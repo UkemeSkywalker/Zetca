@@ -1,6 +1,7 @@
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
+import SolarIcon from '@/components/icons/SolarIcon';
 
 export default function DemoPage() {
   return (
@@ -180,6 +181,75 @@ export default function DemoPage() {
                 <p className="text-sm">✓ Feature three</p>
               </div>
             </Card>
+          </div>
+        </section>
+
+        {/* Solar Icons */}
+        <section className="bg-white rounded-lg p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6">Solar Icons</h2>
+          
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium text-gray-700 mb-3">Icon Sizes</h3>
+              <div className="flex items-center gap-6">
+                <div className="flex flex-col items-center gap-2">
+                  <SolarIcon icon="solar:lightbulb-bolt-bold" size={16} />
+                  <span className="text-xs text-gray-600">16px</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <SolarIcon icon="solar:lightbulb-bolt-bold" size={24} />
+                  <span className="text-xs text-gray-600">24px</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <SolarIcon icon="solar:lightbulb-bolt-bold" size={32} />
+                  <span className="text-xs text-gray-600">32px</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <SolarIcon icon="solar:lightbulb-bolt-bold" size={48} />
+                  <span className="text-xs text-gray-600">48px</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium text-gray-700 mb-3">Feature Icons</h3>
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-6">
+                <div className="flex flex-col items-center gap-2">
+                  <SolarIcon icon="solar:lightbulb-bolt-bold" size={32} color="#3b82f6" />
+                  <span className="text-xs text-gray-600 text-center">Strategy</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <SolarIcon icon="solar:pen-bold" size={32} color="#3b82f6" />
+                  <span className="text-xs text-gray-600 text-center">Copywriter</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <SolarIcon icon="solar:calendar-bold" size={32} color="#3b82f6" />
+                  <span className="text-xs text-gray-600 text-center">Scheduler</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <SolarIcon icon="solar:palette-bold" size={32} color="#3b82f6" />
+                  <span className="text-xs text-gray-600 text-center">Designer</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <SolarIcon icon="solar:send-square-bold" size={32} color="#3b82f6" />
+                  <span className="text-xs text-gray-600 text-center">Publisher</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <SolarIcon icon="solar:chart-bold" size={32} color="#3b82f6" />
+                  <span className="text-xs text-gray-600 text-center">Analytics</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium text-gray-700 mb-3">Social Media Icons</h3>
+              <div className="flex gap-6">
+                <SolarIcon icon="solar:instagram-bold" size={32} color="#E4405F" />
+                <SolarIcon icon="solar:twitter-bold" size={32} color="#1DA1F2" />
+                <SolarIcon icon="solar:linkedin-bold" size={32} color="#0A66C2" />
+                <SolarIcon icon="solar:facebook-bold" size={32} color="#1877F2" />
+              </div>
+            </div>
           </div>
         </section>
       </div>
