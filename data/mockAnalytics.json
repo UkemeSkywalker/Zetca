@@ -1,0 +1,120 @@
+{
+  "metrics": [
+    {
+      "label": "Engagement Rate",
+      "value": "4.8%",
+      "change": 12.5,
+      "icon": "solar:chart-2-bold"
+    },
+    {
+      "label": "Total Reach",
+      "value": "45.2K",
+      "change": 8.3,
+      "icon": "solar:users-group-rounded-bold"
+    },
+    {
+      "label": "Clicks",
+      "value": "2,341",
+      "change": -3.2,
+      "icon": "solar:cursor-bold"
+    },
+    {
+      "label": "Follower Growth",
+      "value": "+1,234",
+      "change": 15.7,
+      "icon": "solar:graph-up-bold"
+    }
+  ],
+  "engagementData": [
+    { "date": "2026-01-01", "engagement": 320, "reach": 4200, "clicks": 180 },
+    { "date": "2026-01-02", "engagement": 450, "reach": 5100, "clicks": 220 },
+    { "date": "2026-01-03", "engagement": 380, "reach": 4800, "clicks": 195 },
+    { "date": "2026-01-04", "engagement": 520, "reach": 5600, "clicks": 245 },
+    { "date": "2026-01-05", "engagement": 410, "reach": 4900, "clicks": 210 },
+    { "date": "2026-01-06", "engagement": 490, "reach": 5300, "clicks": 230 },
+    { "date": "2026-01-07", "engagement": 560, "reach": 5900, "clicks": 270 },
+    { "date": "2026-01-08", "engagement": 430, "reach": 5000, "clicks": 215 },
+    { "date": "2026-01-09", "engagement": 480, "reach": 5200, "clicks": 225 },
+    { "date": "2026-01-10", "engagement": 510, "reach": 5500, "clicks": 240 },
+    { "date": "2026-01-11", "engagement": 390, "reach": 4700, "clicks": 200 },
+    { "date": "2026-01-12", "engagement": 540, "reach": 5700, "clicks": 255 },
+    { "date": "2026-01-13", "engagement": 470, "reach": 5100, "clicks": 220 },
+    { "date": "2026-01-14", "engagement": 500, "reach": 5400, "clicks": 235 },
+    { "date": "2026-01-15", "engagement": 580, "reach": 6100, "clicks": 280 },
+    { "date": "2026-01-16", "engagement": 440, "reach": 4950, "clicks": 205 },
+    { "date": "2026-01-17", "engagement": 490, "reach": 5300, "clicks": 230 },
+    { "date": "2026-01-18", "engagement": 530, "reach": 5650, "clicks": 250 },
+    { "date": "2026-01-19", "engagement": 460, "reach": 5050, "clicks": 215 },
+    { "date": "2026-01-20", "engagement": 510, "reach": 5500, "clicks": 240 },
+    { "date": "2026-01-21", "engagement": 550, "reach": 5800, "clicks": 265 },
+    { "date": "2026-01-22", "engagement": 480, "reach": 5200, "clicks": 225 }
+  ],
+  "platformPerformance": [
+    { 
+      "platform": "instagram", 
+      "posts": 24, 
+      "engagement": 1850, 
+      "reach": 18500 
+    },
+    { 
+      "platform": "twitter", 
+      "posts": 45, 
+      "engagement": 980, 
+      "reach": 12300 
+    },
+    { 
+      "platform": "linkedin", 
+      "posts": 18, 
+      "engagement": 1240, 
+      "reach": 15600 
+    },
+    { 
+      "platform": "facebook", 
+      "posts": 20, 
+      "engagement": 1120, 
+      "reach": 14200 
+    }
+  ],
+  "topPosts": [
+    {
+      "id": "top-1",
+      "content": "Our biggest announcement of the year! 🎉",
+      "platform": "instagram",
+      "engagement": 1250,
+      "reach": 15600,
+      "publishedAt": "2026-01-15T14:00:00Z"
+    },
+    {
+      "id": "top-2",
+      "content": "New AI features that will change how you create content",
+      "platform": "linkedin",
+      "engagement": 980,
+      "reach": 12400,
+      "publishedAt": "2026-01-12T10:30:00Z"
+    },
+    {
+      "id": "top-3",
+      "content": "Behind the scenes: Building the future of social media automation",
+      "platform": "twitter",
+      "engagement": 875,
+      "reach": 11200,
+      "publishedAt": "2026-01-18T16:00:00Z"
+    },
+    {
+      "id": "top-4",
+      "content": "Customer success story: 500% growth in 3 months",
+      "platform": "facebook",
+      "engagement": 820,
+      "reach": 10800,
+      "publishedAt": "2026-01-10T13:00:00Z"
+    },
+    {
+      "id": "top-5",
+      "content": "Free webinar: AI-powered social media strategies",
+      "platform": "linkedin",
+      "engagement": 765,
+      "reach": 9500,
+      "publishedAt": "2026-01-08T09:00:00Z"
+    }
+  ]
+}

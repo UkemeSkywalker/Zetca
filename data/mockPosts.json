@@ -1,0 +1,124 @@
+{
+  "posts": [
+    {
+      "id": "post-1",
+      "content": "Check out our latest blog post on AI trends in social media marketing!",
+      "platform": "twitter",
+      "scheduledDate": "2026-01-25T10:00:00Z",
+      "scheduledTime": "10:00 AM",
+      "status": "scheduled"
+    },
+    {
+      "id": "post-2",
+      "content": "New feature alert! 🚀 AI-powered caption generation is now live. Try it today!",
+      "platform": "instagram",
+      "scheduledDate": "2026-01-26T14:30:00Z",
+      "scheduledTime": "2:30 PM",
+      "status": "scheduled"
+    },
+    {
+      "id": "post-3",
+      "content": "Join our webinar on social media automation strategies. Register now!",
+      "platform": "linkedin",
+      "scheduledDate": "2026-01-27T09:00:00Z",
+      "scheduledTime": "9:00 AM",
+      "status": "scheduled"
+    },
+    {
+      "id": "post-4",
+      "content": "Behind the scenes: How we built Zetca's AI engine. Read the full story on our blog.",
+      "platform": "facebook",
+      "scheduledDate": "2026-01-28T16:00:00Z",
+      "scheduledTime": "4:00 PM",
+      "status": "scheduled"
+    },
+    {
+      "id": "post-5",
+      "content": "Pro tip: Consistency is key in social media. Our scheduler helps you stay on track!",
+      "platform": "twitter",
+      "scheduledDate": "2026-01-29T11:30:00Z",
+      "scheduledTime": "11:30 AM",
+      "status": "scheduled"
+    },
+    {
+      "id": "post-6",
+      "content": "Customer success story: How @techstartup grew their following by 500% in 3 months.",
+      "platform": "instagram",
+      "scheduledDate": "2026-01-30T13:00:00Z",
+      "scheduledTime": "1:00 PM",
+      "status": "draft"
+    },
+    {
+      "id": "post-7",
+      "content": "Announcing our new analytics dashboard! Track your performance across all platforms.",
+      "platform": "linkedin",
+      "scheduledDate": "2026-01-23T10:00:00Z",
+      "scheduledTime": "10:00 AM",
+      "status": "published"
+    },
+    {
+      "id": "post-8",
+      "content": "Happy Monday! Start your week strong with our AI-powered content suggestions.",
+      "platform": "facebook",
+      "scheduledDate": "2026-01-20T08:00:00Z",
+      "scheduledTime": "8:00 AM",
+      "status": "published"
+    },
+    {
+      "id": "post-9",
+      "content": "The future of social media is here. Discover how AI is changing the game.",
+      "platform": "twitter",
+      "scheduledDate": "2026-01-31T15:00:00Z",
+      "scheduledTime": "3:00 PM",
+      "status": "scheduled"
+    },
+    {
+      "id": "post-10",
+      "content": "Weekend inspiration: 5 ways to boost your social media engagement this week.",
+      "platform": "instagram",
+      "scheduledDate": "2026-02-01T12:00:00Z",
+      "scheduledTime": "12:00 PM",
+      "status": "scheduled"
+    },
+    {
+      "id": "post-11",
+      "content": "New case study: How enterprise clients are using Zetca to scale their social presence.",
+      "platform": "linkedin",
+      "scheduledDate": "2026-02-02T10:30:00Z",
+      "scheduledTime": "10:30 AM",
+      "status": "scheduled"
+    },
+    {
+      "id": "post-12",
+      "content": "Thank you for your amazing feedback! We're constantly improving based on your suggestions.",
+      "platform": "facebook",
+      "scheduledDate": "2026-01-21T17:00:00Z",
+      "scheduledTime": "5:00 PM",
+      "status": "published"
+    },
+    {
+      "id": "post-13",
+      "content": "Quick poll: What's your biggest social media challenge? Reply and let us know!",
+      "platform": "twitter",
+      "scheduledDate": "2026-02-03T14:00:00Z",
+      "scheduledTime": "2:00 PM",
+      "status": "draft"
+    },
+    {
+      "id": "post-14",
+      "content": "Sneak peek at our upcoming features! 👀 AI image generation is coming soon.",
+      "platform": "instagram",
+      "scheduledDate": "2026-02-04T11:00:00Z",
+      "scheduledTime": "11:00 AM",
+      "status": "scheduled"
+    },
+    {
+      "id": "post-15",
+      "content": "Industry report: Social media trends to watch in 2026. Download our free guide!",
+      "platform": "linkedin",
+      "scheduledDate": "2026-02-05T09:30:00Z",
+      "scheduledTime": "9:30 AM",
+      "status": "scheduled"
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "captions": [
+    {
+      "id": "caption-1",
+      "text": "Excited to share our latest innovation! 🚀 This new feature will transform how you manage your social media strategy.",
+      "platform": "instagram",
+      "hashtags": ["#Innovation", "#SocialMedia", "#AI", "#Marketing"]
+    },
+    {
+      "id": "caption-2",
+      "text": "Just launched: AI-powered content scheduling that learns from your audience engagement patterns. Check it out!",
+      "platform": "twitter",
+      "hashtags": ["#AI", "#ContentMarketing", "#SocialMediaTools"]
+    },
+    {
+      "id": "caption-3",
+      "text": "Behind the scenes at Zetca: Our team is working hard to bring you the best social media automation tools. Here's a sneak peek at what's coming next! 👀",
+      "platform": "instagram",
+      "hashtags": ["#BehindTheScenes", "#TeamWork", "#Innovation", "#Tech"]
+    },
+    {
+      "id": "caption-4",
+      "text": "New blog post: 5 strategies to boost your social media engagement using AI. Link in bio!",
+      "platform": "linkedin",
+      "hashtags": ["#SocialMediaMarketing", "#AI", "#ContentStrategy"]
+    },
+    {
+      "id": "caption-5",
+      "text": "Customer spotlight: How @brandname increased their engagement by 300% using Zetca. Read their story!",
+      "platform": "facebook",
+      "hashtags": ["#CustomerSuccess", "#CaseStudy", "#SocialMedia"]
+    },
+    {
+      "id": "caption-6",
+      "text": "Pro tip: The best time to post on Instagram is between 10 AM - 3 PM on weekdays. Our AI analyzes your audience to find YOUR perfect posting time.",
+      "platform": "instagram",
+      "hashtags": ["#SocialMediaTips", "#InstagramMarketing", "#AI"]
+    },
+    {
+      "id": "caption-7",
+      "text": "Announcing our new partnership with leading brands to bring you even better social media automation tools!",
+      "platform": "twitter",
+      "hashtags": ["#Partnership", "#Innovation", "#SocialMedia"]
+    },
+    {
+      "id": "caption-8",
+      "text": "Join us for a live webinar on AI-powered social media strategies. Register now! Limited spots available.",
+      "platform": "linkedin",
+      "hashtags": ["#Webinar", "#AI", "#SocialMediaStrategy", "#Marketing"]
+    },
+    {
+      "id": "caption-9",
+      "text": "Weekend vibes at Zetca HQ! 🌟 Our team never stops innovating to bring you the best tools for your social media success.",
+      "platform": "instagram",
+      "hashtags": ["#WeekendVibes", "#TeamCulture", "#Innovation"]
+    },
+    {
+      "id": "caption-10",
+      "text": "Thank you for 10,000 followers! 🎉 We couldn't have done it without your support. Here's to the next milestone!",
+      "platform": "facebook",
+      "hashtags": ["#Milestone", "#ThankYou", "#Community", "#Growth"]
+    }
+  ]
+}

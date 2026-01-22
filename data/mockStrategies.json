@@ -1,0 +1,55 @@
+{
+  "strategies": [
+    {
+      "id": "strategy-1",
+      "contentPillars": [
+        "Educational content about industry trends",
+        "Behind-the-scenes company culture",
+        "Customer success stories",
+        "Product tips and tutorials"
+      ],
+      "postingFrequency": "3-4 times per week",
+      "keyThemes": [
+        "Innovation",
+        "Community",
+        "Expertise",
+        "Authenticity"
+      ],
+      "tone": "Professional yet approachable, informative with personality"
+    },
+    {
+      "id": "strategy-2",
+      "contentPillars": [
+        "Thought leadership articles",
+        "Industry news and insights",
+        "Team spotlights and culture",
+        "Product updates and features"
+      ],
+      "postingFrequency": "Daily posts across all platforms",
+      "keyThemes": [
+        "Leadership",
+        "Growth",
+        "Technology",
+        "Collaboration"
+      ],
+      "tone": "Authoritative yet friendly, data-driven with human touch"
+    },
+    {
+      "id": "strategy-3",
+      "contentPillars": [
+        "User-generated content and testimonials",
+        "How-to guides and tutorials",
+        "Industry trends and predictions",
+        "Company milestones and achievements"
+      ],
+      "postingFrequency": "5-6 times per week",
+      "keyThemes": [
+        "Customer Success",
+        "Education",
+        "Innovation",
+        "Transparency"
+      ],
+      "tone": "Conversational and engaging, helpful and supportive"
+    }
+  ]
+}
