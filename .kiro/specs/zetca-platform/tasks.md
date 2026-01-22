@@ -76,8 +76,8 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Test responsive behavior by resizing browser
     - _Requirements: 1.8_
 
-- [ ] 5. Home Page - Hero Section (First Visible Content)
-  - [ ] 5.1 Create HeroSection component
+- [x] 5. Home Page - Hero Section (First Visible Content)
+  - [x] 5.1 Create HeroSection component
     - Add Herobg.jpg to public/images folder
     - Use Next.js Image for background
     - Add headline: "AI-Powered Social Media Automation"
@@ -85,7 +85,7 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Style with centered content and large text
     - _Requirements: 1.2_
   
-  - [ ] 5.2 Update app/page.tsx to show HeroSection
+  - [x] 5.2 Update app/page.tsx to show HeroSection
     - Replace "Hello Zetca" with HeroSection component
     - Verify hero displays with background image
     - Test CTA button navigation
