@@ -31,28 +31,28 @@ export default function Navbar() {
   };
 
   return (
-    <div className="w-full pt-4 px-4 sm:px-6 lg:px-8">
-      <nav className="bg-white shadow-sm rounded-2xl max-w-7xl mx-auto">
-        <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
+    <div className="fixed top-0 left-0 right-0 z-50 pt-4 px-4 sm:px-6 lg:px-8">
+      <nav className="bg-white/90 backdrop-blur-md shadow-sm rounded-full max-w-6xl mx-auto border border-gray-100">
+        <div className="px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2 flex-shrink-0">
               <div 
-                className="w-8 h-8 rounded-lg flex items-center justify-center" 
+                className="w-7 h-7 rounded-lg flex items-center justify-center" 
                 style={{ background: 'linear-gradient(45deg, var(--colors--linear-color-01), var(--colors--linear-color-02))' }}
               >
-                <Icon icon="solar:bolt-bold" className="w-5 h-5 text-white" />
+                <Icon icon="simple-icons:speedypage" className="w-4 h-4 text-white" />
               </div>
-              <span className="text-2xl font-bold text-gray-900">Zetca.</span>
+              <span className="text-xl font-bold text-gray-900">Zetca.</span>
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center space-x-8">
+            <div className="hidden lg:flex items-center space-x-8 flex-1 justify-center">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-1 text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-1 text-sm font-medium transition-colors whitespace-nowrap ${
                     isActiveLink(link.href)
                       ? 'text-[#3139FB]'
                       : 'text-gray-700 hover:text-[#3139FB]'
@@ -60,23 +60,22 @@ export default function Navbar() {
                 >
                   {link.label}
                   {link.hasDropdown && (
-                    <Icon icon="solar:alt-arrow-down-linear" className="w-4 h-4" />
+                    <Icon icon="solar:alt-arrow-down-linear" className="w-3 h-3" />
                   )}
                 </Link>
               ))}
             </div>
 
             {/* Right Side Actions */}
-            <div className="hidden lg:flex items-center gap-4">
+            <div className="hidden lg:flex items-center flex-shrink-0">
               {/* Get Started Dropdown */}
               <div className="relative">
                 <button
                   onClick={() => setIsGetStartedOpen(!isGetStartedOpen)}
-                  className="flex items-center gap-2 px-6 py-5 text-white text-sm font-semibold rounded-lg transition-all shadow-sm"
+                  className="flex items-center gap-2 px-5 py-2.5 text-white text-sm font-semibold rounded-full transition-all shadow-sm hover:shadow-md"
                   style={{ background: 'linear-gradient(45deg, var(--colors--linear-color-01), var(--colors--linear-color-02))' }}
                 >
                   Get Started
-                  <Icon icon="solar:alt-arrow-down-linear" className="w-4 h-4" />
                 </button>
 
                 {/* Dropdown Menu */}
@@ -88,40 +87,18 @@ export default function Navbar() {
                       onClick={() => setIsGetStartedOpen(false)}
                     />
                     {/* Dropdown */}
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-20">
                       <Link
                         href="/login"
                         onClick={() => setIsGetStartedOpen(false)}
-                        className="block px-4 py-2 text-sm text-gray-700 transition-colors"
-                        style={{ 
-                          backgroundColor: 'transparent'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#EEF0FF';
-                          e.currentTarget.style.color = '#3139FB';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                          e.currentTarget.style.color = '#374151';
-                        }}
+                        className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-blue-50 hover:text-[#3139FB]"
                       >
                         Login
                       </Link>
                       <Link
                         href="/signup"
                         onClick={() => setIsGetStartedOpen(false)}
-                        className="block px-4 py-2 text-sm text-gray-700 transition-colors"
-                        style={{ 
-                          backgroundColor: 'transparent'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#EEF0FF';
-                          e.currentTarget.style.color = '#3139FB';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                          e.currentTarget.style.color = '#374151';
-                        }}
+                        className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-blue-50 hover:text-[#3139FB]"
                       >
                         Sign Up
                       </Link>
@@ -147,31 +124,30 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden border-t border-gray-200">
-            <div className="px-4 py-4 space-y-3">
+          <div className="lg:hidden border-t border-gray-100 rounded-b-3xl">
+            <div className="px-4 py-4 space-y-2">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center justify-between px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     isActiveLink(link.href)
-                      ? 'text-[#3139FB]'
+                      ? 'text-[#3139FB] bg-blue-50'
                       : 'text-gray-700 hover:bg-gray-50'
                   }`}
-                  style={isActiveLink(link.href) ? { backgroundColor: '#EEF0FF' } : {}}
                 >
                   {link.label}
                   {link.hasDropdown && (
-                    <Icon icon="solar:alt-arrow-down-linear" className="w-4 h-4" />
+                    <Icon icon="solar:alt-arrow-down-linear" className="w-3 h-3" />
                   )}
                 </Link>
               ))}
-              <div className="pt-3 border-t border-gray-200 space-y-2">
+              <div className="pt-3 border-t border-gray-100 space-y-2">
                 <Link
                   href="/login"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="block w-full px-4 py-3 text-white text-sm font-semibold rounded-lg text-center transition-all"
+                  className="block w-full px-4 py-2.5 text-white text-sm font-semibold rounded-full text-center transition-all"
                   style={{ background: 'linear-gradient(45deg, var(--colors--linear-color-01), var(--colors--linear-color-02))' }}
                 >
                   Login
@@ -179,7 +155,7 @@ export default function Navbar() {
                 <Link
                   href="/signup"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="block w-full px-4 py-3 border-2 text-sm font-semibold rounded-lg text-center transition-all"
+                  className="block w-full px-4 py-2.5 border-2 text-sm font-semibold rounded-full text-center transition-all"
                   style={{ borderColor: '#3139FB', color: '#3139FB' }}
                 >
                   Sign Up
