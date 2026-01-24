@@ -14,6 +14,11 @@ interface FeaturesSectionProps {
 
 const features: Feature[] = [
   {
+    emoji: 'game-icons:brain',
+    title: 'Strategy Agent',
+    description: 'Automated content planning based on your brand goals and audience.',
+  },
+  {
     emoji: 'solar:pen-new-square-bold',
     title: 'Copywriter Agent',
     description: 'High-converting captions, hooks, and CTAs generated instantly.',
@@ -74,11 +79,11 @@ export default function FeaturesSection({ className = '' }: FeaturesSectionProps
               </div>
 
               {/* Collapsible Feature Items */}
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {features.map((feature, index) => (
                   <div
                     key={index}
-                    className="flex items-start gap-4 p-5 rounded-xl hover:bg-purple-50/50 transition-colors cursor-pointer group"
+                    className="flex items-start gap-4 p-4 rounded-xl hover:bg-purple-50/50 transition-colors cursor-pointer group"
                   >
                     <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center group-hover:bg-purple-200 transition-colors">
                       <SolarIcon icon={feature.emoji} size={24} color="#7c3aed" />
