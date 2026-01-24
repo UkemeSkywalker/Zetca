@@ -23,6 +23,11 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isGetStartedOpen, setIsGetStartedOpen] = useState(false);
 
+  // Hide navbar on dashboard routes
+  if (pathname?.startsWith('/dashboard')) {
+    return null;
+  }
+
   const isActiveLink = (href: string) => {
     if (href === '/') {
       return pathname === '/';
