@@ -163,8 +163,8 @@ This implementation plan breaks down the Zetca platform into discrete, increment
   - Test all interactive elements (buttons, form, links)
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 11. Login Page (Visible Auth UI)
-  - [ ] 11.1 Create LoginForm component
+- [x] 11. Login Page (Visible Auth UI)
+  - [x] 11.1 Create LoginForm component
     - Add email and password Input components
     - Add "Login" Button component
     - Implement email validation (regex)
@@ -174,14 +174,14 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Implement submit with 1-second delay and redirect to /dashboard
     - _Requirements: 21.1, 21.4, 21.6_
   
-  - [ ] 11.2 Create app/login/page.tsx
+  - [x] 11.2 Create app/login/page.tsx
     - Center LoginForm on page with max-width
     - Add page heading "Welcome Back"
     - Verify Navbar appears at top
     - Verify Footer appears at bottom
     - _Requirements: 21.1, 21.3_
   
-  - [ ] 11.3 Test login page
+  - [x] 11.3 Test login page
     - Navigate to /login and verify form displays
     - Test email validation with invalid emails
     - Test password validation with short passwords
