@@ -211,26 +211,26 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Test successful signup redirects to /dashboard
     - _Requirements: 21.5_
 
-- [ ] 13. Dashboard Layout and Sidebar (First Dashboard View)
-  - [ ] 13.1 Create Sidebar component
+- [x] 13. Dashboard Layout and Sidebar (First Dashboard View)
+  - [x] 13.1 Create Sidebar component
     - Add navigation items with Solar icons: Strategist, Copywriter, Scheduler, Designer, Publisher, Analysis, Profile
     - Implement active route highlighting using usePathname
     - Style with dark background (bg-gray-900) and white text
     - Make fixed on desktop, overlay on mobile
     - _Requirements: 3.2, 3.4_
   
-  - [ ] 13.2 Create app/dashboard/layout.tsx
+  - [x] 13.2 Create app/dashboard/layout.tsx
     - Implement layout with Sidebar on left and main content area on right
     - Add responsive behavior (sidebar collapses on mobile)
     - _Requirements: 3.1_
   
-  - [ ] 13.3 Create app/dashboard/page.tsx
+  - [x] 13.3 Create app/dashboard/page.tsx
     - Add welcome message "Welcome to Zetca Dashboard"
     - Add cards showing quick stats (mock data)
     - Add "Get Started" button linking to /dashboard/strategist
     - _Requirements: 1.9_
   
-  - [ ] 13.4 Test dashboard layout
+  - [x] 13.4 Test dashboard layout
     - Navigate to /dashboard and verify layout displays
     - Verify sidebar shows all navigation items
     - Test sidebar navigation to different pages
