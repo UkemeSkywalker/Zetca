@@ -52,7 +52,7 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-1 text-sm font-medium transition-colors whitespace-nowrap ${
+                  className={`flex items-center gap-1 text-base font-medium transition-colors whitespace-nowrap ${
                     isActiveLink(link.href)
                       ? 'text-[#3139FB]'
                       : 'text-gray-700 hover:text-[#3139FB]'
@@ -60,7 +60,7 @@ export default function Navbar() {
                 >
                   {link.label}
                   {link.hasDropdown && (
-                    <Icon icon="solar:alt-arrow-down-linear" className="w-3 h-3" />
+                    <Icon icon="solar:alt-arrow-down-linear" className="w-4 h-4" />
                   )}
                 </Link>
               ))}
@@ -72,7 +72,7 @@ export default function Navbar() {
               <div className="relative">
                 <button
                   onClick={() => setIsGetStartedOpen(!isGetStartedOpen)}
-                  className="flex items-center gap-2 px-5 py-2.5 text-white text-sm font-semibold rounded-full transition-all shadow-sm hover:shadow-md"
+                  className="flex items-center gap-2 px-5 py-2.5 text-white text-base font-semibold rounded-full transition-all shadow-sm hover:shadow-md"
                   style={{ background: 'linear-gradient(45deg, var(--colors--linear-color-01), var(--colors--linear-color-02))' }}
                 >
                   Get Started
@@ -91,14 +91,14 @@ export default function Navbar() {
                       <Link
                         href="/login"
                         onClick={() => setIsGetStartedOpen(false)}
-                        className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-blue-50 hover:text-[#3139FB]"
+                        className="block px-4 py-2 text-base text-gray-700 transition-colors hover:bg-blue-50 hover:text-[#3139FB]"
                       >
                         Login
                       </Link>
                       <Link
                         href="/signup"
                         onClick={() => setIsGetStartedOpen(false)}
-                        className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-blue-50 hover:text-[#3139FB]"
+                        className="block px-4 py-2 text-base text-gray-700 transition-colors hover:bg-blue-50 hover:text-[#3139FB]"
                       >
                         Sign Up
                       </Link>
@@ -131,7 +131,7 @@ export default function Navbar() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center justify-between px-4 py-2.5 rounded-lg text-base font-medium transition-colors ${
                     isActiveLink(link.href)
                       ? 'text-[#3139FB] bg-blue-50'
                       : 'text-gray-700 hover:bg-gray-50'
@@ -139,7 +139,7 @@ export default function Navbar() {
                 >
                   {link.label}
                   {link.hasDropdown && (
-                    <Icon icon="solar:alt-arrow-down-linear" className="w-3 h-3" />
+                    <Icon icon="solar:alt-arrow-down-linear" className="w-4 h-4" />
                   )}
                 </Link>
               ))}
@@ -147,7 +147,7 @@ export default function Navbar() {
                 <Link
                   href="/login"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="block w-full px-4 py-2.5 text-white text-sm font-semibold rounded-full text-center transition-all"
+                  className="block w-full px-4 py-2.5 text-white text-base font-semibold rounded-full text-center transition-all"
                   style={{ background: 'linear-gradient(45deg, var(--colors--linear-color-01), var(--colors--linear-color-02))' }}
                 >
                   Login
@@ -155,7 +155,7 @@ export default function Navbar() {
                 <Link
                   href="/signup"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="block w-full px-4 py-2.5 border-2 text-sm font-semibold rounded-full text-center transition-all"
+                  className="block w-full px-4 py-2.5 border-2 text-base font-semibold rounded-full text-center transition-all"
                   style={{ borderColor: '#3139FB', color: '#3139FB' }}
                 >
                   Sign Up

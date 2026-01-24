@@ -111,8 +111,8 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Test hover effects on cards
     - _Requirements: 1.1_
 
-- [ ] 7. Home Page - Waitlist Section
-  - [ ] 7.1 Create WaitlistSection component
+- [x] 7. Home Page - Waitlist Section
+  - [x] 7.1 Create WaitlistSection component
     - Add section heading "Join the Waitlist"
     - Add email Input component
     - Add "Join Now" Button component
@@ -122,36 +122,36 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Clear input on success
     - _Requirements: 1.4, 2.1, 2.2, 2.3, 2.4, 2.5_
   
-  - [ ] 7.2 Add WaitlistSection to home page
+  - [x] 7.2 Add WaitlistSection to home page
     - Add below FeaturesSection in app/page.tsx
     - Test email validation with valid/invalid emails
     - Verify success message appears after delay
     - Verify input clears on success
     - _Requirements: 1.1_
 
-- [ ] 8. Home Page - Pricing Section
-  - [ ] 8.1 Create PricingSection component
+- [x] 8. Home Page - Pricing Section
+  - [x] 8.1 Create PricingSection component
     - Create grid with 3 pricing cards (Free, Pro, Enterprise)
     - Add pricing details, features lists with checkmarks
     - Highlight "Pro" tier with blue border and "Popular" badge
     - Add CTA buttons (UI only)
     - _Requirements: 1.5_
   
-  - [ ] 8.2 Add PricingSection to home page
+  - [x] 8.2 Add PricingSection to home page
     - Add below WaitlistSection in app/page.tsx
     - Verify 3-column grid on desktop
     - Verify Pro tier is highlighted
     - _Requirements: 1.1_
 
-- [ ] 9. Home Page - Footer
-  - [ ] 9.1 Create Footer component
+- [x] 9. Home Page - Footer
+  - [x] 9.1 Create Footer component
     - Create 4-column grid (Product, Company, Resources, Legal)
     - Add social media icons (Instagram, Twitter, LinkedIn, Facebook)
     - Add copyright text
     - Make responsive (2 columns tablet, 1 column mobile)
     - _Requirements: 1.6, 1.7_
   
-  - [ ] 9.2 Add Footer to root layout
+  - [x] 9.2 Add Footer to root layout
     - Update app/layout.tsx to include Footer below children
     - Verify footer appears on all pages
     - Test responsive grid layout
