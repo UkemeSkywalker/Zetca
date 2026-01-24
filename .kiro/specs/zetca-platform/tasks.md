@@ -188,8 +188,8 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Test successful login redirects to /dashboard
     - _Requirements: 21.4_
 
-- [ ] 12. Signup Page
-  - [ ] 12.1 Create SignupForm component
+- [x] 12. Signup Page
+  - [x] 12.1 Create SignupForm component
     - Add name, email, password, confirm password Input components
     - Add terms of service checkbox
     - Add "Sign Up" Button component
@@ -198,13 +198,13 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Implement submit with 1-second delay and redirect to /dashboard
     - _Requirements: 21.2, 21.5, 21.6_
   
-  - [ ] 12.2 Create app/signup/page.tsx
+  - [x] 12.2 Create app/signup/page.tsx
     - Center SignupForm on page with max-width
     - Add page heading "Create Your Account"
     - Verify Navbar and Footer appear
     - _Requirements: 21.2, 21.3_
   
-  - [ ] 12.3 Test signup page
+  - [x] 12.3 Test signup page
     - Navigate to /signup and verify form displays
     - Test all validations
     - Test password confirmation mismatch
