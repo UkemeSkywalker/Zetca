@@ -237,21 +237,21 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Test responsive sidebar on mobile
     - _Requirements: 3.1, 3.5_
 
-- [ ] 14. Agent Workflow Visualization
-  - [ ] 14.1 Create StatusBadge component
+- [-] 14. Agent Workflow Visualization
+  - [x] 14.1 Create StatusBadge component
     - Implement status prop with color mapping
     - Scheduled: yellow, Published: green, Draft: gray, Complete: green, In Progress: blue, Not Started: gray
     - Apply rounded-full styling
     - _Requirements: 12.6_
   
-  - [ ] 14.2 Create AgentContext for shared state
+  - [x] 14.2 Create AgentContext for shared state
     - Define context with strategy, captions, workflowStatus
     - Implement provider with useState hooks
     - Add methods to update workflow status
     - Wrap dashboard layout with provider
     - _Requirements: 4.4, 5.1_
   
-  - [ ] 14.3 Create AgentWorkflow component
+  - [x] 14.3 Create AgentWorkflow component
     - Display horizontal workflow: Strategist → Copywriter → Scheduler → Designer → Publisher
     - Add icons and labels for each agent
     - Add StatusBadge for each agent
@@ -260,13 +260,13 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Make responsive (vertical on mobile)
     - _Requirements: 11.1, 11.2, 11.3, 11.5_
   
-  - [ ] 14.4 Create PageWrapper component
+  - [x] 14.4 Create PageWrapper component
     - Accept showWorkflow prop
     - Conditionally render AgentWorkflow at top
     - Add responsive padding
     - _Requirements: 12.1_
   
-  - [ ] 14.5 Test workflow visualization
+  - [x] 14.5 Test workflow visualization
     - Navigate to /dashboard/strategist
     - Verify workflow displays at top
     - Verify Strategist is highlighted

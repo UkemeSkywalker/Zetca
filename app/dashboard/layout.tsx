@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import Sidebar from '@/components/layout/Sidebar';
+import { AgentProvider } from '@/context/AgentContext';
 
 export const metadata: Metadata = {
   title: 'Dashboard - Zetca',
@@ -12,7 +13,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <AgentProvider>
+      <div className="min-h-screen bg-gray-50">
       <Sidebar />
       
       {/* Top Header Bar */}
@@ -77,5 +79,6 @@ export default function DashboardLayout({
         </div>
       </main>
     </div>
+    </AgentProvider>
   );
 }
