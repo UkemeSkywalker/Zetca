@@ -274,8 +274,8 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Navigate to /dashboard/analysis and verify workflow is hidden
     - _Requirements: 11.1, 11.6_
 
-- [ ] 15. Strategist Page (First Agent Tool)
-  - [ ] 15.1 Create StrategyForm component
+- [x] 15. Strategist Page (First Agent Tool)
+  - [x] 15.1 Create StrategyForm component
     - Add Input components for: brandName, industry, targetAudience, goals
     - Add "Generate Strategy" Button with loading state
     - Implement required field validation
@@ -285,12 +285,12 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Update workflow status to mark Strategist as complete
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
   
-  - [ ] 15.2 Create app/dashboard/strategist/page.tsx
+  - [x] 15.2 Create app/dashboard/strategist/page.tsx
     - Wrap StrategyForm with PageWrapper (showWorkflow=true)
     - Add page heading "AI Strategy Generator"
     - _Requirements: 4.1_
   
-  - [ ] 15.3 Test strategist page
+  - [x] 15.3 Test strategist page
     - Navigate to /dashboard/strategist
     - Verify workflow shows at top
     - Fill form and click generate
@@ -299,15 +299,15 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Verify workflow status updates to "Complete"
     - _Requirements: 4.2, 4.5_
 
-- [ ] 16. Checkpoint - Dashboard Foundation Complete
+- [x] 16. Checkpoint - Dashboard Foundation Complete
   - Verify dashboard layout with sidebar
   - Verify agent workflow visualization
   - Verify strategist page generates and displays strategy
   - Test navigation between dashboard pages
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 17. Copywriter Page
-  - [ ] 17.1 Create CaptionEditor component
+- [x] 17. Copywriter Page
+  - [x] 17.1 Create CaptionEditor component
     - Fetch captions from AgentContext (or show "No strategy found" message)
     - Display each caption in textarea (editable)
     - Add platform badge for each caption
@@ -316,12 +316,12 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Update local state on caption edit
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
   
-  - [ ] 17.2 Create app/dashboard/copywriter/page.tsx
+  - [x] 17.2 Create app/dashboard/copywriter/page.tsx
     - Wrap CaptionEditor with PageWrapper (showWorkflow=true)
     - Add page heading "AI Copywriter"
     - _Requirements: 5.1_
   
-  - [ ] 17.3 Test copywriter page
+  - [x] 17.3 Test copywriter page
     - Navigate to /dashboard/copywriter without strategy
     - Verify "No strategy found" message displays
     - Go back to strategist and generate strategy
