@@ -330,8 +330,8 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Test copy-to-clipboard button
     - _Requirements: 5.1, 5.2, 5.6_
 
-- [ ] 18. Scheduler Page with Calendar
-  - [ ] 18.1 Create Modal component
+- [x] 18. Scheduler Page with Calendar
+  - [x] 18.1 Create Modal component
     - Implement isOpen, onClose, title, children, footer props
     - Add backdrop with click-to-close
     - Add ESC key handler
@@ -339,7 +339,7 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Use React.createPortal
     - _Requirements: 12.5_
   
-  - [ ] 18.2 Create Calendar component
+  - [x] 18.2 Create Calendar component
     - Implement month grid view with date cells
     - Display current month and year
     - Add navigation arrows for previous/next month
@@ -347,7 +347,7 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Display scheduled posts on dates (colored dots)
     - _Requirements: 6.1, 6.2, 6.3_
   
-  - [ ] 18.3 Create scheduling modal
+  - [x] 18.3 Create scheduling modal
     - Add Input components for: content, platform (dropdown), date, time
     - Add validation (future date, non-empty content)
     - Add "Schedule Post" Button
@@ -355,19 +355,19 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Close modal and update calendar
     - _Requirements: 6.3, 6.4_
   
-  - [ ] 18.4 Add list view toggle
+  - [x] 18.4 Add list view toggle
     - Add toggle button above calendar
     - Implement list view showing posts chronologically
     - Add edit and delete buttons for each post
     - Implement delete handler
     - _Requirements: 6.5, 6.6, 6.7_
   
-  - [ ] 18.5 Create app/dashboard/scheduler/page.tsx
+  - [x] 18.5 Create app/dashboard/scheduler/page.tsx
     - Wrap Calendar with PageWrapper (showWorkflow=true)
     - Add page heading "Content Scheduler"
     - _Requirements: 6.1_
   
-  - [ ] 18.6 Test scheduler page
+  - [x] 18.6 Test scheduler page
     - Navigate to /dashboard/scheduler
     - Verify calendar displays current month
     - Click a date and verify modal opens
