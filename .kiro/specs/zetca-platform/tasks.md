@@ -409,8 +409,8 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Test download button
     - _Requirements: 7.2, 7.4, 7.6_
 
-- [ ] 20. Publisher Page with Posts Table
-  - [ ] 20.1 Create PostsTable component
+- [x] 20. Publisher Page with Posts Table
+  - [x] 20.1 Create PostsTable component
     - Implement table with columns: Content, Platform, Date, Time, Status, Actions
     - Display StatusBadge for each post
     - Add status filter dropdown (All, Scheduled, Published, Draft)
@@ -421,12 +421,12 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Make responsive (stack into cards on mobile)
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
   
-  - [ ] 20.2 Create app/dashboard/publisher/page.tsx
+  - [x] 20.2 Create app/dashboard/publisher/page.tsx
     - Wrap PostsTable with PageWrapper (showWorkflow=true)
     - Add page heading "Content Publisher"
     - _Requirements: 8.1_
   
-  - [ ] 20.3 Test publisher page
+  - [x] 20.3 Test publisher page
     - Navigate to /dashboard/publisher
     - Verify table displays scheduled posts from scheduler
     - Test status filter dropdown

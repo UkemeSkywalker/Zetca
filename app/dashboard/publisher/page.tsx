@@ -1,13 +1,15 @@
+import React from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
+import { PostsTable } from '@/components/dashboard/PostsTable';
 
 export default function PublisherPage() {
   return (
     <PageWrapper
       title="Content Publisher"
-      description="Manage and publish your scheduled posts"
+      description="Manage and publish your scheduled social media posts"
       showWorkflow={true}
     >
-      <p className="text-gray-600">Post publishing coming soon...</p>
+      <PostsTable />
     </PageWrapper>
   );
 }
