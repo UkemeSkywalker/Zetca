@@ -377,13 +377,13 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Delete a post and verify it's removed
     - _Requirements: 6.2, 6.4, 6.7_
 
-- [ ] 19. Designer Page with Image Generation
-  - [ ] 19.1 Create LoadingSkeleton component
+- [x] 19. Designer Page with Image Generation
+  - [x] 19.1 Create LoadingSkeleton component
     - Implement animated pulse effect
     - Add variant props for different shapes
     - _Requirements: 14.6_
   
-  - [ ] 19.2 Create ImageGenerator component
+  - [x] 19.2 Create ImageGenerator component
     - Add Input component for image prompt
     - Add "Generate Image" Button with loading state
     - Fetch placeholder image from mockImages.json with 2-second delay
@@ -394,12 +394,12 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Add download button for each image
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6_
   
-  - [ ] 19.3 Create app/dashboard/designer/page.tsx
+  - [x] 19.3 Create app/dashboard/designer/page.tsx
     - Wrap ImageGenerator with PageWrapper (showWorkflow=true)
     - Add page heading "AI Image Designer"
     - _Requirements: 7.1_
   
-  - [ ] 19.4 Test designer page
+  - [x] 19.4 Test designer page
     - Navigate to /dashboard/designer
     - Enter a prompt and click generate
     - Verify loading skeleton appears
