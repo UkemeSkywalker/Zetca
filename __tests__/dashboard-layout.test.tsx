@@ -78,7 +78,7 @@ describe('Dashboard Layout - Sidebar Navigation', () => {
       const currentPath = '/dashboard/strategist';
       const inactiveHref = '/dashboard/copywriter';
       
-      const isActive = currentPath === inactiveHref;
+      const isActive = (currentPath as string) === (inactiveHref as string);
       expect(isActive).toBe(false);
     });
   });
