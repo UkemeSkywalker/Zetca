@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Icon } from '@iconify/react';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
-import Card from '@/components/ui/Card';
+import { Card } from '@/components/ui/Card';
 import { useAgentContext } from '@/context/AgentContext';
 import { Strategy } from '@/types/agent';
 import mockStrategiesData from '@/data/mockStrategies.json';
