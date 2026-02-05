@@ -1,6 +1,6 @@
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import Card from '@/components/ui/Card';
+import { Card } from '@/components/ui/Card';
 import SolarIcon from '@/components/icons/SolarIcon';
 
 export default function DemoPage() {

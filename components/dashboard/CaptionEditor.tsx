@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAgentContext } from '@/context/AgentContext';
 import { Caption } from '@/types/agent';
-import Card from '@/components/ui/Card';
+import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Icon } from '@iconify/react';
 import mockCaptionsData from '@/data/mockCaptions.json';

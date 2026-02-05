@@ -9,7 +9,7 @@ interface CardProps {
   variant?: 'default' | 'bordered' | 'elevated';
 }
 
-const Card: React.FC<CardProps> = ({
+export const Card: React.FC<CardProps> = ({
   title,
   description,
   children,
@@ -48,5 +48,3 @@ const Card: React.FC<CardProps> = ({
     </div>
   );
 };
-
-export default Card;
