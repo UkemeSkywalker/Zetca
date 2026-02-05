@@ -19,10 +19,10 @@ interface TopPostsListProps {
 }
 
 const platformConfig: Record<string, { icon: string; color: string }> = {
-  instagram: { icon: 'solar:instagram-bold', color: 'text-pink-600' },
-  twitter: { icon: 'solar:twitter-bold', color: 'text-blue-500' },
-  linkedin: { icon: 'solar:linkedin-bold', color: 'text-blue-700' },
-  facebook: { icon: 'solar:facebook-bold', color: 'text-blue-600' },
+  instagram: { icon: 'skill-icons:instagram', color: 'text-pink-600' },
+  twitter: { icon: 'skill-icons:twitter', color: 'text-blue-500' },
+  linkedin: { icon: 'skill-icons:linkedin', color: 'text-blue-700' },
+  facebook: { icon: 'logos:facebook', color: 'text-blue-600' },
 };
 
 export const TopPostsList: React.FC<TopPostsListProps> = ({
@@ -66,7 +66,7 @@ export const TopPostsList: React.FC<TopPostsListProps> = ({
                   </p>
                   <div className="flex items-center space-x-4 text-xs text-gray-500">
                     <div className="flex items-center">
-                      <Icon icon={config.icon} className={`w-4 h-4 mr-1 ${config.color}`} />
+                      <Icon icon={config.icon} className="w-4 h-4 mr-1" />
                       <span className="capitalize">{post.platform}</span>
                     </div>
                     <div className="flex items-center">
