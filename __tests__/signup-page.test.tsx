@@ -102,21 +102,21 @@ describe('Signup Page - Form Validation', () => {
       const password = 'password123';
       const confirmPassword = 'different123';
       
-      expect(password === confirmPassword).toBe(false);
+      expect((password as string) === (confirmPassword as string)).toBe(false);
     });
 
     it('should reject empty confirm password', () => {
       const password = 'password123';
       const confirmPassword = '';
       
-      expect(password === confirmPassword).toBe(false);
+      expect((password as string) === (confirmPassword as string)).toBe(false);
     });
 
     it('should handle case-sensitive password matching', () => {
       const password = 'Password123';
       const confirmPassword = 'password123';
       
-      expect(password === confirmPassword).toBe(false);
+      expect((password as string) === (confirmPassword as string)).toBe(false);
     });
   });
 
@@ -216,7 +216,7 @@ describe('Signup Page - Form Validation', () => {
       const isNameValid = name.length >= 2;
       const isEmailValid = emailRegex.test(email);
       const isPasswordValid = password.length >= 8;
-      const isPasswordMatch = password === confirmPassword;
+      const isPasswordMatch = (password as string) === (confirmPassword as string);
       const isTermsAccepted = acceptTerms;
       const isFormValid = isNameValid && isEmailValid && isPasswordValid && isPasswordMatch && isTermsAccepted;
       

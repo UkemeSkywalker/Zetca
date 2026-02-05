@@ -237,7 +237,7 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Test responsive sidebar on mobile
     - _Requirements: 3.1, 3.5_
 
-- [-] 14. Agent Workflow Visualization
+- [x] 14. Agent Workflow Visualization
   - [x] 14.1 Create StatusBadge component
     - Implement status prop with color mapping
     - Scheduled: yellow, Published: green, Draft: gray, Complete: green, In Progress: blue, Not Started: gray
@@ -435,7 +435,7 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Verify StatusBadge color changes
     - _Requirements: 8.3, 8.5_
 
-- [ ] 21. Checkpoint - All Agent Tools Complete
+- [x] 21. Checkpoint - All Agent Tools Complete
   - Verify all 5 agent tools work correctly
   - Test complete workflow: Strategist → Copywriter → Scheduler → Designer → Publisher
   - Verify workflow status updates correctly
