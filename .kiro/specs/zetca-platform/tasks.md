@@ -481,8 +481,8 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Test responsive layout
     - _Requirements: 9.1, 11.6_
 
-- [ ] 23. Profile Page
-  - [ ] 23.1 Create ProfileForm component
+- [x] 23. Profile Page
+  - [x] 23.1 Create ProfileForm component
     - Add Input components for: name, email, company, bio
     - Add validation (email format, name min length, bio max length)
     - Add "Save Profile" Button
@@ -490,7 +490,7 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Display success message
     - _Requirements: 10.1, 10.3_
   
-  - [ ] 23.2 Add connected accounts section
+  - [x] 23.2 Add connected accounts section
     - Display badges for each platform (Instagram, Twitter, LinkedIn, Facebook)
     - Show connection status with StatusBadge
     - Add "Connect" / "Disconnect" Button for each platform
@@ -499,12 +499,12 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Update badge color on toggle
     - _Requirements: 10.2, 10.4, 10.5, 10.6_
   
-  - [ ] 23.3 Create app/dashboard/profile/page.tsx
+  - [x] 23.3 Create app/dashboard/profile/page.tsx
     - Wrap ProfileForm with PageWrapper (showWorkflow=false)
     - Add page heading "Profile Settings"
     - _Requirements: 10.1_
   
-  - [ ] 23.4 Test profile page
+  - [x] 23.4 Test profile page
     - Navigate to /dashboard/profile
     - Verify workflow is NOT displayed
     - Fill profile form and click save
