@@ -274,8 +274,8 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Navigate to /dashboard/analysis and verify workflow is hidden
     - _Requirements: 11.1, 11.6_
 
-- [ ] 15. Strategist Page (First Agent Tool)
-  - [ ] 15.1 Create StrategyForm component
+- [x] 15. Strategist Page (First Agent Tool)
+  - [x] 15.1 Create StrategyForm component
     - Add Input components for: brandName, industry, targetAudience, goals
     - Add "Generate Strategy" Button with loading state
     - Implement required field validation
@@ -285,12 +285,12 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Update workflow status to mark Strategist as complete
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
   
-  - [ ] 15.2 Create app/dashboard/strategist/page.tsx
+  - [x] 15.2 Create app/dashboard/strategist/page.tsx
     - Wrap StrategyForm with PageWrapper (showWorkflow=true)
     - Add page heading "AI Strategy Generator"
     - _Requirements: 4.1_
   
-  - [ ] 15.3 Test strategist page
+  - [x] 15.3 Test strategist page
     - Navigate to /dashboard/strategist
     - Verify workflow shows at top
     - Fill form and click generate
@@ -299,15 +299,15 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Verify workflow status updates to "Complete"
     - _Requirements: 4.2, 4.5_
 
-- [ ] 16. Checkpoint - Dashboard Foundation Complete
+- [x] 16. Checkpoint - Dashboard Foundation Complete
   - Verify dashboard layout with sidebar
   - Verify agent workflow visualization
   - Verify strategist page generates and displays strategy
   - Test navigation between dashboard pages
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 17. Copywriter Page
-  - [ ] 17.1 Create CaptionEditor component
+- [x] 17. Copywriter Page
+  - [x] 17.1 Create CaptionEditor component
     - Fetch captions from AgentContext (or show "No strategy found" message)
     - Display each caption in textarea (editable)
     - Add platform badge for each caption
@@ -316,12 +316,12 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Update local state on caption edit
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
   
-  - [ ] 17.2 Create app/dashboard/copywriter/page.tsx
+  - [x] 17.2 Create app/dashboard/copywriter/page.tsx
     - Wrap CaptionEditor with PageWrapper (showWorkflow=true)
     - Add page heading "AI Copywriter"
     - _Requirements: 5.1_
   
-  - [ ] 17.3 Test copywriter page
+  - [x] 17.3 Test copywriter page
     - Navigate to /dashboard/copywriter without strategy
     - Verify "No strategy found" message displays
     - Go back to strategist and generate strategy
@@ -330,8 +330,8 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Test copy-to-clipboard button
     - _Requirements: 5.1, 5.2, 5.6_
 
-- [ ] 18. Scheduler Page with Calendar
-  - [ ] 18.1 Create Modal component
+- [x] 18. Scheduler Page with Calendar
+  - [x] 18.1 Create Modal component
     - Implement isOpen, onClose, title, children, footer props
     - Add backdrop with click-to-close
     - Add ESC key handler
@@ -339,7 +339,7 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Use React.createPortal
     - _Requirements: 12.5_
   
-  - [ ] 18.2 Create Calendar component
+  - [x] 18.2 Create Calendar component
     - Implement month grid view with date cells
     - Display current month and year
     - Add navigation arrows for previous/next month
@@ -347,7 +347,7 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Display scheduled posts on dates (colored dots)
     - _Requirements: 6.1, 6.2, 6.3_
   
-  - [ ] 18.3 Create scheduling modal
+  - [x] 18.3 Create scheduling modal
     - Add Input components for: content, platform (dropdown), date, time
     - Add validation (future date, non-empty content)
     - Add "Schedule Post" Button
@@ -355,19 +355,19 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Close modal and update calendar
     - _Requirements: 6.3, 6.4_
   
-  - [ ] 18.4 Add list view toggle
+  - [x] 18.4 Add list view toggle
     - Add toggle button above calendar
     - Implement list view showing posts chronologically
     - Add edit and delete buttons for each post
     - Implement delete handler
     - _Requirements: 6.5, 6.6, 6.7_
   
-  - [ ] 18.5 Create app/dashboard/scheduler/page.tsx
+  - [x] 18.5 Create app/dashboard/scheduler/page.tsx
     - Wrap Calendar with PageWrapper (showWorkflow=true)
     - Add page heading "Content Scheduler"
     - _Requirements: 6.1_
   
-  - [ ] 18.6 Test scheduler page
+  - [x] 18.6 Test scheduler page
     - Navigate to /dashboard/scheduler
     - Verify calendar displays current month
     - Click a date and verify modal opens
@@ -377,13 +377,13 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Delete a post and verify it's removed
     - _Requirements: 6.2, 6.4, 6.7_
 
-- [ ] 19. Designer Page with Image Generation
-  - [ ] 19.1 Create LoadingSkeleton component
+- [x] 19. Designer Page with Image Generation
+  - [x] 19.1 Create LoadingSkeleton component
     - Implement animated pulse effect
     - Add variant props for different shapes
     - _Requirements: 14.6_
   
-  - [ ] 19.2 Create ImageGenerator component
+  - [x] 19.2 Create ImageGenerator component
     - Add Input component for image prompt
     - Add "Generate Image" Button with loading state
     - Fetch placeholder image from mockImages.json with 2-second delay
@@ -394,12 +394,12 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Add download button for each image
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6_
   
-  - [ ] 19.3 Create app/dashboard/designer/page.tsx
+  - [x] 19.3 Create app/dashboard/designer/page.tsx
     - Wrap ImageGenerator with PageWrapper (showWorkflow=true)
     - Add page heading "AI Image Designer"
     - _Requirements: 7.1_
   
-  - [ ] 19.4 Test designer page
+  - [x] 19.4 Test designer page
     - Navigate to /dashboard/designer
     - Enter a prompt and click generate
     - Verify loading skeleton appears
@@ -409,8 +409,8 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Test download button
     - _Requirements: 7.2, 7.4, 7.6_
 
-- [ ] 20. Publisher Page with Posts Table
-  - [ ] 20.1 Create PostsTable component
+- [x] 20. Publisher Page with Posts Table
+  - [x] 20.1 Create PostsTable component
     - Implement table with columns: Content, Platform, Date, Time, Status, Actions
     - Display StatusBadge for each post
     - Add status filter dropdown (All, Scheduled, Published, Draft)
@@ -421,12 +421,12 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Make responsive (stack into cards on mobile)
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
   
-  - [ ] 20.2 Create app/dashboard/publisher/page.tsx
+  - [x] 20.2 Create app/dashboard/publisher/page.tsx
     - Wrap PostsTable with PageWrapper (showWorkflow=true)
     - Add page heading "Content Publisher"
     - _Requirements: 8.1_
   
-  - [ ] 20.3 Test publisher page
+  - [x] 20.3 Test publisher page
     - Navigate to /dashboard/publisher
     - Verify table displays scheduled posts from scheduler
     - Test status filter dropdown

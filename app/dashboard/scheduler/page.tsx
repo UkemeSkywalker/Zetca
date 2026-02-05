@@ -1,13 +1,14 @@
 import { PageWrapper } from '@/components/layout/PageWrapper';
+import { Scheduler } from '@/components/dashboard/Scheduler';
 
 export default function SchedulerPage() {
   return (
-    <PageWrapper
+    <PageWrapper 
       title="Content Scheduler"
-      description="Schedule your posts on a calendar"
+      description="Schedule your social media posts across different platforms"
       showWorkflow={true}
     >
-      <p className="text-gray-600">Calendar scheduling coming soon...</p>
+      <Scheduler />
     </PageWrapper>
   );
 }

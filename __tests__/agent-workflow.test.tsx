@@ -32,11 +32,21 @@ describe('AgentWorkflow Component', () => {
       </AgentProvider>
     );
 
-    expect(screen.getByText('Strategist')).toBeInTheDocument();
-    expect(screen.getByText('Copywriter')).toBeInTheDocument();
-    expect(screen.getByText('Scheduler')).toBeInTheDocument();
-    expect(screen.getByText('Designer')).toBeInTheDocument();
-    expect(screen.getByText('Publisher')).toBeInTheDocument();
+    // Component renders both desktop and mobile versions, so we expect multiple instances
+    const strategistElements = screen.getAllByText('Strategist');
+    expect(strategistElements.length).toBeGreaterThan(0);
+    
+    const copywriterElements = screen.getAllByText('Copywriter');
+    expect(copywriterElements.length).toBeGreaterThan(0);
+    
+    const schedulerElements = screen.getAllByText('Scheduler');
+    expect(schedulerElements.length).toBeGreaterThan(0);
+    
+    const designerElements = screen.getAllByText('Designer');
+    expect(designerElements.length).toBeGreaterThan(0);
+    
+    const publisherElements = screen.getAllByText('Publisher');
+    expect(publisherElements.length).toBeGreaterThan(0);
   });
 
   it('should highlight the current agent based on route', () => {
@@ -48,9 +58,12 @@ describe('AgentWorkflow Component', () => {
       </AgentProvider>
     );
 
-    // Find the strategist step and check if it has the active styling
-    const strategistText = screen.getByText('Strategist');
-    expect(strategistText).toHaveClass('text-blue-600');
+    // Find the strategist steps and check if at least one has the active styling
+    const strategistElements = screen.getAllByText('Strategist');
+    const hasActiveStrategist = strategistElements.some(element => 
+      element.classList.contains('text-blue-600')
+    );
+    expect(hasActiveStrategist).toBe(true);
   });
 
   it('should display status badges for each agent', () => {
@@ -63,8 +76,9 @@ describe('AgentWorkflow Component', () => {
     );
 
     // All agents should start with "Not Started" status
+    // Component renders both desktop and mobile versions, so we expect 10 badges (5 agents x 2 layouts)
     const notStartedBadges = screen.getAllByText('Not Started');
-    expect(notStartedBadges).toHaveLength(5);
+    expect(notStartedBadges).toHaveLength(10);
   });
 
   it('should render workflow title', () => {
@@ -88,10 +102,11 @@ describe('AgentWorkflow Component', () => {
       </AgentProvider>
     );
 
-    expect(screen.getByTestId('icon-solar:lightbulb-bolt-bold')).toBeInTheDocument();
-    expect(screen.getByTestId('icon-solar:pen-bold')).toBeInTheDocument();
-    expect(screen.getByTestId('icon-solar:calendar-bold')).toBeInTheDocument();
-    expect(screen.getByTestId('icon-solar:palette-bold')).toBeInTheDocument();
-    expect(screen.getByTestId('icon-solar:send-square-bold')).toBeInTheDocument();
+    // Component renders both desktop and mobile versions, so we expect multiple instances of each icon
+    expect(screen.getAllByTestId('icon-solar:lightbulb-bolt-bold').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('icon-solar:pen-bold').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('icon-solar:calendar-bold').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('icon-solar:palette-bold').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('icon-solar:send-square-bold').length).toBeGreaterThan(0);
   });
 });
