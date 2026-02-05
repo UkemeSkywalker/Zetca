@@ -19,27 +19,27 @@ interface PlatformPerformanceProps {
 const platformConfig = {
   instagram: {
     name: 'Instagram',
-    icon: 'solar:instagram-bold',
+    icon: 'skill-icons:instagram',
     color: 'text-pink-600',
-    bgColor: 'bg-pink-50',
+    bgColor: 'bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500',
   },
   twitter: {
     name: 'Twitter',
-    icon: 'solar:twitter-bold',
+    icon: 'skill-icons:twitter',
     color: 'text-blue-500',
-    bgColor: 'bg-blue-50',
+    bgColor: 'bg-blue-400',
   },
   linkedin: {
     name: 'LinkedIn',
-    icon: 'solar:linkedin-bold',
+    icon: 'skill-icons:linkedin',
     color: 'text-blue-700',
-    bgColor: 'bg-blue-50',
+    bgColor: 'bg-blue-600',
   },
   facebook: {
     name: 'Facebook',
-    icon: 'solar:facebook-bold',
+    icon: 'logos:facebook',
     color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
+    bgColor: 'bg-blue-600',
   },
 };
 
@@ -59,8 +59,8 @@ export const PlatformPerformance: React.FC<PlatformPerformanceProps> = ({
           return (
             <Card key={platform.platform} variant="bordered" className="p-4">
               <div className="flex items-center mb-4">
-                <div className={`w-10 h-10 rounded-lg ${config.bgColor} flex items-center justify-center mr-3`}>
-                  <Icon icon={config.icon} className={`w-5 h-5 ${config.color}`} />
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+                  <Icon icon={config.icon} className="w-10 h-10" />
                 </div>
                 <h4 className="font-semibold text-gray-900">{config.name}</h4>
               </div>
