@@ -53,7 +53,7 @@ export function Modal({
   };
 
   const modalContent = (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
@@ -63,22 +63,22 @@ export function Modal({
       
       {/* Modal */}
       <div 
-        className={`relative bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-hidden`}
+        className={`relative bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-hidden flex flex-col`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
           <h2 
             id="modal-title"
-            className="text-xl font-semibold text-gray-900"
+            className="text-lg sm:text-xl font-semibold text-gray-900 pr-4"
           >
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2"
             aria-label="Close modal"
           >
             <Icon icon="solar:close-circle-bold" className="w-6 h-6" />
@@ -86,13 +86,13 @@ export function Modal({
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
           {children}
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+          <div className="flex items-center justify-end gap-3 p-4 sm:p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
             {footer}
           </div>
         )}

@@ -35,7 +35,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
       {/* Mobile menu button */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white text-gray-700 rounded-lg shadow-md"
+        className="md:hidden fixed top-4 left-4 z-50 p-3 bg-white text-gray-700 rounded-lg shadow-md min-h-[44px] min-w-[44px] flex items-center justify-center"
         aria-label="Toggle menu"
       >
         <Icon icon={isMobileMenuOpen ? 'solar:close-square-bold' : 'solar:hamburger-menu-bold'} width={24} height={24} />
@@ -76,7 +76,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
               href="/dashboard"
               className={`
                 flex items-center justify-center gap-3 px-5 py-3.5 rounded-lg
-                transition-all duration-200
+                transition-all duration-200 min-h-[44px]
                 ${
                   pathname === '/dashboard'
                     ? 'bg-blue-600 text-white shadow-md'
@@ -101,7 +101,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                       onClick={() => setIsMobileMenuOpen(false)}
                       className={`
                         flex items-center gap-4 px-4 py-3.5 rounded-lg
-                        transition-all duration-200 group
+                        transition-all duration-200 group min-h-[44px]
                         ${
                           isActive
                             ? 'bg-gray-100 text-gray-900'

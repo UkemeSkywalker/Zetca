@@ -9,6 +9,14 @@ import { TopPostsList } from '@/components/dashboard/TopPostsList';
 import mockAnalytics from '@/data/mockAnalytics.json';
 
 export default function AnalysisPage() {
+  // Type assertion for platform performance data
+  const platformPerformance = mockAnalytics.platformPerformance as Array<{
+    platform: 'instagram' | 'twitter' | 'linkedin' | 'facebook';
+    posts: number;
+    engagement: number;
+    reach: number;
+  }>;
+
   return (
     <PageWrapper 
       title="Analytics Dashboard" 
@@ -22,7 +30,7 @@ export default function AnalysisPage() {
       <EngagementChart data={mockAnalytics.engagementData} />
 
       {/* Platform Performance */}
-      <PlatformPerformance data={mockAnalytics.platformPerformance} />
+      <PlatformPerformance data={platformPerformance} />
 
       {/* Top Posts */}
       <TopPostsList posts={mockAnalytics.topPosts} />

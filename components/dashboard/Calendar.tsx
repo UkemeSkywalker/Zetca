@@ -113,19 +113,19 @@ export function Calendar({ posts, onDateClick, className = '' }: CalendarProps) 
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         <button
           onClick={goToPreviousMonth}
-          className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 md:p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           aria-label="Previous month"
         >
           <Icon icon="solar:arrow-left-bold" className="w-5 h-5" />
         </button>
         
-        <h2 className="text-lg font-semibold text-gray-900">
+        <h2 className="text-base sm:text-lg font-semibold text-gray-900">
           {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
         </h2>
         
         <button
           onClick={goToNextMonth}
-          className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 md:p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           aria-label="Next month"
         >
           <Icon icon="solar:arrow-right-bold" className="w-5 h-5" />
@@ -133,12 +133,13 @@ export function Calendar({ posts, onDateClick, className = '' }: CalendarProps) 
       </div>
 
       {/* Calendar Grid */}
-      <div className="p-4">
+      <div className="p-2 sm:p-4">
         {/* Day Headers */}
         <div className="grid grid-cols-7 gap-1 mb-2">
           {dayNames.map(day => (
-            <div key={day} className="p-2 text-center text-sm font-medium text-gray-500">
-              {day}
+            <div key={day} className="p-1 sm:p-2 text-center text-xs sm:text-sm font-medium text-gray-500">
+              <span className="hidden sm:inline">{day}</span>
+              <span className="sm:hidden">{day.substring(0, 1)}</span>
             </div>
           ))}
         </div>
@@ -156,38 +157,57 @@ export function Calendar({ posts, onDateClick, className = '' }: CalendarProps) 
                 key={index}
                 onClick={() => onDateClick(calendarDay.date)}
                 className={`
-                  relative p-2 h-20 text-left border border-gray-100 hover:bg-gray-50 transition-colors overflow-hidden
+                  relative p-1 sm:p-2 h-16 sm:h-20 text-left border border-gray-100 hover:bg-gray-50 transition-colors overflow-hidden min-h-[44px]
                   ${calendarDay.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}
                   ${isToday ? 'bg-blue-50 border-blue-200' : ''}
                 `}
               >
-                <span className={`text-sm ${isToday ? 'font-semibold text-blue-600' : ''}`}>
+                <span className={`text-xs sm:text-sm ${isToday ? 'font-semibold text-blue-600' : ''}`}>
                   {calendarDay.day}
                 </span>
                 
-                {/* Post content preview */}
+                {/* Post indicators - dots on mobile, content on desktop */}
                 {calendarDay.posts.length > 0 && (
-                  <div className="mt-1 space-y-1">
-                    {calendarDay.posts.slice(0, 2).map((post, postIndex) => (
-                      <div
-                        key={postIndex}
-                        className={`text-xs p-1 rounded text-white truncate ${
-                          post.platform === 'instagram' ? 'bg-pink-500' :
-                          post.platform === 'twitter' ? 'bg-blue-500' :
-                          post.platform === 'linkedin' ? 'bg-blue-700' :
-                          'bg-blue-600'
-                        }`}
-                        title={`${post.platform.toUpperCase()}: ${post.content}`}
-                      >
-                        {post.content.length > 20 ? `${post.content.substring(0, 20)}...` : post.content}
-                      </div>
-                    ))}
-                    {calendarDay.posts.length > 2 && (
-                      <div className="text-xs text-gray-500 font-medium">
-                        +{calendarDay.posts.length - 2} more
-                      </div>
-                    )}
-                  </div>
+                  <>
+                    {/* Mobile: Show dots */}
+                    <div className="sm:hidden mt-1 flex gap-0.5 flex-wrap">
+                      {calendarDay.posts.slice(0, 3).map((post, postIndex) => (
+                        <div
+                          key={postIndex}
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            post.platform === 'instagram' ? 'bg-pink-500' :
+                            post.platform === 'twitter' ? 'bg-blue-500' :
+                            post.platform === 'linkedin' ? 'bg-blue-700' :
+                            'bg-blue-600'
+                          }`}
+                          title={`${post.platform.toUpperCase()}: ${post.content}`}
+                        />
+                      ))}
+                    </div>
+                    
+                    {/* Desktop: Show content preview */}
+                    <div className="hidden sm:block mt-1 space-y-1">
+                      {calendarDay.posts.slice(0, 2).map((post, postIndex) => (
+                        <div
+                          key={postIndex}
+                          className={`text-xs p-1 rounded text-white truncate ${
+                            post.platform === 'instagram' ? 'bg-pink-500' :
+                            post.platform === 'twitter' ? 'bg-blue-500' :
+                            post.platform === 'linkedin' ? 'bg-blue-700' :
+                            'bg-blue-600'
+                          }`}
+                          title={`${post.platform.toUpperCase()}: ${post.content}`}
+                        >
+                          {post.content.length > 20 ? `${post.content.substring(0, 20)}...` : post.content}
+                        </div>
+                      ))}
+                      {calendarDay.posts.length > 2 && (
+                        <div className="text-xs text-gray-500 font-medium">
+                          +{calendarDay.posts.length - 2} more
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
               </button>
             );

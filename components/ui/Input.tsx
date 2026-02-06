@@ -15,11 +15,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, helperText, leftIcon, rightIcon, className = '', id, ...props }, ref) => {
     const generatedId = useId();
     const inputId = id || generatedId;
-    const baseStyles = 'w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none transition-colors';
+    const baseStyles = 'w-full px-4 py-3 border rounded-lg focus:ring-2 focus:outline-none transition-colors min-h-[44px]';
     const normalStyles = 'border-gray-300 focus:ring-blue-500 focus:border-transparent';
     const errorStyles = 'border-red-500 focus:ring-red-500';
-    const iconPaddingLeft = leftIcon ? 'pl-10' : '';
-    const iconPaddingRight = rightIcon ? 'pr-10' : '';
+    const iconPaddingLeft = leftIcon ? 'pl-11' : '';
+    const iconPaddingRight = rightIcon ? 'pr-11' : '';
 
     return (
       <div className="w-full">
