@@ -536,8 +536,8 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Remove test error code
     - _Requirements: 17.4_
 
-- [ ] 25. Responsive Design Polish
-  - [ ] 25.1 Test and fix mobile layouts
+- [x] 25. Responsive Design Polish
+  - [x] 25.1 Test and fix mobile layouts
     - Test all pages at 375px width (mobile)
     - Verify sidebar collapses to hamburger menu
     - Verify all grids stack to single column
@@ -546,14 +546,14 @@ This implementation plan breaks down the Zetca platform into discrete, increment
     - Fix any layout issues
     - _Requirements: 13.1, 13.2, 13.3, 13.5_
   
-  - [ ] 25.2 Test and fix tablet layouts
+  - [x] 25.2 Test and fix tablet layouts
     - Test all pages at 768px width (tablet)
     - Verify grids adjust to 2 columns
     - Verify sidebar behavior
     - Fix any layout issues
     - _Requirements: 13.2_
   
-  - [ ] 25.3 Test and fix desktop layouts
+  - [x] 25.3 Test and fix desktop layouts
     - Test all pages at 1024px+ width (desktop)
     - Verify full sidebar displays
     - Verify multi-column grids
