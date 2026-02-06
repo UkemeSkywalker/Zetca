@@ -36,9 +36,9 @@ const Button: React.FC<ButtonProps> = ({
   };
 
   const sizeStyles: Record<ButtonSize, string> = {
-    sm: 'py-2 px-3 text-sm gap-1.5',
-    md: 'py-3 px-4 text-base gap-2',
-    lg: 'py-4 px-6 text-lg gap-2.5',
+    sm: 'py-2.5 px-4 text-sm gap-1.5 min-h-[44px]', // Touch-friendly minimum
+    md: 'py-3 px-5 text-base gap-2 min-h-[44px]',
+    lg: 'py-4 px-6 text-lg gap-2.5 min-h-[48px]',
   };
 
   const iconSizes: Record<ButtonSize, number> = {
