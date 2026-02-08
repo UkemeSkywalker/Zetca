@@ -58,6 +58,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
           md:translate-x-0
           ${className}
         `}
+        aria-label="Main navigation"
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
@@ -90,8 +91,8 @@ export default function Sidebar({ className = '' }: SidebarProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto px-5">
-            <ul className="space-y-2">
+          <nav className="flex-1 overflow-y-auto px-5" aria-label="Dashboard pages">
+            <ul className="space-y-2" role="list">
               {navItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
@@ -108,12 +109,14 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                             : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                         }
                       `}
+                      aria-current={isActive ? 'page' : undefined}
                     >
                       <Icon 
                         icon={item.icon} 
                         width={22} 
                         height={22}
                         className={isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}
+                        aria-hidden="true"
                       />
                       <span className="font-bold text-base">{item.label}</span>
                       {isActive && (
@@ -122,6 +125,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                           width={18} 
                           height={18}
                           className="ml-auto text-gray-400"
+                          aria-hidden="true"
                         />
                       )}
                     </Link>

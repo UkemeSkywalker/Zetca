@@ -100,7 +100,7 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
           </div>
           
           {/* View Mode Toggle */}
-          <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+          <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1" role="group" aria-label="View mode">
             <button
               onClick={() => setViewMode('list')}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
@@ -109,8 +109,9 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
                   : 'text-gray-600 hover:text-gray-900'
               }`}
               aria-label="List view"
+              aria-pressed={viewMode === 'list'}
             >
-              <Icon icon="solar:list-bold" className="w-5 h-5" />
+              <Icon icon="solar:list-bold" className="w-5 h-5" aria-hidden="true" />
             </button>
             <button
               onClick={() => setViewMode('grid')}
@@ -120,8 +121,9 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
                   : 'text-gray-600 hover:text-gray-900'
               }`}
               aria-label="Grid view"
+              aria-pressed={viewMode === 'grid'}
             >
-              <Icon icon="solar:widget-4-bold" className="w-5 h-5" />
+              <Icon icon="solar:widget-4-bold" className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -190,6 +192,7 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
                           size="sm"
                           onClick={() => handlePublish(post.id)}
                           leftIcon="solar:send-square-bold"
+                          aria-label={`Publish post: ${post.content.substring(0, 50)}...`}
                         >
                           Publish
                         </Button>
