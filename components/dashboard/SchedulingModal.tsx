@@ -11,6 +11,7 @@ interface SchedulingModalProps {
   onClose: () => void;
   selectedDate: Date | null;
   onSchedulePost: (post: Omit<Post, 'id' | 'createdAt'>) => void;
+  editingPost?: Post | null;
 }
 
 interface FormData {
@@ -31,7 +32,8 @@ export function SchedulingModal({
   isOpen, 
   onClose, 
   selectedDate, 
-  onSchedulePost 
+  onSchedulePost,
+  editingPost = null
 }: SchedulingModalProps) {
   const [formData, setFormData] = useState<FormData>({
     content: '',
@@ -43,15 +45,23 @@ export function SchedulingModal({
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Update date when selectedDate changes
+  // Update form when editing a post
   React.useEffect(() => {
-    if (selectedDate) {
+    if (editingPost) {
+      const postDate = new Date(editingPost.scheduledDate);
+      setFormData({
+        content: editingPost.content,
+        platform: editingPost.platform,
+        date: postDate.toISOString().split('T')[0],
+        time: editingPost.scheduledTime
+      });
+    } else if (selectedDate) {
       setFormData(prev => ({
         ...prev,
         date: selectedDate.toISOString().split('T')[0]
       }));
     }
-  }, [selectedDate]);
+  }, [editingPost, selectedDate]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -178,7 +188,7 @@ export function SchedulingModal({
         isLoading={isSubmitting}
         disabled={isSubmitting}
       >
-        Schedule Post
+        {editingPost ? "Update Post" : "Schedule Post"}
       </Button>
     </>
   );
@@ -187,7 +197,7 @@ export function SchedulingModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Schedule New Post"
+      title={editingPost ? "Edit Post" : "Schedule New Post"}
       footer={footer}
       size="md"
     >
@@ -243,26 +253,26 @@ export function SchedulingModal({
 
         {/* Date and Time */}
         <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Input
-            label="Date"
-            type="date"
-            value={formData.date}
-            onChange={(e) => handleInputChange('date', e.target.value)}
-            error={errors.date}
-            id="date-input"
-          />
-        </div>
-        <div>
-          <Input
-            label="Time"
-            type="time"
-            value={formData.time}
-            onChange={(e) => handleInputChange('time', e.target.value)}
-            error={errors.time}
-            id="time-input"
-          />
-        </div>
+          <div>
+            <Input
+              label="Date"
+              type="date"
+              value={formData.date}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('date', e.target.value)}
+              error={errors.date}
+              id="date-input"
+            />
+          </div>
+          <div>
+            <Input
+              label="Time"
+              type="time"
+              value={formData.time}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('time', e.target.value)}
+              error={errors.time}
+              id="time-input"
+            />
+          </div>
         </div>
       </form>
     </Modal>

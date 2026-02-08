@@ -5,11 +5,11 @@ import PricingSection from '@/components/home/PricingSection';
 
 export default function Home() {
   return (
-    <main>
+    <>
       <HeroSection />
       <FeaturesSection />
       <WaitlistSection />
       <PricingSection />
-    </main>
+    </>
   );
 }

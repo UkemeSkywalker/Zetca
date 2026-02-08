@@ -62,10 +62,11 @@ export default function Navbar() {
                       ? 'text-[#3139FB]'
                       : 'text-gray-700 hover:text-[#3139FB]'
                   }`}
+                  aria-current={isActiveLink(link.href) ? 'page' : undefined}
                 >
                   {link.label}
                   {link.hasDropdown && (
-                    <Icon icon="solar:alt-arrow-down-linear" className="w-4 h-4" />
+                    <Icon icon="solar:alt-arrow-down-linear" className="w-4 h-4" aria-hidden="true" />
                   )}
                 </Link>
               ))}
@@ -79,6 +80,9 @@ export default function Navbar() {
                   onClick={() => setIsGetStartedOpen(!isGetStartedOpen)}
                   className="flex items-center gap-2 px-5 py-2.5 text-white text-base font-semibold rounded-full transition-all shadow-sm hover:shadow-md"
                   style={{ background: 'linear-gradient(45deg, var(--colors--linear-color-01), var(--colors--linear-color-02))' }}
+                  aria-expanded={isGetStartedOpen}
+                  aria-haspopup="true"
+                  aria-label="Get started menu"
                 >
                   Get Started
                 </button>
@@ -92,7 +96,11 @@ export default function Navbar() {
                       onClick={() => setIsGetStartedOpen(false)}
                     />
                     {/* Dropdown */}
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-20">
+                    <div 
+                      className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-20"
+                      role="menu"
+                      aria-label="Get started options"
+                    >
                       <Link
                         href="/login"
                         onClick={() => setIsGetStartedOpen(false)}
@@ -129,7 +137,7 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden border-t border-gray-100 rounded-b-3xl">
+          <div className="lg:hidden border-t border-gray-100 rounded-b-3xl" role="navigation" aria-label="Mobile navigation">
             <div className="px-4 py-4 space-y-2">
               {navLinks.map((link) => (
                 <Link

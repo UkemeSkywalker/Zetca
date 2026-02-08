@@ -140,7 +140,7 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
       {/* Platform Tabs */}
       {availablePlatforms.length > 0 && (
         <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
+          <nav className="-mb-px flex space-x-8" role="tablist" aria-label="Platform tabs">
             {availablePlatforms.map((platform) => {
               const config = platformConfig[platform];
               const isActive = activeTab === platform;
@@ -155,8 +155,12 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
                       ? `${config.tabColorActive} border-current`
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-controls={`${platform}-panel`}
+                  id={`${platform}-tab`}
                 >
-                  <Icon icon={config.icon} className="w-4 h-4" />
+                  <Icon icon={config.icon} className="w-4 h-4" aria-hidden="true" />
                   {config.name}
                   <span className={`px-2 py-0.5 rounded-full text-xs ${
                     isActive ? 'bg-white text-gray-600' : 'bg-gray-100 text-gray-600'
@@ -172,7 +176,12 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
 
       {/* Active Tab Content */}
       {availablePlatforms.length > 0 && captionsByPlatform[activeTab] && (
-        <div className="space-y-4">
+        <div 
+          className="space-y-4"
+          role="tabpanel"
+          id={`${activeTab}-panel`}
+          aria-labelledby={`${activeTab}-tab`}
+        >
           {captionsByPlatform[activeTab].map((caption, index) => (
             <Card key={caption.id} className="p-6">
               <div className="flex items-start justify-between mb-4">
@@ -193,10 +202,12 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
                   size="sm"
                   onClick={() => handleCopyToClipboard(caption.text, caption.id)}
                   className="flex items-center gap-2"
+                  aria-label={`Copy caption ${index + 1} to clipboard`}
                 >
                   <Icon 
                     icon={copySuccess === caption.id ? "solar:check-circle-bold" : "solar:copy-bold"} 
                     className="w-4 h-4" 
+                    aria-hidden="true"
                   />
                   {copySuccess === caption.id ? 'Copied!' : 'Copy'}
                 </Button>
@@ -204,12 +215,17 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
 
               {/* Caption Text Area */}
               <div className="mb-4">
+                <label htmlFor={`caption-${caption.id}`} className="sr-only">
+                  Caption text for {platformConfig[caption.platform].name}
+                </label>
                 <textarea
+                  id={`caption-${caption.id}`}
                   value={caption.text}
                   onChange={(e) => handleCaptionEdit(caption.id, e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   rows={4}
                   placeholder="Enter your caption text..."
+                  aria-label={`Edit caption ${index + 1} for ${platformConfig[caption.platform].name}`}
                 />
               </div>
 

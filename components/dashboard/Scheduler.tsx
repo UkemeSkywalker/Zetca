@@ -21,6 +21,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
   const [isSchedulingModalOpen, setIsSchedulingModalOpen] = useState(false);
   const [isDateDetailsModalOpen, setIsDateDetailsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
 
   // Handle date click from calendar
   const handleDateClick = (date: Date) => {
@@ -47,13 +48,23 @@ export function Scheduler({ className = '' }: SchedulerProps) {
 
   // Handle scheduling a new post
   const handleSchedulePost = (postData: Omit<Post, 'id' | 'createdAt'>) => {
-    const newPost: Post = {
-      ...postData,
-      id: `post-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      createdAt: new Date()
-    };
-    
-    setPosts(prev => [...prev, newPost]);
+    if (editingPost) {
+      // Update existing post
+      setPosts(prev => prev.map(post => 
+        post.id === editingPost.id 
+          ? { ...postData, id: editingPost.id, createdAt: editingPost.createdAt }
+          : post
+      ));
+      setEditingPost(null);
+    } else {
+      // Create new post
+      const newPost: Post = {
+        ...postData,
+        id: `post-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        createdAt: new Date()
+      };
+      setPosts(prev => [...prev, newPost]);
+    }
   };
 
   // Handle opening scheduling modal from date details
@@ -73,10 +84,15 @@ export function Scheduler({ className = '' }: SchedulerProps) {
     setPosts(prev => prev.filter(post => post.id !== postId));
   };
 
-  // Handle editing a post (for future implementation)
+  // Handle editing a post
   const handleEditPost = (postId: string) => {
-    // TODO: Implement edit functionality
-    console.log('Edit post:', postId);
+    const postToEdit = posts.find(post => post.id === postId);
+    if (postToEdit) {
+      setEditingPost(postToEdit);
+      setSelectedDate(new Date(postToEdit.scheduledDate));
+      setIsDateDetailsModalOpen(false);
+      setIsSchedulingModalOpen(true);
+    }
   };
 
   // Sort posts chronologically (nearest first)
@@ -259,9 +275,11 @@ export function Scheduler({ className = '' }: SchedulerProps) {
         onClose={() => {
           setIsSchedulingModalOpen(false);
           setSelectedDate(null);
+          setEditingPost(null);
         }}
         selectedDate={selectedDate}
         onSchedulePost={handleSchedulePost}
+        editingPost={editingPost}
       />
     </div>
   );
