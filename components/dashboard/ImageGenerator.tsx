@@ -146,14 +146,24 @@ export const ImageGenerator: React.FC<ImageGeneratorProps> = ({
             {generatedImages.map((image) => (
               <div
                 key={image.id}
-                className="relative group cursor-pointer bg-gray-50 rounded-lg overflow-hidden border border-gray-200 hover:border-blue-300 transition-colors"
+                className="relative group cursor-pointer bg-gray-50 rounded-lg overflow-hidden border border-gray-200 hover:border-blue-300 transition-colors focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
                 onClick={() => handleImageClick(image)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleImageClick(image);
+                  }
+                }}
+                aria-label={`View image: ${image.prompt}`}
               >
                 <div className="aspect-square relative">
                   <Image
                     src={image.url}
                     alt={image.prompt}
                     fill
+                    loading="lazy"
                     className="object-cover"
                     sizes="(max-width: 768px) 100vw, 50vw"
                   />
@@ -169,6 +179,7 @@ export const ImageGenerator: React.FC<ImageGeneratorProps> = ({
                           e.stopPropagation();
                           handleImageClick(image);
                         }}
+                        aria-label={`View image: ${image.prompt}`}
                       >
                         View
                       </Button>
@@ -180,6 +191,7 @@ export const ImageGenerator: React.FC<ImageGeneratorProps> = ({
                           e.stopPropagation();
                           handleDownload(image);
                         }}
+                        aria-label={`Download image: ${image.prompt}`}
                       >
                         Download
                       </Button>
@@ -235,6 +247,7 @@ export const ImageGenerator: React.FC<ImageGeneratorProps> = ({
                 src={selectedImage.url}
                 alt={selectedImage.prompt}
                 fill
+                loading="lazy"
                 className="object-cover rounded-lg"
                 sizes="(max-width: 768px) 100vw, 512px"
               />
