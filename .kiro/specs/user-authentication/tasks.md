@@ -18,7 +18,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Run `terraform init` and `terraform plan` successfully. Optionally run `terraform apply` to create the table in AWS, then verify table exists in AWS Console
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
 
-- [ ] 2. Set up project dependencies and configuration
+- [x] 2. Set up project dependencies and configuration
   - Install required npm packages: `@aws-sdk/client-dynamodb`, `@aws-sdk/lib-dynamodb`, `jsonwebtoken`, `bcrypt`, `@types/jsonwebtoken`, `@types/bcrypt`
   - Create `lib/config.ts` with environment configuration (DynamoDB table name, AWS region, JWT secret, rate limiting settings)
   - Create `.env.local` with actual environment variables (JWT_SECRET, DYNAMODB_TABLE_NAME, AWS_REGION)
