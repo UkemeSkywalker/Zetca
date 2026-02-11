@@ -54,7 +54,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Use Postman/curl to POST to `/api/auth/signup` with `{name, email, password}`. Verify: (1) User created in DynamoDB, (2) Token returned in response, (3) Cookie set in headers, (4) Password is hashed in DB
   - _Requirements: 5.1, 5.3, 5.4, 1.5, 1.6, 8.1_
 
-- [ ] 6. Connect signup form to real API
+- [x] 6. Connect signup form to real API
   - Update `components/auth/SignupForm.tsx` to call `/api/auth/signup` instead of mock
   - Handle API errors (email already exists, validation errors)
   - Store token from response (handled by cookie)
