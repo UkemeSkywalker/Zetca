@@ -26,7 +26,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Run `npm install` successfully, import config in a test file and log values to verify configuration loads correctly
   - _Requirements: 5.1, 5.2, 4.4_
 
-- [ ] 3. Implement core authentication utilities
+- [x] 3. Implement core authentication utilities
   - Create `lib/auth/password.ts` with `hashPassword()` and `verifyPassword()` functions using bcrypt
   - Create `lib/auth/jwt.ts` with `generateToken()`, `verifyToken()`, and `getTokenFromRequest()` functions (24-hour expiration)
   - Create `lib/validation.ts` with validation functions for email, password, name, and bio
