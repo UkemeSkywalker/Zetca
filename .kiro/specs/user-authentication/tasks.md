@@ -42,7 +42,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Create test script `scripts/test-db.ts` that creates a test user, retrieves by ID and email, updates it, and deletes it. Run script and verify all operations work (requires DynamoDB table to exist)
   - _Requirements: 5.2, 5.5, 5.6_
 
-- [ ] 5. Implement signup API endpoint
+- [x] 5. Implement signup API endpoint
   - Create `app/api/auth/signup/route.ts`
   - Validate name, email, and password inputs
   - Check if email already exists in DynamoDB
