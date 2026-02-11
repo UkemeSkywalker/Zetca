@@ -62,7 +62,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Open `/signup` in browser, create a new account with real data, verify: (1) Account created in DynamoDB, (2) Redirected to dashboard, (3) Cookie set in browser DevTools
   - _Requirements: 1.1, 1.5, 1.6, 8.4, 8.5_
 
-- [ ] 7. Implement login API endpoint with rate limiting
+- [x] 7. Implement login API endpoint with rate limiting
   - Create `lib/middleware/withRateLimit.ts` using in-memory store (5 requests per 15 minutes)
   - Create `app/api/auth/login/route.ts`
   - Apply rate limiting middleware

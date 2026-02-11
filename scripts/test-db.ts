@@ -17,7 +17,7 @@ async function testUserRepository() {
   console.log('🧪 Testing DynamoDB UserRepository...\n');
 
   const repo = new UserRepository();
-  let testUserId: string;
+  let testUserId: string | undefined;
 
   try {
     // Test 1: Create User
