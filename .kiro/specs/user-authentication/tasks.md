@@ -34,7 +34,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Create a test script `scripts/test-auth-utils.ts` that hashes a password, verifies it, generates a JWT token, and validates inputs. Run with `npx tsx scripts/test-auth-utils.ts` and verify all functions work correctly
   - _Requirements: 5.1, 5.3, 5.4, 1.5, 4.1, 4.2, 4.4, 3.3, 3.4, 7.4_
 
-- [ ] 4. Implement DynamoDB repository layer
+- [x] 4. Implement DynamoDB repository layer
   - Create `lib/db/userRepository.ts` with `UserRepository` class
   - Implement `createUser()`, `getUserById()`, `getUserByEmail()`, `updateUser()`, `deleteUser()` methods
   - Use userId as primary key and EmailIndex GSI for email lookups
