@@ -76,7 +76,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Use Postman to POST to `/api/auth/login` with valid credentials, verify token returned and cookie set. Try invalid credentials, verify generic error. Make 6+ rapid requests, verify rate limiting (429 status)
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 7.2, 7.3_
 
-- [ ] 8. Connect login form to real API
+- [x] 8. Connect login form to real API
   - Update `components/auth/LoginForm.tsx` to call `/api/auth/login` instead of mock
   - Handle API errors (invalid credentials, rate limiting, validation errors)
   - Display appropriate error messages

@@ -57,12 +57,51 @@ export default function LoginForm() {
     }
 
     setIsLoading(true);
+    setErrors({});
 
-    // Simulate API call with 1-second delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
 
-    // Mock successful login and redirect to dashboard
-    router.push('/dashboard');
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle different error types
+        if (response.status === 429) {
+          setErrors({ email: 'Too many login attempts. Please try again later.' });
+        } else if (response.status === 401) {
+          setErrors({ email: 'Invalid email or password' });
+        } else if (response.status === 400) {
+          // Validation errors
+          if (data.field === 'email') {
+            setErrors({ email: data.error });
+          } else if (data.field === 'password') {
+            setErrors({ password: data.error });
+          } else {
+            setErrors({ email: data.error || 'Invalid credentials' });
+          }
+        } else {
+          setErrors({ email: 'An error occurred. Please try again.' });
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      // Successful login - redirect to dashboard
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Login error:', error);
+      setErrors({ email: 'Network error. Please check your connection and try again.' });
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
