@@ -94,7 +94,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Add `useAuth()` to a test component, verify it returns null when not logged in. Login via `/login`, verify `useAuth()` returns user data. Clear cookie, verify redirect to login
   - _Requirements: 4.1, 4.2, 4.3_
 
-- [ ] 10. Implement logout API endpoint
+- [x] 10. Implement logout API endpoint
   - Create `app/api/auth/logout/route.ts`
   - Clear authentication cookie
   - Return success response

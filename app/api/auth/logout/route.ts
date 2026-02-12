@@ -1,35 +1,27 @@
-/**
- * Logout API endpoint
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 
-/**
- * POST /api/auth/logout
- * Clear authentication cookie and end session
- */
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    // Create response
-    const response = NextResponse.json({
-      success: true,
-      message: 'Logged out successfully',
-    });
+    // Create response with success message
+    const response = NextResponse.json(
+      { success: true, message: 'Logged out successfully' },
+      { status: 200 }
+    );
 
-    // Clear the auth_token cookie
-    response.cookies.set('auth_token', '', {
+    // Clear the authentication cookie by setting it with an expired date
+    response.cookies.set('auth-token', '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
+      maxAge: 0, // Expire immediately
       path: '/',
-      expires: new Date(0), // Set expiration to past date to delete cookie
     });
 
     return response;
   } catch (error) {
     console.error('Logout error:', error);
     return NextResponse.json(
-      { success: false, error: 'Logout failed' },
+      { success: false, error: 'An error occurred during logout' },
       { status: 500 }
     );
   }
