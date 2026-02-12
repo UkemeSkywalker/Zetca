@@ -34,7 +34,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Create a test script `scripts/test-auth-utils.ts` that hashes a password, verifies it, generates a JWT token, and validates inputs. Run with `npx tsx scripts/test-auth-utils.ts` and verify all functions work correctly
   - _Requirements: 5.1, 5.3, 5.4, 1.5, 4.1, 4.2, 4.4, 3.3, 3.4, 7.4_
 
-- [ ] 4. Implement DynamoDB repository layer
+- [x] 4. Implement DynamoDB repository layer
   - Create `lib/db/userRepository.ts` with `UserRepository` class
   - Implement `createUser()`, `getUserById()`, `getUserByEmail()`, `updateUser()`, `deleteUser()` methods
   - Use userId as primary key and EmailIndex GSI for email lookups
@@ -42,7 +42,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Create test script `scripts/test-db.ts` that creates a test user, retrieves by ID and email, updates it, and deletes it. Run script and verify all operations work (requires DynamoDB table to exist)
   - _Requirements: 5.2, 5.5, 5.6_
 
-- [ ] 5. Implement signup API endpoint
+- [x] 5. Implement signup API endpoint
   - Create `app/api/auth/signup/route.ts`
   - Validate name, email, and password inputs
   - Check if email already exists in DynamoDB
@@ -54,7 +54,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Use Postman/curl to POST to `/api/auth/signup` with `{name, email, password}`. Verify: (1) User created in DynamoDB, (2) Token returned in response, (3) Cookie set in headers, (4) Password is hashed in DB
   - _Requirements: 5.1, 5.3, 5.4, 1.5, 1.6, 8.1_
 
-- [ ] 6. Connect signup form to real API
+- [x] 6. Connect signup form to real API
   - Update `components/auth/SignupForm.tsx` to call `/api/auth/signup` instead of mock
   - Handle API errors (email already exists, validation errors)
   - Store token from response (handled by cookie)
@@ -62,7 +62,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Open `/signup` in browser, create a new account with real data, verify: (1) Account created in DynamoDB, (2) Redirected to dashboard, (3) Cookie set in browser DevTools
   - _Requirements: 1.1, 1.5, 1.6, 8.4, 8.5_
 
-- [ ] 7. Implement login API endpoint with rate limiting
+- [x] 7. Implement login API endpoint with rate limiting
   - Create `lib/middleware/withRateLimit.ts` using in-memory store (5 requests per 15 minutes)
   - Create `app/api/auth/login/route.ts`
   - Apply rate limiting middleware
@@ -76,7 +76,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Use Postman to POST to `/api/auth/login` with valid credentials, verify token returned and cookie set. Try invalid credentials, verify generic error. Make 6+ rapid requests, verify rate limiting (429 status)
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 7.2, 7.3_
 
-- [ ] 8. Connect login form to real API
+- [x] 8. Connect login form to real API
   - Update `components/auth/LoginForm.tsx` to call `/api/auth/login` instead of mock
   - Handle API errors (invalid credentials, rate limiting, validation errors)
   - Display appropriate error messages

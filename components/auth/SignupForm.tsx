@@ -83,11 +83,48 @@ export default function SignupForm() {
 
     setIsLoading(true);
 
-    // Simulate API call with 1-second delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
 
-    // Mock successful signup and redirect to dashboard
-    router.push('/dashboard');
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle API errors
+        if (data.field === 'email' && data.error === 'Email already exists') {
+          setErrors({ email: 'An account with this email already exists' });
+        } else if (response.status === 400 && data.error) {
+          // Handle validation errors from API
+          const fieldError = data.field as keyof FormErrors;
+          if (fieldError) {
+            setErrors({ [fieldError]: data.error });
+          } else {
+            setErrors({ email: data.error });
+          }
+        } else {
+          setErrors({ email: data.error || 'Signup failed. Please try again.' });
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      // Token is automatically stored in HTTP-only cookie by the API
+      // Redirect to dashboard on success
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Signup error:', error);
+      setErrors({ email: 'Network error. Please check your connection and try again.' });
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
