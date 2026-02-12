@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import { useAuth } from '@/context/AuthContext';
 
 interface SignupFormData {
   name: string;
@@ -24,6 +25,7 @@ interface FormErrors {
 
 export default function SignupForm() {
   const router = useRouter();
+  const { login } = useAuth();
   const [formData, setFormData] = useState<SignupFormData>({
     name: '',
     email: '',
@@ -118,7 +120,10 @@ export default function SignupForm() {
       }
 
       // Token is automatically stored in HTTP-only cookie by the API
-      // Redirect to dashboard on success
+      // Update auth context and redirect to dashboard on success
+      if (data.success && data.user) {
+        login(data.user);
+      }
       router.push('/dashboard');
     } catch (error) {
       console.error('Signup error:', error);

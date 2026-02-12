@@ -84,7 +84,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Open `/login` in browser, login with account created in task 6, verify: (1) Successful login, (2) Redirected to dashboard, (3) Cookie set. Try wrong password, verify error message. Try 6+ rapid attempts, verify rate limit message
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 8.4, 8.5_
 
-- [ ] 9. Implement authentication middleware and context
+- [x] 9. Implement authentication middleware and context
   - Create `lib/middleware/withAuth.ts` that validates JWT tokens from cookies and extracts userId
   - Handle missing, invalid, and expired tokens with appropriate errors
   - Create `contexts/AuthContext.tsx` with React Context for managing auth state
