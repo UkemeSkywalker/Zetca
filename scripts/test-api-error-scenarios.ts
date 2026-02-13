@@ -7,6 +7,9 @@
  * Then: npx tsx scripts/test-api-error-scenarios.ts
  */
 
+// Make this file a module to avoid global scope conflicts
+export {};
+
 const BASE_URL = 'http://localhost:3000';
 
 interface TestResult {
