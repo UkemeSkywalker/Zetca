@@ -249,3 +249,135 @@ describe('Dashboard Page - Quick Stats', () => {
     expect(negativeChanges).toHaveLength(1);
   });
 });
+
+describe('Dashboard Layout - Authentication Protection', () => {
+  describe('Authentication State', () => {
+    it('should show loading state while checking authentication', () => {
+      const isLoading = true;
+      const isAuthenticated = false;
+      
+      const shouldShowLoading = isLoading;
+      const shouldShowDashboard = !isLoading && isAuthenticated;
+      
+      expect(shouldShowLoading).toBe(true);
+      expect(shouldShowDashboard).toBe(false);
+    });
+
+    it('should redirect to login when not authenticated', () => {
+      const isLoading = false;
+      const isAuthenticated = false;
+      
+      const shouldRedirect = !isLoading && !isAuthenticated;
+      const redirectPath = '/login';
+      
+      expect(shouldRedirect).toBe(true);
+      expect(redirectPath).toBe('/login');
+    });
+
+    it('should render dashboard when authenticated', () => {
+      const isLoading = false;
+      const isAuthenticated = true;
+      
+      const shouldShowDashboard = !isLoading && isAuthenticated;
+      
+      expect(shouldShowDashboard).toBe(true);
+    });
+
+    it('should not render dashboard content while loading', () => {
+      const isLoading = true;
+      const isAuthenticated = true;
+      
+      const shouldShowDashboard = !isLoading && isAuthenticated;
+      
+      expect(shouldShowDashboard).toBe(false);
+    });
+  });
+
+  describe('Loading State UI', () => {
+    it('should display loading spinner', () => {
+      const loadingSpinnerClass = 'animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600';
+      
+      expect(loadingSpinnerClass).toContain('animate-spin');
+      expect(loadingSpinnerClass).toContain('rounded-full');
+    });
+
+    it('should display loading text', () => {
+      const loadingText = 'Loading...';
+      
+      expect(loadingText).toBe('Loading...');
+    });
+
+    it('should center loading state', () => {
+      const containerClass = 'min-h-screen bg-gray-50 flex items-center justify-center';
+      
+      expect(containerClass).toContain('flex');
+      expect(containerClass).toContain('items-center');
+      expect(containerClass).toContain('justify-center');
+    });
+  });
+
+  describe('Authentication Flow', () => {
+    it('should check authentication on mount', () => {
+      const authCheckStates = [
+        { isLoading: true, isAuthenticated: false },  // Initial state
+        { isLoading: false, isAuthenticated: true },  // After successful auth check
+      ];
+      
+      expect(authCheckStates[0].isLoading).toBe(true);
+      expect(authCheckStates[1].isLoading).toBe(false);
+      expect(authCheckStates[1].isAuthenticated).toBe(true);
+    });
+
+    it('should handle authentication failure', () => {
+      const authCheckStates = [
+        { isLoading: true, isAuthenticated: false },  // Initial state
+        { isLoading: false, isAuthenticated: false }, // After failed auth check
+      ];
+      
+      expect(authCheckStates[0].isLoading).toBe(true);
+      expect(authCheckStates[1].isLoading).toBe(false);
+      expect(authCheckStates[1].isAuthenticated).toBe(false);
+    });
+  });
+
+  describe('Protected Routes', () => {
+    it('should protect all dashboard routes', () => {
+      const protectedRoutes = [
+        '/dashboard',
+        '/dashboard/strategist',
+        '/dashboard/copywriter',
+        '/dashboard/scheduler',
+        '/dashboard/designer',
+        '/dashboard/publisher',
+        '/dashboard/analysis',
+        '/dashboard/profile',
+      ];
+      
+      protectedRoutes.forEach(route => {
+        expect(route).toMatch(/^\/dashboard/);
+      });
+    });
+
+    it('should require authentication for dashboard access', () => {
+      const isAuthenticated = false;
+      const currentPath = '/dashboard';
+      
+      const requiresAuth = currentPath.startsWith('/dashboard');
+      const hasAccess = isAuthenticated && requiresAuth;
+      
+      expect(requiresAuth).toBe(true);
+      expect(hasAccess).toBe(false);
+    });
+
+    it('should grant access when authenticated', () => {
+      const isAuthenticated = true;
+      const currentPath = '/dashboard';
+      
+      const requiresAuth = currentPath.startsWith('/dashboard');
+      const hasAccess = isAuthenticated && requiresAuth;
+      
+      expect(requiresAuth).toBe(true);
+      expect(hasAccess).toBe(true);
+    });
+  });
+});

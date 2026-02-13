@@ -15,13 +15,11 @@ const navLinks: NavLink[] = [
   { label: 'Home', href: '/' },
   { label: 'Features', href: '/features', hasDropdown: true },
   { label: 'Pricing', href: '/pricing', hasDropdown: true },
-  { label: 'Dashboard', href: '/dashboard' },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isGetStartedOpen, setIsGetStartedOpen] = useState(false);
 
   // Hide navbar on dashboard routes
   if (pathname?.startsWith('/dashboard')) {
@@ -73,52 +71,20 @@ export default function Navbar() {
             </div>
 
             {/* Right Side Actions */}
-            <div className="hidden lg:flex items-center flex-shrink-0">
-              {/* Get Started Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setIsGetStartedOpen(!isGetStartedOpen)}
-                  className="flex items-center gap-2 px-5 py-2.5 text-white text-base font-semibold rounded-full transition-all shadow-sm hover:shadow-md"
-                  style={{ background: 'linear-gradient(45deg, var(--colors--linear-color-01), var(--colors--linear-color-02))' }}
-                  aria-expanded={isGetStartedOpen}
-                  aria-haspopup="true"
-                  aria-label="Get started menu"
-                >
-                  Get Started
-                </button>
-
-                {/* Dropdown Menu */}
-                {isGetStartedOpen && (
-                  <>
-                    {/* Backdrop */}
-                    <div
-                      className="fixed inset-0 z-10"
-                      onClick={() => setIsGetStartedOpen(false)}
-                    />
-                    {/* Dropdown */}
-                    <div 
-                      className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-20"
-                      role="menu"
-                      aria-label="Get started options"
-                    >
-                      <Link
-                        href="/login"
-                        onClick={() => setIsGetStartedOpen(false)}
-                        className="block px-4 py-2 text-base text-gray-700 transition-colors hover:bg-blue-50 hover:text-[#3139FB]"
-                      >
-                        Login
-                      </Link>
-                      <Link
-                        href="/signup"
-                        onClick={() => setIsGetStartedOpen(false)}
-                        className="block px-4 py-2 text-base text-gray-700 transition-colors hover:bg-blue-50 hover:text-[#3139FB]"
-                      >
-                        Sign Up
-                      </Link>
-                    </div>
-                  </>
-                )}
-              </div>
+            <div className="hidden lg:flex items-center gap-4 flex-shrink-0">
+              <Link
+                href="/login"
+                className="text-base font-medium text-gray-700 hover:text-[#3139FB] transition-colors"
+              >
+                Login
+              </Link>
+              <Link
+                href="/signup"
+                className="px-5 py-2.5 text-white text-base font-semibold rounded-full transition-all shadow-sm hover:shadow-md"
+                style={{ background: 'linear-gradient(45deg, var(--colors--linear-color-01), var(--colors--linear-color-02))' }}
+              >
+                Get Started
+              </Link>
             </div>
 
             {/* Mobile Menu Button */}
@@ -160,18 +126,17 @@ export default function Navbar() {
                 <Link
                   href="/login"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="block w-full px-4 py-3 text-white text-base font-semibold rounded-full text-center transition-all min-h-[44px] flex items-center justify-center"
-                  style={{ background: 'linear-gradient(45deg, var(--colors--linear-color-01), var(--colors--linear-color-02))' }}
+                  className="block w-full px-4 py-3 text-gray-700 text-base font-medium rounded-lg text-center transition-all min-h-[44px] flex items-center justify-center hover:bg-gray-50"
                 >
                   Login
                 </Link>
                 <Link
                   href="/signup"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="block w-full px-4 py-3 border-2 text-base font-semibold rounded-full text-center transition-all min-h-[44px] flex items-center justify-center"
-                  style={{ borderColor: '#3139FB', color: '#3139FB' }}
+                  className="block w-full px-4 py-3 text-white text-base font-semibold rounded-full text-center transition-all min-h-[44px] flex items-center justify-center"
+                  style={{ background: 'linear-gradient(45deg, var(--colors--linear-color-01), var(--colors--linear-color-02))' }}
                 >
-                  Sign Up
+                  Get Started
                 </Link>
               </div>
             </div>
