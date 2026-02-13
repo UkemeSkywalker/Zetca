@@ -12,6 +12,7 @@ import {
   validateAndSanitizeName,
   validatePassword,
 } from '@/lib/validation';
+import { AuthError, AuthErrors, logError, formatErrorResponse } from '@/lib/errors';
 
 interface SignupRequest {
   name: string;
@@ -41,40 +42,19 @@ export async function POST(req: NextRequest) {
     // Validate and sanitize name
     const nameValidation = validateAndSanitizeName(name);
     if (!nameValidation.isValid) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: nameValidation.error,
-          field: 'name',
-        } as SignupResponse,
-        { status: 400 }
-      );
+      throw new AuthError(nameValidation.error || 'Invalid name', 400, 'name', 'INVALID_NAME');
     }
 
     // Validate and sanitize email
     const emailValidation = validateAndSanitizeEmail(email);
     if (!emailValidation.isValid) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: emailValidation.error,
-          field: 'email',
-        } as SignupResponse,
-        { status: 400 }
-      );
+      throw new AuthError(emailValidation.error || 'Invalid email', 400, 'email', 'INVALID_EMAIL');
     }
 
     // Validate password
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: passwordValidation.error,
-          field: 'password',
-        } as SignupResponse,
-        { status: 400 }
-      );
+      throw new AuthError(passwordValidation.error || 'Invalid password', 400, 'password', 'INVALID_PASSWORD');
     }
 
     const sanitizedName = nameValidation.sanitized!;
@@ -86,14 +66,7 @@ export async function POST(req: NextRequest) {
     // Check if email already exists
     const existingUser = await userRepository.getUserByEmail(sanitizedEmail);
     if (existingUser) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Email already exists',
-          field: 'email',
-        } as SignupResponse,
-        { status: 400 }
-      );
+      throw AuthErrors.EMAIL_EXISTS();
     }
 
     // Hash password
@@ -135,9 +108,24 @@ export async function POST(req: NextRequest) {
 
     return nextResponse;
   } catch (error) {
-    console.error('Signup error:', error);
+    // Log error with context
+    logError(error as Error, {
+      endpoint: '/api/auth/signup',
+      method: 'POST',
+    });
 
-    // Return generic error to client
+    // Handle AuthError instances
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        {
+          success: false,
+          ...formatErrorResponse(error),
+        } as SignupResponse,
+        { status: error.statusCode }
+      );
+    }
+
+    // Return generic error for unexpected errors
     return NextResponse.json(
       {
         success: false,

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError } from '@/lib/errors';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,7 +20,11 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('Logout error:', error);
+    logError(error as Error, {
+      endpoint: '/api/auth/logout',
+      method: 'POST',
+    });
+    
     return NextResponse.json(
       { success: false, error: 'An error occurred during logout' },
       { status: 500 }

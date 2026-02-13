@@ -4,6 +4,7 @@ import { validateEmail, validatePassword } from '@/lib/validation';
 import { verifyPassword } from '@/lib/auth/password';
 import { generateToken } from '@/lib/auth/jwt';
 import { UserRepository } from '@/lib/db/userRepository';
+import { AuthError, AuthErrors, logError, formatErrorResponse } from '@/lib/errors';
 
 async function loginHandler(req: NextRequest): Promise<Response> {
   try {
@@ -13,35 +14,23 @@ async function loginHandler(req: NextRequest): Promise<Response> {
 
     // Validate inputs
     if (!email || typeof email !== 'string') {
-      return NextResponse.json(
-        { error: 'Email is required' },
-        { status: 400 }
-      );
+      throw AuthErrors.MISSING_FIELD('email');
     }
 
     if (!password || typeof password !== 'string') {
-      return NextResponse.json(
-        { error: 'Password is required' },
-        { status: 400 }
-      );
+      throw AuthErrors.MISSING_FIELD('password');
     }
 
     // Validate email format
     const emailValidation = validateEmail(email);
     if (!emailValidation.isValid) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      );
+      throw AuthErrors.INVALID_EMAIL();
     }
 
     // Validate password
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
-      return NextResponse.json(
-        { error: 'Invalid password' },
-        { status: 400 }
-      );
+      throw AuthErrors.INVALID_PASSWORD();
     }
 
     // Query user by email from DynamoDB
@@ -50,10 +39,7 @@ async function loginHandler(req: NextRequest): Promise<Response> {
 
     // Return generic error if user not found (don't reveal if email exists)
     if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      );
+      throw AuthErrors.INVALID_CREDENTIALS();
     }
 
     // Verify password hash
@@ -61,10 +47,7 @@ async function loginHandler(req: NextRequest): Promise<Response> {
 
     // Return generic error if password is wrong (don't reveal which credential was incorrect)
     if (!isPasswordValid) {
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      );
+      throw AuthErrors.INVALID_CREDENTIALS();
     }
 
     // Generate JWT token
@@ -101,7 +84,21 @@ async function loginHandler(req: NextRequest): Promise<Response> {
 
     return response;
   } catch (error) {
-    console.error('Login error:', error);
+    // Log error with context
+    logError(error as Error, {
+      endpoint: '/api/auth/login',
+      method: 'POST',
+    });
+
+    // Handle AuthError instances
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        formatErrorResponse(error),
+        { status: error.statusCode }
+      );
+    }
+
+    // Return generic error for unexpected errors
     return NextResponse.json(
       { error: 'An error occurred during login' },
       { status: 500 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { AuthErrors, formatErrorResponse } from '../errors';
 
 interface RateLimitEntry {
   count: number;
@@ -45,10 +46,11 @@ export function withRateLimit(
     if (entry.count >= maxRequests) {
       // Rate limit exceeded
       const retryAfter = Math.ceil((entry.resetTime - now) / 1000);
+      const error = AuthErrors.RATE_LIMIT_EXCEEDED();
       return NextResponse.json(
-        { error: 'Too many requests, please try again later' },
+        formatErrorResponse(error),
         { 
-          status: 429,
+          status: error.statusCode,
           headers: {
             'Retry-After': retryAfter.toString(),
           },

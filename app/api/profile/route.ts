@@ -11,6 +11,7 @@ import {
   validateAndSanitizeBio,
   validateAndSanitizeCompany,
 } from '@/lib/validation';
+import { AuthError, AuthErrors, logError, formatErrorResponse } from '@/lib/errors';
 
 /**
  * GET /api/profile
@@ -23,10 +24,7 @@ export async function GET(req: NextRequest) {
       const user = await userRepo.getUserById(userId);
 
       if (!user) {
-        return NextResponse.json(
-          { success: false, error: 'User not found' },
-          { status: 404 }
-        );
+        throw new AuthError('User not found', 404, undefined, 'USER_NOT_FOUND');
       }
 
       // Return user data without password hash
@@ -41,7 +39,19 @@ export async function GET(req: NextRequest) {
         },
       });
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      logError(error as Error, {
+        endpoint: '/api/profile',
+        method: 'GET',
+        userId,
+      });
+
+      if (error instanceof AuthError) {
+        return NextResponse.json(
+          { success: false, ...formatErrorResponse(error) },
+          { status: error.statusCode }
+        );
+      }
+
       return NextResponse.json(
         { success: false, error: 'Failed to fetch profile' },
         { status: 500 }
@@ -109,18 +119,12 @@ export async function PUT(req: NextRequest) {
 
       // Return validation errors if any
       if (Object.keys(errors).length > 0) {
-        return NextResponse.json(
-          { success: false, error: 'Validation failed', errors },
-          { status: 400 }
-        );
+        throw new AuthError('Validation failed', 400, undefined, 'VALIDATION_ERROR');
       }
 
       // Check if there are any updates to apply
       if (Object.keys(updates).length === 0) {
-        return NextResponse.json(
-          { success: false, error: 'No valid fields to update' },
-          { status: 400 }
-        );
+        throw new AuthError('No valid fields to update', 400, undefined, 'NO_UPDATES');
       }
 
       // Update user in DynamoDB
@@ -140,7 +144,18 @@ export async function PUT(req: NextRequest) {
         },
       });
     } catch (error: any) {
-      console.error('Error updating profile:', error);
+      logError(error as Error, {
+        endpoint: '/api/profile',
+        method: 'PUT',
+        userId,
+      });
+
+      if (error instanceof AuthError) {
+        return NextResponse.json(
+          { success: false, ...formatErrorResponse(error) },
+          { status: error.statusCode }
+        );
+      }
 
       // Handle user not found error
       if (error.name === 'ConditionalCheckFailedException') {
