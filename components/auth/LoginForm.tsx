@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import { useAuth } from '@/context/AuthContext';
 
 interface LoginFormData {
   email: string;
@@ -18,6 +19,7 @@ interface FormErrors {
 
 export default function LoginForm() {
   const router = useRouter();
+  const { login } = useAuth();
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',
@@ -95,7 +97,10 @@ export default function LoginForm() {
         return;
       }
 
-      // Successful login - redirect to dashboard
+      // Successful login - update auth context and redirect to dashboard
+      if (data.success && data.user) {
+        login(data.user);
+      }
       router.push('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
