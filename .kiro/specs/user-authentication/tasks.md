@@ -126,7 +126,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Use Postman with valid auth cookie to GET `/api/profile`, verify user data returned. Try without cookie, verify 401 error
   - _Requirements: 3.1, 3.6_
 
-- [ ] 14. Implement profile UPDATE API endpoint
+- [x] 14. Implement profile UPDATE API endpoint
   - Add PUT handler to `app/api/profile/route.ts`
   - Apply `withAuth` middleware
   - Validate input data (email format, name length, bio length)
