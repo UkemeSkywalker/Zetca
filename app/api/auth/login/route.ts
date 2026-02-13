@@ -91,7 +91,7 @@ async function loginHandler(req: NextRequest): Promise<Response> {
     );
 
     // Set HTTP-only cookie with token
-    response.cookies.set('auth-token', token, {
+    response.cookies.set('auth_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

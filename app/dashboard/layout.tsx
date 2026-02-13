@@ -1,17 +1,20 @@
-import { Metadata } from 'next';
+'use client';
+
 import Sidebar from '@/components/layout/Sidebar';
 import { AgentProvider } from '@/context/AgentContext';
-
-export const metadata: Metadata = {
-  title: 'Dashboard - Zetca',
-  description: 'AI-powered social media automation dashboard',
-};
+import LogoutButton from '@/components/auth/LogoutButton';
+import { useAuth } from '@/context/AuthContext';
+import { useState } from 'react';
+import Link from 'next/link';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { user } = useAuth();
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
   return (
     <AgentProvider>
       <div className="min-h-screen bg-gray-50">
@@ -75,17 +78,66 @@ export default function DashboardLayout({
               </svg>
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" aria-label="New notifications"></span>
             </button>
-            <button 
-              className="hidden sm:flex items-center gap-2 p-1 hover:bg-gray-100 rounded-lg transition-colors min-h-[44px]"
-              aria-label="User menu"
-            >
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-semibold">U</span>
-              </div>
-              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
+            
+            {/* User Menu Dropdown */}
+            <div className="relative hidden sm:block">
+              <button 
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center gap-2 p-1 hover:bg-gray-100 rounded-lg transition-colors min-h-[44px]"
+                aria-label="User menu"
+                aria-expanded={isUserMenuOpen}
+                aria-haspopup="true"
+              >
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-semibold">
+                    {user?.name?.charAt(0).toUpperCase() || 'U'}
+                  </span>
+                </div>
+                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* Dropdown Menu */}
+              {isUserMenuOpen && (
+                <>
+                  {/* Backdrop to close menu */}
+                  <div 
+                    className="fixed inset-0 z-30" 
+                    onClick={() => setIsUserMenuOpen(false)}
+                    aria-hidden="true"
+                  />
+                  
+                  {/* Menu Content */}
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-40">
+                    {/* User Info */}
+                    <div className="px-4 py-3 border-b border-gray-200">
+                      <p className="text-sm font-semibold text-gray-900">{user?.name || 'User'}</p>
+                      <p className="text-xs text-gray-500 truncate">{user?.email || ''}</p>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div className="py-2">
+                      <Link
+                        href="/dashboard/profile"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <span>Profile</span>
+                      </Link>
+                    </div>
+
+                    {/* Logout Button */}
+                    <div className="border-t border-gray-200 pt-2">
+                      <LogoutButton onLogout={() => setIsUserMenuOpen(false)} />
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -101,7 +101,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Use Postman with valid auth cookie to POST to `/api/auth/logout`, verify cookie is cleared in response headers
   - _Requirements: 2.1, 2.2_
 
-- [ ] 11. Add logout functionality to dashboard
+- [x] 11. Add logout functionality to dashboard
   - Create `components/auth/LogoutButton.tsx` that calls `/api/auth/logout`
   - Clear client-side auth state in AuthContext
   - Redirect to login page after logout

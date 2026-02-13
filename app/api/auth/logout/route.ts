@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Clear the authentication cookie by setting it with an expired date
-    response.cookies.set('auth-token', '', {
+    response.cookies.set('auth_token', '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
