@@ -146,14 +146,14 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Login and navigate to `/dashboard/profile`, verify: (1) Real user data loads from API, (2) Can update name/email/bio, (3) Changes persist after page refresh, (4) Validation errors display correctly
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 8.3, 8.4, 8.5, 8.6_
 
-- [ ] 16. Add user data to dashboard navigation
+- [x] 16. Add user data to dashboard navigation
   - Update `app/dashboard/layout.tsx` to display logged-in user's name from AuthContext
   - Show user email or name in navigation bar
   - Add link to profile page
   - **Verification**: Login and navigate to dashboard, verify user name displays in navigation. Click profile link, verify navigation to profile page
   - _Requirements: 3.1, 8.3_
 
-- [ ] 17. Implement session persistence and token refresh
+- [x] 17. Implement session persistence and token refresh
   - Update AuthContext to check token expiration on app load
   - Implement token refresh logic (optional: create refresh token endpoint)
   - Handle token expiration gracefully with redirect to login
