@@ -109,7 +109,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Login via browser, navigate to dashboard, click logout button, verify: (1) Cookie cleared in DevTools, (2) Redirected to login, (3) Cannot access dashboard without logging in again
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 8.2_
 
-- [ ] 12. Protect dashboard routes with authentication
+- [x] 12. Protect dashboard routes with authentication
   - Update `app/dashboard/layout.tsx` to use `useAuth()` hook
   - Check for authenticated user before rendering dashboard
   - Redirect unauthenticated users to `/login`
