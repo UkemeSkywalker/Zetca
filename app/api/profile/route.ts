@@ -9,6 +9,7 @@ import {
   validateAndSanitizeEmail,
   validateAndSanitizeName,
   validateAndSanitizeBio,
+  validateAndSanitizeCompany,
 } from '@/lib/validation';
 
 /**
@@ -35,6 +36,7 @@ export async function GET(req: NextRequest) {
           id: user.userId,
           email: user.email,
           name: user.name,
+          company: user.company,
           bio: user.bio,
         },
       });
@@ -59,10 +61,10 @@ export async function PUT(req: NextRequest) {
     try {
       // Parse request body
       const body = await request.json();
-      const { name, email, bio } = body;
+      const { name, email, bio, company } = body;
 
       // Validate and sanitize inputs
-      const updates: { name?: string; email?: string; bio?: string } = {};
+      const updates: { name?: string; email?: string; bio?: string; company?: string } = {};
       const errors: Record<string, string> = {};
 
       // Validate name if provided
@@ -95,6 +97,16 @@ export async function PUT(req: NextRequest) {
         }
       }
 
+      // Validate company if provided
+      if (company !== undefined) {
+        const companyValidation = validateAndSanitizeCompany(company);
+        if (!companyValidation.isValid) {
+          errors.company = companyValidation.error || 'Invalid company';
+        } else {
+          updates.company = companyValidation.sanitized;
+        }
+      }
+
       // Return validation errors if any
       if (Object.keys(errors).length > 0) {
         return NextResponse.json(
@@ -122,6 +134,7 @@ export async function PUT(req: NextRequest) {
           id: updatedUser.userId,
           email: updatedUser.email,
           name: updatedUser.name,
+          company: updatedUser.company,
           bio: updatedUser.bio,
           lastModified: updatedUser.lastModified,
         },

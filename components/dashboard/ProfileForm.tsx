@@ -60,7 +60,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
               id: data.user.id,
               name: data.user.name,
               email: data.user.email,
-              company: '', // Company field not in API yet
+              company: data.user.company || '',
               bio: data.user.bio || '',
             });
           }
@@ -107,6 +107,9 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
         return 'Please enter a valid email address';
       }
     }
+    if (field === 'company' && value.length > 100) {
+      return 'Company name must be less than 100 characters';
+    }
     if (field === 'bio' && value.length > 500) {
       return 'Bio must be less than 500 characters';
     }
@@ -118,19 +121,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
     const error = validateField(field, tempValue);
     if (error) {
       setErrors({ [field]: error });
-      return;
-    }
-
-    // Don't update company field via API (not implemented yet)
-    if (field === 'company') {
-      setProfile(prev => ({ ...prev, [field]: tempValue }));
-      setEditingField(null);
-      setTempValue('');
-      setSuccessMessage(`${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully!`);
-      
-      setTimeout(() => {
-        setSuccessMessage('');
-      }, 3000);
       return;
     }
 
