@@ -136,7 +136,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Use Postman with valid auth cookie to PUT `/api/profile` with `{name, email, bio}`, verify: (1) Data updated in DynamoDB, (2) lastModified timestamp updated, (3) Updated data returned. Try invalid email, verify validation error
   - _Requirements: 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 15. Connect profile form to real API
+- [-] 15. Connect profile form to real API
   - Update `components/dashboard/ProfileForm.tsx` to fetch from GET `/api/profile` on mount
   - Update save handlers to call PUT `/api/profile` with changed data
   - Display real user data from API instead of mock data
