@@ -1,37 +1,35 @@
 'use client';
 
-import React, { useState } from 'react';
-import Input from '@/components/ui/Input';
+import React, { useState, useEffect } from 'react';
 import Button from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { UserProfile, ConnectedAccount } from '@/types';
 import { Icon } from '@iconify/react';
+import { useAuth } from '@/context/AuthContext';
 
 interface ProfileFormProps {
   className?: string;
 }
 
-// Mock data for connected accounts with username and followers
-const mockAccountData: Record<string, { username: string; followers: string }> = {
-  instagram: { username: '@johndoe', followers: '12.5K' },
-  twitter: { username: '@johndoe', followers: '8.3K' },
-  linkedin: { username: 'John Doe', followers: '2.1K' },
-  facebook: { username: 'John Doe', followers: '5.7K' },
-};
-
 export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
+  const { user: authUser, updateUser } = useAuth();
+  
   // Profile state
   const [profile, setProfile] = useState<UserProfile>({
-    id: 'user-1',
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    company: 'Acme Inc',
-    bio: 'Social media enthusiast and content creator',
+    id: '',
+    name: '',
+    email: '',
+    company: '',
+    bio: '',
   });
 
+  // Loading states
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
   // Connected accounts state
-  const [accounts, setAccounts] = useState<ConnectedAccount[]>([
+  const [accounts] = useState<ConnectedAccount[]>([
     { platform: 'instagram', isConnected: false },
     { platform: 'twitter', isConnected: false },
     { platform: 'linkedin', isConnected: false },
@@ -44,6 +42,45 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [successMessage, setSuccessMessage] = useState('');
   const [connectionMessage, setConnectionMessage] = useState('');
+
+  // Fetch profile data on mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setIsLoadingProfile(true);
+        const response = await fetch('/api/profile', {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.user) {
+            setProfile({
+              id: data.user.id,
+              name: data.user.name,
+              email: data.user.email,
+              company: data.user.company || '',
+              bio: data.user.bio || '',
+            });
+          }
+        } else if (response.status === 401) {
+          // Unauthorized - will be handled by AuthContext
+          console.error('Unauthorized access to profile');
+        } else {
+          const data = await response.json();
+          setErrors({ general: data.error || 'Failed to load profile' });
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        setErrors({ general: 'Failed to load profile' });
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   // Start editing a field
   const startEditing = (field: keyof UserProfile) => {
@@ -70,6 +107,9 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
         return 'Please enter a valid email address';
       }
     }
+    if (field === 'company' && value.length > 100) {
+      return 'Company name must be less than 100 characters';
+    }
     if (field === 'bio' && value.length > 500) {
       return 'Bio must be less than 500 characters';
     }
@@ -77,40 +117,69 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
   };
 
   // Save field
-  const saveField = (field: keyof UserProfile) => {
+  const saveField = async (field: keyof UserProfile) => {
     const error = validateField(field, tempValue);
     if (error) {
       setErrors({ [field]: error });
       return;
     }
 
-    setProfile(prev => ({ ...prev, [field]: tempValue }));
-    setEditingField(null);
-    setTempValue('');
-    setSuccessMessage(`${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully!`);
-    
-    setTimeout(() => {
-      setSuccessMessage('');
-    }, 3000);
+    try {
+      setIsSaving(true);
+      setErrors({});
+
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          [field]: tempValue,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Update local state
+        setProfile(prev => ({ ...prev, [field]: tempValue }));
+        
+        // Update auth context
+        if (authUser) {
+          updateUser({
+            ...authUser,
+            [field]: tempValue,
+          });
+        }
+
+        setEditingField(null);
+        setTempValue('');
+        setSuccessMessage(`${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully!`);
+        
+        setTimeout(() => {
+          setSuccessMessage('');
+        }, 3000);
+      } else {
+        // Handle validation errors from API
+        if (data.errors && data.errors[field]) {
+          setErrors({ [field]: data.errors[field] });
+        } else {
+          setErrors({ [field]: data.error || 'Failed to update profile' });
+        }
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setErrors({ [field]: 'Failed to update profile. Please try again.' });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  // Handle account connection toggle
-  const handleAccountToggle = (platform: ConnectedAccount['platform']) => {
-    setAccounts(prev =>
-      prev.map(account =>
-        account.platform === platform
-          ? { 
-              ...account, 
-              isConnected: !account.isConnected,
-              username: !account.isConnected ? mockAccountData[platform].username : undefined,
-            }
-          : account
-      )
-    );
-
-    const account = accounts.find(a => a.platform === platform);
-    const action = account?.isConnected ? 'disconnected from' : 'connected to';
-    setConnectionMessage(`Successfully ${action} ${platform.charAt(0).toUpperCase() + platform.slice(1)}!`);
+  // Handle account connection toggle (to be implemented separately)
+  const handleAccountToggle = () => {
+    // Account connection will be implemented in a future task
+    setConnectionMessage(`Account connection feature coming soon!`);
 
     setTimeout(() => {
       setConnectionMessage('');
@@ -175,13 +244,15 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
                     variant="primary"
                     size="sm"
                     onClick={() => saveField(field)}
+                    disabled={isSaving}
                   >
-                    Save
+                    {isSaving ? 'Saving...' : 'Save'}
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={cancelEditing}
+                    disabled={isSaving}
                   >
                     Cancel
                   </Button>
@@ -206,6 +277,13 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
 
   return (
     <div className={className}>
+      {/* General Error Message */}
+      {errors.general && (
+        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6">
+          {errors.general}
+        </div>
+      )}
+
       {/* Success Message */}
       {successMessage && (
         <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-6">
@@ -220,8 +298,28 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
         </div>
       )}
 
-      {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Loading State */}
+      {isLoadingProfile ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card title="Profile Information" variant="bordered">
+            <div className="space-y-4 animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+              <div className="h-20 bg-gray-200 rounded"></div>
+            </div>
+          </Card>
+          <Card title="Connected Accounts" variant="bordered">
+            <div className="space-y-4 animate-pulse">
+              <div className="h-16 bg-gray-200 rounded"></div>
+              <div className="h-16 bg-gray-200 rounded"></div>
+              <div className="h-16 bg-gray-200 rounded"></div>
+              <div className="h-16 bg-gray-200 rounded"></div>
+            </div>
+          </Card>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Profile Information */}
         <Card title="Profile Information" variant="bordered">
           <div className="space-y-0">
@@ -263,11 +361,13 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
                       {account.isConnected ? (
                         <div className="space-y-1">
                           <p className="text-sm text-gray-600">
-                            {mockAccountData[account.platform].username}
+                            {account.username || 'Connected'}
                           </p>
-                          <p className="text-xs text-gray-500">
-                            {mockAccountData[account.platform].followers} followers
-                          </p>
+                          {account.username && (
+                            <p className="text-xs text-gray-500">
+                              Account connected
+                            </p>
+                          )}
                         </div>
                       ) : (
                         <p className="text-sm text-gray-500">
@@ -280,7 +380,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
                   <Button
                     variant={account.isConnected ? 'outline' : 'primary'}
                     size="sm"
-                    onClick={() => handleAccountToggle(account.platform)}
+                    onClick={handleAccountToggle}
                   >
                     {account.isConnected ? 'Disconnect' : 'Connect'}
                   </Button>
@@ -290,6 +390,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
           </div>
         </Card>
       </div>
+      )}
     </div>
   );
 };

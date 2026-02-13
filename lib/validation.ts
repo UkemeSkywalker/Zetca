@@ -156,3 +156,40 @@ export function validateAndSanitizeBio(bio: string | undefined): ValidationResul
 
   return { isValid: true, sanitized };
 }
+
+/**
+ * Validate company name
+ * @param company - Company name to validate (optional field)
+ * @returns Validation result with error message if invalid
+ */
+export function validateCompany(company: string | undefined): ValidationResult {
+  if (!company) {
+    return { isValid: true }; // Company is optional
+  }
+
+  if (company.length > 30) {
+    return { isValid: false, error: 'Company name must be less than 30 characters' };
+  }
+
+  return { isValid: true };
+}
+
+/**
+ * Validate and sanitize company name
+ * @param company - Company name to validate and sanitize
+ * @returns Validation result with sanitized company name
+ */
+export function validateAndSanitizeCompany(company: string | undefined): ValidationResult & { sanitized?: string } {
+  if (!company) {
+    return { isValid: true, sanitized: undefined };
+  }
+
+  const sanitized = sanitizeInput(company);
+  const validation = validateCompany(sanitized);
+  
+  if (!validation.isValid) {
+    return validation;
+  }
+
+  return { isValid: true, sanitized };
+}

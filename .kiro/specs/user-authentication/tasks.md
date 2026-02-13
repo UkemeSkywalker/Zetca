@@ -117,7 +117,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Try accessing `/dashboard` without logging in, verify redirect to login. Login and verify access granted. Logout and verify redirect again
   - _Requirements: 3.6, 4.2, 4.3_
 
-- [ ] 13. Implement profile GET API endpoint
+- [x] 13. Implement profile GET API endpoint
   - Create `app/api/profile/route.ts` with GET handler
   - Apply `withAuth` middleware to validate token
   - Extract userId from validated token
@@ -126,7 +126,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Use Postman with valid auth cookie to GET `/api/profile`, verify user data returned. Try without cookie, verify 401 error
   - _Requirements: 3.1, 3.6_
 
-- [ ] 14. Implement profile UPDATE API endpoint
+- [x] 14. Implement profile UPDATE API endpoint
   - Add PUT handler to `app/api/profile/route.ts`
   - Apply `withAuth` middleware
   - Validate input data (email format, name length, bio length)
@@ -136,7 +136,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Use Postman with valid auth cookie to PUT `/api/profile` with `{name, email, bio}`, verify: (1) Data updated in DynamoDB, (2) lastModified timestamp updated, (3) Updated data returned. Try invalid email, verify validation error
   - _Requirements: 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 15. Connect profile form to real API
+- [x] 15. Connect profile form to real API
   - Update `components/dashboard/ProfileForm.tsx` to fetch from GET `/api/profile` on mount
   - Update save handlers to call PUT `/api/profile` with changed data
   - Display real user data from API instead of mock data

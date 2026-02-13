@@ -23,6 +23,7 @@ export interface UserRecord {
   email: string;            // Global Secondary Index
   passwordHash: string;
   name: string;
+  company?: string;
   bio?: string;
   createdAt: string;        // ISO 8601 timestamp
   lastModified: string;     // ISO 8601 timestamp
