@@ -17,24 +17,30 @@ export interface TokenPayload {
  * Generate a JWT token for a user
  * @param userId - Unique user identifier
  * @param email - User email address
+ * @param expiresIn - Optional custom expiration (e.g., '1h', '1s', '24h'). Defaults to config value
  * @returns JWT token string
  */
-export function generateToken(userId: string, email: string): string {
+export function generateToken(userId: string, email: string, expiresIn?: string): string {
   const config = getConfig();
+  
+  if (!config.jwtSecret) {
+    throw new Error('JWT_SECRET is not configured');
+  }
+  
   const payload = {
     userId,
     email,
   };
 
   return jwt.sign(payload, config.jwtSecret, {
-    expiresIn: `${config.jwtExpirationHours}h`,
-  });
+    expiresIn: expiresIn || `${config.jwtExpirationHours}h`,
+  } as jwt.SignOptions);
 }
 
 /**
  * Verify and decode a JWT token
  * @param token - JWT token string to verify
- * @returns Decoded token payload or null if invalid
+ * @returns Decoded token payload or null if invalid/expired
  */
 export function verifyToken(token: string): TokenPayload | null {
   const config = getConfig();
@@ -42,6 +48,7 @@ export function verifyToken(token: string): TokenPayload | null {
     const decoded = jwt.verify(token, config.jwtSecret) as TokenPayload;
     return decoded;
   } catch (error) {
+    // Token is invalid or expired
     return null;
   }
 }

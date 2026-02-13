@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getTokenFromRequest, verifyToken } from '../auth/jwt';
+import { AuthErrors, formatErrorResponse } from '../errors';
 
 export interface AuthenticatedRequest extends NextRequest {
   userId: string;
@@ -25,9 +26,10 @@ export async function withAuth(
 
     // Handle missing token
     if (!token) {
+      const error = AuthErrors.MISSING_TOKEN();
       return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
+        formatErrorResponse(error),
+        { status: error.statusCode }
       );
     }
 
@@ -36,9 +38,10 @@ export async function withAuth(
 
     // Handle invalid or expired token
     if (!payload) {
+      const error = AuthErrors.INVALID_TOKEN();
       return NextResponse.json(
-        { error: 'Invalid or expired token' },
-        { status: 401 }
+        formatErrorResponse(error),
+        { status: error.statusCode }
       );
     }
 
