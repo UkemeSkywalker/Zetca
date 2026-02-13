@@ -117,7 +117,7 @@ This implementation plan follows a backend-first approach that progressively int
   - **Verification**: Try accessing `/dashboard` without logging in, verify redirect to login. Login and verify access granted. Logout and verify redirect again
   - _Requirements: 3.6, 4.2, 4.3_
 
-- [ ] 13. Implement profile GET API endpoint
+- [x] 13. Implement profile GET API endpoint
   - Create `app/api/profile/route.ts` with GET handler
   - Apply `withAuth` middleware to validate token
   - Extract userId from validated token
