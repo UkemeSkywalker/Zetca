@@ -19,7 +19,7 @@ Each phase ends with a verification checkpoint where you can see the feature wor
 
 ## Phase 1: Foundation Setup (Backend + Frontend Types)
 
-- [ ] 1. Set up Python project structure
+- [x] 1. Set up Python project structure
   - Create `python-service/` directory in project root
   - Create `requirements.txt` with FastAPI, uvicorn, pydantic, boto3, pytest
   - Create `main.py` as application entry point
