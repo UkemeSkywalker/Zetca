@@ -29,8 +29,8 @@ Each phase ends with a verification checkpoint where you can see the feature wor
   - Create `.env.example` with AWS_REGION, JWT_SECRET placeholders
   - _Requirements: 11.1, 11.2_
 
-- [ ] 2. Create shared TypeScript types for strategy data
-  - [ ] 2.1 Create `types/strategy.ts` with interfaces
+- [x] 2. Create shared TypeScript types for strategy data
+  - [x] 2.1 Create `types/strategy.ts` with interfaces
     - Define `StrategyInput` interface (brandName, industry, targetAudience, goals)
     - Define `PlatformRecommendation` interface (platform, rationale, priority)
     - Define `StrategyOutput` interface (contentPillars, postingSchedule, platformRecommendations, contentThemes, engagementTactics, visualPrompts)
