@@ -37,8 +37,8 @@ Each phase ends with a verification checkpoint where you can see the feature wor
     - Define `StrategyRecord` interface (id, userId, ...input fields, strategyOutput, createdAt)
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7_
 
-- [ ] 3. Create matching Pydantic models in Python
-  - [ ] 3.1 Create `python-service/models/strategy.py`
+- [x] 3. Create matching Pydantic models in Python
+  - [x] 3.1 Create `python-service/models/strategy.py`
     - Implement `StrategyInput` model matching TypeScript interface
     - Implement `PlatformRecommendation` model
     - Implement `StrategyOutput` model with field descriptions and constraints
@@ -47,7 +47,7 @@ Each phase ends with a verification checkpoint where you can see the feature wor
     - Add Pydantic validators for min_length=1 on required fields
     - _Requirements: 1.2, 1.3, 1.4, 1.5, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8_
 
-  - [ ]* 3.2 Write unit tests for Pydantic validation
+  - [x]* 3.2 Write unit tests for Pydantic validation
     - Test empty strings are rejected
     - Test content_pillars requires 3-6 items
     - Test platform_recommendations requires at least 2 items
