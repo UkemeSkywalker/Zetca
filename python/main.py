@@ -7,6 +7,7 @@ using the Strands Agents Python SDK with Amazon Bedrock (Claude 4 Sonnet).
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from routes.strategy import router as strategy_router
 import os
 
 # Initialize FastAPI app
@@ -24,6 +25,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register routes
+app.include_router(strategy_router)
 
 
 @app.get("/health")
