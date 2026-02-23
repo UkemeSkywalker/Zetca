@@ -113,8 +113,8 @@ Each phase ends with a verification checkpoint where you can see the feature wor
     - Add error message display for failures
     - _Requirements: 6.1_
 
-- [ ] 9. Update Strategist page to integrate components
-  - [ ] 9.1 Update `app/dashboard/strategist/page.tsx`
+- [x] 9. Update Strategist page to integrate components
+  - [x] 9.1 Update `app/dashboard/strategist/page.tsx`
     - Import StrategyForm and StrategyDisplay
     - Render StrategyForm
     - Conditionally render StrategyDisplay when strategy exists
