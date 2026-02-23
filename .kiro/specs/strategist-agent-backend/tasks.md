@@ -103,8 +103,8 @@ Each phase ends with a verification checkpoint where you can see the feature wor
     - Use existing UI components (Card, Button) for consistency
     - _Requirements: 3.2, 3.3, 3.4, 3.5, 3.6, 3.7_
 
-- [ ] 8. Update StrategyForm to call API and show results
-  - [ ] 8.1 Update `components/dashboard/StrategyForm.tsx`
+- [x] 8. Update StrategyForm to call API and show results
+  - [x] 8.1 Update `components/dashboard/StrategyForm.tsx`
     - Import `generateStrategy` from strategyClient
     - Add state for loading and generated strategy
     - On form submit, call `generateStrategy()` with form data
