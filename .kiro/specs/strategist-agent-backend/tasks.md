@@ -121,7 +121,7 @@ Each phase ends with a verification checkpoint where you can see the feature wor
     - Add simple layout with sections
     - _Requirements: 6.1_
 
-- [ ] 10. **CHECKPOINT: Verify mock agent flow works**
+- [x] 10. **CHECKPOINT: Verify mock agent flow works**
   - Start Python service: `cd python-service && uvicorn main:app --reload --port 8000`
   - Start Next.js: `npm run dev`
   - Navigate to /dashboard/strategist
