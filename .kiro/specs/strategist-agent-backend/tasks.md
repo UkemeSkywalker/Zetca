@@ -226,8 +226,8 @@ Each phase ends with a verification checkpoint where you can see the feature wor
     - **Property 9: Strategy Records Are Complete**
     - **Validates: Requirements 4.2, 4.3, 4.4, 4.5, 4.6**
 
-- [ ] 18. Create service layer with persistence
-  - [ ] 18.1 Create `python-service/services/strategy_service.py`
+- [x] 18. Create service layer with persistence
+  - [x] 18.1 Create `python-service/services/strategy_service.py`
     - Implement `StrategyService` class
     - Inject agent and repository dependencies
     - Implement `generate_and_store_strategy()` - generates then stores
@@ -236,11 +236,11 @@ Each phase ends with a verification checkpoint where you can see the feature wor
     - Ensure errors don't create incomplete records
     - _Requirements: 4.1, 5.2, 7.4_
 
-  - [ ]* 18.2 Write property test for persistence
+  - [x] 18.2 Write property test for persistence
     - **Property 8: Generated Strategies Are Persisted**
     - **Validates: Requirements 4.1**
 
-  - [ ]* 18.3 Write property test for error prevention
+  - [x] 18.3 Write property test for error prevention
     - **Property 13: Errors Prevent Incomplete Storage**
     - **Validates: Requirements 7.4**
 
