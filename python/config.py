@@ -29,11 +29,14 @@ class Settings(BaseSettings):
     jwt_secret: str
     
     # Bedrock Configuration
-    bedrock_model_id: str = "anthropic.claude-4-sonnet-20250514-v1:0"
+    bedrock_model_id: str = "anthropic.claude-sonnet-4-6"
     
     # API Configuration
     frontend_url: str = "http://localhost:3000"
     api_port: int = 8000
+    
+    # Agent Configuration
+    use_mock_agent: bool = False  # Set to True to use mock agent instead of real Bedrock
     
     # Timeout Configuration
     agent_timeout_seconds: int = 60

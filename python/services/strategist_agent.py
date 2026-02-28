@@ -6,9 +6,11 @@ Python SDK to generate social media strategies via Amazon Bedrock (Claude 4 Sonn
 The agent returns structured output validated by Pydantic models.
 """
 
+import boto3
 from strands import Agent
 from strands.models.bedrock import BedrockModel
 from models.strategy import StrategyInput, StrategyOutput
+from typing import Optional
 
 
 class StructuredOutputException(Exception):
@@ -21,22 +23,43 @@ class StrategistAgent:
     Production Strategist Agent using Strands Agents SDK with Bedrock.
     
     This agent generates comprehensive social media strategies by leveraging
-    Claude 4 Sonnet through Amazon Bedrock. It uses structured output to ensure
+    Claude through Amazon Bedrock. It uses structured output to ensure
     the response conforms to the StrategyOutput Pydantic model.
     """
     
-    def __init__(self, aws_region: str, model_id: str = "anthropic.claude-4-sonnet-20250514-v1:0"):
+    def __init__(
+        self, 
+        aws_region: str, 
+        model_id: str = "anthropic.claude-3-haiku-20240307-v1:0",
+        aws_access_key_id: Optional[str] = None,
+        aws_secret_access_key: Optional[str] = None
+    ):
         """
         Initialize the Strategist Agent with Bedrock provider.
         
         Args:
             aws_region: AWS region for Bedrock API calls
-            model_id: Bedrock model identifier (default: Claude 4 Sonnet)
+            model_id: Bedrock model identifier
+            aws_access_key_id: AWS access key ID (if None, uses default credential chain)
+            aws_secret_access_key: AWS secret access key (if None, uses default credential chain)
         """
-        self.model = BedrockModel(
-            region_name=aws_region,
-            model_id=model_id
-        )
+        # Create boto3 session with explicit credentials if provided
+        if aws_access_key_id and aws_secret_access_key:
+            boto_session = boto3.Session(
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+                region_name=aws_region
+            )
+            self.model = BedrockModel(
+                boto_session=boto_session,
+                model_id=model_id
+            )
+        else:
+            # Fall back to default credential chain
+            self.model = BedrockModel(
+                region_name=aws_region,
+                model_id=model_id
+            )
         
         self.agent = Agent(
             model=self.model,
@@ -103,13 +126,6 @@ Goals: {strategy_input.goals}
 Provide a detailed strategy that includes content pillars, posting schedule, platform recommendations, 
 content themes, engagement tactics, and visual prompts for image generation that align with the strategy."""
 
-        response = await self.agent.invoke_async(
-            user_prompt,
-            structured_output_model=StrategyOutput
-        )
-        
-        # Extract structured output from agent response
-        if not response.structured_output:
-            raise StructuredOutputException("Agent did not return structured output")
-        
-        return response.structured_output
+        # Use invoke_async with structured_output_model parameter (Strands SDK 1.x)
+        result = await self.agent.invoke_async(user_prompt, structured_output_model=StrategyOutput)
+        return result.structured_output

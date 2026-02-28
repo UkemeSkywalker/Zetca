@@ -2,12 +2,13 @@
 Strategy API Routes
 
 This module defines the REST API endpoints for strategy generation and retrieval.
-Uses the real Strands Agent with Amazon Bedrock for production strategy generation.
+Supports both real Strands Agent with Amazon Bedrock and mock agent for development.
 """
 
 from fastapi import APIRouter, HTTPException, status
 from models.strategy import StrategyInput, StrategyOutput
 from services.strategist_agent import StrategistAgent, StructuredOutputException
+from services.mock_agent import MockStrategistAgent
 from config import settings
 import logging
 import asyncio
@@ -20,17 +21,27 @@ logger = logging.getLogger(__name__)
 # Create router
 router = APIRouter(prefix="/api/strategy", tags=["strategy"])
 
-# Initialize real Strands agent with Bedrock
-agent = StrategistAgent(
-    aws_region=settings.aws_region,
-    model_id=settings.bedrock_model_id
-)
+# Initialize agent based on configuration
+if settings.use_mock_agent:
+    logger.info("Using MOCK agent for strategy generation (no AWS required)")
+    agent = MockStrategistAgent()
+else:
+    logger.info(f"Using REAL Strands agent with Bedrock (region: {settings.aws_region}, model: {settings.bedrock_model_id})")
+    agent = StrategistAgent(
+        aws_region=settings.aws_region,
+        model_id=settings.bedrock_model_id,
+        aws_access_key_id=settings.aws_access_key_id,
+        aws_secret_access_key=settings.aws_secret_access_key
+    )
 
 
 @router.post("/generate", response_model=StrategyOutput, status_code=status.HTTP_200_OK)
 async def generate_strategy(strategy_input: StrategyInput):
     """
-    Generate a new social media strategy using the Strands Agent.
+    Generate a new social media strategy.
+    
+    Uses either mock agent (for development) or real Strands Agent with Bedrock
+    based on USE_MOCK_AGENT configuration.
     
     Accepts brand information and returns a comprehensive social media strategy
     including content pillars, posting schedule, platform recommendations,
@@ -46,13 +57,13 @@ async def generate_strategy(strategy_input: StrategyInput):
         HTTPException: 
             - 400 for validation errors
             - 500 for agent/structured output errors
-            - 503 for Bedrock service unavailability
+            - 503 for Bedrock service unavailability (real agent only)
             - 504 for timeout errors
     """
     try:
-        logger.info(f"Generating strategy for brand: {strategy_input.brand_name}")
+        logger.info(f"Generating strategy for brand: {strategy_input.brand_name} (mock={settings.use_mock_agent})")
         
-        # Call real Strands agent with timeout
+        # Call agent with timeout
         strategy_output = await asyncio.wait_for(
             agent.generate_strategy(strategy_input),
             timeout=settings.agent_timeout_seconds
@@ -71,7 +82,7 @@ async def generate_strategy(strategy_input: StrategyInput):
         
     except StructuredOutputException as e:
         # Agent failed to return structured output
-        logger.error(f"Structured output error: {str(e)}")
+        logger.error(f"Structured output error: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate structured strategy output. Please try again."
