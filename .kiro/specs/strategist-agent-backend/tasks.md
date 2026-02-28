@@ -182,7 +182,7 @@ Each phase ends with a verification checkpoint where you can see the feature wor
     - Add try-except for timeout (return 504)
     - _Requirements: 7.1, 7.2, 7.3_
 
-- [ ] 15. **CHECKPOINT: Verify real agent generates strategies**
+- [x] 15. **CHECKPOINT: Verify real agent generates strategies**
   - Ensure AWS credentials are set in environment
   - Restart Python service
   - Fill out form in browser with real brand info
@@ -193,8 +193,8 @@ Each phase ends with a verification checkpoint where you can see the feature wor
 
 ## Phase 4: Add Database Persistence
 
-- [ ] 16. Create DynamoDB table with Terraform
-  - [ ] 16.1 Create `terraform/strategies-table.tf`
+- [x] 16. Create DynamoDB table with Terraform
+  - [x] 16.1 Create `terraform/strategies-table.tf`
     - Define aws_dynamodb_table resource
     - Set hash_key to "strategyId"
     - Define attributes: strategyId (S), userId (S), createdAt (S)
@@ -202,14 +202,14 @@ Each phase ends with a verification checkpoint where you can see the feature wor
     - Enable point-in-time recovery and encryption
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
 
-  - [ ] 16.2 Apply Terraform
+  - [x] 16.2 Apply Terraform
     - Run `terraform init`
     - Run `terraform plan`
     - Run `terraform apply`
     - Note the table name for environment variables
 
-- [ ] 17. Implement DynamoDB repository
-  - [ ] 17.1 Create `python-service/repositories/strategy_repository.py`
+- [x] 17. Implement DynamoDB repository
+  - [x] 17.1 Create `python-service/repositories/strategy_repository.py`
     - Initialize DynamoDB resource with boto3
     - Implement `create_strategy(record: StrategyRecord) -> StrategyRecord`
     - Implement `get_strategy_by_id(strategy_id: str, user_id: str) -> Optional[StrategyRecord]`
@@ -218,11 +218,11 @@ Each phase ends with a verification checkpoint where you can see the feature wor
     - Enforce user isolation in get_strategy_by_id
     - _Requirements: 4.1, 4.7, 5.2, 5.3_
 
-  - [ ]* 17.2 Write property test for user isolation
+  - [x] 17.2 Write property test for user isolation
     - **Property 10: Strategy Records Enforce User Isolation**
     - **Validates: Requirements 4.7, 5.2, 5.4**
 
-  - [ ]* 17.3 Write property test for record completeness
+  - [x] 17.3 Write property test for record completeness
     - **Property 9: Strategy Records Are Complete**
     - **Validates: Requirements 4.2, 4.3, 4.4, 4.5, 4.6**
 

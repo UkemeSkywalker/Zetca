@@ -9,6 +9,8 @@ from datetime import datetime, UTC
 from typing import List, Literal
 from uuid import uuid4
 from pydantic import BaseModel, Field, field_validator, ConfigDict
+from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import core_schema
 
 
 class StrategyInput(BaseModel):
@@ -176,7 +178,6 @@ class StrategyRecord(BaseModel):
     )
 
     model_config = ConfigDict(
-        json_encoders={
-            datetime: lambda v: v.isoformat()
-        }
+        # Use Pydantic v2 serialization - datetime will automatically serialize to ISO format
+        ser_json_timedelta='iso8601'
     )

@@ -5,6 +5,7 @@ All settings are loaded from environment variables with sensible defaults where 
 """
 
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 from typing import Optional
 
 
@@ -41,11 +42,11 @@ class Settings(BaseSettings):
     # Timeout Configuration
     agent_timeout_seconds: int = 60
     
-    class Config:
-        """Pydantic configuration."""
-        env_file = ".env"
-        case_sensitive = False
-        extra = "ignore"
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore"
+    )
 
 
 # Global settings instance
