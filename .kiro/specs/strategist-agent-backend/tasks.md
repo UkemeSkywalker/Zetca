@@ -244,8 +244,8 @@ Each phase ends with a verification checkpoint where you can see the feature wor
     - **Property 13: Errors Prevent Incomplete Storage**
     - **Validates: Requirements 7.4**
 
-- [ ] 19. Add persistence endpoints to API
-  - [ ] 19.1 Update `python-service/routes/strategy.py`
+- [x] 19. Add persistence endpoints to API
+  - [x] 19.1 Update `python-service/routes/strategy.py`
     - Update POST /generate to use strategy_service.generate_and_store_strategy()
     - Add GET `/api/strategy/list` endpoint (returns all user strategies)
     - Add GET `/api/strategy/{strategy_id}` endpoint (returns specific strategy)

@@ -6,13 +6,16 @@ Supports both real Strands Agent with Amazon Bedrock and mock agent for developm
 """
 
 from fastapi import APIRouter, HTTPException, status
-from models.strategy import StrategyInput, StrategyOutput
+from models.strategy import StrategyInput, StrategyOutput, StrategyRecord
 from services.strategist_agent import StrategistAgent, StructuredOutputException
 from services.mock_agent import MockStrategistAgent
+from services.strategy_service import StrategyService
+from repositories.strategy_repository import StrategyRepository
 from config import settings
 import logging
 import asyncio
 from botocore.exceptions import BotoCoreError, ClientError
+from typing import List
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -34,11 +37,18 @@ else:
         aws_secret_access_key=settings.aws_secret_access_key
     )
 
+# Initialize repository and service
+repository = StrategyRepository(
+    table_name=settings.dynamodb_strategies_table,
+    region=settings.aws_region
+)
+strategy_service = StrategyService(agent=agent, repository=repository)
 
-@router.post("/generate", response_model=StrategyOutput, status_code=status.HTTP_200_OK)
+
+@router.post("/generate", response_model=StrategyRecord, status_code=status.HTTP_200_OK)
 async def generate_strategy(strategy_input: StrategyInput):
     """
-    Generate a new social media strategy.
+    Generate a new social media strategy and store it in the database.
     
     Uses either mock agent (for development) or real Strands Agent with Bedrock
     based on USE_MOCK_AGENT configuration.
@@ -47,11 +57,14 @@ async def generate_strategy(strategy_input: StrategyInput):
     including content pillars, posting schedule, platform recommendations,
     content themes, engagement tactics, and visual prompts.
     
+    The generated strategy is automatically persisted to DynamoDB and associated
+    with the user (currently hardcoded as "test-user" until auth is implemented).
+    
     Args:
         strategy_input: Brand information (brand_name, industry, target_audience, goals)
         
     Returns:
-        StrategyOutput: Generated strategy with all components
+        StrategyRecord: Complete strategy record including ID, timestamps, and generated strategy
         
     Raises:
         HTTPException: 
@@ -60,17 +73,20 @@ async def generate_strategy(strategy_input: StrategyInput):
             - 503 for Bedrock service unavailability (real agent only)
             - 504 for timeout errors
     """
+    # TODO: Replace with authenticated user_id from JWT token (Phase 5)
+    user_id = "test-user"
+    
     try:
         logger.info(f"Generating strategy for brand: {strategy_input.brand_name} (mock={settings.use_mock_agent})")
         
-        # Call agent with timeout
-        strategy_output = await asyncio.wait_for(
-            agent.generate_strategy(strategy_input),
+        # Call service with timeout
+        strategy_record = await asyncio.wait_for(
+            strategy_service.generate_and_store_strategy(strategy_input, user_id),
             timeout=settings.agent_timeout_seconds
         )
         
-        logger.info(f"Successfully generated strategy for: {strategy_input.brand_name}")
-        return strategy_output
+        logger.info(f"Successfully generated and stored strategy for: {strategy_input.brand_name} (ID: {strategy_record.id})")
+        return strategy_record
         
     except asyncio.TimeoutError:
         # Timeout after configured seconds
@@ -110,4 +126,84 @@ async def generate_strategy(strategy_input: StrategyInput):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Strategy generation failed. Please try again."
+        )
+
+
+@router.get("/list", response_model=List[StrategyRecord], status_code=status.HTTP_200_OK)
+async def list_strategies():
+    """
+    List all strategies for the authenticated user.
+    
+    Returns all strategy records associated with the user, ordered by creation date
+    (newest first). Currently uses hardcoded "test-user" until auth is implemented.
+    
+    Returns:
+        List[StrategyRecord]: List of strategy records, sorted by created_at descending
+        
+    Raises:
+        HTTPException: 500 for database errors
+    """
+    # TODO: Replace with authenticated user_id from JWT token (Phase 5)
+    user_id = "test-user"
+    
+    try:
+        logger.info(f"Retrieving strategy list for user: {user_id}")
+        strategies = await strategy_service.get_user_strategies(user_id)
+        logger.info(f"Found {len(strategies)} strategies for user: {user_id}")
+        return strategies
+        
+    except Exception as e:
+        logger.error(f"Failed to retrieve strategies: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve strategies. Please try again."
+        )
+
+
+@router.get("/{strategy_id}", response_model=StrategyRecord, status_code=status.HTTP_200_OK)
+async def get_strategy(strategy_id: str):
+    """
+    Get a specific strategy by ID.
+    
+    Retrieves a single strategy record by its unique identifier. Enforces user isolation
+    to ensure users can only access their own strategies. Currently uses hardcoded
+    "test-user" until auth is implemented.
+    
+    Args:
+        strategy_id: Unique identifier of the strategy to retrieve
+        
+    Returns:
+        StrategyRecord: The requested strategy record
+        
+    Raises:
+        HTTPException:
+            - 404 if strategy not found or belongs to another user
+            - 500 for database errors
+    """
+    # TODO: Replace with authenticated user_id from JWT token (Phase 5)
+    user_id = "test-user"
+    
+    try:
+        logger.info(f"Retrieving strategy {strategy_id} for user: {user_id}")
+        strategy = await strategy_service.get_strategy(strategy_id, user_id)
+        
+        if strategy is None:
+            logger.warning(f"Strategy {strategy_id} not found for user: {user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Strategy not found"
+            )
+        
+        logger.info(f"Successfully retrieved strategy {strategy_id}")
+        return strategy
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions (like 404)
+        raise
+        
+    except Exception as e:
+        logger.error(f"Failed to retrieve strategy {strategy_id}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve strategy. Please try again."
         )
