@@ -132,16 +132,16 @@ Each phase ends with a verification checkpoint where you can see the feature wor
 
 ## Phase 3: Real Strands Agent Integration
 
-- [ ] 11. Add Strands Agents SDK and AWS dependencies
-  - [ ] 11.1 Update `python-service/requirements.txt`
+- [x] 11. Add Strands Agents SDK and AWS dependencies
+  - [x] 11.1 Update `python-service/requirements.txt`
     - Add `strands-agents` package
     - Add `boto3` for AWS SDK
     - Add `python-jose[cryptography]` for JWT
     - Install: `pip install -r requirements.txt`
     - _Requirements: 2.1, 8.1_
 
-- [ ] 12. Create configuration management
-  - [ ] 12.1 Create `python-service/config.py`
+- [x] 12. Create configuration management
+  - [x] 12.1 Create `python-service/config.py`
     - Define `Settings` class with Pydantic BaseSettings
     - Add AWS credentials (AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
     - Add JWT_SECRET
@@ -150,12 +150,12 @@ Each phase ends with a verification checkpoint where you can see the feature wor
     - Load from environment variables
     - _Requirements: 8.1, 8.2, 8.4_
 
-  - [ ]* 12.2 Write test for missing credentials
+  - [x]* 12.2 Write test for missing credentials
     - Test that missing AWS credentials raise error
     - _Requirements: 8.3_
 
-- [ ] 13. Implement real Strands Agent
-  - [ ] 13.1 Create `python-service/services/strategist_agent.py`
+- [x] 13. Implement real Strands Agent
+  - [x] 13.1 Create `python-service/services/strategist_agent.py`
     - Import Agent, BedrockProvider from strands_agents
     - Implement `StrategistAgent` class
     - Initialize BedrockProvider with AWS region and model ID
@@ -173,8 +173,8 @@ Each phase ends with a verification checkpoint where you can see the feature wor
     - Verify visual_prompts field has 2-3 items
     - **Validates: Requirements 2.5, 2.6, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 9.4**
 
-- [ ] 14. Replace mock agent with real agent in routes
-  - [ ] 14.1 Update `python-service/routes/strategy.py`
+- [x] 14. Replace mock agent with real agent in routes
+  - [x] 14.1 Update `python-service/routes/strategy.py`
     - Replace MockStrategistAgent with StrategistAgent
     - Add timeout handling (60 seconds)
     - Add try-except for Bedrock errors (return 503)
