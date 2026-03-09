@@ -95,23 +95,35 @@ class StrategyService:
         self, 
         strategy_id: str, 
         user_id: str
-    ) -> Optional[StrategyRecord]:
+    ) -> tuple[Optional[StrategyRecord], bool]:
         """
         Retrieve a specific strategy by ID with user isolation enforcement.
         
         This method ensures that users can only access their own strategies.
-        If the strategy exists but belongs to a different user, None is returned.
+        Returns information about whether the strategy exists but belongs to another user.
         
         Args:
             strategy_id: The strategy ID to retrieve
             user_id: Authenticated user's ID from JWT token
             
         Returns:
-            StrategyRecord if found and belongs to user, None otherwise
+            Tuple of (StrategyRecord or None, exists_for_other_user: bool)
+            - (record, False) if strategy found and belongs to user
+            - (None, True) if strategy exists but belongs to another user
+            - (None, False) if strategy does not exist
             
         Note:
-            User isolation is enforced at the repository level. This method
-            will return None for both non-existent strategies and strategies
-            belonging to other users (Requirements 4.7, 5.2).
+            User isolation is enforced at the repository level (Requirements 4.7, 5.2, 6.6).
         """
-        return await self.repository.get_strategy_by_id(strategy_id, user_id)
+        # First check if strategy exists at all
+        exists = await self.repository.strategy_exists(strategy_id)
+        
+        # Try to get strategy with user isolation
+        strategy = await self.repository.get_strategy_by_id(strategy_id, user_id)
+        
+        # If exists but we got None, it belongs to another user
+        if exists and strategy is None:
+            return (None, True)
+        
+        # Either found (strategy is not None) or doesn't exist (strategy is None, exists is False)
+        return (strategy, False)
