@@ -63,13 +63,13 @@ class StrategyRepository:
     async def get_strategy_by_id(
         self, 
         strategy_id: str, 
-        user_id: str
+        user_id: str = None
     ) -> Optional[StrategyRecord]:
-        """Retrieve a strategy by ID with user isolation enforcement.
+        """Retrieve a strategy by ID with optional user isolation enforcement.
         
         Args:
             strategy_id: The strategy ID to retrieve
-            user_id: The authenticated user's ID
+            user_id: The authenticated user's ID (optional for existence check)
             
         Returns:
             StrategyRecord if found and belongs to user, None otherwise
@@ -85,12 +85,26 @@ class StrategyRepository:
         
         item = response['Item']
         
-        # Enforce user isolation - return None if strategy belongs to different user
-        if item['userId'] != user_id:
+        # Enforce user isolation if user_id is provided
+        if user_id is not None and item['userId'] != user_id:
             return None
         
         # Convert DynamoDB item to StrategyRecord
         return self._item_to_record(item)
+    
+    async def strategy_exists(self, strategy_id: str) -> bool:
+        """Check if a strategy exists regardless of owner.
+        
+        Args:
+            strategy_id: The strategy ID to check
+            
+        Returns:
+            True if strategy exists, False otherwise
+        """
+        response = self.table.get_item(
+            Key={'strategyId': strategy_id}
+        )
+        return 'Item' in response
     
     async def list_strategies_by_user(self, user_id: str) -> List[StrategyRecord]:
         """List all strategies for a specific user, sorted by creation date descending.

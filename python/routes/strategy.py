@@ -188,16 +188,26 @@ async def get_strategy(
     Raises:
         HTTPException:
             - 401 for missing or invalid authentication
-            - 404 if strategy not found or belongs to another user
+            - 403 if strategy exists but belongs to another user
+            - 404 if strategy not found
             - 500 for database errors
     """
     
     try:
         logger.info(f"Retrieving strategy {strategy_id} for user: {user_id}")
-        strategy = await strategy_service.get_strategy(strategy_id, user_id)
+        strategy, belongs_to_other_user = await strategy_service.get_strategy(strategy_id, user_id)
         
+        # Check if strategy belongs to another user (403 Forbidden)
+        if belongs_to_other_user:
+            logger.warning(f"User {user_id} attempted to access strategy {strategy_id} belonging to another user")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: You do not have permission to access this strategy"
+            )
+        
+        # Check if strategy not found (404 Not Found)
         if strategy is None:
-            logger.warning(f"Strategy {strategy_id} not found for user: {user_id}")
+            logger.warning(f"Strategy {strategy_id} not found")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Strategy not found"
@@ -207,7 +217,7 @@ async def get_strategy(
         return strategy
         
     except HTTPException:
-        # Re-raise HTTP exceptions (like 404)
+        # Re-raise HTTP exceptions (like 403, 404)
         raise
         
     except Exception as e:
