@@ -272,7 +272,7 @@ Each phase ends with a verification checkpoint where you can see the feature wor
     - Allow clicking saved strategy to view details
     - _Requirements: 6.2, 6.3_
 
-- [ ] 21. **CHECKPOINT: Verify persistence works**
+- [x] 21. **CHECKPOINT: Verify persistence works**
   - Generate a strategy through the form
   - Refresh the page
   - Verify the strategy appears in "Saved Strategies" list
@@ -283,8 +283,8 @@ Each phase ends with a verification checkpoint where you can see the feature wor
 
 ## Phase 5: Add Authentication
 
-- [ ] 22. Implement JWT authentication middleware
-  - [ ] 22.1 Create `python-service/middleware/auth.py`
+- [-] 22. Implement JWT authentication middleware
+  - [x] 22.1 Create `python-service/middleware/auth.py`
     - Implement `AuthMiddleware` class
     - Implement `get_current_user()` dependency
     - Extract JWT from Authorization header
@@ -293,28 +293,28 @@ Each phase ends with a verification checkpoint where you can see the feature wor
     - Return 401 for missing/expired/invalid tokens
     - _Requirements: 1.1, 6.4, 6.5_
 
-  - [ ]* 22.2 Write property test for authentication
+  - [x] 22.2 Write property test for authentication
     - **Property 3: Authentication Required for Protected Endpoints**
     - **Validates: Requirements 1.1, 6.4**
 
-  - [ ]* 22.3 Write property test for 401 responses
+  <!-- - [ ] 22.3 Write property test for 401 responses
     - **Property 4: Unauthenticated Requests Return 401**
-    - **Validates: Requirements 6.5**
+    - **Validates: Requirements 6.5** -->
 
-- [ ] 23. Add authentication to all endpoints
-  - [ ] 23.1 Update `python-service/routes/strategy.py`
+- [x] 23. Add authentication to all endpoints
+  - [x] 23.1 Update `python-service/routes/strategy.py`
     - Add `user_id: str = Depends(auth_middleware.get_current_user)` to all endpoints
     - Remove hardcoded "test-user"
     - Use authenticated user_id for all operations
     - Add 403 handling when user tries to access another user's strategy
     - _Requirements: 1.1, 6.4, 6.5, 6.6_
 
-  - [ ]* 23.2 Write property test for cross-user access
+  - [x] 23.2 Write property test for cross-user access
     - **Property 12: Cross-User Access Returns 403**
     - **Validates: Requirements 6.6**
 
-- [ ] 24. Update frontend API client to send JWT
-  - [ ] 24.1 Update `lib/api/strategyClient.ts`
+- [x] 24. Update frontend API client to send JWT
+  - [x] 24.1 Update `lib/api/strategyClient.ts`
     - Get JWT token from AuthContext or localStorage
     - Add Authorization header to all requests: `Bearer ${token}`
     - Handle 401 errors (redirect to login)
