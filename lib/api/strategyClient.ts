@@ -3,7 +3,7 @@
  * Handles communication with the Python FastAPI service
  */
 
-import { StrategyInput, StrategyOutput } from '@/types/strategy';
+import { StrategyInput, StrategyOutput, StrategyRecord } from '@/types/strategy';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_PYTHON_SERVICE_URL || 'http://localhost:8000';
 
@@ -81,6 +81,143 @@ export async function generateStrategy(input: StrategyInput): Promise<StrategyOu
     // Wrap other errors
     throw new StrategyAPIError(
       'An unexpected error occurred while generating the strategy',
+      undefined,
+      error
+    );
+  }
+}
+
+/**
+ * List all strategies for the authenticated user
+ * 
+ * @returns Promise resolving to an array of strategy records
+ * @throws StrategyAPIError if the request fails
+ */
+export async function listStrategies(): Promise<StrategyRecord[]> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/strategy/list`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new StrategyAPIError(
+        errorData.detail || `Failed to list strategies: ${response.statusText}`,
+        response.status,
+        errorData
+      );
+    }
+
+    const data = await response.json();
+    
+    // Convert snake_case from Python to camelCase for TypeScript
+    return data.map((record: any) => ({
+      id: record.id,
+      userId: record.user_id,
+      brandName: record.brand_name,
+      industry: record.industry,
+      targetAudience: record.target_audience,
+      goals: record.goals,
+      strategyOutput: {
+        contentPillars: record.strategy_output.content_pillars,
+        postingSchedule: record.strategy_output.posting_schedule,
+        platformRecommendations: record.strategy_output.platform_recommendations,
+        contentThemes: record.strategy_output.content_themes,
+        engagementTactics: record.strategy_output.engagement_tactics,
+        visualPrompts: record.strategy_output.visual_prompts,
+      },
+      createdAt: record.created_at,
+    }));
+  } catch (error) {
+    // Handle network errors
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new StrategyAPIError(
+        'Network error: Unable to connect to the strategy service. Please check your connection and try again.',
+        undefined,
+        error
+      );
+    }
+
+    // Re-throw StrategyAPIError as-is
+    if (error instanceof StrategyAPIError) {
+      throw error;
+    }
+
+    // Wrap other errors
+    throw new StrategyAPIError(
+      'An unexpected error occurred while listing strategies',
+      undefined,
+      error
+    );
+  }
+}
+
+/**
+ * Get a specific strategy by ID
+ * 
+ * @param id - Strategy ID
+ * @returns Promise resolving to the strategy record
+ * @throws StrategyAPIError if the request fails
+ */
+export async function getStrategy(id: string): Promise<StrategyRecord> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/strategy/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new StrategyAPIError(
+        errorData.detail || `Failed to get strategy: ${response.statusText}`,
+        response.status,
+        errorData
+      );
+    }
+
+    const record = await response.json();
+    
+    // Convert snake_case from Python to camelCase for TypeScript
+    return {
+      id: record.id,
+      userId: record.user_id,
+      brandName: record.brand_name,
+      industry: record.industry,
+      targetAudience: record.target_audience,
+      goals: record.goals,
+      strategyOutput: {
+        contentPillars: record.strategy_output.content_pillars,
+        postingSchedule: record.strategy_output.posting_schedule,
+        platformRecommendations: record.strategy_output.platform_recommendations,
+        contentThemes: record.strategy_output.content_themes,
+        engagementTactics: record.strategy_output.engagement_tactics,
+        visualPrompts: record.strategy_output.visual_prompts,
+      },
+      createdAt: record.created_at,
+    };
+  } catch (error) {
+    // Handle network errors
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new StrategyAPIError(
+        'Network error: Unable to connect to the strategy service. Please check your connection and try again.',
+        undefined,
+        error
+      );
+    }
+
+    // Re-throw StrategyAPIError as-is
+    if (error instanceof StrategyAPIError) {
+      throw error;
+    }
+
+    // Wrap other errors
+    throw new StrategyAPIError(
+      'An unexpected error occurred while getting the strategy',
       undefined,
       error
     );

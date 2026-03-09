@@ -66,7 +66,11 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
   );
 };
 
-export const StrategyForm: React.FC = () => {
+interface StrategyFormProps {
+  onStrategyGenerated?: (strategy: StrategyOutput) => void;
+}
+
+export const StrategyForm: React.FC<StrategyFormProps> = ({ onStrategyGenerated }) => {
   const { setStrategy, updateWorkflowStatus } = useAgentContext();
   const [formData, setFormData] = useState<StrategyFormData>({
     brandName: '',
@@ -159,6 +163,11 @@ export const StrategyForm: React.FC = () => {
 
       // Display generated strategy
       setGeneratedStrategy(strategyOutput);
+      
+      // Call the callback if provided
+      if (onStrategyGenerated) {
+        onStrategyGenerated(strategyOutput);
+      }
       
       // Expand the first section to show results
       setExpandedSection('pillars');

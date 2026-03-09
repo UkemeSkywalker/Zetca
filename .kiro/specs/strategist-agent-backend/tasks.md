@@ -253,20 +253,20 @@ Each phase ends with a verification checkpoint where you can see the feature wor
     - For now, use hardcoded user_id="test-user" (auth comes next phase)
     - _Requirements: 6.2, 6.3, 6.7_
 
-- [ ] 20. Add strategy list to frontend
-  - [ ] 20.1 Update `lib/api/strategyClient.ts`
+- [x] 20. Add strategy list to frontend
+  - [x] 20.1 Update `lib/api/strategyClient.ts`
     - Add `listStrategies(): Promise<StrategyRecord[]>`
     - Add `getStrategy(id: string): Promise<StrategyRecord>`
     - _Requirements: 6.2, 6.3_
 
-  - [ ] 20.2 Create `components/dashboard/StrategyList.tsx`
+  - [x] 20.2 Create `components/dashboard/StrategyList.tsx`
     - Fetch strategies on mount using listStrategies()
     - Display as cards with brand name, industry, created date
     - Add click handler to view full strategy
     - Show loading state and empty state
     - _Requirements: 5.1, 5.3, 5.5_
 
-  - [ ] 20.3 Update `app/dashboard/strategist/page.tsx`
+  - [x] 20.3 Update `app/dashboard/strategist/page.tsx`
     - Add StrategyList component
     - Add tabs or sections: "Generate New" and "Saved Strategies"
     - Allow clicking saved strategy to view details
