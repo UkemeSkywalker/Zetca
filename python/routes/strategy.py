@@ -5,12 +5,13 @@ This module defines the REST API endpoints for strategy generation and retrieval
 Supports both real Strands Agent with Amazon Bedrock and mock agent for development.
 """
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from models.strategy import StrategyInput, StrategyOutput, StrategyRecord
 from services.strategist_agent import StrategistAgent, StructuredOutputException
 from services.mock_agent import MockStrategistAgent
 from services.strategy_service import StrategyService
 from repositories.strategy_repository import StrategyRepository
+from middleware.auth import auth_middleware
 from config import settings
 import logging
 import asyncio
@@ -46,7 +47,10 @@ strategy_service = StrategyService(agent=agent, repository=repository)
 
 
 @router.post("/generate", response_model=StrategyRecord, status_code=status.HTTP_200_OK)
-async def generate_strategy(strategy_input: StrategyInput):
+async def generate_strategy(
+    strategy_input: StrategyInput,
+    user_id: str = Depends(auth_middleware.get_current_user)
+):
     """
     Generate a new social media strategy and store it in the database.
     
@@ -58,23 +62,23 @@ async def generate_strategy(strategy_input: StrategyInput):
     content themes, engagement tactics, and visual prompts.
     
     The generated strategy is automatically persisted to DynamoDB and associated
-    with the user (currently hardcoded as "test-user" until auth is implemented).
+    with the authenticated user.
     
     Args:
         strategy_input: Brand information (brand_name, industry, target_audience, goals)
+        user_id: Authenticated user ID from JWT token (injected by auth middleware)
         
     Returns:
         StrategyRecord: Complete strategy record including ID, timestamps, and generated strategy
         
     Raises:
         HTTPException: 
+            - 401 for missing or invalid authentication
             - 400 for validation errors
             - 500 for agent/structured output errors
             - 503 for Bedrock service unavailability (real agent only)
             - 504 for timeout errors
     """
-    # TODO: Replace with authenticated user_id from JWT token (Phase 5)
-    user_id = "test-user"
     
     try:
         logger.info(f"Generating strategy for brand: {strategy_input.brand_name} (mock={settings.use_mock_agent})")
@@ -130,21 +134,24 @@ async def generate_strategy(strategy_input: StrategyInput):
 
 
 @router.get("/list", response_model=List[StrategyRecord], status_code=status.HTTP_200_OK)
-async def list_strategies():
+async def list_strategies(user_id: str = Depends(auth_middleware.get_current_user)):
     """
     List all strategies for the authenticated user.
     
     Returns all strategy records associated with the user, ordered by creation date
-    (newest first). Currently uses hardcoded "test-user" until auth is implemented.
+    (newest first).
+    
+    Args:
+        user_id: Authenticated user ID from JWT token (injected by auth middleware)
     
     Returns:
         List[StrategyRecord]: List of strategy records, sorted by created_at descending
         
     Raises:
-        HTTPException: 500 for database errors
+        HTTPException: 
+            - 401 for missing or invalid authentication
+            - 500 for database errors
     """
-    # TODO: Replace with authenticated user_id from JWT token (Phase 5)
-    user_id = "test-user"
     
     try:
         logger.info(f"Retrieving strategy list for user: {user_id}")
@@ -161,27 +168,29 @@ async def list_strategies():
 
 
 @router.get("/{strategy_id}", response_model=StrategyRecord, status_code=status.HTTP_200_OK)
-async def get_strategy(strategy_id: str):
+async def get_strategy(
+    strategy_id: str,
+    user_id: str = Depends(auth_middleware.get_current_user)
+):
     """
     Get a specific strategy by ID.
     
     Retrieves a single strategy record by its unique identifier. Enforces user isolation
-    to ensure users can only access their own strategies. Currently uses hardcoded
-    "test-user" until auth is implemented.
+    to ensure users can only access their own strategies.
     
     Args:
         strategy_id: Unique identifier of the strategy to retrieve
+        user_id: Authenticated user ID from JWT token (injected by auth middleware)
         
     Returns:
         StrategyRecord: The requested strategy record
         
     Raises:
         HTTPException:
+            - 401 for missing or invalid authentication
             - 404 if strategy not found or belongs to another user
             - 500 for database errors
     """
-    # TODO: Replace with authenticated user_id from JWT token (Phase 5)
-    user_id = "test-user"
     
     try:
         logger.info(f"Retrieving strategy {strategy_id} for user: {user_id}")
