@@ -30,43 +30,6 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-// Helper to decode JWT and check expiration
-function decodeToken(token: string): { exp: number } | null {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    return JSON.parse(jsonPayload);
-  } catch (error) {
-    return null;
-  }
-}
-
-// Helper to get token from cookie
-function getTokenFromCookie(): string | null {
-  const cookies = document.cookie.split(';');
-  const authCookie = cookies.find(cookie => cookie.trim().startsWith('auth_token='));
-  if (!authCookie) return null;
-  return authCookie.split('=')[1];
-}
-
-// Helper to check if token is expired or will expire soon (within 5 minutes)
-function isTokenExpiringSoon(token: string): boolean {
-  const decoded = decodeToken(token);
-  if (!decoded || !decoded.exp) return true;
-  
-  const expirationTime = decoded.exp * 1000; // Convert to milliseconds
-  const currentTime = Date.now();
-  const fiveMinutes = 5 * 60 * 1000;
-  
-  return expirationTime - currentTime < fiveMinutes;
-}
-
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,29 +40,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const validateSession = async () => {
       try {
-        const token = getTokenFromCookie();
-        
-        if (!token) {
-          setIsLoading(false);
-          return;
-        }
-
-        // Check if token is expired
-        const decoded = decodeToken(token);
-        if (decoded && decoded.exp) {
-          const expirationTime = decoded.exp * 1000;
-          const currentTime = Date.now();
-          
-          if (currentTime >= expirationTime) {
-            // Token is expired, clear it
-            document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-            setUser(null);
-            setIsLoading(false);
-            return;
-          }
-        }
-
-        // Fetch user profile to validate token
+        // Fetch user profile to validate token (httpOnly cookie is sent automatically)
         const response = await fetch('/api/profile', {
           method: 'GET',
           credentials: 'include',
@@ -110,13 +51,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           if (data.success && data.user) {
             setUser(data.user);
           }
-        } else if (response.status === 401) {
-          // Token is invalid or expired, clear it
-          document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        } else {
+          // Token is invalid, expired, or missing
           setUser(null);
         }
       } catch (error) {
         console.error('Error validating session:', error);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -125,34 +66,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
     validateSession();
   }, []);
 
-  // Periodic token expiration check (every minute)
+  // Periodic token expiration check (every 5 minutes)
+  // Since the token is httpOnly, we check by calling the profile API
   useEffect(() => {
     if (!user) return;
 
-    const checkTokenExpiration = () => {
-      const token = getTokenFromCookie();
-      
-      if (!token) {
-        // Token was removed (e.g., by another tab)
-        setUser(null);
-        return;
-      }
+    const checkTokenExpiration = async () => {
+      try {
+        const response = await fetch('/api/profile', {
+          method: 'GET',
+          credentials: 'include',
+        });
 
-      const decoded = decodeToken(token);
-      if (decoded && decoded.exp) {
-        const expirationTime = decoded.exp * 1000;
-        const currentTime = Date.now();
-        
-        if (currentTime >= expirationTime) {
-          // Token has expired
-          document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        if (!response.ok) {
+          // Token is no longer valid
           setUser(null);
         }
+      } catch (error) {
+        console.error('Error checking token:', error);
       }
     };
 
-    // Check every minute
-    tokenCheckIntervalRef.current = setInterval(checkTokenExpiration, 60 * 1000);
+    // Check every 5 minutes
+    tokenCheckIntervalRef.current = setInterval(checkTokenExpiration, 5 * 60 * 1000);
 
     return () => {
       if (tokenCheckIntervalRef.current) {
