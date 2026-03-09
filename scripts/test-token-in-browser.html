@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Token Debug</title>
+</head>
+<body>
+    <h1>JWT Token Debug</h1>
+    <div id="output"></div>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        // Check localStorage
+        const token = localStorage.getItem('token');
+        
+        let html = '<h2>Token Check:</h2>';
+        html += '<p><strong>Token exists:</strong> ' + (!!token) + '</p>';
+        
+        if (token) {
+            html += '<p><strong>Token length:</strong> ' + token.length + '</p>';
+            html += '<p><strong>Token preview:</strong> ' + token.substring(0, 50) + '...</p>';
+            
+            // Try to decode
+            try {
+                const parts = token.split('.');
+                if (parts.length === 3) {
+                    const payload = JSON.parse(atob(parts[1]));
+                    html += '<h2>Token Payload:</h2>';
+                    html += '<pre>' + JSON.stringify(payload, null, 2) + '</pre>';
+                    
+                    if (payload.userId) {
+                        html += '<p style="color: green;">✓ userId found: ' + payload.userId + '</p>';
+                    } else {
+                        html += '<p style="color: red;">✗ userId NOT found!</p>';
+                    }
+                    
+                    if (payload.exp) {
+                        const expDate = new Date(payload.exp * 1000);
+                        const now = new Date();
+                        html += '<p><strong>Expires:</strong> ' + expDate.toISOString() + '</p>';
+                        html += '<p><strong>Expired:</strong> ' + (now > expDate) + '</p>';
+                    }
+                }
+            } catch (e) {
+                html += '<p style="color: red;">Error decoding token: ' + e.message + '</p>';
+            }
+        } else {
+            html += '<p style="color: red;">✗ No token found in localStorage!</p>';
+            html += '<p>Make sure you are logged in.</p>';
+        }
+        
+        output.innerHTML = html;
+    </script>
+</body>
+</html>
