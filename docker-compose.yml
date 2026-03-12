@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  nextjs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PYTHON_SERVICE_URL=http://python-service:8000
+      - JWT_SECRET=${JWT_SECRET}
+      - AWS_REGION=${AWS_REGION}
+      - DYNAMODB_USERS_TABLE=${DYNAMODB_USERS_TABLE:-users-dev}
+      - DYNAMODB_STRATEGIES_TABLE=${DYNAMODB_STRATEGIES_TABLE:-strategies-dev}
+    depends_on:
+      - python-service
+    networks:
+      - app-network
+
+  python-service:
+    build:
+      context: ./python
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - DYNAMODB_USERS_TABLE=${DYNAMODB_USERS_TABLE:-users-dev}
+      - DYNAMODB_STRATEGIES_TABLE=${DYNAMODB_STRATEGIES_TABLE:-strategies-dev}
+      - BEDROCK_MODEL_ID=${BEDROCK_MODEL_ID:-anthropic.claude-4-sonnet-20250514-v1:0}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

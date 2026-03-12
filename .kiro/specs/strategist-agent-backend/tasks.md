@@ -321,7 +321,7 @@ Each phase ends with a verification checkpoint where you can see the feature wor
     - Handle 403 errors (show access denied message)
     - _Requirements: 6.4, 6.5, 6.6_
 
-- [ ] 25. **CHECKPOINT: Verify authentication works**
+- [x] 25. **CHECKPOINT: Verify authentication works**
   - Log in as User A
   - Generate a strategy
   - Verify it appears in User A's list
@@ -367,8 +367,8 @@ Each phase ends with a verification checkpoint where you can see the feature wor
     - Highlight invalid fields
     - _Requirements: 1.6_
 
-- [ ] 28. Set up Docker and docker-compose
-  - [ ] 28.1 Create `python-service/Dockerfile`
+- [x] 28. Set up Docker and docker-compose
+  - [x] 28.1 Create `python-service/Dockerfile`
     - Use python:3.11-slim base image
     - Copy requirements and install dependencies
     - Copy application code
@@ -376,14 +376,14 @@ Each phase ends with a verification checkpoint where you can see the feature wor
     - CMD: uvicorn main:app --host 0.0.0.0 --port 8000
     - _Requirements: 11.3_
 
-  - [ ] 28.2 Create `docker-compose.yml` at project root
+  - [x] 28.2 Create `docker-compose.yml` at project root
     - Define nextjs service (port 3000)
     - Define python-service (port 8000)
     - Share environment variables (AWS, JWT, DynamoDB)
     - Set up service dependencies
     - _Requirements: 11.2, 11.3, 11.4_
 
-  - [ ] 28.3 Update `next.config.ts` with API proxy
+  - [x] 28.3 Update `next.config.ts` with API proxy
     - Add rewrites to proxy /api/strategy/* to Python service
     - Use PYTHON_SERVICE_URL environment variable
     - _Requirements: 11.5_
