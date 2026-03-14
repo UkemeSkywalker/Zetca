@@ -396,7 +396,7 @@ Each phase ends with a verification checkpoint where you can see the feature wor
     - Document Docker deployment
     - _Requirements: 11.8_
 
-  - [ ] 29.2 Update root `README.md`
+  - [x] 29.2 Update root `README.md`
     - Add section on running both services
     - Document microservices architecture
     - Add troubleshooting guide
