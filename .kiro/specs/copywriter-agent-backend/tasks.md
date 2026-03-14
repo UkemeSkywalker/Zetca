@@ -48,12 +48,12 @@ Each phase ends with a verification checkpoint.
     - Table name pattern: `copies-${var.environment}`
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7_
 
-- [ ] 3. Update configuration and app registration
-  - [ ] 3.1 Update `python/config.py`
+- [x] 3. Update configuration and app registration
+  - [x] 3.1 Update `python/config.py`
     - Add `dynamodb_copies_table: str = "copies-dev"` to Settings class
     - _Requirements: 8.7_
 
-  - [ ] 3.2 Update `python/main.py`
+  - [x] 3.2 Update `python/main.py`
     - Import and register copy router: `from routes.copy import router as copy_router`
     - Add `app.include_router(copy_router)`
     - Update app title/description to reflect both strategy and copy services

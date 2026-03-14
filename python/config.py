@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     # DynamoDB Configuration
     dynamodb_users_table: str = "users-dev"
     dynamodb_strategies_table: str = "strategies-dev"
+    dynamodb_copies_table: str = "copies-dev"
     
     # JWT Configuration
     jwt_secret: str

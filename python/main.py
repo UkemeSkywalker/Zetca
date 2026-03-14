@@ -8,19 +8,20 @@ using the Strands Agents Python SDK with Amazon Bedrock (Claude 4 Sonnet).
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes.strategy import router as strategy_router
-import os
+from routes.copy import router as copy_router
+from config import settings
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="Strategist Agent API",
-    description="AI-powered social media strategy generation service",
+    title="Zetca Agent API",
+    description="AI-powered social media strategy and copy generation service",
     version="1.0.0"
 )
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.getenv("FRONTEND_URL", "http://localhost:3000")],
+    allow_origins=[settings.frontend_url],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -28,19 +29,20 @@ app.add_middleware(
 
 # Register routes
 app.include_router(strategy_router)
+app.include_router(copy_router)
 
 
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    return {"status": "healthy", "service": "strategist-agent"}
+    return {"status": "healthy", "service": "zetca-agent"}
 
 
 @app.get("/")
 async def root():
     """Root endpoint"""
     return {
-        "message": "Strategist Agent API",
+        "message": "Zetca Agent API",
         "version": "1.0.0",
         "docs": "/docs"
     }
@@ -51,6 +53,6 @@ if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=int(os.getenv("API_PORT", "8000")),
+        port=settings.api_port,
         reload=True
     )
