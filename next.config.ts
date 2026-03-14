@@ -11,6 +11,16 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    const pythonServiceUrl = process.env.PYTHON_SERVICE_URL || 'http://localhost:8000';
+    
+    return [
+      {
+        source: '/api/strategy/:path*',
+        destination: `${pythonServiceUrl}/api/strategy/:path*`,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

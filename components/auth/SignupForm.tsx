@@ -123,6 +123,10 @@ export default function SignupForm() {
       // Token is automatically stored in HTTP-only cookie by the API
       // Update auth context and redirect to dashboard on success
       if (data.success && data.user) {
+        // Store token in localStorage for Python service authentication
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+        }
         login(data.user);
       }
       router.push('/dashboard');

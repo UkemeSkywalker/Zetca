@@ -171,6 +171,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Clear user state
       setUser(null);
       
+      // Clear token from localStorage
+      localStorage.removeItem('token');
+      
       // Notify other tabs about logout
       localStorage.setItem('auth_logout', Date.now().toString());
       localStorage.removeItem('auth_logout'); // Clean up immediately

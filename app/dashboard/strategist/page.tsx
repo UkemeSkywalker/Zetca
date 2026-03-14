@@ -104,24 +104,19 @@ export default function StrategistPage() {
                 <Icon icon="solar:alt-arrow-left-bold" width={20} />
                 Back to Saved Strategies
               </button>
-              <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-semibold text-gray-700">Brand:</span>{' '}
-                    <span className="text-gray-900">{selectedStrategy.brandName}</span>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-gray-700">Industry:</span>{' '}
-                    <span className="text-gray-900">{selectedStrategy.industry}</span>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-gray-700">Target Audience:</span>{' '}
-                    <span className="text-gray-900">{selectedStrategy.targetAudience}</span>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-gray-700">Goals:</span>{' '}
-                    <span className="text-gray-900">{selectedStrategy.goals}</span>
-                  </div>
+              <div className="mb-5 bg-white rounded-xl border border-gray-200 p-5">
+                <div className="flex items-center gap-4 flex-wrap">
+                  {[
+                    { label: 'Brand', value: selectedStrategy.brandName },
+                    { label: 'Industry', value: selectedStrategy.industry },
+                    { label: 'Audience', value: selectedStrategy.targetAudience },
+                    { label: 'Goals', value: selectedStrategy.goals },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                      <span className="text-xs text-gray-400 uppercase tracking-wide">{item.label}</span>
+                      <span className="text-sm text-gray-900 font-medium">{item.value}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
               <StrategyDisplay strategy={selectedStrategy.strategyOutput} />

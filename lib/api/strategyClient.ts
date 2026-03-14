@@ -22,6 +22,45 @@ export class StrategyAPIError extends Error {
 }
 
 /**
+ * Get JWT token from localStorage
+ * @returns JWT token or null if not found
+ */
+function getAuthToken(): string | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  return localStorage.getItem('token');
+}
+
+/**
+ * Create headers with JWT authentication
+ * @returns Headers object with Authorization header if token exists
+ */
+function createAuthHeaders(): HeadersInit {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  const token = getAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return headers;
+}
+
+/**
+ * Handle authentication errors by redirecting to login
+ */
+function handleAuthError(): void {
+  if (typeof window !== 'undefined') {
+    // Clear token and redirect to login
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+  }
+}
+
+/**
  * Generate a social media strategy using the Strategist Agent
  * 
  * @param input - Strategy input data (brand name, industry, target audience, goals)
@@ -32,9 +71,7 @@ export async function generateStrategy(input: StrategyInput): Promise<StrategyOu
   try {
     const response = await fetch(`${API_BASE_URL}/api/strategy/generate`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: createAuthHeaders(),
       body: JSON.stringify({
         brand_name: input.brandName,
         industry: input.industry,
@@ -42,6 +79,23 @@ export async function generateStrategy(input: StrategyInput): Promise<StrategyOu
         goals: input.goals,
       }),
     });
+
+    // Handle 401 Unauthorized - redirect to login
+    if (response.status === 401) {
+      handleAuthError();
+      throw new StrategyAPIError(
+        'Authentication required. Please log in again.',
+        401
+      );
+    }
+
+    // Handle 403 Forbidden - access denied
+    if (response.status === 403) {
+      throw new StrategyAPIError(
+        'Access denied. You do not have permission to perform this action.',
+        403
+      );
+    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -97,10 +151,25 @@ export async function listStrategies(): Promise<StrategyRecord[]> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/strategy/list`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: createAuthHeaders(),
     });
+
+    // Handle 401 Unauthorized - redirect to login
+    if (response.status === 401) {
+      handleAuthError();
+      throw new StrategyAPIError(
+        'Authentication required. Please log in again.',
+        401
+      );
+    }
+
+    // Handle 403 Forbidden - access denied
+    if (response.status === 403) {
+      throw new StrategyAPIError(
+        'Access denied. You do not have permission to view these strategies.',
+        403
+      );
+    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -166,10 +235,25 @@ export async function getStrategy(id: string): Promise<StrategyRecord> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/strategy/${id}`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: createAuthHeaders(),
     });
+
+    // Handle 401 Unauthorized - redirect to login
+    if (response.status === 401) {
+      handleAuthError();
+      throw new StrategyAPIError(
+        'Authentication required. Please log in again.',
+        401
+      );
+    }
+
+    // Handle 403 Forbidden - access denied
+    if (response.status === 403) {
+      throw new StrategyAPIError(
+        'Access denied. You do not have permission to view this strategy.',
+        403
+      );
+    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
