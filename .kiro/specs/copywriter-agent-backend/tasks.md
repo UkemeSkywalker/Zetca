@@ -27,7 +27,7 @@ Each phase ends with a verification checkpoint.
     - Define `ChatResponse` model with `updated_text`, `updated_hashtags`, `ai_message` fields
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7_
 
-  - [ ]* 1.2 Write property test for input validation
+  - [x] 1.2 Write property test for input validation
     - **Property 1: Input Validation Rejects Whitespace**
     - Test that whitespace-only or empty strings are rejected for `strategy_id` in CopyGenerateInput and `message` in ChatRequest
     - **Validates: Requirements 10.1, 10.5**
@@ -37,8 +37,8 @@ Each phase ends with a verification checkpoint.
     - Test that CopyItem, CopyOutput, CopyRecord, ChatRequest, ChatResponse survive JSON serialize/deserialize
     - **Validates: Requirements 1.7, 10.2, 10.3, 10.4, 10.6, 10.7**
 
-- [ ] 2. Create DynamoDB copies table with Terraform
-  - [ ] 2.1 Create `terraform/copies-table.tf`
+- [x] 2. Create DynamoDB copies table with Terraform
+  - [x] 2.1 Create `terraform/copies-table.tf`
     - Define `aws_dynamodb_table` resource for copies table
     - Set `copyId` as partition key (String)
     - Define attributes: `copyId` (S), `strategyId` (S), `userId` (S), `createdAt` (S)
