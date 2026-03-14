@@ -2,199 +2,138 @@
 
 import React from 'react';
 import { Icon } from '@iconify/react';
-import { Card } from '@/components/ui/Card';
 import { StrategyOutput } from '@/types/strategy';
 
 interface StrategyDisplayProps {
   strategy: StrategyOutput;
 }
 
-const PriorityBadge: React.FC<{ priority: 'high' | 'medium' | 'low' }> = ({ priority }) => {
+const PriorityDot: React.FC<{ priority: 'high' | 'medium' | 'low' }> = ({ priority }) => {
   const colorMap = {
-    high: 'bg-red-100 text-red-800 border-red-200',
-    medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    low: 'bg-green-100 text-green-800 border-green-200',
+    high: 'bg-red-500',
+    medium: 'bg-amber-500',
+    low: 'bg-green-500',
   };
-
   const labelMap = {
-    high: 'High Priority',
-    medium: 'Medium Priority',
-    low: 'Low Priority',
+    high: 'High',
+    medium: 'Medium',
+    low: 'Low',
   };
-
   return (
-    <span className={`px-3 py-1 rounded-full text-xs font-medium border ${colorMap[priority]}`}>
+    <span className="flex items-center gap-1.5 text-xs text-gray-500">
+      <span className={`w-2 h-2 rounded-full ${colorMap[priority]}`} />
       {labelMap[priority]}
     </span>
   );
 };
 
+type CardTheme = 'blue' | 'violet' | 'rose' | 'amber' | 'emerald' | 'cyan';
+
+const themeStyles: Record<CardTheme, { iconBg: string; iconText: string; rowBg: string; accent: string; border: string }> = {
+  blue:    { iconBg: 'bg-blue-100',    iconText: 'text-blue-600',    rowBg: 'bg-blue-50/60',    accent: 'text-blue-500',    border: 'border-t-blue-500' },
+  violet:  { iconBg: 'bg-violet-100',  iconText: 'text-violet-600',  rowBg: 'bg-violet-50/60',  accent: 'text-violet-500',  border: 'border-t-violet-500' },
+  rose:    { iconBg: 'bg-rose-100',    iconText: 'text-rose-600',    rowBg: 'bg-rose-50/60',    accent: 'text-rose-500',    border: 'border-t-rose-500' },
+  amber:   { iconBg: 'bg-amber-100',   iconText: 'text-amber-600',   rowBg: 'bg-amber-50/60',   accent: 'text-amber-500',   border: 'border-t-amber-500' },
+  emerald: { iconBg: 'bg-emerald-100', iconText: 'text-emerald-600', rowBg: 'bg-emerald-50/60', accent: 'text-emerald-500', border: 'border-t-emerald-500' },
+  cyan:    { iconBg: 'bg-cyan-100',    iconText: 'text-cyan-600',    rowBg: 'bg-cyan-50/60',    accent: 'text-cyan-500',    border: 'border-t-cyan-500' },
+};
+
+const SectionCard: React.FC<{
+  icon: string;
+  title: string;
+  subtitle: string;
+  theme: CardTheme;
+  children: React.ReactNode;
+}> = ({ icon, title, subtitle, theme, children }) => {
+  const t = themeStyles[theme];
+  return (
+    <div className={`bg-white rounded-xl border border-gray-200 border-t-2 ${t.border} overflow-hidden break-inside-avoid mb-4`}>
+      <div className="px-5 pt-5 pb-3 flex items-center gap-3">
+        <div className={`w-8 h-8 rounded-lg ${t.iconBg} flex items-center justify-center flex-shrink-0`}>
+          <Icon icon={icon} className={`w-4 h-4 ${t.iconText}`} />
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+          <p className="text-xs text-gray-400">{subtitle}</p>
+        </div>
+      </div>
+      <div className="px-5 pb-5 flex-1">{children}</div>
+    </div>
+  );
+};
+
 export const StrategyDisplay: React.FC<StrategyDisplayProps> = ({ strategy }) => {
   return (
-    <div className="space-y-6">
-      {/* Content Pillars Section */}
-      <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-2xl p-6 border border-blue-100">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-            <Icon icon="solar:layers-bold" className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-gray-900">Content Pillars</h3>
-            <p className="text-sm text-gray-600">Core themes for your content strategy</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {strategy.contentPillars.map((pillar, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all hover:scale-105"
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-600 text-sm font-bold">{index + 1}</span>
-                </div>
-                <span className="text-gray-700 font-medium">{pillar}</span>
-              </div>
+    <div className="columns-1 md:columns-2 lg:columns-3 gap-4">
+      {/* Content Pillars */}
+      <SectionCard icon="solar:layers-bold" title="Content Pillars" subtitle="Core themes for your strategy" theme="blue">
+        <div className="space-y-2">
+          {strategy.contentPillars.map((pillar, i) => (
+            <div key={i} className="flex items-center gap-3 rounded-lg bg-blue-50/60 px-3 py-2.5">
+              <span className="text-xs font-bold text-blue-500 w-4 text-center">{i + 1}</span>
+              <span className="text-sm text-gray-700">{pillar}</span>
             </div>
           ))}
         </div>
-      </div>
+      </SectionCard>
 
-      {/* Posting Schedule Section */}
-      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-            <Icon icon="solar:calendar-mark-bold" className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-gray-900">Posting Schedule</h3>
-            <p className="text-sm text-gray-600">Recommended posting frequency</p>
-          </div>
+      {/* Posting Schedule */}
+      <SectionCard icon="solar:calendar-mark-bold" title="Posting Schedule" subtitle="Recommended frequency" theme="violet">
+        <div className="rounded-lg bg-violet-50/60 px-4 py-4 flex items-center h-full">
+          <p className="text-sm text-gray-700 leading-relaxed">{strategy.postingSchedule}</p>
         </div>
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-          <p className="text-gray-700 text-lg font-medium">{strategy.postingSchedule}</p>
-        </div>
-      </div>
+      </SectionCard>
 
-      {/* Platform Recommendations Section */}
-      <div className="bg-gradient-to-br from-pink-50 to-orange-50 rounded-2xl p-6 border border-pink-100">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center">
-            <Icon icon="solar:devices-bold" className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-gray-900">Platform Recommendations</h3>
-            <p className="text-sm text-gray-600">Best platforms for your brand</p>
-          </div>
-        </div>
-        <div className="space-y-3">
-          {strategy.platformRecommendations.map((platform, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start justify-between gap-4 mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center">
-                    <Icon icon="solar:star-bold" className="w-5 h-5 text-white" />
-                  </div>
-                  <h4 className="text-lg font-semibold text-gray-900">{platform.platform}</h4>
-                </div>
-                <PriorityBadge priority={platform.priority} />
+      {/* Platform Recommendations */}
+      <SectionCard icon="solar:devices-bold" title="Platforms" subtitle="Best for your brand" theme="rose">
+        <div className="space-y-2">
+          {strategy.platformRecommendations.map((p, i) => (
+            <div key={i} className="rounded-lg bg-rose-50/60 px-3 py-2.5">
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-sm font-medium text-gray-900">{p.platform}</span>
+                <PriorityDot priority={p.priority} />
               </div>
-              <p className="text-gray-600 ml-13">{platform.rationale}</p>
+              <p className="text-xs text-gray-500 leading-relaxed">{p.rationale}</p>
             </div>
           ))}
         </div>
-      </div>
+      </SectionCard>
 
-      {/* Content Themes Section */}
-      <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-6 border border-orange-100">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
-            <Icon icon="solar:palette-bold" className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-gray-900">Content Themes</h3>
-            <p className="text-sm text-gray-600">Topics and themes to explore</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {strategy.contentThemes.map((theme, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all hover:scale-105"
-            >
-              <div className="flex items-center gap-3">
-                <Icon icon="solar:hashtag-bold" className="w-5 h-5 text-orange-600" />
-                <span className="text-gray-700 font-medium">{theme}</span>
-              </div>
+      {/* Content Themes */}
+      <SectionCard icon="solar:palette-bold" title="Content Themes" subtitle="Topics to explore" theme="amber">
+        <div className="space-y-2">
+          {strategy.contentThemes.map((theme, i) => (
+            <div key={i} className="flex items-center gap-2.5 rounded-lg bg-amber-50/60 px-3 py-2.5">
+              <span className="text-amber-500 text-xs font-bold">#</span>
+              <span className="text-sm text-gray-700">{theme}</span>
             </div>
           ))}
         </div>
-      </div>
+      </SectionCard>
 
-      {/* Engagement Tactics Section */}
-      <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-100">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
-            <Icon icon="solar:users-group-rounded-bold" className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-gray-900">Engagement Tactics</h3>
-            <p className="text-sm text-gray-600">Strategies to boost audience interaction</p>
-          </div>
-        </div>
-        <ul className="space-y-3">
-          {strategy.engagementTactics.map((tactic, index) => (
-            <li
-              key={index}
-              className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Icon icon="solar:check-circle-bold" className="w-4 h-4 text-green-600" />
-                </div>
-                <span className="text-gray-700">{tactic}</span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Visual Prompts Section */}
-      <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-2xl p-6 border border-teal-100">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center">
-            <Icon icon="solar:camera-bold" className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-gray-900">Visual Prompts</h3>
-            <p className="text-sm text-gray-600">Image ideas for content creation</p>
-          </div>
-        </div>
-        <div className="space-y-3">
-          {strategy.visualPrompts.map((prompt, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-xl p-5 shadow-sm border border-teal-100 hover:shadow-md transition-all hover:border-teal-300"
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0">
-                  <Icon icon="solar:gallery-bold" className="w-5 h-5 text-teal-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-gray-700 font-medium mb-1">{prompt}</p>
-                  <div className="flex items-center gap-2 text-xs text-teal-600">
-                    <Icon icon="solar:magic-stick-bold" className="w-4 h-4" />
-                    <span>Ready for image generation</span>
-                  </div>
-                </div>
-              </div>
+      {/* Engagement Tactics */}
+      <SectionCard icon="solar:users-group-rounded-bold" title="Engagement Tactics" subtitle="Boost audience interaction" theme="emerald">
+        <div className="space-y-2">
+          {strategy.engagementTactics.map((tactic, i) => (
+            <div key={i} className="flex items-start gap-2.5 rounded-lg bg-emerald-50/60 px-3 py-2.5">
+              <Icon icon="solar:check-circle-bold" className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+              <span className="text-sm text-gray-700">{tactic}</span>
             </div>
           ))}
         </div>
-      </div>
+      </SectionCard>
+
+      {/* Visual Prompts */}
+      <SectionCard icon="solar:camera-bold" title="Visual Prompts" subtitle="Image ideas for content" theme="cyan">
+        <div className="space-y-2">
+          {strategy.visualPrompts.map((prompt, i) => (
+            <div key={i} className="flex items-start gap-2.5 rounded-lg bg-cyan-50/60 px-3 py-2.5">
+              <Icon icon="solar:gallery-bold" className="w-4 h-4 text-cyan-500 flex-shrink-0 mt-0.5" />
+              <span className="text-sm text-gray-700">{prompt}</span>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
     </div>
   );
 };
