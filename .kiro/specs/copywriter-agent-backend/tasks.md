@@ -243,8 +243,8 @@ Each phase ends with a verification checkpoint.
     - Keep existing `Caption` type for backward compatibility or replace with `CopyRecord`
     - _Requirements: 10.2, 10.4, 10.6_
 
-- [ ] 14. Create copy API client
-  - [ ] 14.1 Create `lib/api/copyClient.ts`
+- [x] 14. Create copy API client
+  - [x] 14.1 Create `lib/api/copyClient.ts`
     - Implement `generateCopies(strategyId: string): Promise<CopyRecord[]>`
       - POST to `/api/copy/generate` with `{ strategy_id: strategyId }`
       - Include JWT Authorization header
