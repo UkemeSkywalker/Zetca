@@ -264,8 +264,8 @@ Each phase ends with a verification checkpoint.
     - Handle 401 (redirect to login), 403 (access denied), 404 (not found) errors
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [ ] 15. Update CaptionEditor to use real backend
-  - [ ] 15.1 Update `components/dashboard/CaptionEditor.tsx`
+- [x] 15. Update CaptionEditor to use real backend
+  - [x] 15.1 Update `components/dashboard/CaptionEditor.tsx`
     - Remove import of `mockCaptionsData` from `data/mockCaptions.json`
     - Remove dependency on `useAgentContext` for captions (use local state + API)
     - Add strategy selection: fetch user's strategies via `listStrategies()` from strategyClient
