@@ -227,7 +227,7 @@ Each phase ends with a verification checkpoint.
     - Ensure timeout handling (60 seconds) wraps agent calls
     - _Requirements: 1.1, 7.1, 7.3_
 
-- [ ] 12. **CHECKPOINT: Verify real agent generates copies**
+- [x] 12. **CHECKPOINT: Verify real agent generates copies**
   - Set USE_MOCK_AGENT=false and ensure AWS credentials are configured
   - Generate copies from an existing strategy
   - Verify copies are platform-specific with appropriate tone and hashtags

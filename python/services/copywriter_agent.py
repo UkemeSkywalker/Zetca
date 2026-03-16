@@ -122,7 +122,24 @@ When refining copies via chat:
             StructuredOutputException: If the agent fails to return structured output
         """
         platforms = strategy_data.get("platform_recommendations", [])
-        platform_list = ", ".join(platforms) if platforms else "Instagram, Twitter, LinkedIn"
+        
+        # Handle both list of strings and list of dicts (PlatformRecommendation objects)
+        if platforms and isinstance(platforms[0], dict):
+            platform_names = [p.get("platform", "") for p in platforms]
+        else:
+            platform_names = platforms
+        
+        platform_list = ", ".join(platform_names) if platform_names else "Instagram, Twitter, LinkedIn"
+        
+        # Also handle content_pillars, content_themes, engagement_tactics which may be lists
+        content_pillars = strategy_data.get("content_pillars", [])
+        content_themes = strategy_data.get("content_themes", [])
+        engagement_tactics = strategy_data.get("engagement_tactics", [])
+        
+        # Convert to strings if they're lists
+        pillars_str = ", ".join(content_pillars) if isinstance(content_pillars, list) else str(content_pillars)
+        themes_str = ", ".join(content_themes) if isinstance(content_themes, list) else str(content_themes)
+        tactics_str = ", ".join(engagement_tactics) if isinstance(engagement_tactics, list) else str(engagement_tactics)
 
         user_prompt = f"""Generate social media copies for the following brand strategy:
 
@@ -131,9 +148,9 @@ Industry: {strategy_data.get("industry", "N/A")}
 Target Audience: {strategy_data.get("target_audience", "N/A")}
 Goals: {strategy_data.get("goals", "N/A")}
 
-Content Pillars: {", ".join(strategy_data.get("content_pillars", []))}
-Content Themes: {", ".join(strategy_data.get("content_themes", []))}
-Engagement Tactics: {", ".join(strategy_data.get("engagement_tactics", []))}
+Content Pillars: {pillars_str}
+Content Themes: {themes_str}
+Engagement Tactics: {tactics_str}
 Platform Recommendations: {platform_list}
 Posting Schedule: {strategy_data.get("posting_schedule", "N/A")}
 

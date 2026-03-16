@@ -19,7 +19,10 @@ class CopyRepository:
     def __init__(self, table_name: str = None, region: str = None):
         self.table_name = table_name or settings.dynamodb_copies_table
         self.region = region or settings.aws_region
-        dynamodb = boto3.resource('dynamodb', region_name=self.region)
+        # Initialize DynamoDB resource using default profile from ~/.aws/credentials
+        # (explicitly using profile_name to avoid env var credentials meant for Bedrock)
+        session = boto3.Session(profile_name='default', region_name=self.region)
+        dynamodb = session.resource('dynamodb')
         self.table = dynamodb.Table(self.table_name)
 
     async def create_copy(self, record: CopyRecord) -> CopyRecord:
