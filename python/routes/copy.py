@@ -8,6 +8,7 @@ Bedrock and mock agent for development.
 
 from fastapi import APIRouter, HTTPException, status, Depends, Response
 from models.copy import CopyGenerateInput, CopyRecord, ChatRequest, ChatResponse
+from services.copywriter_agent import CopywriterAgent, StructuredOutputException
 from services.mock_copywriter_agent import MockCopywriterAgent
 from services.copy_service import CopyService
 from repositories.copy_repository import CopyRepository
@@ -31,18 +32,13 @@ if settings.use_mock_agent:
     logger.info("Using MOCK agent for copy generation (no AWS required)")
     agent = MockCopywriterAgent()
 else:
-    try:
-        from services.copywriter_agent import CopywriterAgent
-        logger.info(f"Using REAL Copywriter agent with Bedrock (region: {settings.aws_region}, model: {settings.bedrock_model_id})")
-        agent = CopywriterAgent(
-            aws_region=settings.aws_region,
-            model_id=settings.bedrock_model_id,
-            aws_access_key_id=settings.aws_access_key_id,
-            aws_secret_access_key=settings.aws_secret_access_key,
-        )
-    except ImportError:
-        logger.warning("CopywriterAgent not available, falling back to MockCopywriterAgent")
-        agent = MockCopywriterAgent()
+    logger.info(f"Using REAL Copywriter agent with Bedrock (region: {settings.aws_region}, model: {settings.bedrock_model_id})")
+    agent = CopywriterAgent(
+        aws_region=settings.aws_region,
+        model_id=settings.bedrock_model_id,
+        aws_access_key_id=settings.aws_access_key_id,
+        aws_secret_access_key=settings.aws_secret_access_key,
+    )
 
 # Initialize repositories and service
 copy_repository = CopyRepository(
@@ -98,6 +94,12 @@ async def generate_copies(
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
             detail="Copy generation timed out. Please try again.",
+        )
+    except StructuredOutputException as e:
+        logger.error(f"Structured output error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate structured copy output. Please try again.",
         )
     except HTTPException:
         raise
@@ -243,6 +245,12 @@ async def chat_refine(
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
             detail="Chat refinement timed out. Please try again.",
+        )
+    except StructuredOutputException as e:
+        logger.error(f"Structured output error during chat: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate structured chat response. Please try again.",
         )
     except HTTPException:
         raise

@@ -220,8 +220,8 @@ Each phase ends with a verification checkpoint.
       - Return `result.structured_output`
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 4.1, 4.2, 4.3, 4.4, 4.5_
 
-- [ ] 11. Wire real agent into routes
-  - [ ] 11.1 Update `python/routes/copy.py`
+- [x] 11. Wire real agent into routes
+  - [x] 11.1 Update `python/routes/copy.py`
     - Import `CopywriterAgent` from `services.copywriter_agent`
     - When `settings.use_mock_agent` is False, instantiate `CopywriterAgent` with AWS config
     - Ensure timeout handling (60 seconds) wraps agent calls
