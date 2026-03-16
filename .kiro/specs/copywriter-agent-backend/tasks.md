@@ -236,8 +236,8 @@ Each phase ends with a verification checkpoint.
 
 ## Phase 4: Frontend Integration
 
-- [ ] 13. Create TypeScript types for copy data
-  - [ ] 13.1 Update `types/agent.ts`
+- [x] 13. Create TypeScript types for copy data
+  - [x] 13.1 Update `types/agent.ts`
     - Add `CopyRecord` interface with fields: `id`, `strategyId`, `userId`, `text`, `platform`, `hashtags`, `createdAt`, `updatedAt`
     - Add `ChatResponse` interface with fields: `updatedText`, `updatedHashtags`, `aiMessage`
     - Keep existing `Caption` type for backward compatibility or replace with `CopyRecord`
