@@ -180,12 +180,12 @@ Each phase ends with a verification checkpoint.
       - Return 204 No Content
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 7.1, 7.2, 7.3, 7.6_
 
-  - [-] 8.2 Write property test for authentication required
+  - [x] 8.2 Write property test for authentication required
     - **Property 6: Authentication Required for All Copy Endpoints**
     - Test that missing/expired/invalid JWT returns 401 for all copy endpoints
     - **Validates: Requirements 5.6**
 
-- [ ] 9. **CHECKPOINT: Verify mock agent flow works**
+- [x] 9. **CHECKPOINT: Verify mock agent flow works**
   - Start Python service with USE_MOCK_AGENT=true
   - Test POST /api/copy/generate with a valid strategyId (from existing strategy)
   - Verify copies are returned with platform-specific text and hashtags
