@@ -198,8 +198,8 @@ Each phase ends with a verification checkpoint.
 
 ## Phase 3: Real Copywriter Agent with Bedrock
 
-- [ ] 10. Implement real copywriter agent
-  - [ ] 10.1 Create `python/services/copywriter_agent.py`
+- [x] 10. Implement real copywriter agent
+  - [x] 10.1 Create `python/services/copywriter_agent.py`
     - Implement `CopywriterAgent` class following same pattern as `StrategistAgent`
     - Initialize BedrockModel with AWS credentials and model_id
     - Create Agent with system prompt for social media copywriting
