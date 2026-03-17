@@ -43,7 +43,7 @@ class CopyOutput(BaseModel):
     copies: List[CopyItem] = Field(
         ...,
         min_length=1,
-        description="List of generated copies, one per platform"
+        description="List of generated copies, 7 variations per platform"
     )
 
 

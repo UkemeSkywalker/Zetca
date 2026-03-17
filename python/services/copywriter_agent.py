@@ -98,7 +98,8 @@ When generating copies:
 3. Match the tone to the target audience demographics
 4. Include relevant, trending hashtags appropriate for each platform
 5. Ensure each copy is unique and platform-optimized
-6. Generate ONE copy per platform from the platform_recommendations
+6. Generate SEVEN different copy variations per platform from the platform_recommendations
+7. Each variation should take a different angle: storytelling, question-driven, educational, CTA-focused, social proof, bold hook, short and punchy
 
 When refining copies via chat:
 1. Understand the user's specific request (tone change, length adjustment, hashtag updates)
@@ -151,11 +152,20 @@ Goals: {strategy_data.get("goals", "N/A")}
 Content Pillars: {pillars_str}
 Content Themes: {themes_str}
 Engagement Tactics: {tactics_str}
-Platform Recommendations: {platform_list}
 Posting Schedule: {strategy_data.get("posting_schedule", "N/A")}
 
-Generate ONE unique, platform-optimized copy for each of these platforms: {platform_list}
-Each copy must include engaging caption text and relevant hashtags tailored to the platform."""
+IMPORTANT: Generate exactly 7 unique copy variations for EACH of these 4 platforms: Twitter/X, Instagram, LinkedIn, Facebook.
+That means 28 total CopyItems in the output (7 for Twitter, 7 for Instagram, 7 for LinkedIn, 7 for Facebook).
+
+Each copy must include engaging caption text and relevant hashtags tailored to the platform.
+Each of the 7 variations per platform should take a different angle:
+1. Bold hook — attention-grabbing opening
+2. Storytelling — emotional narrative
+3. Question-driven — sparks conversation
+4. Educational — thought leadership
+5. Social proof — credibility and trust
+6. Short and punchy — scroll-stopping brevity
+7. CTA-focused — drives action (clicks, saves, shares)"""
 
         result = await self.agent.invoke_async(
             user_prompt, structured_output_model=CopyOutput

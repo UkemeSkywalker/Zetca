@@ -82,16 +82,31 @@ class CopyService:
         if strategy.strategy_output:
             strategy_data.update(strategy.strategy_output.model_dump())
 
+        # Override platforms to only target X, Instagram, LinkedIn, Facebook
+        # with 7 copies per platform
+        strategy_data["platform_recommendations"] = [
+            {"platform": "Twitter"},
+            {"platform": "Instagram"},
+            {"platform": "LinkedIn"},
+            {"platform": "Facebook"},
+        ]
+
         # Call agent — if this raises, no copies are written
         copy_output: CopyOutput = await self.agent.generate_copies(strategy_data)
 
         # Convert CopyItems to CopyRecords
+        def _normalize_platform(p: str) -> str:
+            lower = p.lower().strip()
+            if lower in ("twitter", "twitter/x", "x (twitter)", "x/twitter", "tiktok"):
+                return "x"
+            return lower
+
         records = [
             CopyRecord(
                 strategy_id=strategy_id,
                 user_id=user_id,
                 text=item.text,
-                platform=item.platform,
+                platform=_normalize_platform(item.platform),
                 hashtags=item.hashtags,
             )
             for item in copy_output.copies

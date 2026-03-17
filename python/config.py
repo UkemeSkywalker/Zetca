@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     jwt_secret: str
     
     # Bedrock Configuration
-    bedrock_model_id: str = "anthropic.claude-sonnet-4-6"
+    bedrock_model_id: str = "us.anthropic.claude-sonnet-4-6"
     
     # API Configuration
     frontend_url: str = "http://localhost:3000"
