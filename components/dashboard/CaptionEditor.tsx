@@ -1,10 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CopyRecord } from '@/types/agent';
 import { StrategyRecord } from '@/types/strategy';
-import { Card } from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
 import { Icon } from '@iconify/react';
 import { listStrategies } from '@/lib/api/strategyClient';
 import { generateCopies, listCopies, chatRefineCopy, deleteCopy } from '@/lib/api/copyClient';
@@ -13,70 +11,59 @@ interface CaptionEditorProps {
   className?: string;
 }
 
-type Platform = 'instagram' | 'twitter' | 'linkedin' | 'facebook';
-
 const platformConfig: Record<string, {
   name: string;
-  color: string;
-  tabColor: string;
-  tabColorActive: string;
   icon: string;
+  color: string;
 }> = {
-  instagram: {
-    name: 'Instagram',
-    color: 'bg-pink-100 text-pink-800',
-    tabColor: 'border-pink-500 text-pink-600',
-    tabColorActive: 'border-pink-500 text-pink-600 bg-pink-50',
-    icon: 'solar:camera-bold',
-  },
-  twitter: {
-    name: 'Twitter',
-    color: 'bg-blue-100 text-blue-800',
-    tabColor: 'border-blue-500 text-blue-600',
-    tabColorActive: 'border-blue-500 text-blue-600 bg-blue-50',
-    icon: 'solar:chat-round-bold',
-  },
-  linkedin: {
-    name: 'LinkedIn',
-    color: 'bg-indigo-100 text-indigo-800',
-    tabColor: 'border-indigo-500 text-indigo-600',
-    tabColorActive: 'border-indigo-500 text-indigo-600 bg-indigo-50',
-    icon: 'solar:user-bold',
-  },
-  facebook: {
-    name: 'Facebook',
-    color: 'bg-blue-100 text-blue-800',
-    tabColor: 'border-blue-500 text-blue-600',
-    tabColorActive: 'border-blue-500 text-blue-600 bg-blue-50',
-    icon: 'solar:users-group-rounded-bold',
-  },
+  x: { name: 'X', icon: 'ri:twitter-x-fill', color: '#000000' },
+  twitter: { name: 'X', icon: 'ri:twitter-x-fill', color: '#000000' },
+  pinterest: { name: 'Pinterest', icon: 'mdi:pinterest', color: '#E60023' },
+  instagram: { name: 'Instagram', icon: 'mdi:instagram', color: '#E4405F' },
+  linkedin: { name: 'LinkedIn', icon: 'mdi:linkedin', color: '#0A66C2' },
+  facebook: { name: 'Facebook', icon: 'mdi:facebook', color: '#1877F2' },
+  youtube: { name: 'YouTube', icon: 'mdi:youtube', color: '#FF0000' },
+  other: { name: 'Other', icon: 'mdi:web', color: '#6B7280' },
 };
 
+const allPlatformKeys = ['x', 'instagram', 'linkedin', 'facebook'];
+
+// Normalize platform key: map twitter variants and tiktok to "x"
+function normalizePlatform(p: string): string {
+  const lower = p.toLowerCase().trim();
+  if (lower === 'twitter' || lower === 'tiktok' || lower === 'twitter/x' || lower === 'x (twitter)' || lower === 'x/twitter') return 'x';
+  return lower;
+}
+
 export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) => {
-  // State for strategies
   const [strategies, setStrategies] = useState<StrategyRecord[]>([]);
   const [selectedStrategyId, setSelectedStrategyId] = useState<string>('');
   const [loadingStrategies, setLoadingStrategies] = useState(true);
-
-  // State for copies
   const [copies, setCopies] = useState<CopyRecord[]>([]);
   const [loadingCopies, setLoadingCopies] = useState(false);
   const [generatingCopies, setGeneratingCopies] = useState(false);
-
-  // State for chat refinement
   const [chatInputs, setChatInputs] = useState<Record<string, string>>({});
   const [chattingCopyId, setChattingCopyId] = useState<string | null>(null);
   const [aiMessages, setAiMessages] = useState<Record<string, string>>({});
-
-  // State for deletion
   const [deletingCopyId, setDeletingCopyId] = useState<string | null>(null);
-
-  // UI state
-  const [copySuccess, setCopySuccess] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>('instagram');
+  const [activeTab, setActiveTab] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [copySuccess, setCopySuccess] = useState<string | null>(null);
+  const [showPlatformMenu, setShowPlatformMenu] = useState(false);
+  const [editedTexts, setEditedTexts] = useState<Record<string, string>>({});
+  const [expandedAccordions, setExpandedAccordions] = useState<Record<string, boolean>>({});
+  const platformMenuRef = useRef<HTMLDivElement>(null);
 
-  // Fetch strategies on mount
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (platformMenuRef.current && !platformMenuRef.current.contains(e.target as Node)) {
+        setShowPlatformMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   useEffect(() => {
     const fetchStrategies = async () => {
       try {
@@ -93,17 +80,18 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
     fetchStrategies();
   }, []);
 
-  // Load copies when strategy is selected
   const loadCopiesForStrategy = useCallback(async (strategyId: string) => {
-    if (!strategyId) {
-      setCopies([]);
-      return;
-    }
+    if (!strategyId) { setCopies([]); return; }
     try {
       setLoadingCopies(true);
       setError(null);
       const data = await listCopies(strategyId);
       setCopies(data);
+      if (data.length > 0) {
+        const allowed = ['x', 'instagram', 'linkedin', 'facebook'];
+        const firstAllowed = data.find(c => allowed.includes(normalizePlatform(c.platform)));
+        setActiveTab(firstAllowed ? normalizePlatform(firstAllowed.platform) : normalizePlatform(data[0].platform));
+      }
     } catch (err) {
       console.error('Failed to load copies:', err);
       setError('Failed to load copies. Please try again.');
@@ -113,20 +101,16 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
     }
   }, []);
 
-  // Handle strategy selection change
   const handleStrategyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const strategyId = e.target.value;
     setSelectedStrategyId(strategyId);
     setAiMessages({});
     setChatInputs({});
-    if (strategyId) {
-      loadCopiesForStrategy(strategyId);
-    } else {
-      setCopies([]);
-    }
+    setEditedTexts({});
+    if (strategyId) { loadCopiesForStrategy(strategyId); }
+    else { setCopies([]); setActiveTab(''); }
   };
 
-  // Generate copies from selected strategy
   const handleGenerateCopies = async () => {
     if (!selectedStrategyId) return;
     try {
@@ -135,6 +119,12 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
       const newCopies = await generateCopies(selectedStrategyId);
       setCopies(newCopies);
       setAiMessages({});
+      setEditedTexts({});
+      if (newCopies.length > 0) {
+        const allowed = ['x', 'instagram', 'linkedin', 'facebook'];
+        const firstAllowed = newCopies.find(c => allowed.includes(normalizePlatform(c.platform)));
+        setActiveTab(firstAllowed ? normalizePlatform(firstAllowed.platform) : normalizePlatform(newCopies[0].platform));
+      }
     } catch (err: any) {
       console.error('Failed to generate copies:', err);
       setError(err.message || 'Failed to generate copies. Please try again.');
@@ -143,24 +133,19 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
     }
   };
 
-  // Handle chat refinement
   const handleChatSubmit = async (copyId: string) => {
     const message = chatInputs[copyId]?.trim();
     if (!message) return;
-
     try {
       setChattingCopyId(copyId);
       setError(null);
       const response = await chatRefineCopy(copyId, message);
-      
-      // Update the copy in local state with the refined text and hashtags
-      setCopies(prev => prev.map(copy => 
-        copy.id === copyId 
+      setCopies(prev => prev.map(copy =>
+        copy.id === copyId
           ? { ...copy, text: response.updatedText, hashtags: response.updatedHashtags }
           : copy
       ));
-      
-      // Store AI message and clear input
+      setEditedTexts(prev => { const { [copyId]: _, ...rest } = prev; return rest; });
       setAiMessages(prev => ({ ...prev, [copyId]: response.aiMessage }));
       setChatInputs(prev => ({ ...prev, [copyId]: '' }));
     } catch (err: any) {
@@ -171,22 +156,15 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
     }
   };
 
-  // Handle copy deletion
   const handleDeleteCopy = async (copyId: string) => {
     try {
       setDeletingCopyId(copyId);
       setError(null);
       await deleteCopy(copyId);
       setCopies(prev => prev.filter(copy => copy.id !== copyId));
-      // Clean up related state
-      setAiMessages(prev => {
-        const { [copyId]: _, ...rest } = prev;
-        return rest;
-      });
-      setChatInputs(prev => {
-        const { [copyId]: _, ...rest } = prev;
-        return rest;
-      });
+      setAiMessages(prev => { const { [copyId]: _, ...rest } = prev; return rest; });
+      setChatInputs(prev => { const { [copyId]: _, ...rest } = prev; return rest; });
+      setEditedTexts(prev => { const { [copyId]: _, ...rest } = prev; return rest; });
     } catch (err: any) {
       console.error('Failed to delete copy:', err);
       setError(err.message || 'Failed to delete copy. Please try again.');
@@ -195,7 +173,6 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
     }
   };
 
-  // Copy to clipboard
   const handleCopyToClipboard = async (text: string, copyId: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -206,308 +183,362 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
     }
   };
 
-  // Group copies by platform
+  const toggleAccordion = (copyId: string) => {
+    setExpandedAccordions(prev => ({ ...prev, [copyId]: !prev[copyId] }));
+  };
+
+  // Group copies by normalized platform, filtering to only allowed platforms
+  const allowedPlatforms = new Set(['x', 'instagram', 'linkedin', 'facebook']);
   const copiesByPlatform = copies.reduce((acc, copy) => {
-    const platform = copy.platform.toLowerCase();
-    if (!acc[platform]) {
-      acc[platform] = [];
-    }
+    const platform = normalizePlatform(copy.platform);
+    if (!allowedPlatforms.has(platform)) return acc;
+    if (!acc[platform]) acc[platform] = [];
     acc[platform].push(copy);
     return acc;
   }, {} as Record<string, CopyRecord[]>);
 
   const availablePlatforms = Object.keys(copiesByPlatform);
-
-  // Adjust active tab if current tab has no copies
-  useEffect(() => {
-    if (availablePlatforms.length > 0 && !availablePlatforms.includes(activeTab)) {
-      setActiveTab(availablePlatforms[0]);
-    }
-  }, [availablePlatforms, activeTab]);
+  const activePlatformCopies = activeTab ? (copiesByPlatform[activeTab] || []) : [];
+  const activeCopy = activePlatformCopies[0] || null;
+  const additionalCopies = activePlatformCopies.slice(1);
 
   const getPlatformConfig = (platform: string) => {
-    return platformConfig[platform.toLowerCase()] || {
-      name: platform,
-      color: 'bg-gray-100 text-gray-800',
-      tabColor: 'border-gray-500 text-gray-600',
-      tabColorActive: 'border-gray-500 text-gray-600 bg-gray-50',
-      icon: 'solar:hashtag-bold',
-    };
+    return platformConfig[normalizePlatform(platform)] || platformConfig.other;
   };
 
-  return (
-    <div className={`space-y-6 ${className}`}>
-      {/* Strategy Selection */}
-      <Card className="p-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
-          <div className="flex-1 w-full">
-            <label htmlFor="strategy-select" className="block text-sm font-medium text-gray-700 mb-1">
-              Select Strategy
-            </label>
-            {loadingStrategies ? (
-              <div className="h-10 bg-gray-100 rounded-lg animate-pulse" />
-            ) : (
-              <select
-                id="strategy-select"
-                value={selectedStrategyId}
-                onChange={handleStrategyChange}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                aria-label="Select a strategy to generate copies from"
-              >
-                <option value="">Choose a strategy...</option>
-                {strategies.map(s => (
-                  <option key={s.id} value={s.id}>
-                    {s.brandName} — {s.industry}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-          <Button
-            variant="primary"
-            onClick={handleGenerateCopies}
-            disabled={!selectedStrategyId || generatingCopies}
-            className="flex items-center gap-2 whitespace-nowrap"
-            aria-label="Generate copies from selected strategy"
-          >
-            {generatingCopies ? (
-              <>
-                <Icon icon="solar:refresh-bold" className="w-4 h-4 animate-spin" aria-hidden="true" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Icon icon="solar:magic-stick-3-bold" className="w-4 h-4" aria-hidden="true" />
-                Generate Copies
-              </>
-            )}
-          </Button>
-        </div>
-      </Card>
+  const handleRemoveTab = (platform: string) => {
+    const platformCopies = copiesByPlatform[platform] || [];
+    platformCopies.forEach(copy => handleDeleteCopy(copy.id));
+    if (activeTab === platform && availablePlatforms.length > 1) {
+      const nextPlatform = availablePlatforms.find(p => p !== platform);
+      if (nextPlatform) setActiveTab(nextPlatform);
+    }
+  };
 
-      {/* Error Display */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3" role="alert">
-          <Icon icon="solar:danger-triangle-bold" className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
-          <div className="flex-1">
-            <p className="text-sm text-red-700">{error}</p>
-          </div>
-          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600" aria-label="Dismiss error">
-            <Icon icon="solar:close-circle-bold" className="w-5 h-5" />
+  const getDisplayText = (copy: CopyRecord) => {
+    return editedTexts[copy.id] !== undefined ? editedTexts[copy.id] : copy.text;
+  };
+
+  // --- EMPTY STATES ---
+  if (loadingStrategies) {
+    return (
+      <div className={`${className}`}>
+        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+          <Icon icon="svg-spinners:ring-resize" className="w-8 h-8 text-gray-400 mx-auto mb-3" />
+          <p className="text-gray-500 text-sm">Loading strategies...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedStrategyId && !loadingStrategies) {
+    return (
+      <div className={`space-y-4 ${className}`}>
+        <StrategySelector strategies={strategies} selectedStrategyId={selectedStrategyId} onChange={handleStrategyChange} loading={loadingStrategies} />
+        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+          <Icon icon="solar:document-text-bold" className="w-14 h-14 text-gray-300 mx-auto mb-3" />
+          <p className="text-gray-900 font-semibold text-lg mb-1">Select a Strategy</p>
+          <p className="text-gray-500 text-sm">Choose a strategy above to generate or view copies.</p>
+          {strategies.length === 0 && (
+            <button onClick={() => window.location.href = '/dashboard/strategist'} className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white" style={{ background: 'linear-gradient(45deg, #3139FB, #8B5CF6)' }}>
+              Go to Strategist
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (loadingCopies || generatingCopies) {
+    return (
+      <div className={`space-y-4 ${className}`}>
+        <StrategySelector strategies={strategies} selectedStrategyId={selectedStrategyId} onChange={handleStrategyChange} loading={loadingStrategies} />
+        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+          <Icon icon="svg-spinners:ring-resize" className="w-10 h-10 text-indigo-500 mx-auto mb-4" />
+          <p className="text-gray-900 font-semibold text-lg mb-1">{generatingCopies ? 'Generating Copies...' : 'Loading Copies...'}</p>
+          <p className="text-gray-500 text-sm">{generatingCopies ? 'The AI is crafting platform-specific copies from your strategy.' : 'Fetching your existing copies.'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (selectedStrategyId && copies.length === 0) {
+    return (
+      <div className={`space-y-4 ${className}`}>
+        <StrategySelector strategies={strategies} selectedStrategyId={selectedStrategyId} onChange={handleStrategyChange} loading={loadingStrategies} />
+        {error && <ErrorBanner error={error} onDismiss={() => setError(null)} />}
+        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+          <Icon icon="solar:pen-bold" className="w-14 h-14 text-gray-300 mx-auto mb-3" />
+          <p className="text-gray-900 font-semibold text-lg mb-1">No Copies Yet</p>
+          <p className="text-gray-500 text-sm mb-4">Click &quot;Generate&quot; to create platform-specific content.</p>
+          <button onClick={handleGenerateCopies} disabled={generatingCopies} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-emerald-500 hover:bg-emerald-600 transition-colors disabled:opacity-50">
+            <Icon icon="solar:refresh-bold" className="w-4 h-4" />
+            Generate
           </button>
         </div>
-      )}
+      </div>
+    );
+  }
 
-      {/* Loading State */}
-      {(loadingCopies || generatingCopies) && (
-        <Card className="text-center py-12">
-          <Icon icon="solar:refresh-bold" className="w-12 h-12 text-blue-400 mx-auto mb-4 animate-spin" aria-hidden="true" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            {generatingCopies ? 'Generating Copies...' : 'Loading Copies...'}
-          </h3>
-          <p className="text-gray-600">
-            {generatingCopies
-              ? 'The AI is crafting platform-specific copies from your strategy.'
-              : 'Fetching your existing copies.'}
-          </p>
-        </Card>
-      )}
+  // --- MAIN EDITOR UI ---
+  const currentText = activeCopy ? getDisplayText(activeCopy) : '';
+  const charCount = currentText.length;
 
-      {/* Platform Tabs */}
-      {!loadingCopies && !generatingCopies && availablePlatforms.length > 0 && (
-        <>
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8" role="tablist" aria-label="Platform tabs">
-              {availablePlatforms.map((platform) => {
-                const config = getPlatformConfig(platform);
-                const isActive = activeTab === platform;
-                const copyCount = copiesByPlatform[platform]?.length || 0;
+  return (
+    <div className={`space-y-4 ${className}`}>
+      <StrategySelector strategies={strategies} selectedStrategyId={selectedStrategyId} onChange={handleStrategyChange} loading={loadingStrategies} />
+      {error && <ErrorBanner error={error} onDismiss={() => setError(null)} />}
 
-                return (
-                  <button
-                    key={platform}
-                    onClick={() => setActiveTab(platform)}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors ${
-                      isActive
-                        ? `${config.tabColorActive} border-current`
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                    role="tab"
-                    aria-selected={isActive}
-                    aria-controls={`${platform}-panel`}
-                    id={`${platform}-tab`}
-                  >
-                    <Icon icon={config.icon} className="w-4 h-4" aria-hidden="true" />
-                    {config.name}
-                    <span className={`px-2 py-0.5 rounded-full text-xs ${
-                      isActive ? 'bg-white text-gray-600' : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {copyCount}
-                    </span>
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+        {/* Platform Tabs */}
+        <div className="flex items-center border-b border-gray-200 bg-gray-50 overflow-x-auto">
+          {availablePlatforms.map((platform) => {
+            const config = getPlatformConfig(platform);
+            const isActive = activeTab === platform;
+            return (
+              <button
+                key={platform}
+                onClick={() => setActiveTab(platform)}
+                className={`flex items-center gap-3 px-6 py-4 text-base font-medium border-r border-gray-200 whitespace-nowrap transition-all ${
+                  isActive ? 'text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 bg-transparent'
+                }`}
+                style={isActive ? { backgroundColor: config.color, color: 'white' } : undefined}
+                role="tab"
+                aria-selected={isActive}
+              >
+                <Icon icon={config.icon} className="w-5 h-5" style={{ color: isActive ? 'white' : config.color }} />
+                {config.name}
+                <span
+                  onClick={(e) => { e.stopPropagation(); handleRemoveTab(platform); }}
+                  className={`ml-1 rounded-sm p-1 leading-none text-lg transition-colors ${isActive ? 'text-white/70 hover:text-white hover:bg-white/20' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-200'}`}
+                  role="button"
+                  aria-label={`Remove ${config.name} tab`}
+                  tabIndex={0}
+                >×</span>
+              </button>
+            );
+          })}
+        </div>
 
-          {/* Active Tab Content */}
-          <div
-            className="space-y-4"
-            role="tabpanel"
-            id={`${activeTab}-panel`}
-            aria-labelledby={`${activeTab}-tab`}
-          >
-            {copiesByPlatform[activeTab]?.map((copy, index) => {
-              const config = getPlatformConfig(copy.platform);
-              const isDeleting = deletingCopyId === copy.id;
-              const isChatting = chattingCopyId === copy.id;
-
-              return (
-                <Card key={copy.id} className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-gray-500">Copy {index + 1}</span>
-                      <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${config.color}`}>
-                        <Icon icon={config.icon} className="w-4 h-4" />
-                        {config.name}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleCopyToClipboard(copy.text, copy.id)}
-                        className="flex items-center gap-2"
-                        aria-label={`Copy caption ${index + 1} to clipboard`}
-                      >
-                        <Icon
-                          icon={copySuccess === copy.id ? 'solar:check-circle-bold' : 'solar:copy-bold'}
-                          className="w-4 h-4"
-                          aria-hidden="true"
-                        />
-                        {copySuccess === copy.id ? 'Copied!' : 'Copy'}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteCopy(copy.id)}
-                        disabled={isDeleting}
-                        className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:border-red-300"
-                        aria-label={`Delete caption ${index + 1}`}
-                      >
-                        {isDeleting ? (
-                          <Icon icon="solar:refresh-bold" className="w-4 h-4 animate-spin" aria-hidden="true" />
-                        ) : (
-                          <Icon icon="solar:trash-bin-trash-bold" className="w-4 h-4" aria-hidden="true" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Copy Text Display */}
-                  <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                    <p className="text-gray-800 whitespace-pre-wrap">{copy.text}</p>
-                  </div>
-
-                  {/* Hashtags */}
-                  {copy.hashtags && copy.hashtags.length > 0 && (
-                    <div className="mb-4">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Hashtags</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {copy.hashtags.map((hashtag, hashtagIndex) => (
-                          <span
-                            key={hashtagIndex}
-                            className="px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-md font-medium"
-                          >
-                            {hashtag.startsWith('#') ? hashtag : `#${hashtag}`}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* AI Message */}
-                  {aiMessages[copy.id] && (
-                    <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                      <div className="flex items-start gap-2">
-                        <Icon icon="solar:magic-stick-3-bold" className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
-                        <p className="text-sm text-blue-700">{aiMessages[copy.id]}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Chat Refinement Input */}
-                  <div className="flex items-start gap-2">
-                    <label htmlFor={`chat-${copy.id}`} className="sr-only">
-                      Refine this copy with AI
-                    </label>
-                    <input
-                      id={`chat-${copy.id}`}
-                      type="text"
-                      value={chatInputs[copy.id] || ''}
-                      onChange={(e) => setChatInputs(prev => ({ ...prev, [copy.id]: e.target.value }))}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleChatSubmit(copy.id);
-                        }
-                      }}
-                      placeholder="Ask AI to refine this copy..."
-                      className="flex-1 p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      disabled={isChatting}
-                      aria-label={`Chat to refine copy ${index + 1}`}
-                    />
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => handleChatSubmit(copy.id)}
-                      disabled={isChatting || !chatInputs[copy.id]?.trim()}
-                      className="flex items-center gap-1"
-                      aria-label={`Send refinement message for copy ${index + 1}`}
-                    >
-                      {isChatting ? (
-                        <Icon icon="solar:refresh-bold" className="w-4 h-4 animate-spin" aria-hidden="true" />
-                      ) : (
-                        <Icon icon="solar:plain-bold" className="w-4 h-4" aria-hidden="true" />
-                      )}
-                    </Button>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        </>
-      )}
-
-      {/* Empty State - no strategy selected */}
-      {!selectedStrategyId && !loadingStrategies && (
-        <Card className="text-center py-12">
-          <Icon icon="solar:document-text-bold" className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Select a Strategy</h3>
-          <p className="text-gray-600 mb-4">
-            Choose a strategy above to generate or view copies.
-          </p>
-          {strategies.length === 0 && (
-            <Button
-              variant="primary"
-              onClick={() => window.location.href = '/dashboard/strategist'}
-            >
-              Go to Strategist
-            </Button>
+        {/* Toolbar */}
+        <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-200 bg-white">
+          <button onClick={handleGenerateCopies} disabled={generatingCopies || !selectedStrategyId} className="inline-flex items-center gap-2.5 px-6 py-2.5 rounded-lg text-base font-semibold text-white bg-emerald-500 hover:bg-emerald-600 transition-colors disabled:opacity-50" aria-label="Generate copies">
+            {generatingCopies ? <Icon icon="svg-spinners:ring-resize" className="w-5 h-5" /> : <Icon icon="solar:refresh-bold" className="w-5 h-5" />}
+            Generate
+          </button>
+          <div className="w-px h-8 bg-gray-200 mx-1" />
+          <ToolbarButton icon="solar:undo-left-round-linear" label="Undo" />
+          <ToolbarButton icon="solar:undo-right-round-linear" label="Redo" />
+          <div className="w-px h-8 bg-gray-200 mx-1" />
+          {activeCopy && (
+            <ToolbarButton
+              icon={copySuccess === activeCopy.id ? 'solar:check-circle-bold' : 'solar:copy-linear'}
+              label="Copy to clipboard"
+              onClick={() => handleCopyToClipboard(currentText + '\n\n' + activeCopy.hashtags.map(h => h.startsWith('#') ? h : `#${h}`).join(' '), activeCopy.id)}
+            />
           )}
-        </Card>
-      )}
+          <ToolbarButton icon="solar:eye-linear" label="Preview" />
+          <div className="relative" ref={platformMenuRef}>
+            <ToolbarButton icon="solar:add-square-linear" label="Copy to Platform" onClick={() => setShowPlatformMenu(!showPlatformMenu)} />
+            {showPlatformMenu && (
+              <div className="absolute top-full left-0 mt-2 w-60 bg-white rounded-xl border border-gray-200 shadow-xl py-2 z-50">
+                <p className="px-5 py-2 text-sm font-medium text-gray-400 uppercase tracking-wide">Copy to Platform</p>
+                {allPlatformKeys.map((key) => {
+                  const config = platformConfig[key];
+                  const isActive = activeTab === key;
+                  return (
+                    <button key={key} onClick={() => { if (activeCopy) { navigator.clipboard.writeText(currentText); setCopySuccess(activeCopy.id); setTimeout(() => setCopySuccess(null), 2000); } setShowPlatformMenu(false); }}
+                      className={`w-full flex items-center gap-3 px-5 py-3 text-base transition-colors ${isActive ? 'bg-gray-100 text-gray-900 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                      <Icon icon={config.icon} className="w-6 h-6" style={{ color: config.color }} />
+                      {config.name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          <div className="flex-1" />
+          {/* Copy counter */}
+          {activePlatformCopies.length > 1 && (
+            <span className="text-sm text-gray-400 font-medium">1/{activePlatformCopies.length}</span>
+          )}
+          <button className="inline-flex items-center gap-2.5 px-6 py-2.5 rounded-lg text-base font-semibold transition-colors" style={{ background: 'linear-gradient(45deg, #3139FB, #8B5CF6)', color: 'white' }}>
+            <Icon icon="solar:plain-bold" className="w-5 h-5" />
+            Publish
+          </button>
+        </div>
 
-      {/* Empty State - strategy selected but no copies */}
-      {selectedStrategyId && !loadingCopies && !generatingCopies && copies.length === 0 && (
-        <Card className="text-center py-12">
-          <Icon icon="solar:pen-bold" className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Copies Yet</h3>
-          <p className="text-gray-600">
-            Click &quot;Generate Copies&quot; to create platform-specific content from your strategy.
-          </p>
-        </Card>
-      )}
+        {/* Editor Content Area */}
+        {activeCopy && (
+          <div role="tabpanel" id={`${activeTab}-panel`}>
+            {/* Editable text area */}
+            <div className="p-8">
+              <textarea
+                value={currentText}
+                onChange={(e) => setEditedTexts(prev => ({ ...prev, [activeCopy.id]: e.target.value }))}
+                className="w-full min-h-[320px] text-lg leading-relaxed text-gray-800 bg-white border border-gray-200 rounded-xl p-6 resize-y focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                placeholder="Write your copy here..."
+                aria-label="Edit copy text"
+              />
+              <p className="mt-2 text-sm text-gray-400">{charCount} characters</p>
+            </div>
+
+            {/* Hashtags */}
+            {activeCopy.hashtags && activeCopy.hashtags.length > 0 && (
+              <div className="px-8 pb-6">
+                <div className="flex flex-wrap gap-2.5">
+                  {activeCopy.hashtags.map((hashtag, i) => (
+                    <span key={i} className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-indigo-50 text-indigo-700">
+                      {hashtag.startsWith('#') ? hashtag : `#${hashtag}`}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* AI Message */}
+            {aiMessages[activeCopy.id] && (
+              <div className="mx-8 mb-6 p-4 bg-blue-50 border border-blue-100 rounded-xl">
+                <div className="flex items-start gap-3">
+                  <Icon icon="solar:magic-stick-3-bold" className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-base text-blue-700">{aiMessages[activeCopy.id]}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Chat refinement */}
+            <div className="px-8 pb-6">
+              <div className="flex items-center gap-3">
+                <label htmlFor={`chat-${activeCopy.id}`} className="sr-only">Refine this copy with AI</label>
+                <input
+                  id={`chat-${activeCopy.id}`}
+                  type="text"
+                  value={chatInputs[activeCopy.id] || ''}
+                  onChange={(e) => setChatInputs(prev => ({ ...prev, [activeCopy.id]: e.target.value }))}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatSubmit(activeCopy.id); } }}
+                  placeholder="Ask AI to refine this copy..."
+                  className="flex-1 px-5 py-3.5 border border-gray-200 rounded-xl text-base focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 placeholder-gray-400"
+                  disabled={chattingCopyId === activeCopy.id}
+                />
+                <button
+                  onClick={() => handleChatSubmit(activeCopy.id)}
+                  disabled={chattingCopyId === activeCopy.id || !chatInputs[activeCopy.id]?.trim()}
+                  className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl text-base font-medium text-white transition-colors disabled:opacity-50"
+                  style={{ background: 'linear-gradient(45deg, #3139FB, #8B5CF6)' }}
+                  aria-label="Send refinement message"
+                >
+                  {chattingCopyId === activeCopy.id ? <Icon icon="svg-spinners:ring-resize" className="w-5 h-5" /> : <Icon icon="solar:plain-bold" className="w-5 h-5" />}
+                  Refine
+                </button>
+              </div>
+            </div>
+
+            {/* Accordion copies */}
+            {additionalCopies.length > 0 && (
+              <div className="px-8 pb-8 space-y-3">
+                {additionalCopies.map((copy, i) => {
+                  const isExpanded = expandedAccordions[copy.id] || false;
+                  const copyText = getDisplayText(copy);
+                  return (
+                    <div key={copy.id} className="rounded-xl overflow-hidden border border-gray-200 bg-white">
+                      {/* Accordion header */}
+                      <div
+                        className="flex items-center justify-between px-5 py-4 cursor-pointer transition-colors hover:bg-gray-50"
+                        onClick={() => toggleAccordion(copy.id)}
+                        role="button"
+                        aria-expanded={isExpanded}
+                        tabIndex={0}
+                      >
+                        <p className="text-base text-gray-700 truncate flex-1 pr-4">
+                          {copyText.substring(0, 100)}{copyText.length > 100 ? '...' : ''}
+                        </p>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDeleteCopy(copy.id); }}
+                            disabled={deletingCopyId === copy.id}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 transition-colors"
+                            aria-label={`Delete copy ${i + 2}`}
+                          >
+                            {deletingCopyId === copy.id ? <Icon icon="svg-spinners:ring-resize" className="w-5 h-5" /> : <Icon icon="solar:close-circle-bold" className="w-5 h-5" />}
+                          </button>
+                          <Icon icon={isExpanded ? 'solar:alt-arrow-up-linear' : 'solar:alt-arrow-down-linear'} className="w-5 h-5 text-gray-400" />
+                        </div>
+                      </div>
+                      {/* Accordion body */}
+                      {isExpanded && (
+                        <div className="px-5 pb-5 border-t border-gray-200">
+                          <textarea
+                            value={copyText}
+                            onChange={(e) => setEditedTexts(prev => ({ ...prev, [copy.id]: e.target.value }))}
+                            className="w-full min-h-[150px] mt-4 text-base leading-relaxed text-gray-800 bg-gray-50 border border-gray-200 rounded-lg p-4 resize-y focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                            aria-label={`Edit copy ${i + 2}`}
+                          />
+                          <p className="mt-1 text-sm text-gray-400">{copyText.length} characters</p>
+                          {copy.hashtags && copy.hashtags.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-3">
+                              {copy.hashtags.map((h, hi) => (
+                                <span key={hi} className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700">
+                                  {h.startsWith('#') ? h : `#${h}`}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                {/* Add to Thread button */}
+                <button className="w-full flex items-center justify-center gap-2 px-5 py-4 rounded-xl text-base font-medium text-indigo-600 border border-gray-200 bg-white hover:bg-gray-50 transition-colors">
+                  <Icon icon="solar:add-circle-linear" className="w-5 h-5" />
+                  Add to Thread
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
+
+
+// --- Helper Components ---
+
+function ToolbarButton({ icon, label, onClick }: { icon: string; label: string; onClick?: () => void }) {
+  return (
+    <button onClick={onClick} className="p-2.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors" aria-label={label} title={label}>
+      <Icon icon={icon} className="w-6 h-6" />
+    </button>
+  );
+}
+
+function StrategySelector({ strategies, selectedStrategyId, onChange, loading }: {
+  strategies: StrategyRecord[];
+  selectedStrategyId: string;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  loading: boolean;
+}) {
+  if (loading) return <div className="h-12 bg-gray-100 rounded-xl animate-pulse" />;
+  return (
+    <div className="flex items-center gap-4">
+      <label htmlFor="strategy-select" className="text-base font-medium text-gray-600 whitespace-nowrap">Strategy</label>
+      <select id="strategy-select" value={selectedStrategyId} onChange={onChange} className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-base bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent" aria-label="Select a strategy to generate copies from">
+        <option value="">Choose a strategy...</option>
+        {strategies.map(s => <option key={s.id} value={s.id}>{s.brandName} — {s.industry}</option>)}
+      </select>
+    </div>
+  );
+}
+
+function ErrorBanner({ error, onDismiss }: { error: string; onDismiss: () => void }) {
+  return (
+    <div className="bg-red-50 border border-red-200 rounded-xl px-5 py-4 flex items-center gap-4" role="alert">
+      <Icon icon="solar:danger-triangle-bold" className="w-6 h-6 text-red-500 flex-shrink-0" />
+      <p className="text-base text-red-700 flex-1">{error}</p>
+      <button onClick={onDismiss} className="text-red-400 hover:text-red-600" aria-label="Dismiss error">
+        <Icon icon="solar:close-circle-bold" className="w-6 h-6" />
+      </button>
+    </div>
+  );
+}

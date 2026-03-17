@@ -280,8 +280,8 @@ Each phase ends with a verification checkpoint.
     - On mount, if a strategyId is selected, load existing copies via `listCopies(strategyId)`
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 3.1, 3.4, 4.1, 4.5, 5.5_
 
-- [ ] 16. Update Next.js proxy config
-  - [ ] 16.1 Update `next.config.ts`
+- [x] 16. Update Next.js proxy config
+  - [x] 16.1 Update `next.config.ts`
     - Add rewrite rule for `/api/copy/*` to proxy to Python service (same pattern as `/api/strategy/*`)
     - _Requirements: 5.7_
 

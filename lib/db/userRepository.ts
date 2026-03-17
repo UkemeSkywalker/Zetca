@@ -12,7 +12,7 @@ import {
   UpdateCommand,
   DeleteCommand,
 } from '@aws-sdk/lib-dynamodb';
-import { config } from '../config';
+import { config, getConfig } from '../config';
 import { randomUUID } from 'crypto';
 
 /**
@@ -37,12 +37,22 @@ export class UserRepository {
   private tableName: string;
 
   constructor() {
-    const client = new DynamoDBClient({
-      region: config.awsRegion,
-    });
-    
+    const cfg = getConfig();
+    const clientConfig: Record<string, any> = {
+      region: cfg.awsRegion,
+    };
+
+    // Explicitly pass credentials from env vars if available
+    if (cfg.awsAccessKeyId && cfg.awsSecretAccessKey) {
+      clientConfig.credentials = {
+        accessKeyId: cfg.awsAccessKeyId,
+        secretAccessKey: cfg.awsSecretAccessKey,
+      };
+    }
+
+    const client = new DynamoDBClient(clientConfig);
     this.docClient = DynamoDBDocumentClient.from(client);
-    this.tableName = config.dynamoDbTableName;
+    this.tableName = cfg.dynamoDbTableName;
   }
 
   /**

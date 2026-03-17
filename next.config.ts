@@ -19,6 +19,10 @@ const nextConfig: NextConfig = {
         source: '/api/strategy/:path*',
         destination: `${pythonServiceUrl}/api/strategy/:path*`,
       },
+      {
+        source: '/api/copy/:path*',
+        destination: `${pythonServiceUrl}/api/copy/:path*`,
+      },
     ];
   },
 };
