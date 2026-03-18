@@ -40,8 +40,8 @@ Each phase ends with a verification checkpoint.
     - Test that AutoScheduleInput, ManualScheduleInput, PostAssignment, AutoScheduleOutput, ScheduledPostRecord, and ScheduledPostUpdate survive JSON serialize/deserialize
     - **Validates: Requirements 1.4, 12.1, 12.2, 12.3, 12.4, 12.5, 12.6, 12.7**
 
-- [ ] 2. Create DynamoDB scheduled-posts table with Terraform
-  - [ ] 2.1 Create `terraform/scheduled-posts-table.tf`
+- [x] 2. Create DynamoDB scheduled-posts table with Terraform
+  - [x] 2.1 Create `terraform/scheduled-posts-table.tf`
     - Define `aws_dynamodb_table` resource for scheduled-posts table
     - Set `postId` as partition key (String)
     - Define attributes: `postId` (S), `userId` (S), `strategyId` (S), `copyId` (S), `scheduledDate` (S)
