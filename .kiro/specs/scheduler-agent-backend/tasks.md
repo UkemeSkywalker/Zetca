@@ -64,7 +64,7 @@ Each phase ends with a verification checkpoint.
     - Update app description to reflect strategy, copy, and scheduler services
     - _Requirements: 7.9_
 
-- [ ] 4. **CHECKPOINT: Verify foundation**
+- [x] 4. **CHECKPOINT: Verify foundation**
   - Ensure Pydantic models validate correctly
   - Ensure Terraform plan succeeds for scheduled-posts table
   - Ensure Python service starts without errors with new config
@@ -72,8 +72,8 @@ Each phase ends with a verification checkpoint.
 
 ## Phase 2: Repository + Mock Agent + Service + Routes
 
-- [ ] 5. Create scheduler repository for DynamoDB
-  - [ ] 5.1 Create `python/repositories/scheduler_repository.py`
+- [x] 5. Create scheduler repository for DynamoDB
+  - [x] 5.1 Create `python/repositories/scheduler_repository.py`
     - Initialize DynamoDB resource with boto3 using settings
     - Implement `create_post(record: ScheduledPostRecord) -> ScheduledPostRecord`
     - Implement `create_posts(records: List[ScheduledPostRecord]) -> List[ScheduledPostRecord]` for batch storage
@@ -86,20 +86,20 @@ Each phase ends with a verification checkpoint.
     - Implement `_record_to_item()` and `_item_to_record()` helper methods
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 3.10, 3.11, 3.12, 4.1, 4.2, 4.3, 4.4, 4.5, 5.1, 5.2, 5.4, 5.5, 8.5_
 
-  - [ ]* 5.2 Write property test for ScheduledPostRecord completeness
+  - [x] 5.2 Write property test for ScheduledPostRecord completeness
     - **Property 4: ScheduledPostRecord Completeness**
     - Create `python/tests/test_scheduler_record_completeness_property.py`
     - Test that stored ScheduledPostRecords contain all required fields: non-empty postId, strategyId, copyId, userId, content, platform, hashtags list, valid scheduledDate, valid scheduledTime, valid status, strategyColor, strategyLabel, valid createdAt, valid updatedAt
     - **Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 3.10, 3.11, 3.12**
 
-  - [ ]* 5.3 Write property test for user isolation
+  - [-] 5.3 Write property test for user isolation
     - **Property 5: User Isolation Across All Scheduler Operations**
     - Create `python/tests/test_scheduler_user_isolation_property.py`
     - Test that user A's posts are inaccessible to user B across get, list, update, and delete operations
     - **Validates: Requirements 1.7, 2.3, 2.5, 5.3, 5.7, 8.1, 8.2, 8.3, 8.4**
 
-- [ ] 6. Create mock scheduler agent
-  - [ ] 6.1 Create `python/services/mock_scheduler_agent.py`
+- [x] 6. Create mock scheduler agent
+  - [x] 6.1 Create `python/services/mock_scheduler_agent.py`
     - Implement `MockSchedulerAgent` class
     - Implement `auto_schedule(strategy_data: dict, copies_data: List[dict]) -> AutoScheduleOutput`
     - Return realistic scheduling assignments with dates spread across upcoming 2-4 weeks
@@ -108,7 +108,7 @@ Each phase ends with a verification checkpoint.
     - Reference provided copies' copyIds in the output
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
 
-  - [ ]* 6.2 Write property test for mock agent interface compatibility
+  - [x]* 6.2 Write property test for mock agent interface compatibility
     - **Property 11: Mock Agent Interface Compatibility**
     - Create `python/tests/test_scheduler_mock_interface_property.py`
     - Test that MockSchedulerAgent accepts the same inputs and returns AutoScheduleOutput with copyIds referencing the provided copies
