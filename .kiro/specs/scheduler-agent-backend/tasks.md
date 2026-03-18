@@ -34,7 +34,7 @@ Each phase ends with a verification checkpoint.
     - Test that invalid date formats, time formats, empty copy_id, and empty platform are rejected in ManualScheduleInput
     - **Validates: Requirements 2.6, 12.1, 12.2**
 
-  - [ ]* 1.3 Write property test for Pydantic JSON round-trip
+  - [x] 1.3 Write property test for Pydantic JSON round-trip
     - **Property 2: Pydantic Model JSON Serialization Round-Trip**
     - Create `python/tests/test_scheduler_serialization_property.py`
     - Test that AutoScheduleInput, ManualScheduleInput, PostAssignment, AutoScheduleOutput, ScheduledPostRecord, and ScheduledPostUpdate survive JSON serialize/deserialize
