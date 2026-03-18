@@ -6,6 +6,8 @@
 interface Config {
   dynamoDbTableName: string;
   awsRegion: string;
+  awsAccessKeyId: string;
+  awsSecretAccessKey: string;
   jwtSecret: string;
   jwtExpirationHours: number;
   rateLimitMaxRequests: number;
@@ -17,6 +19,8 @@ export function getConfig(): Config {
   const cfg = {
     dynamoDbTableName: process.env.DYNAMODB_TABLE_NAME || 'users-dev',
     awsRegion: process.env.AWS_REGION || 'us-east-1',
+    awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+    awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
     jwtSecret: process.env.JWT_SECRET || '',
     jwtExpirationHours: 24,
     rateLimitMaxRequests: 5,

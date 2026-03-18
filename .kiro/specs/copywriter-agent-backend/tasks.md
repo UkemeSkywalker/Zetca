@@ -59,7 +59,7 @@ Each phase ends with a verification checkpoint.
     - Update app title/description to reflect both strategy and copy services
     - _Requirements: 5.7_
 
-- [ ] 4. **CHECKPOINT: Verify foundation**
+- [x] 4. **CHECKPOINT: Verify foundation**
   - Ensure Pydantic models validate correctly (run model unit tests)
   - Ensure Terraform plan succeeds for copies table
   - Ensure Python service starts without errors with new config
@@ -67,8 +67,8 @@ Each phase ends with a verification checkpoint.
 
 ## Phase 2: Mock Agent + Repository + Service + Routes
 
-- [ ] 5. Create copy repository for DynamoDB
-  - [ ] 5.1 Create `python/repositories/copy_repository.py`
+- [x] 5. Create copy repository for DynamoDB
+  - [x] 5.1 Create `python/repositories/copy_repository.py`
     - Initialize DynamoDB resource with boto3
     - Implement `create_copy(record: CopyRecord) -> CopyRecord`
     - Implement `create_copies(records: List[CopyRecord]) -> List[CopyRecord]` for batch storage
@@ -81,18 +81,18 @@ Each phase ends with a verification checkpoint.
     - Implement `_item_to_record()` helper to convert DynamoDB items to CopyRecord
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 3.1, 3.3, 6.5_
 
-  - [ ]* 5.2 Write property test for CopyRecord completeness
+  - [x] 5.2 Write property test for CopyRecord completeness
     - **Property 4: CopyRecord Completeness**
     - Test that stored CopyRecords contain all required fields: non-empty copyId, strategyId, userId, text, platform, hashtags list, valid createdAt, valid updatedAt
     - **Validates: Requirements 2.2, 2.3, 2.4, 2.5, 2.6, 2.7**
 
-  - [ ]* 5.3 Write property test for user isolation
+  - [ ] 5.3 Write property test for user isolation
     - **Property 5: User Isolation Across All Copy Operations**
     - Test that user A's copies are inaccessible to user B across get, list, chat, and delete operations
     - **Validates: Requirements 1.9, 3.2, 3.6, 4.9, 6.1, 6.2, 6.3, 6.4**
 
-- [ ] 6. Create mock copywriter agent
-  - [ ] 6.1 Create `python/services/mock_copywriter_agent.py`
+- [x] 6. Create mock copywriter agent
+  - [x] 6.1 Create `python/services/mock_copywriter_agent.py`
     - Implement `MockCopywriterAgent` class
     - Implement `generate_copies(strategy_data: dict) -> CopyOutput` returning realistic sample copies
     - Generate copies for platforms from strategy data's platform_recommendations
@@ -102,13 +102,13 @@ Each phase ends with a verification checkpoint.
     - Return mock ChatResponse with updated text, hashtags, and AI explanation message
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
 
-  - [ ]* 6.2 Write property test for mock agent interface compatibility
+  - [x] 6.2 Write property test for mock agent interface compatibility
     - **Property 10: Mock Agent Interface Compatibility**
     - Test that MockCopywriterAgent accepts the same inputs and returns the same Pydantic model types as the real agent interface
     - **Validates: Requirements 9.4**
 
-- [ ] 7. Create copy service layer
-  - [ ] 7.1 Create `python/services/copy_service.py`
+- [x] 7. Create copy service layer
+  - [x] 7.1 Create `python/services/copy_service.py`
     - Implement `CopyService` class with agent, copy_repository, and strategy_repository dependencies
     - Implement `generate_copies(strategy_id, user_id) -> List[CopyRecord]`:
       - Fetch strategy from strategy_repository (verify ownership, raise 404/403)
@@ -145,8 +145,8 @@ Each phase ends with a verification checkpoint.
     - Test that failed generation stores no copies, and failed chat leaves copy unchanged
     - **Validates: Requirements 7.4, 7.5**
 
-- [ ] 8. Create copy API routes
-  - [ ] 8.1 Create `python/routes/copy.py`
+- [x] 8. Create copy API routes
+  - [x] 8.1 Create `python/routes/copy.py`
     - Create APIRouter with prefix `/api/copy` and tags `["copy"]`
     - Initialize agent (mock or real based on `settings.use_mock_agent`)
     - Initialize copy_repository and strategy_repository
@@ -180,12 +180,12 @@ Each phase ends with a verification checkpoint.
       - Return 204 No Content
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 7.1, 7.2, 7.3, 7.6_
 
-  - [ ]* 8.2 Write property test for authentication required
+  - [x] 8.2 Write property test for authentication required
     - **Property 6: Authentication Required for All Copy Endpoints**
     - Test that missing/expired/invalid JWT returns 401 for all copy endpoints
     - **Validates: Requirements 5.6**
 
-- [ ] 9. **CHECKPOINT: Verify mock agent flow works**
+- [x] 9. **CHECKPOINT: Verify mock agent flow works**
   - Start Python service with USE_MOCK_AGENT=true
   - Test POST /api/copy/generate with a valid strategyId (from existing strategy)
   - Verify copies are returned with platform-specific text and hashtags
@@ -198,8 +198,8 @@ Each phase ends with a verification checkpoint.
 
 ## Phase 3: Real Copywriter Agent with Bedrock
 
-- [ ] 10. Implement real copywriter agent
-  - [ ] 10.1 Create `python/services/copywriter_agent.py`
+- [x] 10. Implement real copywriter agent
+  - [x] 10.1 Create `python/services/copywriter_agent.py`
     - Implement `CopywriterAgent` class following same pattern as `StrategistAgent`
     - Initialize BedrockModel with AWS credentials and model_id
     - Create Agent with system prompt for social media copywriting
@@ -220,14 +220,14 @@ Each phase ends with a verification checkpoint.
       - Return `result.structured_output`
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 4.1, 4.2, 4.3, 4.4, 4.5_
 
-- [ ] 11. Wire real agent into routes
-  - [ ] 11.1 Update `python/routes/copy.py`
+- [x] 11. Wire real agent into routes
+  - [x] 11.1 Update `python/routes/copy.py`
     - Import `CopywriterAgent` from `services.copywriter_agent`
     - When `settings.use_mock_agent` is False, instantiate `CopywriterAgent` with AWS config
     - Ensure timeout handling (60 seconds) wraps agent calls
     - _Requirements: 1.1, 7.1, 7.3_
 
-- [ ] 12. **CHECKPOINT: Verify real agent generates copies**
+- [x] 12. **CHECKPOINT: Verify real agent generates copies**
   - Set USE_MOCK_AGENT=false and ensure AWS credentials are configured
   - Generate copies from an existing strategy
   - Verify copies are platform-specific with appropriate tone and hashtags
@@ -236,15 +236,15 @@ Each phase ends with a verification checkpoint.
 
 ## Phase 4: Frontend Integration
 
-- [ ] 13. Create TypeScript types for copy data
-  - [ ] 13.1 Update `types/agent.ts`
+- [x] 13. Create TypeScript types for copy data
+  - [x] 13.1 Update `types/agent.ts`
     - Add `CopyRecord` interface with fields: `id`, `strategyId`, `userId`, `text`, `platform`, `hashtags`, `createdAt`, `updatedAt`
     - Add `ChatResponse` interface with fields: `updatedText`, `updatedHashtags`, `aiMessage`
     - Keep existing `Caption` type for backward compatibility or replace with `CopyRecord`
     - _Requirements: 10.2, 10.4, 10.6_
 
-- [ ] 14. Create copy API client
-  - [ ] 14.1 Create `lib/api/copyClient.ts`
+- [x] 14. Create copy API client
+  - [x] 14.1 Create `lib/api/copyClient.ts`
     - Implement `generateCopies(strategyId: string): Promise<CopyRecord[]>`
       - POST to `/api/copy/generate` with `{ strategy_id: strategyId }`
       - Include JWT Authorization header
@@ -264,8 +264,8 @@ Each phase ends with a verification checkpoint.
     - Handle 401 (redirect to login), 403 (access denied), 404 (not found) errors
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [ ] 15. Update CaptionEditor to use real backend
-  - [ ] 15.1 Update `components/dashboard/CaptionEditor.tsx`
+- [x] 15. Update CaptionEditor to use real backend
+  - [x] 15.1 Update `components/dashboard/CaptionEditor.tsx`
     - Remove import of `mockCaptionsData` from `data/mockCaptions.json`
     - Remove dependency on `useAgentContext` for captions (use local state + API)
     - Add strategy selection: fetch user's strategies via `listStrategies()` from strategyClient
@@ -280,8 +280,8 @@ Each phase ends with a verification checkpoint.
     - On mount, if a strategyId is selected, load existing copies via `listCopies(strategyId)`
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 3.1, 3.4, 4.1, 4.5, 5.5_
 
-- [ ] 16. Update Next.js proxy config
-  - [ ] 16.1 Update `next.config.ts`
+- [x] 16. Update Next.js proxy config
+  - [x] 16.1 Update `next.config.ts`
     - Add rewrite rule for `/api/copy/*` to proxy to Python service (same pattern as `/api/strategy/*`)
     - _Requirements: 5.7_
 

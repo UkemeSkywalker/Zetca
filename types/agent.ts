@@ -21,6 +21,23 @@ export interface Caption {
   createdAt: Date;
 }
 
+export interface CopyRecord {
+  id: string;
+  strategyId: string;
+  userId: string;
+  text: string;
+  platform: string;
+  hashtags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatResponse {
+  updatedText: string;
+  updatedHashtags: string[];
+  aiMessage: string;
+}
+
 export interface WorkflowStatus {
   strategist: 'complete' | 'in-progress' | 'not-started';
   copywriter: 'complete' | 'in-progress' | 'not-started';
