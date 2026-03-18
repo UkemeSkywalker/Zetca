@@ -9,12 +9,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes.strategy import router as strategy_router
 from routes.copy import router as copy_router
+from routes.scheduler import router as scheduler_router
 from config import settings
 
 # Initialize FastAPI app
 app = FastAPI(
     title="Zetca Agent API",
-    description="AI-powered social media strategy and copy generation service",
+    description="AI-powered social media strategy, copy generation, and scheduling service",
     version="1.0.0"
 )
 
@@ -30,6 +31,7 @@ app.add_middleware(
 # Register routes
 app.include_router(strategy_router)
 app.include_router(copy_router)
+app.include_router(scheduler_router)
 
 
 @app.get("/health")

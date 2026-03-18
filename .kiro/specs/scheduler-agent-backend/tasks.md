@@ -53,12 +53,12 @@ Each phase ends with a verification checkpoint.
     - Add tags: Name, Environment, ManagedBy, Application
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7, 10.8_
 
-- [ ] 3. Update configuration and app registration
-  - [ ] 3.1 Update `python/config.py`
+- [x] 3. Update configuration and app registration
+  - [x] 3.1 Update `python/config.py`
     - Add `dynamodb_scheduled_posts_table: str = "scheduled-posts-dev"` to Settings class
     - _Requirements: 13.1, 13.2_
 
-  - [ ] 3.2 Update `python/main.py`
+  - [x] 3.2 Update `python/main.py`
     - Import and register scheduler router: `from routes.scheduler import router as scheduler_router`
     - Add `app.include_router(scheduler_router)`
     - Update app description to reflect strategy, copy, and scheduler services
