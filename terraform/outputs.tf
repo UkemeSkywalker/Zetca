@@ -27,3 +27,12 @@ output "dynamodb_copies_table_arn" {
   value       = aws_dynamodb_table.copies.arn
   description = "ARN of the DynamoDB copies table"
 }
+output "dynamodb_scheduled_posts_table_name" {
+  value       = aws_dynamodb_table.scheduled_posts.name
+  description = "Name of the DynamoDB scheduled posts table"
+}
+
+output "dynamodb_scheduled_posts_table_arn" {
+  value       = aws_dynamodb_table.scheduled_posts.arn
+  description = "ARN of the DynamoDB scheduled posts table"
+}
