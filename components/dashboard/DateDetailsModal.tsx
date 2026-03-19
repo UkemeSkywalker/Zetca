@@ -5,13 +5,13 @@ import { Icon } from '@iconify/react';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { Post } from '@/types/post';
+import { ScheduledPost } from '@/types/scheduler';
 
 interface DateDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedDate: Date | null;
-  posts: Post[];
+  posts: ScheduledPost[];
   onScheduleNew: () => void;
   onEditPost: (postId: string) => void;
   onDeletePost: (postId: string) => void;
@@ -29,7 +29,7 @@ export function DateDetailsModal({
   if (!selectedDate) return null;
 
   // Platform icons
-  const platformIcons = {
+  const platformIcons: Record<string, string> = {
     instagram: 'solar:camera-bold',
     twitter: 'solar:chat-round-bold',
     linkedin: 'solar:user-bold',
@@ -104,6 +104,17 @@ export function DateDetailsModal({
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
+                      {/* Strategy indicator */}
+                      {post.strategyLabel && (
+                        <div className="flex items-center gap-2 mb-2">
+                          <span
+                            className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: post.strategyColor || '#6B7280' }}
+                          />
+                          <span className="text-xs font-medium text-gray-500">{post.strategyLabel}</span>
+                        </div>
+                      )}
+
                       {/* Post content */}
                       <p className="text-gray-900 mb-3 leading-relaxed">
                         {post.content}
@@ -113,7 +124,7 @@ export function DateDetailsModal({
                       <div className="flex items-center gap-4 text-sm text-gray-500">
                         <div className="flex items-center gap-1">
                           <Icon 
-                            icon={platformIcons[post.platform]} 
+                            icon={platformIcons[post.platform] || 'solar:chat-round-bold'} 
                             className="w-4 h-4" 
                           />
                           <span className="capitalize font-medium">{post.platform}</span>

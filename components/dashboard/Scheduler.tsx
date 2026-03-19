@@ -19,24 +19,6 @@ interface SchedulerProps {
 
 type ViewMode = 'calendar' | 'list';
 
-/**
- * Convert a ScheduledPost (API) to a Post (legacy component format).
- * This adapter keeps Calendar and DateDetailsModal working until they
- * are updated in tasks 17.1 / 17.2.
- */
-function toPost(sp: ScheduledPost): Post {
-  const [year, month, day] = sp.scheduledDate.split('-').map(Number);
-  return {
-    id: sp.id,
-    content: sp.content,
-    platform: sp.platform as Post['platform'],
-    scheduledDate: new Date(year, month - 1, day),
-    scheduledTime: sp.scheduledTime,
-    status: sp.status,
-    createdAt: new Date(sp.createdAt),
-  };
-}
-
 export function Scheduler({ className = '' }: SchedulerProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [posts, setPosts] = useState<ScheduledPost[]>([]);
@@ -83,18 +65,15 @@ export function Scheduler({ className = '' }: SchedulerProps) {
     }
   }, []);
 
-  // Convert ScheduledPost[] to Post[] for legacy components
-  const legacyPosts: Post[] = posts.map(toPost);
-
   // Handle date click from calendar
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);
-    const postsForDate = legacyPosts.filter(post => {
-      const postDate = new Date(post.scheduledDate);
+    const postsForDate = posts.filter(post => {
+      const [year, month, day] = post.scheduledDate.split('-').map(Number);
       return (
-        postDate.getDate() === date.getDate() &&
-        postDate.getMonth() === date.getMonth() &&
-        postDate.getFullYear() === date.getFullYear()
+        day === date.getDate() &&
+        month - 1 === date.getMonth() &&
+        year === date.getFullYear()
       );
     });
     if (postsForDate.length > 0) {
@@ -169,10 +148,21 @@ export function Scheduler({ className = '' }: SchedulerProps) {
 
   // Handle editing a post
   const handleEditPost = (postId: string) => {
-    const postToEdit = legacyPosts.find(post => post.id === postId);
-    if (postToEdit) {
-      setEditingPost(postToEdit);
-      setSelectedDate(new Date(postToEdit.scheduledDate));
+    const post = posts.find(p => p.id === postId);
+    if (post) {
+      // Convert to legacy Post format for SchedulingModal (until task 20 updates it)
+      const [year, month, day] = post.scheduledDate.split('-').map(Number);
+      const legacyPost = {
+        id: post.id,
+        content: post.content,
+        platform: post.platform as 'instagram' | 'twitter' | 'linkedin' | 'facebook',
+        scheduledDate: new Date(year, month - 1, day),
+        scheduledTime: post.scheduledTime,
+        status: post.status as 'scheduled' | 'published' | 'draft',
+        createdAt: new Date(post.createdAt),
+      };
+      setEditingPost(legacyPost);
+      setSelectedDate(new Date(year, month - 1, day));
       setIsDateDetailsModalOpen(false);
       setIsSchedulingModalOpen(true);
     }
@@ -345,7 +335,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
       {/* Calendar View */}
       {viewMode === 'calendar' && (
         <Calendar
-          posts={legacyPosts}
+          posts={posts}
           onDateClick={handleDateClick}
         />
       )}
@@ -451,12 +441,12 @@ export function Scheduler({ className = '' }: SchedulerProps) {
           setSelectedDate(null);
         }}
         selectedDate={selectedDate}
-        posts={selectedDate ? legacyPosts.filter(post => {
-          const postDate = new Date(post.scheduledDate);
+        posts={selectedDate ? posts.filter(post => {
+          const [year, month, day] = post.scheduledDate.split('-').map(Number);
           return (
-            postDate.getDate() === selectedDate.getDate() &&
-            postDate.getMonth() === selectedDate.getMonth() &&
-            postDate.getFullYear() === selectedDate.getFullYear()
+            day === selectedDate.getDate() &&
+            month - 1 === selectedDate.getMonth() &&
+            year === selectedDate.getFullYear()
           );
         }) : []}
         onScheduleNew={handleScheduleFromDateDetails}

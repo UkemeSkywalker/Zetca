@@ -276,14 +276,14 @@ Each phase ends with a verification checkpoint.
     - On delete, call schedulerClient.deletePost and refresh calendar
     - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.5, 16.8, 18.1_
 
-- [ ] 17. Update Calendar and DateDetailsModal for strategy colors
-  - [ ] 17.1 Update `components/dashboard/Calendar.tsx`
+- [x] 17. Update Calendar and DateDetailsModal for strategy colors
+  - [x] 17.1 Update `components/dashboard/Calendar.tsx`
     - Accept `ScheduledPost[]` instead of `Post[]`
     - Use `strategyColor` for post indicator colors instead of hardcoded platform colors
     - Show strategy-colored dots/bars on calendar cells
     - _Requirements: 16.6_
 
-  - [ ] 17.2 Update `components/dashboard/DateDetailsModal.tsx`
+  - [x] 17.2 Update `components/dashboard/DateDetailsModal.tsx`
     - Display `strategyLabel` (brandName) for each post
     - Show strategy color indicator next to each post entry
     - _Requirements: 16.7_

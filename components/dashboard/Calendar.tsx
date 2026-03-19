@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import { Icon } from '@iconify/react';
-import { Post } from '@/types/post';
+import { ScheduledPost } from '@/types/scheduler';
 
 interface CalendarProps {
-  posts: Post[];
+  posts: ScheduledPost[];
   onDateClick: (date: Date) => void;
   className?: string;
 }
@@ -40,12 +40,11 @@ export function Calendar({ posts, onDateClick, className = '' }: CalendarProps) 
   // Get posts for a specific date
   const getPostsForDate = (date: Date) => {
     return posts.filter(post => {
-      const postDate = new Date(post.scheduledDate);
-      // Compare only the date parts, ignoring time
+      const [year, month, day] = post.scheduledDate.split('-').map(Number);
       return (
-        postDate.getDate() === date.getDate() &&
-        postDate.getMonth() === date.getMonth() &&
-        postDate.getFullYear() === date.getFullYear()
+        day === date.getDate() &&
+        month - 1 === date.getMonth() &&
+        year === date.getFullYear()
       );
     });
   };
@@ -99,13 +98,8 @@ export function Calendar({ posts, onDateClick, className = '' }: CalendarProps) 
   ];
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  // Platform colors for post indicators
-  const platformColors = {
-    instagram: 'bg-pink-500',
-    twitter: 'bg-blue-500',
-    linkedin: 'bg-blue-700',
-    facebook: 'bg-blue-600'
-  };
+  // Default fallback color when strategyColor is not set
+  const defaultColor = '#6B7280';
 
   return (
     <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className}`}>
@@ -174,13 +168,9 @@ export function Calendar({ posts, onDateClick, className = '' }: CalendarProps) 
                       {calendarDay.posts.slice(0, 3).map((post, postIndex) => (
                         <div
                           key={postIndex}
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            post.platform === 'instagram' ? 'bg-pink-500' :
-                            post.platform === 'twitter' ? 'bg-blue-500' :
-                            post.platform === 'linkedin' ? 'bg-blue-700' :
-                            'bg-blue-600'
-                          }`}
-                          title={`${post.platform.toUpperCase()}: ${post.content}`}
+                          className="w-1.5 h-1.5 rounded-full"
+                          style={{ backgroundColor: post.strategyColor || defaultColor }}
+                          title={`${post.strategyLabel || post.platform}: ${post.content}`}
                         />
                       ))}
                     </div>
@@ -190,13 +180,9 @@ export function Calendar({ posts, onDateClick, className = '' }: CalendarProps) 
                       {calendarDay.posts.slice(0, 2).map((post, postIndex) => (
                         <div
                           key={postIndex}
-                          className={`text-xs p-1 rounded text-white truncate ${
-                            post.platform === 'instagram' ? 'bg-pink-500' :
-                            post.platform === 'twitter' ? 'bg-blue-500' :
-                            post.platform === 'linkedin' ? 'bg-blue-700' :
-                            'bg-blue-600'
-                          }`}
-                          title={`${post.platform.toUpperCase()}: ${post.content}`}
+                          className="text-xs p-1 rounded text-white truncate"
+                          style={{ backgroundColor: post.strategyColor || defaultColor }}
+                          title={`${post.strategyLabel || post.platform}: ${post.content}`}
                         >
                           {post.content.length > 20 ? `${post.content.substring(0, 20)}...` : post.content}
                         </div>
