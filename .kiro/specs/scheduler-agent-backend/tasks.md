@@ -306,8 +306,8 @@ Each phase ends with a verification checkpoint.
     - On failure, display error message with retry option
     - _Requirements: 18.1, 18.2, 18.3, 18.4, 18.5, 18.6_
 
-- [ ] 20. Update SchedulingModal for API integration
-  - [ ] 20.1 Update `components/dashboard/SchedulingModal.tsx`
+- [x] 20. Update SchedulingModal for API integration
+  - [x] 20.1 Update `components/dashboard/SchedulingModal.tsx`
     - Accept optional pre-fill props for content, platform, hashtags (from CaptionEditor publish flow)
     - Support both "create new" and "edit existing" modes via API
     - _Requirements: 16.3, 16.4, 17.1, 17.2_
