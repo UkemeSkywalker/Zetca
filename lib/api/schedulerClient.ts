@@ -392,7 +392,7 @@ export async function updatePost(postId: string, data: ScheduledPostUpdate): Pro
  */
 export async function deleteAllPosts(): Promise<number> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/scheduler/posts`, {
+    const response = await fetch(`${API_BASE_URL}/api/scheduler/posts/clear-all`, {
       method: 'DELETE',
       headers: createAuthHeaders(),
     });

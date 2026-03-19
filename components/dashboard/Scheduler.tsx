@@ -437,9 +437,9 @@ export function Scheduler({ className = '' }: SchedulerProps) {
 
       {/* List View */}
       {viewMode === 'list' && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div>
           {sortedPosts.length === 0 ? (
-            <div className="p-8 text-center">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
               <Icon icon="solar:calendar-bold" className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No scheduled posts</h3>
               <p className="text-gray-500 mb-4">
@@ -453,73 +453,94 @@ export function Scheduler({ className = '' }: SchedulerProps) {
               </Button>
             </div>
           ) : (
-            <div className="divide-y divide-gray-200">
-              {sortedPosts.map((post) => (
-                <div key={post.id} className="p-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      {/* Strategy label */}
-                      {post.strategyLabel && (
-                        <div className="flex items-center gap-2 mb-1">
-                          <span
-                            className="inline-block w-2.5 h-2.5 rounded-full"
-                            style={{ backgroundColor: post.strategyColor || '#6B7280' }}
-                          />
-                          <span className="text-xs font-medium text-gray-500">{post.strategyLabel}</span>
-                        </div>
-                      )}
+            <div className="space-y-6">
+              {Object.entries(
+                sortedPosts.reduce<Record<string, ScheduledPost[]>>((groups, post) => {
+                  const dateKey = post.scheduledDate;
+                  if (!groups[dateKey]) groups[dateKey] = [];
+                  groups[dateKey].push(post);
+                  return groups;
+                }, {})
+              ).map(([dateKey, datePosts]) => (
+                <div key={dateKey}>
+                  {/* Date group header */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                      <Icon icon="solar:calendar-bold" className="w-4 h-4 text-indigo-500" />
+                      <span>{formatDate(dateKey)}</span>
+                    </div>
+                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                      {datePosts.length} post{datePosts.length !== 1 ? 's' : ''}
+                    </span>
+                    <div className="flex-1 border-t border-gray-200" />
+                  </div>
 
-                      {/* Post content */}
-                      <p className="text-gray-900 mb-2 line-clamp-3">
-                        {post.content}
-                      </p>
-                      
-                      {/* Post metadata */}
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <div className="flex items-center gap-1">
-                          <Icon 
-                            icon={platformIcons[post.platform] || 'solar:chat-round-bold'} 
-                            className="w-4 h-4" 
-                          />
-                          <span className="capitalize">{post.platform}</span>
+                  {/* Posts for this date */}
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 divide-y divide-gray-200">
+                    {datePosts.map((post) => (
+                      <div key={post.id} className="p-4 hover:bg-gray-50 transition-colors">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            {/* Strategy label */}
+                            {post.strategyLabel && (
+                              <div className="flex items-center gap-2 mb-1">
+                                <span
+                                  className="inline-block w-2.5 h-2.5 rounded-full"
+                                  style={{ backgroundColor: post.strategyColor || '#6B7280' }}
+                                />
+                                <span className="text-xs font-medium text-gray-500">{post.strategyLabel}</span>
+                              </div>
+                            )}
+
+                            {/* Post content */}
+                            <p className="text-gray-900 mb-2 line-clamp-3">
+                              {post.content}
+                            </p>
+                            
+                            {/* Post metadata */}
+                            <div className="flex items-center gap-4 text-sm text-gray-500">
+                              <div className="flex items-center gap-1">
+                                <Icon 
+                                  icon={platformIcons[post.platform] || 'solar:chat-round-bold'} 
+                                  className="w-4 h-4" 
+                                />
+                                <span className="capitalize">{post.platform}</span>
+                              </div>
+                              
+                              <div className="flex items-center gap-1">
+                                <Icon icon="solar:clock-circle-bold" className="w-4 h-4" />
+                                <span>{formatTime(post.scheduledTime)}</span>
+                              </div>
+                              
+                              <StatusBadge status={post.status} />
+                            </div>
+                          </div>
+                          
+                          {/* Actions */}
+                          <div className="flex items-center gap-2 ml-4">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditPost(post.id)}
+                              leftIcon="solar:pen-bold"
+                              aria-label="Edit post"
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeletePost(post.id)}
+                              leftIcon="solar:trash-bin-trash-bold"
+                              aria-label="Delete post"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              Delete
+                            </Button>
+                          </div>
                         </div>
-                        
-                        <div className="flex items-center gap-1">
-                          <Icon icon="solar:calendar-bold" className="w-4 h-4" />
-                          <span>{formatDate(post.scheduledDate)}</span>
-                        </div>
-                        
-                        <div className="flex items-center gap-1">
-                          <Icon icon="solar:clock-circle-bold" className="w-4 h-4" />
-                          <span>{formatTime(post.scheduledTime)}</span>
-                        </div>
-                        
-                        <StatusBadge status={post.status} />
                       </div>
-                    </div>
-                    
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 ml-4">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditPost(post.id)}
-                        leftIcon="solar:pen-bold"
-                        aria-label="Edit post"
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeletePost(post.id)}
-                        leftIcon="solar:trash-bin-trash-bold"
-                        aria-label="Delete post"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        Delete
-                      </Button>
-                    </div>
+                    ))}
                   </div>
                 </div>
               ))}

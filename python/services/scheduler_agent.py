@@ -8,6 +8,7 @@ content themes) and copy content to distribute posts across optimal dates and ti
 """
 
 import boto3
+from datetime import datetime, UTC
 from strands import Agent
 from strands.models.bedrock import BedrockModel
 from models.scheduler import AutoScheduleOutput
@@ -72,6 +73,11 @@ class SchedulerAgent:
 a brand's posting strategy and a set of ready-to-publish copies, then determine the optimal
 date and time to publish each copy on its target platform.
 
+CRITICAL RULES:
+- You will be given today's date in the prompt. ALL scheduled dates MUST be in the FUTURE
+  (strictly after today). NEVER schedule a post on today's date or any past date.
+- Distribute copies starting from tomorrow onwards across the upcoming 2-4 weeks.
+
 When scheduling, follow these principles:
 
 1. Respect the strategy's posting_schedule — honour the recommended frequency and preferred
@@ -92,7 +98,7 @@ When scheduling, follow these principles:
 
 For each copy provided, produce exactly one PostAssignment containing:
 - copy_id: the id of the copy being scheduled (must match one of the provided copies)
-- scheduled_date: an ISO 8601 date string (YYYY-MM-DD) in the near future
+- scheduled_date: an ISO 8601 date string (YYYY-MM-DD) that is AFTER today's date
 - scheduled_time: a time string in HH:MM format
 - platform: the target social media platform
 
@@ -146,6 +152,9 @@ Return a structured AutoScheduleOutput with a "posts" list containing all assign
 
         prompt = f"""Schedule the following copies based on the brand strategy below.
 
+IMPORTANT: Today's date is {datetime.now(UTC).strftime('%Y-%m-%d')}. All scheduled_date values
+MUST be strictly after today. Do NOT use today's date or any past date.
+
 Strategy:
 - Brand: {strategy_data.get("brand_name", "N/A")}
 - Posting Schedule: {posting_schedule}
@@ -157,7 +166,8 @@ Copies to schedule ({len(copies_data)} total):
 
 Produce exactly {len(copies_data)} PostAssignment entries — one per copy.
 Each must reference the exact copy_id from the list above.
-Ensure no two assignments share the same (platform, scheduled_date, scheduled_time)."""
+Ensure no two assignments share the same (platform, scheduled_date, scheduled_time).
+All dates must be in the future (after {datetime.now(UTC).strftime('%Y-%m-%d')})."""
 
         result = await self.agent.invoke_async(
             prompt, structured_output_model=AutoScheduleOutput

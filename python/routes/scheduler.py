@@ -332,7 +332,7 @@ async def update_post(
         )
 
 
-@router.delete("/posts", status_code=status.HTTP_200_OK)
+@router.delete("/posts/clear-all", status_code=status.HTTP_200_OK)
 async def delete_all_posts(
     user_id: str = Depends(auth_middleware.get_current_user),
 ):

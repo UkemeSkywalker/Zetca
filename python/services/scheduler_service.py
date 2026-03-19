@@ -8,7 +8,7 @@ and Strategy Repository while enforcing user isolation and data integrity.
 """
 
 import logging
-from datetime import datetime, UTC
+from datetime import datetime, date, timedelta, UTC
 from typing import List, Optional
 
 from fastapi import HTTPException, status
@@ -56,6 +56,34 @@ class SchedulerService:
     def _get_strategy_color(self, strategy_id: str) -> str:
         """Derive a consistent color from strategyId hash."""
         return self.STRATEGY_COLORS[hash(strategy_id) % len(self.STRATEGY_COLORS)]
+
+    @staticmethod
+    def _validate_future_date(scheduled_date: str, scheduled_time: str = "23:59") -> None:
+        """Raise 400 if the given date/time is in the past."""
+        try:
+            dt = datetime.strptime(f"{scheduled_date} {scheduled_time}", "%Y-%m-%d %H:%M")
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid date or time format: {scheduled_date} {scheduled_time}",
+            )
+        if dt <= datetime.now():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Cannot schedule a post in the past. The date {scheduled_date} at {scheduled_time} has already passed. Please choose a future date and time.",
+            )
+
+    @staticmethod
+    def _ensure_future_date(scheduled_date: str) -> str:
+        """If the date is today or in the past, bump it to tomorrow. Used as a safety net for agent output."""
+        try:
+            d = datetime.strptime(scheduled_date, "%Y-%m-%d").date()
+        except ValueError:
+            return scheduled_date
+        today = date.today()
+        if d <= today:
+            return (today + timedelta(days=1)).isoformat()
+        return scheduled_date
 
     async def _get_strategy_with_ownership(self, strategy_id: str, user_id: str):
         """Fetch a strategy and verify ownership. Raises 404/403 on failure."""
@@ -134,6 +162,9 @@ class SchedulerService:
             hashtags = copy.hashtags if copy else []
             platform = assignment.platform or (copy.platform if copy else "")
 
+            # Safety net: ensure the agent didn't return a past date
+            safe_date = self._ensure_future_date(assignment.scheduled_date)
+
             records.append(
                 ScheduledPostRecord(
                     strategy_id=strategy_id,
@@ -142,7 +173,7 @@ class SchedulerService:
                     content=content,
                     platform=platform,
                     hashtags=hashtags,
-                    scheduled_date=assignment.scheduled_date,
+                    scheduled_date=safe_date,
                     scheduled_time=assignment.scheduled_time,
                     status="scheduled",
                     strategy_color=strategy_color,
@@ -158,11 +189,15 @@ class SchedulerService:
         """
         Manually schedule a single copy.
 
-        1. Fetch copy (verify ownership -> 404/403)
-        2. Fetch associated strategy for color/label
-        3. Create ScheduledPostRecord with status "scheduled"
-        4. Store record
+        1. Validate date is in the future
+        2. Fetch copy (verify ownership -> 404/403)
+        3. Fetch associated strategy for color/label
+        4. Create ScheduledPostRecord with status "scheduled"
+        5. Store record
         """
+        # Reject past dates with a clear message
+        self._validate_future_date(input.scheduled_date, input.scheduled_time)
+
         # Verify copy exists and belongs to user
         copy_exists = await self.copy_repository.copy_exists(input.copy_id)
         if not copy_exists:
