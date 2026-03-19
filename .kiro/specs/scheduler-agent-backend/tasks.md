@@ -162,8 +162,8 @@ Each phase ends with a verification checkpoint.
     - Test that strategyColor is deterministically derived from strategyId and strategyLabel matches the strategy's brandName
     - **Validates: Requirements 6.1, 6.3, 6.4, 6.5**
 
-- [ ] 8. Create scheduler API routes
-  - [ ] 8.1 Create `python/routes/scheduler.py`
+- [-] 8. Create scheduler API routes
+  - [x] 8.1 Create `python/routes/scheduler.py`
     - Create APIRouter with prefix `/api/scheduler` and tags `["scheduler"]`
     - Initialize agent (mock or real based on `settings.use_mock_agent`)
     - Initialize scheduler_repository, copy_repository, strategy_repository
@@ -177,7 +177,7 @@ Each phase ends with a verification checkpoint.
     - Implement `DELETE /posts/{post_id}` endpoint with auth, 204 response, 404/403 handling
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 9.1, 9.2, 9.3, 9.5_
 
-  - [ ]* 8.2 Write property test for authentication required
+  - [x] 8.2 Write property test for authentication required
     - **Property 6: Authentication Required for All Scheduler Endpoints**
     - Create `python/tests/test_scheduler_auth_property.py`
     - Test that missing/expired/invalid JWT returns 401 for all scheduler endpoints
