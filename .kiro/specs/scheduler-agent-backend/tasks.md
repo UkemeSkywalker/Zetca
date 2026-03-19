@@ -92,7 +92,7 @@ Each phase ends with a verification checkpoint.
     - Test that stored ScheduledPostRecords contain all required fields: non-empty postId, strategyId, copyId, userId, content, platform, hashtags list, valid scheduledDate, valid scheduledTime, valid status, strategyColor, strategyLabel, valid createdAt, valid updatedAt
     - **Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 3.10, 3.11, 3.12**
 
-  - [-] 5.3 Write property test for user isolation
+  - [ ] 5.3 Write property test for user isolation
     - **Property 5: User Isolation Across All Scheduler Operations**
     - Create `python/tests/test_scheduler_user_isolation_property.py`
     - Test that user A's posts are inaccessible to user B across get, list, update, and delete operations
@@ -114,8 +114,8 @@ Each phase ends with a verification checkpoint.
     - Test that MockSchedulerAgent accepts the same inputs and returns AutoScheduleOutput with copyIds referencing the provided copies
     - **Validates: Requirements 11.4, 11.5**
 
-- [ ] 7. Create scheduler service layer
-  - [ ] 7.1 Create `python/services/scheduler_service.py`
+- [x] 7. Create scheduler service layer
+  - [x] 7.1 Create `python/services/scheduler_service.py`
     - Implement `SchedulerService` class with agent, scheduler_repository, copy_repository, strategy_repository dependencies
     - Define `STRATEGY_COLORS` palette for visual differentiation
     - Implement `_get_strategy_color(strategy_id: str) -> str` using hash-based consistent color derivation
@@ -138,13 +138,13 @@ Each phase ends with a verification checkpoint.
     - Implement `delete_post(post_id, user_id) -> tuple[bool, bool]` with user isolation
     - _Requirements: 1.1, 1.2, 1.3, 1.5, 1.6, 1.7, 1.8, 2.1, 2.2, 2.3, 2.4, 2.5, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 6.1, 6.3, 6.4, 6.5, 8.1, 8.2, 8.3, 8.4, 9.4_
 
-  - [ ]* 7.2 Write property test for post persistence round-trip
+  - [x] 7.2 Write property test for post persistence round-trip
     - **Property 3: Post Persistence Round-Trip**
     - Create `python/tests/test_scheduler_persistence_property.py`
     - Test that created posts can be retrieved by postId with matching fields and manual schedule posts have status "scheduled"
     - **Validates: Requirements 2.1, 2.2, 4.2**
 
-  - [ ]* 7.3 Write property test for update round-trip
+  - [x] 7.3 Write property test for update round-trip
     - **Property 8: Update Round-Trip with Timestamp Advancement**
     - Create `python/tests/test_scheduler_update_property.py`
     - Test that updating fields and retrieving the post reflects updated values, updatedAt >= original, and invalid status values are rejected
@@ -156,7 +156,7 @@ Each phase ends with a verification checkpoint.
     - Test that failed auto-schedule operations create no new records in the database
     - **Validates: Requirements 9.4**
 
-  - [ ]* 7.5 Write property test for strategy metadata consistency
+  - [x] 7.5 Write property test for strategy metadata consistency
     - **Property 12: Strategy Metadata Consistency**
     - Create `python/tests/test_scheduler_strategy_metadata_property.py`
     - Test that strategyColor is deterministically derived from strategyId and strategyLabel matches the strategy's brandName
