@@ -198,8 +198,8 @@ Each phase ends with a verification checkpoint.
 
 ## Phase 3: Real Scheduler Agent with Bedrock
 
-- [ ] 10. Implement real scheduler agent
-  - [ ] 10.1 Create `python/services/scheduler_agent.py`
+- [x] 10. Implement real scheduler agent
+  - [x] 10.1 Create `python/services/scheduler_agent.py`
     - Implement `SchedulerAgent` class following same pattern as `CopywriterAgent`
     - Initialize BedrockModel with AWS credentials and model_id
     - Create Agent with system prompt for social media scheduling optimization
@@ -215,7 +215,7 @@ Each phase ends with a verification checkpoint.
       - Raise `StructuredOutputException` if structured_output is None
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
-  - [ ]* 10.2 Write property test for no duplicate scheduling
+  - [x] 10.2 Write property test for no duplicate scheduling
     - **Property 9: Auto-Schedule No Duplicate Platform-Date-Time**
     - Create `python/tests/test_scheduler_no_duplicates_property.py`
     - Test that no two post assignments share the same (platform, scheduledDate, scheduledTime) and each references a valid copyId
