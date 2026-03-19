@@ -183,7 +183,7 @@ Each phase ends with a verification checkpoint.
     - Test that missing/expired/invalid JWT returns 401 for all scheduler endpoints
     - **Validates: Requirements 7.8**
 
-- [ ] 9. **CHECKPOINT: Verify mock agent flow works**
+- [x] 9. **CHECKPOINT: Verify mock agent flow works**
   - Start Python service with USE_MOCK_AGENT=true
   - Test POST /api/scheduler/auto-schedule with a valid strategyId
   - Verify scheduled posts are returned with dates, times, platforms, strategy color/label
