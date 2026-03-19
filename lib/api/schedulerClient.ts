@@ -385,6 +385,43 @@ export async function updatePost(postId: string, data: ScheduledPostUpdate): Pro
 }
 
 /**
+ * Delete all scheduled posts for the authenticated user
+ *
+ * @returns Promise resolving to the count of deleted posts
+ * @throws SchedulerAPIError if the request fails
+ */
+export async function deleteAllPosts(): Promise<number> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/scheduler/posts`, {
+      method: 'DELETE',
+      headers: createAuthHeaders(),
+    });
+
+    if (response.status === 401) {
+      handleAuthError();
+      throw new SchedulerAPIError('Authentication required. Please log in again.', 401);
+    }
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new SchedulerAPIError(
+        errorData.detail || `Failed to delete all posts: ${response.statusText}`,
+        response.status,
+        errorData
+      );
+    }
+
+    const data = await response.json();
+    return data.deleted ?? 0;
+  } catch (error) {
+    if (error instanceof SchedulerAPIError) throw error;
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new SchedulerAPIError('Network error: Unable to connect to the scheduler service.', undefined, error);
+    }
+    throw new SchedulerAPIError('An unexpected error occurred while deleting all posts', undefined, error);
+  }
+}
+
+/**
  * Delete a scheduled post
  * 
  * @param postId - ID of the post to delete

@@ -140,7 +140,7 @@ Return a structured AutoScheduleOutput with a "posts" list containing all assign
         copies_block = "\n".join(
             f"  - Copy ID: {c.get('id', c.get('copy_id', 'unknown'))}, "
             f"Platform: {c.get('platform', 'N/A')}, "
-            f"Content preview: {str(c.get('content', ''))[:120]}"
+            f"Content preview: {str(c.get('text', c.get('content', '')))[:120]}"
             for c in copies_data
         )
 

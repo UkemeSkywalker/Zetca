@@ -37,6 +37,10 @@ export function Scheduler({ className = '' }: SchedulerProps) {
   const [lastAutoScheduleStrategyId, setLastAutoScheduleStrategyId] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Clear all state
+  const [isClearingAll, setIsClearingAll] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+
   // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -184,7 +188,11 @@ export function Scheduler({ className = '' }: SchedulerProps) {
   };
 
   // Handle auto-schedule
+  const [autoScheduleStrategyName, setAutoScheduleStrategyName] = useState<string>('');
+
   const handleAutoSchedule = async (strategyId: string) => {
+    const strategy = strategies.find(s => s.id === strategyId);
+    setAutoScheduleStrategyName(strategy?.brandName || 'your strategy');
     setIsAutoScheduling(true);
     setOperationError(null);
     setShowStrategyDropdown(false);
@@ -209,6 +217,24 @@ export function Scheduler({ className = '' }: SchedulerProps) {
       await fetchStrategies();
     }
     setShowStrategyDropdown(prev => !prev);
+  };
+
+  // Handle clearing all scheduled posts
+  const handleClearAll = async () => {
+    setIsClearingAll(true);
+    setOperationError(null);
+    setShowClearConfirm(false);
+    try {
+      await schedulerClient.deleteAllPosts();
+      setPosts([]);
+    } catch (err) {
+      const message = err instanceof schedulerClient.SchedulerAPIError
+        ? err.message
+        : 'Failed to clear scheduled posts';
+      setOperationError(message);
+    } finally {
+      setIsClearingAll(false);
+    }
   };
 
   // Sort posts chronologically (nearest first)
@@ -270,6 +296,32 @@ export function Scheduler({ className = '' }: SchedulerProps) {
     );
   }
 
+  // Full-screen auto-schedule loading overlay
+  if (isAutoScheduling) {
+    return (
+      <div className={className}>
+        <div className="flex flex-col items-center justify-center py-32">
+          <div className="relative mb-6">
+            <div className="w-20 h-20 rounded-full border-4 border-indigo-100 flex items-center justify-center">
+              <Icon icon="svg-spinners:blocks-shuffle-3" className="w-10 h-10 text-indigo-500" />
+            </div>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            Zetca is automatically scheduling your posts
+          </h3>
+          <p className="text-gray-500 text-sm max-w-md text-center">
+            Analyzing your strategy and copies to find the best dates and times for each post. This may take a moment...
+          </p>
+          {autoScheduleStrategyName && (
+            <p className="mt-3 text-sm text-indigo-600 font-medium">
+              Strategy: {autoScheduleStrategyName}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={className}>
       {/* Operation error banner */}
@@ -318,6 +370,21 @@ export function Scheduler({ className = '' }: SchedulerProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Clear All button — only show when there are posts */}
+          {posts.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowClearConfirm(true)}
+              leftIcon="solar:trash-bin-trash-bold"
+              disabled={isClearingAll}
+              isLoading={isClearingAll}
+              className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+            >
+              Clear All
+            </Button>
+          )}
+
           {/* Auto Schedule button with strategy dropdown */}
           <div className="relative" ref={dropdownRef}>
             <Button
@@ -494,6 +561,35 @@ export function Scheduler({ className = '' }: SchedulerProps) {
         onSchedulePost={handleSchedulePost}
         editingPost={editingPost}
       />
+
+      {/* Clear All Confirmation Dialog */}
+      {showClearConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <Icon icon="solar:trash-bin-trash-bold" className="w-5 h-5 text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">Clear all posts?</h3>
+            </div>
+            <p className="text-sm text-gray-500 mb-6">
+              This will permanently delete all {posts.length} scheduled post{posts.length !== 1 ? 's' : ''} from your calendar. This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" size="sm" onClick={() => setShowClearConfirm(false)}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleClearAll}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Clear All
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -111,6 +111,14 @@ class SchedulerRepository:
         )
         return self._item_to_record(response['Attributes'])
 
+    async def delete_all_by_user(self, user_id: str) -> int:
+        """Delete all posts for a user. Returns the number of deleted records."""
+        posts = await self.list_posts_by_user(user_id)
+        with self.table.batch_writer() as batch:
+            for post in posts:
+                batch.delete_item(Key={'postId': post.id})
+        return len(posts)
+
     async def delete_post(self, post_id: str) -> bool:
         """Delete a post record. Returns True if deleted."""
         response = self.table.delete_item(

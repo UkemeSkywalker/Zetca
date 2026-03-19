@@ -267,6 +267,10 @@ class SchedulerService:
 
         return await self.scheduler_repository.update_post(post_id, update_dict)
 
+    async def delete_all_posts(self, user_id: str) -> int:
+        """Delete all posts for the authenticated user. Returns count of deleted posts."""
+        return await self.scheduler_repository.delete_all_by_user(user_id)
+
     async def delete_post(
         self, post_id: str, user_id: str
     ) -> tuple[bool, bool]:
