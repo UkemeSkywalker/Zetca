@@ -244,8 +244,8 @@ Each phase ends with a verification checkpoint.
     - Define `ScheduledPostUpdate` interface with optional fields: `scheduledDate`, `scheduledTime`, `content`, `platform`, `hashtags`, `status`
     - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5_
 
-- [ ] 14. Create scheduler API client
-  - [ ] 14.1 Create `lib/api/schedulerClient.ts`
+- [x] 14. Create scheduler API client
+  - [x] 14.1 Create `lib/api/schedulerClient.ts`
     - Follow same patterns as `copyClient.ts` and `strategyClient.ts`
     - Export `SchedulerAPIError` class for typed error handling
     - Implement `convertScheduledPost()` helper for snake_case to camelCase conversion
