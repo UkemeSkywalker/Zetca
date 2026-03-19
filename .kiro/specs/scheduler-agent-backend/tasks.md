@@ -260,8 +260,8 @@ Each phase ends with a verification checkpoint.
     - Handle 401 (clear token, redirect to login), 403, 404 errors with descriptive messages
     - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 14.7_
 
-- [ ] 15. Update Next.js proxy config
-  - [ ] 15.1 Update `next.config.ts`
+- [x] 15. Update Next.js proxy config
+  - [x] 15.1 Update `next.config.ts`
     - Add rewrite rule for `/api/scheduler/*` to proxy to Python service (same pattern as `/api/strategy/*` and `/api/copy/*`)
     - _Requirements: 7.9_
 
