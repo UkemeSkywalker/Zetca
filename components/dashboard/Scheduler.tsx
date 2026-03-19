@@ -17,7 +17,7 @@ interface SchedulerProps {
   className?: string;
 }
 
-type ViewMode = 'calendar' | 'list';
+type ViewMode = 'calendar' | 'list' | 'grid';
 
 export function Scheduler({ className = '' }: SchedulerProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
@@ -243,12 +243,21 @@ export function Scheduler({ className = '' }: SchedulerProps) {
     a.scheduledTime.localeCompare(b.scheduledTime)
   );
 
-  // Platform icons
+  // Platform icons and brand colors
   const platformIcons: Record<string, string> = {
-    instagram: 'solar:camera-bold',
-    twitter: 'solar:chat-round-bold',
-    linkedin: 'solar:user-bold',
-    facebook: 'solar:users-group-rounded-bold',
+    instagram: 'simple-icons:instagram',
+    twitter: 'ri:twitter-x-fill',
+    x: 'ri:twitter-x-fill',
+    linkedin: 'simple-icons:linkedin',
+    facebook: 'simple-icons:facebook',
+  };
+
+  const platformColors: Record<string, string> = {
+    instagram: '#E4405F',
+    twitter: '#000000',
+    x: '#000000',
+    linkedin: '#0A66C2',
+    facebook: '#1877F2',
   };
 
   // Format date for display
@@ -366,6 +375,14 @@ export function Scheduler({ className = '' }: SchedulerProps) {
             leftIcon="solar:list-bold"
           >
             List
+          </Button>
+          <Button
+            variant={viewMode === 'grid' ? 'primary' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('grid')}
+            leftIcon="solar:widget-bold"
+          >
+            Grid
           </Button>
         </div>
 
@@ -501,8 +518,9 @@ export function Scheduler({ className = '' }: SchedulerProps) {
                             <div className="flex items-center gap-4 text-sm text-gray-500">
                               <div className="flex items-center gap-1">
                                 <Icon 
-                                  icon={platformIcons[post.platform] || 'solar:chat-round-bold'} 
-                                  className="w-4 h-4" 
+                                  icon={platformIcons[post.platform.toLowerCase()] || 'solar:chat-round-bold'} 
+                                  className="w-4 h-4"
+                                  style={{ color: platformColors[post.platform.toLowerCase()] }}
                                 />
                                 <span className="capitalize">{post.platform}</span>
                               </div>
@@ -518,6 +536,119 @@ export function Scheduler({ className = '' }: SchedulerProps) {
                           
                           {/* Actions */}
                           <div className="flex items-center gap-2 ml-4">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditPost(post.id)}
+                              leftIcon="solar:pen-bold"
+                              aria-label="Edit post"
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeletePost(post.id)}
+                              leftIcon="solar:trash-bin-trash-bold"
+                              aria-label="Delete post"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Grid View */}
+      {viewMode === 'grid' && (
+        <div>
+          {sortedPosts.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+              <Icon icon="solar:calendar-bold" className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No scheduled posts</h3>
+              <p className="text-gray-500 mb-4">
+                Start by scheduling your first post to see it appear here.
+              </p>
+              <Button
+                onClick={() => handleScheduleNewPost()}
+                leftIcon="solar:add-circle-bold"
+              >
+                Schedule Your First Post
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              {Object.entries(
+                sortedPosts.reduce<Record<string, ScheduledPost[]>>((groups, post) => {
+                  const dateKey = post.scheduledDate;
+                  if (!groups[dateKey]) groups[dateKey] = [];
+                  groups[dateKey].push(post);
+                  return groups;
+                }, {})
+              ).map(([dateKey, datePosts]) => (
+                <div key={dateKey}>
+                  {/* Date group header */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                      <Icon icon="solar:calendar-bold" className="w-4 h-4 text-indigo-500" />
+                      <span>{formatDate(dateKey)}</span>
+                    </div>
+                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                      {datePosts.length} post{datePosts.length !== 1 ? 's' : ''}
+                    </span>
+                    <div className="flex-1 border-t border-gray-200" />
+                  </div>
+
+                  {/* Grid cards for this date */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {datePosts.map((post) => (
+                      <div
+                        key={post.id}
+                        className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-col justify-between hover:shadow-md transition-shadow"
+                      >
+                        {/* Top: strategy + content */}
+                        <div>
+                          {post.strategyLabel && (
+                            <div className="flex items-center gap-2 mb-2">
+                              <span
+                                className="inline-block w-2.5 h-2.5 rounded-full"
+                                style={{ backgroundColor: post.strategyColor || '#6B7280' }}
+                              />
+                              <span className="text-xs font-medium text-gray-500">{post.strategyLabel}</span>
+                            </div>
+                          )}
+                          <p className="text-sm text-gray-900 line-clamp-4 mb-3">
+                            {post.content}
+                          </p>
+                        </div>
+
+                        {/* Bottom: metadata + actions */}
+                        <div>
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mb-3">
+                            <div className="flex items-center gap-1">
+                              <Icon
+                                icon={platformIcons[post.platform] || 'solar:chat-round-bold'}
+                                className="w-3.5 h-3.5"
+                                style={{ color: platformColors[post.platform] }}
+                              />
+                              <span className="capitalize">{post.platform}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Icon icon="solar:clock-circle-bold" className="w-3.5 h-3.5" />
+                              <span>{formatTime(post.scheduledTime)}</span>
+                            </div>
+                            <StatusBadge status={post.status} />
+                          </div>
+
+                          <div className="flex items-center gap-2 border-t border-gray-100 pt-3">
                             <Button
                               variant="ghost"
                               size="sm"
