@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     dynamodb_users_table: str = "users-dev"
     dynamodb_strategies_table: str = "strategies-dev"
     dynamodb_copies_table: str = "copies-dev"
+    dynamodb_scheduled_posts_table: str = "scheduled-posts-dev"
     
     # JWT Configuration
     jwt_secret: str
