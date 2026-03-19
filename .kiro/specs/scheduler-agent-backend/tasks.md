@@ -296,8 +296,8 @@ Each phase ends with a verification checkpoint.
     - Disable Publish button when no copy is selected or scheduling is in progress
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5, 17.6_
 
-- [ ] 19. Add auto-schedule UI to Scheduler page
-  - [ ] 19.1 Update `components/dashboard/Scheduler.tsx` (or scheduler page)
+- [x] 19. Add auto-schedule UI to Scheduler page
+  - [x] 19.1 Update `components/dashboard/Scheduler.tsx` (or scheduler page)
     - Add "Auto Schedule" button alongside "Schedule Post"
     - On click, display strategy selection dropdown listing user's strategies
     - On confirm, call `schedulerClient.autoSchedule(strategyId)`

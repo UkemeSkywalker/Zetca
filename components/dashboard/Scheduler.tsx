@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import { Calendar } from './Calendar';
 import { SchedulingModal } from './SchedulingModal';
@@ -34,6 +34,21 @@ export function Scheduler({ className = '' }: SchedulerProps) {
   const [showStrategyDropdown, setShowStrategyDropdown] = useState(false);
   const [isAutoScheduling, setIsAutoScheduling] = useState(false);
   const [operationError, setOperationError] = useState<string | null>(null);
+  const [lastAutoScheduleStrategyId, setLastAutoScheduleStrategyId] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowStrategyDropdown(false);
+      }
+    };
+    if (showStrategyDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showStrategyDropdown]);
 
   // Fetch posts from API on mount
   const fetchPosts = useCallback(async () => {
@@ -173,9 +188,11 @@ export function Scheduler({ className = '' }: SchedulerProps) {
     setIsAutoScheduling(true);
     setOperationError(null);
     setShowStrategyDropdown(false);
+    setLastAutoScheduleStrategyId(strategyId);
     try {
       await schedulerClient.autoSchedule(strategyId);
       await fetchPosts();
+      setLastAutoScheduleStrategyId(null);
     } catch (err) {
       const message = err instanceof schedulerClient.SchedulerAPIError
         ? err.message
@@ -262,9 +279,20 @@ export function Scheduler({ className = '' }: SchedulerProps) {
             <Icon icon="solar:danger-triangle-bold" className="w-4 h-4" />
             {operationError}
           </div>
-          <button onClick={() => setOperationError(null)} className="text-red-400 hover:text-red-600">
-            <Icon icon="solar:close-circle-bold" className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {lastAutoScheduleStrategyId && (
+              <button
+                onClick={() => handleAutoSchedule(lastAutoScheduleStrategyId)}
+                className="text-sm text-red-700 hover:text-red-900 font-medium underline"
+                disabled={isAutoScheduling}
+              >
+                Retry
+              </button>
+            )}
+            <button onClick={() => { setOperationError(null); setLastAutoScheduleStrategyId(null); }} className="text-red-400 hover:text-red-600">
+              <Icon icon="solar:close-circle-bold" className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       )}
 
@@ -291,7 +319,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
 
         <div className="flex items-center gap-2">
           {/* Auto Schedule button with strategy dropdown */}
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <Button
               variant="outline"
               onClick={handleAutoScheduleClick}
