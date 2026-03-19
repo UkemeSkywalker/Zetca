@@ -288,8 +288,8 @@ Each phase ends with a verification checkpoint.
     - Show strategy color indicator next to each post entry
     - _Requirements: 16.7_
 
-- [ ] 18. Wire Publish button in CaptionEditor to manual scheduling
-  - [ ] 18.1 Update `components/dashboard/CaptionEditor.tsx`
+- [x] 18. Wire Publish button in CaptionEditor to manual scheduling
+  - [x] 18.1 Update `components/dashboard/CaptionEditor.tsx`
     - Wire "Publish" button to open a scheduling modal pre-filled with active copy data (content, platform, hashtags)
     - On confirm, call `schedulerClient.manualSchedule()` with copyId, date, time, platform
     - Show success/error feedback after scheduling
