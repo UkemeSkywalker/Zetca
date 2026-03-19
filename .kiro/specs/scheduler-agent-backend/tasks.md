@@ -221,8 +221,8 @@ Each phase ends with a verification checkpoint.
     - Test that no two post assignments share the same (platform, scheduledDate, scheduledTime) and each references a valid copyId
     - **Validates: Requirements 1.3, 1.5**
 
-- [ ] 11. Wire real agent into routes
-  - [ ] 11.1 Update `python/routes/scheduler.py`
+- [x] 11. Wire real agent into routes
+  - [x] 11.1 Update `python/routes/scheduler.py`
     - Import `SchedulerAgent` from `services.scheduler_agent`
     - When `settings.use_mock_agent` is False, instantiate `SchedulerAgent` with AWS config
     - Ensure timeout handling (60 seconds) wraps agent calls
@@ -237,8 +237,8 @@ Each phase ends with a verification checkpoint.
 
 ## Phase 4: Frontend Integration
 
-- [ ] 13. Create TypeScript types for scheduler data
-  - [ ] 13.1 Create `types/scheduler.ts`
+- [x] 13. Create TypeScript types for scheduler data
+  - [x] 13.1 Create `types/scheduler.ts`
     - Define `ScheduledPost` interface with fields: `id`, `strategyId`, `copyId`, `userId`, `content`, `platform`, `hashtags`, `scheduledDate`, `scheduledTime`, `status` ('draft' | 'scheduled' | 'published'), `strategyColor`, `strategyLabel`, `createdAt`, `updatedAt`
     - Define `ManualScheduleInput` interface with fields: `copyId`, `scheduledDate`, `scheduledTime`, `platform`
     - Define `ScheduledPostUpdate` interface with optional fields: `scheduledDate`, `scheduledTime`, `content`, `platform`, `hashtags`, `status`
