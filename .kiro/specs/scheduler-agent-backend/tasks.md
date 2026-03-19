@@ -265,8 +265,8 @@ Each phase ends with a verification checkpoint.
     - Add rewrite rule for `/api/scheduler/*` to proxy to Python service (same pattern as `/api/strategy/*` and `/api/copy/*`)
     - _Requirements: 7.9_
 
-- [ ] 16. Update Scheduler component to use API
-  - [ ] 16.1 Update `components/dashboard/Scheduler.tsx`
+- [x] 16. Update Scheduler component to use API
+  - [x] 16.1 Update `components/dashboard/Scheduler.tsx`
     - Fetch posts from `schedulerClient.listPosts()` on mount instead of local state
     - Replace local state post mutations with API calls (manualSchedule, updatePost, deletePost)
     - Add "Auto Schedule" button next to "Schedule Post" with strategy selection dropdown

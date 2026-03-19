@@ -1,13 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
 import { Calendar } from './Calendar';
 import { SchedulingModal } from './SchedulingModal';
 import { DateDetailsModal } from './DateDetailsModal';
 import Button from '@/components/ui/Button';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { ScheduledPost } from '@/types/scheduler';
 import { Post } from '@/types/post';
+import { StrategyRecord } from '@/types/strategy';
+import * as schedulerClient from '@/lib/api/schedulerClient';
+import { listStrategies } from '@/lib/api/strategyClient';
 
 interface SchedulerProps {
   className?: string;
@@ -15,20 +19,77 @@ interface SchedulerProps {
 
 type ViewMode = 'calendar' | 'list';
 
+/**
+ * Convert a ScheduledPost (API) to a Post (legacy component format).
+ * This adapter keeps Calendar and DateDetailsModal working until they
+ * are updated in tasks 17.1 / 17.2.
+ */
+function toPost(sp: ScheduledPost): Post {
+  const [year, month, day] = sp.scheduledDate.split('-').map(Number);
+  return {
+    id: sp.id,
+    content: sp.content,
+    platform: sp.platform as Post['platform'],
+    scheduledDate: new Date(year, month - 1, day),
+    scheduledTime: sp.scheduledTime,
+    status: sp.status,
+    createdAt: new Date(sp.createdAt),
+  };
+}
+
 export function Scheduler({ className = '' }: SchedulerProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<ScheduledPost[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isSchedulingModalOpen, setIsSchedulingModalOpen] = useState(false);
   const [isDateDetailsModalOpen, setIsDateDetailsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
 
+  // Auto-schedule state
+  const [strategies, setStrategies] = useState<StrategyRecord[]>([]);
+  const [showStrategyDropdown, setShowStrategyDropdown] = useState(false);
+  const [isAutoScheduling, setIsAutoScheduling] = useState(false);
+  const [operationError, setOperationError] = useState<string | null>(null);
+
+  // Fetch posts from API on mount
+  const fetchPosts = useCallback(async () => {
+    try {
+      setError(null);
+      const data = await schedulerClient.listPosts();
+      setPosts(data);
+    } catch (err) {
+      const message = err instanceof schedulerClient.SchedulerAPIError
+        ? err.message
+        : 'Failed to load scheduled posts';
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
+
+  // Fetch strategies for auto-schedule dropdown
+  const fetchStrategies = useCallback(async () => {
+    try {
+      const data = await listStrategies();
+      setStrategies(data);
+    } catch {
+      // Silently fail — dropdown will just be empty
+    }
+  }, []);
+
+  // Convert ScheduledPost[] to Post[] for legacy components
+  const legacyPosts: Post[] = posts.map(toPost);
+
   // Handle date click from calendar
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);
-    
-    // Get posts for this date
-    const postsForDate = posts.filter(post => {
+    const postsForDate = legacyPosts.filter(post => {
       const postDate = new Date(post.scheduledDate);
       return (
         postDate.getDate() === date.getDate() &&
@@ -36,9 +97,6 @@ export function Scheduler({ className = '' }: SchedulerProps) {
         postDate.getFullYear() === date.getFullYear()
       );
     });
-
-    // If there are posts for this date, show details modal
-    // Otherwise, show scheduling modal
     if (postsForDate.length > 0) {
       setIsDateDetailsModalOpen(true);
     } else {
@@ -46,24 +104,40 @@ export function Scheduler({ className = '' }: SchedulerProps) {
     }
   };
 
-  // Handle scheduling a new post
-  const handleSchedulePost = (postData: Omit<Post, 'id' | 'createdAt'>) => {
-    if (editingPost) {
-      // Update existing post
-      setPosts(prev => prev.map(post => 
-        post.id === editingPost.id 
-          ? { ...postData, id: editingPost.id, createdAt: editingPost.createdAt }
-          : post
-      ));
-      setEditingPost(null);
-    } else {
-      // Create new post
-      const newPost: Post = {
-        ...postData,
-        id: `post-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        createdAt: new Date()
-      };
-      setPosts(prev => [...prev, newPost]);
+  // Handle scheduling a new post or updating an existing one via API
+  const handleSchedulePost = async (postData: Omit<Post, 'id' | 'createdAt'>) => {
+    setOperationError(null);
+    try {
+      if (editingPost) {
+        // Update existing post via API
+        await schedulerClient.updatePost(editingPost.id, {
+          content: postData.content,
+          platform: postData.platform,
+          scheduledDate: postData.scheduledDate instanceof Date
+            ? postData.scheduledDate.toISOString().split('T')[0]
+            : String(postData.scheduledDate),
+          scheduledTime: postData.scheduledTime,
+          status: postData.status,
+        });
+        setEditingPost(null);
+      } else {
+        // Create new post via manual-schedule API
+        const dateStr = postData.scheduledDate instanceof Date
+          ? postData.scheduledDate.toISOString().split('T')[0]
+          : String(postData.scheduledDate);
+        await schedulerClient.manualSchedule({
+          copyId: 'manual-' + Date.now(),
+          scheduledDate: dateStr,
+          scheduledTime: postData.scheduledTime,
+          platform: postData.platform,
+        });
+      }
+      await fetchPosts();
+    } catch (err) {
+      const message = err instanceof schedulerClient.SchedulerAPIError
+        ? err.message
+        : 'Failed to save post';
+      setOperationError(message);
     }
   };
 
@@ -79,14 +153,23 @@ export function Scheduler({ className = '' }: SchedulerProps) {
     setIsSchedulingModalOpen(true);
   };
 
-  // Handle deleting a post
-  const handleDeletePost = (postId: string) => {
-    setPosts(prev => prev.filter(post => post.id !== postId));
+  // Handle deleting a post via API
+  const handleDeletePost = async (postId: string) => {
+    setOperationError(null);
+    try {
+      await schedulerClient.deletePost(postId);
+      await fetchPosts();
+    } catch (err) {
+      const message = err instanceof schedulerClient.SchedulerAPIError
+        ? err.message
+        : 'Failed to delete post';
+      setOperationError(message);
+    }
   };
 
   // Handle editing a post
   const handleEditPost = (postId: string) => {
-    const postToEdit = posts.find(post => post.id === postId);
+    const postToEdit = legacyPosts.find(post => post.id === postId);
     if (postToEdit) {
       setEditingPost(postToEdit);
       setSelectedDate(new Date(postToEdit.scheduledDate));
@@ -95,26 +178,55 @@ export function Scheduler({ className = '' }: SchedulerProps) {
     }
   };
 
+  // Handle auto-schedule
+  const handleAutoSchedule = async (strategyId: string) => {
+    setIsAutoScheduling(true);
+    setOperationError(null);
+    setShowStrategyDropdown(false);
+    try {
+      await schedulerClient.autoSchedule(strategyId);
+      await fetchPosts();
+    } catch (err) {
+      const message = err instanceof schedulerClient.SchedulerAPIError
+        ? err.message
+        : 'Auto-scheduling failed. Please try again.';
+      setOperationError(message);
+    } finally {
+      setIsAutoScheduling(false);
+    }
+  };
+
+  // Toggle strategy dropdown and fetch strategies
+  const handleAutoScheduleClick = async () => {
+    if (!showStrategyDropdown) {
+      await fetchStrategies();
+    }
+    setShowStrategyDropdown(prev => !prev);
+  };
+
   // Sort posts chronologically (nearest first)
-  const sortedPosts = [...posts].sort((a, b) => 
-    new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime()
+  const sortedPosts = [...posts].sort((a, b) =>
+    a.scheduledDate.localeCompare(b.scheduledDate) ||
+    a.scheduledTime.localeCompare(b.scheduledTime)
   );
 
   // Platform icons
-  const platformIcons = {
+  const platformIcons: Record<string, string> = {
     instagram: 'solar:camera-bold',
     twitter: 'solar:chat-round-bold',
     linkedin: 'solar:user-bold',
-    facebook: 'solar:users-group-rounded-bold'
+    facebook: 'solar:users-group-rounded-bold',
   };
 
   // Format date for display
-  const formatDate = (date: Date) => {
+  const formatDate = (dateStr: string) => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
     return new Intl.DateTimeFormat('en-US', {
       weekday: 'short',
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     }).format(date);
   };
 
@@ -127,8 +239,45 @@ export function Scheduler({ className = '' }: SchedulerProps) {
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className={`flex items-center justify-center py-16 ${className}`}>
+        <Icon icon="solar:refresh-bold" className="w-8 h-8 text-blue-500 animate-spin" />
+        <span className="ml-3 text-gray-600">Loading scheduled posts...</span>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error && posts.length === 0) {
+    return (
+      <div className={`text-center py-16 ${className}`}>
+        <Icon icon="solar:danger-triangle-bold" className="w-12 h-12 text-red-400 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Unable to load posts</h3>
+        <p className="text-gray-500 mb-4">{error}</p>
+        <Button onClick={() => { setIsLoading(true); fetchPosts(); }}>
+          Try Again
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className={className}>
+      {/* Operation error banner */}
+      {operationError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
+          <div className="flex items-center gap-2 text-red-700 text-sm">
+            <Icon icon="solar:danger-triangle-bold" className="w-4 h-4" />
+            {operationError}
+          </div>
+          <button onClick={() => setOperationError(null)} className="text-red-400 hover:text-red-600">
+            <Icon icon="solar:close-circle-bold" className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
       {/* Header with view toggle */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
@@ -150,18 +299,53 @@ export function Scheduler({ className = '' }: SchedulerProps) {
           </Button>
         </div>
 
-        <Button
-          onClick={() => handleScheduleNewPost()}
-          leftIcon="solar:add-circle-bold"
-        >
-          Schedule Post
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Auto Schedule button with strategy dropdown */}
+          <div className="relative">
+            <Button
+              variant="outline"
+              onClick={handleAutoScheduleClick}
+              leftIcon="solar:magic-stick-bold"
+              disabled={isAutoScheduling}
+              isLoading={isAutoScheduling}
+            >
+              Auto Schedule
+            </Button>
+            {showStrategyDropdown && (
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+                <div className="p-2">
+                  <p className="text-xs font-medium text-gray-500 px-2 py-1">Select a strategy</p>
+                  {strategies.length === 0 ? (
+                    <p className="text-sm text-gray-400 px-2 py-3 text-center">No strategies found</p>
+                  ) : (
+                    strategies.map((strategy) => (
+                      <button
+                        key={strategy.id}
+                        onClick={() => handleAutoSchedule(strategy.id)}
+                        className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                      >
+                        {strategy.brandName}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <Button
+            onClick={() => handleScheduleNewPost()}
+            leftIcon="solar:add-circle-bold"
+          >
+            Schedule Post
+          </Button>
+        </div>
       </div>
 
       {/* Calendar View */}
       {viewMode === 'calendar' && (
         <Calendar
-          posts={posts}
+          posts={legacyPosts}
           onDateClick={handleDateClick}
         />
       )}
@@ -189,6 +373,17 @@ export function Scheduler({ className = '' }: SchedulerProps) {
                 <div key={post.id} className="p-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
+                      {/* Strategy label */}
+                      {post.strategyLabel && (
+                        <div className="flex items-center gap-2 mb-1">
+                          <span
+                            className="inline-block w-2.5 h-2.5 rounded-full"
+                            style={{ backgroundColor: post.strategyColor || '#6B7280' }}
+                          />
+                          <span className="text-xs font-medium text-gray-500">{post.strategyLabel}</span>
+                        </div>
+                      )}
+
                       {/* Post content */}
                       <p className="text-gray-900 mb-2 line-clamp-3">
                         {post.content}
@@ -198,7 +393,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
                       <div className="flex items-center gap-4 text-sm text-gray-500">
                         <div className="flex items-center gap-1">
                           <Icon 
-                            icon={platformIcons[post.platform]} 
+                            icon={platformIcons[post.platform] || 'solar:chat-round-bold'} 
                             className="w-4 h-4" 
                           />
                           <span className="capitalize">{post.platform}</span>
@@ -206,7 +401,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
                         
                         <div className="flex items-center gap-1">
                           <Icon icon="solar:calendar-bold" className="w-4 h-4" />
-                          <span>{formatDate(new Date(post.scheduledDate))}</span>
+                          <span>{formatDate(post.scheduledDate)}</span>
                         </div>
                         
                         <div className="flex items-center gap-1">
@@ -256,7 +451,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
           setSelectedDate(null);
         }}
         selectedDate={selectedDate}
-        posts={selectedDate ? posts.filter(post => {
+        posts={selectedDate ? legacyPosts.filter(post => {
           const postDate = new Date(post.scheduledDate);
           return (
             postDate.getDate() === selectedDate.getDate() &&
