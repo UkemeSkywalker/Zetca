@@ -98,7 +98,7 @@ Each phase ends with a verification checkpoint where you can see the feature wor
   - NEVER include `linkedinAccessToken` in the response
   - _Requirements: 3.1, 3.6, 7.4, 7.5_
 
-- [ ] 10. Update ProfileForm to display LinkedIn connection status from API
+- [x] 10. Update ProfileForm to display LinkedIn connection status from API
   - Update `components/dashboard/ProfileForm.tsx`:
   - Fetch LinkedIn connection data from the profile API response (the `linkedin` object added in task 9)
   - Replace the hardcoded `accounts` state for LinkedIn with real data from the API
@@ -107,7 +107,7 @@ Each phase ends with a verification checkpoint where you can see the feature wor
   - Keep Instagram, Twitter, Facebook as hardcoded "not connected" with "coming soon" behavior
   - _Requirements: 1.5, 3.2, 3.3, 3.4, 3.5, 5.2_
 
-- [ ] 11. Update next.config.ts for LinkedIn profile images
+- [x] 11. Update next.config.ts for LinkedIn profile images
   - Add LinkedIn image domains to `images.remotePatterns` in `next.config.ts`:
     - `media.licdn-ei.com` with protocol `https` and pathname `/**`
     - `media.licdn.com` with protocol `https` and pathname `/**`
