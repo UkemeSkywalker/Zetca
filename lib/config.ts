@@ -12,6 +12,9 @@ interface Config {
   jwtExpirationHours: number;
   rateLimitMaxRequests: number;
   rateLimitWindowMs: number;
+  linkedinClientId: string;
+  linkedinClientSecret: string;
+  linkedinRedirectUri: string;
 }
 
 // Use a function to get config so environment variables are read at runtime
@@ -25,6 +28,9 @@ export function getConfig(): Config {
     jwtExpirationHours: 24,
     rateLimitMaxRequests: 5,
     rateLimitWindowMs: 15 * 60 * 1000, // 15 minutes
+    linkedinClientId: process.env.LINKEDIN_CLIENT_ID || '',
+    linkedinClientSecret: process.env.LINKEDIN_CLIENT_SECRET || '',
+    linkedinRedirectUri: process.env.LINKEDIN_REDIRECT_URI || 'http://localhost:3000/api/auth/linkedin/callback',
   };
 
   // Validate required configuration in production
