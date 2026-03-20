@@ -124,7 +124,7 @@ Each phase ends with a verification checkpoint where you can see the feature wor
 
 ## Phase 4: Dashboard Display (See LinkedIn Avatar in Dashboard Header)
 
-- [ ] 13. Update AuthContext to include LinkedIn data
+- [x] 13. Update AuthContext to include LinkedIn data
   - Update the `User` interface in `context/AuthContext.tsx` to add optional field: `linkedin?: { isConnected: boolean; name?: string; pictureUrl?: string }`
   - Update the `validateSession` function to map the LinkedIn data from the profile API response into the user state
   - Update the `login` function to also accept LinkedIn data if present

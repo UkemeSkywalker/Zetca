@@ -13,6 +13,11 @@ interface User {
   email: string;
   name: string;
   bio?: string;
+  linkedin?: {
+    isConnected: boolean;
+    name?: string;
+    pictureUrl?: string;
+  };
 }
 
 interface AuthContextType {
@@ -49,7 +54,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.user) {
-            setUser(data.user);
+            const userData: User = {
+              id: data.user.id,
+              email: data.user.email,
+              name: data.user.name,
+              bio: data.user.bio,
+            };
+            if (data.user.linkedin) {
+              userData.linkedin = {
+                isConnected: data.user.linkedin.isConnected,
+                name: data.user.linkedin.name,
+                pictureUrl: data.user.linkedin.pictureUrl,
+              };
+            }
+            setUser(userData);
           }
         } else {
           // Token is invalid, expired, or missing
@@ -133,7 +151,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
             if (response.ok) {
               const data = await response.json();
               if (data.success && data.user) {
-                setUser(data.user);
+                const userData: User = {
+                  id: data.user.id,
+                  email: data.user.email,
+                  name: data.user.name,
+                  bio: data.user.bio,
+                };
+                if (data.user.linkedin) {
+                  userData.linkedin = {
+                    isConnected: data.user.linkedin.isConnected,
+                    name: data.user.linkedin.name,
+                    pictureUrl: data.user.linkedin.pictureUrl,
+                  };
+                }
+                setUser(userData);
               }
             }
           } catch (error) {
