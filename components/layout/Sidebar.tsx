@@ -35,7 +35,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
       {/* Mobile menu button */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="md:hidden fixed top-4 left-4 z-50 p-3 bg-white text-gray-700 rounded-lg shadow-md min-h-[44px] min-w-[44px] flex items-center justify-center"
+        className="md:hidden fixed top-4 left-4 z-50 p-3 bg-surface-container-lowest text-on-surface rounded-lg shadow-ambient-sm min-h-[44px] min-w-[44px] flex items-center justify-center"
         aria-label="Toggle menu"
       >
         <Icon icon={isMobileMenuOpen ? 'solar:close-square-bold' : 'solar:hamburger-menu-bold'} width={24} height={24} />
@@ -44,15 +44,16 @@ export default function Sidebar({ className = '' }: SidebarProps) {
       {/* Backdrop for mobile */}
       {isMobileMenuOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
+          className="md:hidden fixed inset-0 bg-on-surface/30 z-30"
+          style={{ backdropFilter: 'blur(4px)' }}
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - surface-container-low per design system */}
       <aside
         className={`
-          fixed top-0 left-0 h-screen w-64 bg-white border-r border-gray-200 z-40
+          fixed top-0 left-0 h-screen w-64 bg-surface-container-low z-40
           transition-transform duration-300 ease-in-out
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
           md:translate-x-0
@@ -64,10 +65,10 @@ export default function Sidebar({ className = '' }: SidebarProps) {
           {/* Logo */}
           <div className="px-6 py-6">
             <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">Z</span>
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center gradient-primary">
+                <span className="text-on-primary font-bold text-lg">Z</span>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">Zetca</h1>
+              <h1 className="text-2xl font-bold font-heading text-on-surface">Zetca</h1>
             </Link>
           </div>
 
@@ -80,8 +81,8 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                 transition-all duration-200 min-h-[44px]
                 ${
                   pathname === '/dashboard'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                    ? 'text-on-primary shadow-ambient-sm gradient-primary'
+                    : 'bg-primary/5 text-primary hover:bg-primary/10'
                 }
               `}
             >
@@ -105,8 +106,8 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                         transition-all duration-200 group min-h-[44px]
                         ${
                           isActive
-                            ? 'bg-gray-100 text-gray-900'
-                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            ? 'bg-surface-container-lowest text-on-surface shadow-ambient-sm'
+                            : 'text-outline hover:bg-surface-container-lowest/60 hover:text-on-surface'
                         }
                       `}
                       aria-current={isActive ? 'page' : undefined}
@@ -115,7 +116,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                         icon={item.icon} 
                         width={22} 
                         height={22}
-                        className={isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}
+                        className={isActive ? 'text-primary' : 'text-outline group-hover:text-primary/60'}
                         aria-hidden="true"
                       />
                       <span className="font-bold text-base">{item.label}</span>
@@ -124,7 +125,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                           icon="solar:alt-arrow-right-linear" 
                           width={18} 
                           height={18}
-                          className="ml-auto text-gray-400"
+                          className="ml-auto text-outline"
                           aria-hidden="true"
                         />
                       )}
@@ -136,8 +137,8 @@ export default function Sidebar({ className = '' }: SidebarProps) {
           </nav>
 
           {/* Footer */}
-          <div className="px-5 py-5 border-t border-gray-200">
-            <p className="text-sm text-gray-500 font-medium">© 2024 Zetca</p>
+          <div className="px-5 py-5" style={{ borderTop: '1px solid var(--ghost-border)' }}>
+            <p className="text-label-sm text-outline">© 2024 Zetca</p>
           </div>
         </div>
       </aside>

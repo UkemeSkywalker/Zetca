@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
-import { Inter_Tight } from "next/font/google";
+import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { AuthProvider } from "@/context/AuthContext";
 
-const interTight = Inter_Tight({ 
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: "--font-inter-tight",
+  variable: "--font-plus-jakarta",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -22,12 +27,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={interTight.className}>
+      <body className={`${plusJakartaSans.variable} ${inter.variable} font-sans bg-surface`}>
         <AuthProvider>
           {/* Skip Navigation Link */}
           <a 
             href="#main-content" 
-            className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-lg focus:shadow-lg"
+            className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:text-on-primary focus:rounded-lg focus:shadow-ambient gradient-primary"
           >
             Skip to main content
           </a>

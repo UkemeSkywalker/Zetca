@@ -203,27 +203,27 @@ export default function SignupForm() {
               name="acceptTerms"
               checked={formData.acceptTerms}
               onChange={handleChange}
-              className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+              className="mt-1 h-4 w-4 rounded border-outline-variant text-primary focus:ring-2 focus:ring-primary/50"
             />
-            <label htmlFor="acceptTerms" className="ml-2 text-sm text-gray-700">
+            <label htmlFor="acceptTerms" className="ml-2 text-sm text-on-surface/80">
               I accept the{' '}
               <Link
                 href="#"
-                className="text-blue-600 hover:text-blue-700 hover:underline"
+                className="text-primary hover:text-primary/80 hover:underline"
               >
                 Terms of Service
               </Link>{' '}
               and{' '}
               <Link
                 href="#"
-                className="text-blue-600 hover:text-blue-700 hover:underline"
+                className="text-primary hover:text-primary/80 hover:underline"
               >
                 Privacy Policy
               </Link>
             </label>
           </div>
           {errors.acceptTerms && (
-            <p className="text-sm text-red-600">{errors.acceptTerms}</p>
+            <p className="text-sm text-error">{errors.acceptTerms}</p>
           )}
         </div>
 
@@ -237,11 +237,11 @@ export default function SignupForm() {
           Sign Up
         </Button>
 
-        <p className="text-center text-sm text-gray-600">
+        <p className="text-center text-sm text-outline">
           Already have an account?{' '}
           <Link
             href="/login"
-            className="text-blue-600 hover:text-blue-700 hover:underline font-medium"
+            className="text-primary hover:text-primary/80 hover:underline font-medium"
           >
             Log in
           </Link>

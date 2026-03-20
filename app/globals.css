@@ -3,91 +3,138 @@
 @tailwind utilities;
 
 :root {
-  --primary-blue: #2563eb;
-  --secondary-gray: #6b7280;
-  --success-green: #10b981;
-  --error-red: #ef4444;
-  --colors--linear-color-01: #3139FB;
-  --colors--linear-color-02: #8B5CF6;
+  /* Design System: "The Editorial Architect" */
+  /* Primary palette */
+  --primary: #4a40e0;
+  --primary-container: #9795ff;
+  --on-primary: #ffffff;
+
+  /* Secondary palette */
+  --secondary: #6b4fa0;
+  --secondary-container: #c4b0e8;
+  --on-secondary-container: #2a1a48;
+
+  /* Surface hierarchy */
+  --surface: #f6f6ff;
+  --surface-container-low: #eef0ff;
+  --surface-container-lowest: #ffffff;
+  --surface-container-high: #dde2f5;
+  --surface-container-highest: #d1dcff;
+
+  /* On-surface */
+  --on-surface: #272e42;
+  --outline: #6f768e;
+  --outline-variant: #a5adc6;
+
+  /* Semantic */
+  --tertiary: #983772;
+  --error: #dc2626;
+  --on-error: #ffefef;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #4a40e0, #9795ff);
+  --colors--linear-color-01: #4a40e0;
+  --colors--linear-color-02: #9795ff;
+
+  /* Ghost border */
+  --ghost-border: rgba(165, 173, 198, 0.15);
+  --ghost-border-focus: rgba(74, 64, 224, 0.4);
 }
 
-body {
-  margin: 0;
-  padding: 0;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  body {
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--surface);
+    color: var(--on-surface);
+  }
+
+  /* Editorial typography defaults */
+  h1, h2, h3 {
+    font-family: var(--font-plus-jakarta), system-ui, sans-serif;
+    letter-spacing: -0.02em;
+    color: var(--on-surface);
+  }
+
+  p, span, label, input, textarea, select {
+    color: var(--on-surface);
+  }
 }
 
 /* Custom animations */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes slideIn {
-  from {
-    transform: translateY(-10px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
-/* Custom utility classes */
 @layer utilities {
   .animate-fade-in {
     animation: fadeIn 0.3s ease-in-out;
   }
-
   .animate-slide-in {
     animation: slideIn 0.3s ease-out;
   }
-
   .animate-spin {
     animation: spin 1s linear infinite;
   }
-
   .animate-pulse {
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
-
   .transition-all {
     transition: all 0.3s ease-in-out;
   }
-
   .transition-colors {
     transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
   }
-
   .transition-transform {
     transition: transform 0.3s ease-in-out;
   }
-
   .transition-shadow {
     transition: box-shadow 0.3s ease-in-out;
   }
+
+  /* Glass & Gradient utilities */
+  .glass {
+    background: rgba(246, 246, 255, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  .glass-nav {
+    background: rgba(238, 240, 255, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  .gradient-primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-container));
+  }
+  .ghost-border {
+    border: 1px solid var(--ghost-border);
+  }
+  .ghost-border-focus {
+    border: 2px solid var(--ghost-border-focus);
+  }
+
+  /* No-line rule: tonal surface shifts */
+  .surface-base { background-color: var(--surface); }
+  .surface-low { background-color: var(--surface-container-low); }
+  .surface-lowest { background-color: var(--surface-container-lowest); }
+  .surface-high { background-color: var(--surface-container-high); }
+  .surface-highest { background-color: var(--surface-container-highest); }
 }

@@ -56,7 +56,7 @@ export const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({
   const skeletonElement = (
     <div
       className={`
-        bg-gray-200 
+        bg-surface-container-high 
         animate-pulse 
         ${getVariantClasses()} 
         ${className}

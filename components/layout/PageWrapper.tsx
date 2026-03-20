@@ -27,10 +27,10 @@ export const PageWrapper: React.FC<PageWrapperProps> = ({
       {(title || description) && (
         <div className="mb-6">
           {title && (
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{title}</h1>
+            <h1 className="text-3xl font-bold font-heading text-on-surface mb-2">{title}</h1>
           )}
           {description && (
-            <p className="text-gray-600">{description}</p>
+            <p className="text-outline">{description}</p>
           )}
         </div>
       )}

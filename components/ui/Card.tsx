@@ -17,10 +17,12 @@ export const Card: React.FC<CardProps> = ({
   className = '',
   variant = 'default',
 }) => {
+  /* No-Line Rule: no 1px solid borders for sectioning.
+     Use tonal surface shifts instead. */
   const variantStyles = {
-    default: 'bg-white rounded-lg p-6',
-    bordered: 'bg-white border border-gray-200 rounded-lg p-6',
-    elevated: 'bg-white rounded-lg p-6 shadow-lg',
+    default: 'bg-surface-container-lowest rounded-xl p-6',
+    bordered: 'bg-surface-container-lowest rounded-xl p-6 ghost-border',
+    elevated: 'bg-surface-container-lowest rounded-xl p-6 shadow-ambient',
   };
 
   return (
@@ -28,20 +30,20 @@ export const Card: React.FC<CardProps> = ({
       {(title || description) && (
         <div className="mb-4">
           {title && (
-            <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
+            <h3 className="text-headline-sm font-heading text-on-surface">{title}</h3>
           )}
           {description && (
-            <p className="text-sm text-gray-600 mt-1">{description}</p>
+            <p className="text-label-md text-outline mt-1">{description}</p>
           )}
         </div>
       )}
       
-      <div className="text-gray-700">
+      <div className="text-on-surface/80">
         {children}
       </div>
 
       {actions && (
-        <div className="mt-4 pt-4 border-t border-gray-200">
+        <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--ghost-border)' }}>
           {actions}
         </div>
       )}

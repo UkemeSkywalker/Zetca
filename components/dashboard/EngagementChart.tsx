@@ -90,10 +90,10 @@ export const EngagementChart: React.FC<EngagementChartProps> = ({
     return (
       <Card className={className}>
         <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <h3 className="text-headline-sm font-heading text-on-surface mb-4">
             Engagement Trends
           </h3>
-          <p className="text-gray-500">No data available</p>
+          <p className="text-outline">No data available</p>
         </div>
       </Card>
     );
@@ -102,7 +102,7 @@ export const EngagementChart: React.FC<EngagementChartProps> = ({
   return (
     <Card className={className}>
       <div className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <h3 className="text-headline-sm font-heading text-on-surface mb-4">
           Engagement Trends
         </h3>
         <div className="w-full overflow-x-auto">
@@ -119,7 +119,7 @@ export const EngagementChart: React.FC<EngagementChartProps> = ({
                 y1={label.y}
                 x2={chartData.width - chartData.padding.right}
                 y2={label.y}
-                stroke="#e5e7eb"
+                stroke="var(--ghost-border)"
                 strokeWidth="1"
               />
             ))}
@@ -135,7 +135,7 @@ export const EngagementChart: React.FC<EngagementChartProps> = ({
             <path
               d={chartData.pathData}
               fill="none"
-              stroke="#3b82f6"
+              stroke="var(--primary)"
               strokeWidth="3"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -148,7 +148,7 @@ export const EngagementChart: React.FC<EngagementChartProps> = ({
                   cx={point.x}
                   cy={point.y}
                   r="4"
-                  fill="#3b82f6"
+                  fill="var(--primary)"
                   stroke="white"
                   strokeWidth="2"
                 />
@@ -164,7 +164,7 @@ export const EngagementChart: React.FC<EngagementChartProps> = ({
                 y={label.y}
                 textAnchor="end"
                 alignmentBaseline="middle"
-                className="text-xs fill-gray-600"
+                className="text-xs" style={{ fill: 'var(--outline)' }}
               >
                 {label.value}
               </text>
@@ -183,7 +183,7 @@ export const EngagementChart: React.FC<EngagementChartProps> = ({
                   x={x}
                   y={chartData.height - chartData.padding.bottom + 20}
                   textAnchor="middle"
-                  className="text-xs fill-gray-600"
+                  className="text-xs" style={{ fill: 'var(--outline)' }}
                 >
                   {label}
                 </text>
@@ -193,8 +193,8 @@ export const EngagementChart: React.FC<EngagementChartProps> = ({
             {/* Gradient definition */}
             <defs>
               <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
               </linearGradient>
             </defs>
           </svg>

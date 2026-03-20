@@ -237,6 +237,22 @@ export function Scheduler({ className = '' }: SchedulerProps) {
     }
   };
 
+  // Handle moving posts to a new date via drag-and-drop
+  const handleMovePosts = async (postIds: string[], targetDate: string) => {
+    setOperationError(null);
+    try {
+      await Promise.all(
+        postIds.map(id => schedulerClient.updatePost(id, { scheduledDate: targetDate }))
+      );
+      await fetchPosts();
+    } catch (err) {
+      const message = err instanceof schedulerClient.SchedulerAPIError
+        ? err.message
+        : 'Failed to move posts';
+      setOperationError(message);
+    }
+  };
+
   // Sort posts chronologically (nearest first)
   const sortedPosts = [...posts].sort((a, b) =>
     a.scheduledDate.localeCompare(b.scheduledDate) ||
@@ -449,6 +465,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
         <Calendar
           posts={posts}
           onDateClick={handleDateClick}
+          onMovePosts={handleMovePosts}
         />
       )}
 
@@ -456,124 +473,9 @@ export function Scheduler({ className = '' }: SchedulerProps) {
       {viewMode === 'list' && (
         <div>
           {sortedPosts.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
               <Icon icon="solar:calendar-bold" className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No scheduled posts</h3>
-              <p className="text-gray-500 mb-4">
-                Start by scheduling your first post to see it appear here.
-              </p>
-              <Button
-                onClick={() => handleScheduleNewPost()}
-                leftIcon="solar:add-circle-bold"
-              >
-                Schedule Your First Post
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {Object.entries(
-                sortedPosts.reduce<Record<string, ScheduledPost[]>>((groups, post) => {
-                  const dateKey = post.scheduledDate;
-                  if (!groups[dateKey]) groups[dateKey] = [];
-                  groups[dateKey].push(post);
-                  return groups;
-                }, {})
-              ).map(([dateKey, datePosts]) => (
-                <div key={dateKey}>
-                  {/* Date group header */}
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                      <Icon icon="solar:calendar-bold" className="w-4 h-4 text-indigo-500" />
-                      <span>{formatDate(dateKey)}</span>
-                    </div>
-                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-                      {datePosts.length} post{datePosts.length !== 1 ? 's' : ''}
-                    </span>
-                    <div className="flex-1 border-t border-gray-200" />
-                  </div>
-
-                  {/* Posts for this date */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 divide-y divide-gray-200">
-                    {datePosts.map((post) => (
-                      <div key={post.id} className="p-4 hover:bg-gray-50 transition-colors">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            {/* Strategy label */}
-                            {post.strategyLabel && (
-                              <div className="flex items-center gap-2 mb-1">
-                                <span
-                                  className="inline-block w-2.5 h-2.5 rounded-full"
-                                  style={{ backgroundColor: post.strategyColor || '#6B7280' }}
-                                />
-                                <span className="text-xs font-medium text-gray-500">{post.strategyLabel}</span>
-                              </div>
-                            )}
-
-                            {/* Post content */}
-                            <p className="text-gray-900 mb-2 line-clamp-3">
-                              {post.content}
-                            </p>
-                            
-                            {/* Post metadata */}
-                            <div className="flex items-center gap-4 text-sm text-gray-500">
-                              <div className="flex items-center gap-1">
-                                <Icon 
-                                  icon={platformIcons[post.platform.toLowerCase()] || 'solar:chat-round-bold'} 
-                                  className="w-4 h-4"
-                                  style={{ color: platformColors[post.platform.toLowerCase()] }}
-                                />
-                                <span className="capitalize">{post.platform}</span>
-                              </div>
-                              
-                              <div className="flex items-center gap-1">
-                                <Icon icon="solar:clock-circle-bold" className="w-4 h-4" />
-                                <span>{formatTime(post.scheduledTime)}</span>
-                              </div>
-                              
-                              <StatusBadge status={post.status} />
-                            </div>
-                          </div>
-                          
-                          {/* Actions */}
-                          <div className="flex items-center gap-2 ml-4">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditPost(post.id)}
-                              leftIcon="solar:pen-bold"
-                              aria-label="Edit post"
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeletePost(post.id)}
-                              leftIcon="solar:trash-bin-trash-bold"
-                              aria-label="Delete post"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Grid View */}
-      {viewMode === 'grid' && (
-        <div>
-          {sortedPosts.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-              <Icon icon="solar:calendar-bold" className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No scheduled posts</h3>
+              <h3 className="text-lg font-medium font-heading text-gray-900 mb-2">No scheduled posts</h3>
               <p className="text-gray-500 mb-4">
                 Start by scheduling your first post to see it appear here.
               </p>
@@ -593,88 +495,223 @@ export function Scheduler({ className = '' }: SchedulerProps) {
                   groups[dateKey].push(post);
                   return groups;
                 }, {})
-              ).map(([dateKey, datePosts]) => (
-                <div key={dateKey}>
-                  {/* Date group header */}
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                      <Icon icon="solar:calendar-bold" className="w-4 h-4 text-indigo-500" />
-                      <span>{formatDate(dateKey)}</span>
+              ).map(([dateKey, datePosts]) => {
+                const [y, m, d] = dateKey.split('-').map(Number);
+                const dateObj = new Date(y, m - 1, d);
+                const dateLabel = dateObj.toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                }).toUpperCase();
+
+                return (
+                  <div key={dateKey}>
+                    {/* Date separator */}
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="flex-1 border-t border-gray-200" />
+                      <span className="text-xs font-bold font-heading tracking-widest text-gray-400 whitespace-nowrap">
+                        {dateLabel}
+                      </span>
+                      <div className="flex-1 border-t border-gray-200" />
                     </div>
-                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-                      {datePosts.length} post{datePosts.length !== 1 ? 's' : ''}
-                    </span>
-                    <div className="flex-1 border-t border-gray-200" />
-                  </div>
 
-                  {/* Grid cards for this date */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {datePosts.map((post) => (
-                      <div
-                        key={post.id}
-                        className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-col justify-between hover:shadow-md transition-shadow"
-                      >
-                        {/* Top: strategy + content */}
-                        <div>
-                          {post.strategyLabel && (
-                            <div className="flex items-center gap-2 mb-2">
-                              <span
-                                className="inline-block w-2.5 h-2.5 rounded-full"
-                                style={{ backgroundColor: post.strategyColor || '#6B7280' }}
-                              />
-                              <span className="text-xs font-medium text-gray-500">{post.strategyLabel}</span>
-                            </div>
-                          )}
-                          <p className="text-sm text-gray-900 line-clamp-4 mb-3">
-                            {post.content}
-                          </p>
-                        </div>
+                    {/* Post rows */}
+                    <div className="space-y-3">
+                      {datePosts.map((post) => (
+                        <div
+                          key={post.id}
+                          className="bg-white rounded-xl border border-gray-200 border-l-4 border-l-indigo-400 px-5 py-4 flex items-center gap-4 hover:shadow-md transition-shadow"
+                        >
+                          {/* Strategy avatar */}
+                          <div
+                            className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold text-white"
+                            style={{ backgroundColor: post.strategyColor || '#6366F1' }}
+                          >
+                            {(post.strategyLabel || 'Post').substring(0, 4)}
+                          </div>
 
-                        {/* Bottom: metadata + actions */}
-                        <div>
-                          <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mb-3">
-                            <div className="flex items-center gap-1">
+                          {/* Content block */}
+                          <div className="flex-1 min-w-0">
+                            {/* Top row: label + platform icons */}
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-sm font-semibold text-gray-900">
+                                {post.strategyLabel || 'Post'}
+                              </span>
+                              <span className="text-gray-300">·</span>
                               <Icon
-                                icon={platformIcons[post.platform] || 'solar:chat-round-bold'}
-                                className="w-3.5 h-3.5"
-                                style={{ color: platformColors[post.platform] }}
+                                icon={platformIcons[post.platform.toLowerCase()] || 'solar:chat-round-bold'}
+                                className="w-4 h-4"
+                                style={{ color: platformColors[post.platform.toLowerCase()] || '#6B7280' }}
                               />
-                              <span className="capitalize">{post.platform}</span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Icon icon="solar:clock-circle-bold" className="w-3.5 h-3.5" />
+                            {/* Content preview */}
+                            <p className="text-sm text-gray-500 truncate">
+                              {post.content}
+                            </p>
+                          </div>
+
+                          {/* Time + status */}
+                          <div className="text-right shrink-0">
+                            <div className="text-base font-bold font-heading text-gray-900">
+                              {formatTime(post.scheduledTime)}
+                            </div>
+                            <div className="text-[10px] font-bold tracking-wider uppercase text-gray-400">
+                              {post.status}
+                            </div>
+                          </div>
+
+                          {/* Status badge */}
+                          <div className="shrink-0">
+                            <span className={`
+                              inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold
+                              ${post.status === 'published'
+                                ? 'bg-green-50 text-green-600'
+                                : post.status === 'scheduled'
+                                  ? 'bg-indigo-50 text-indigo-600'
+                                  : 'bg-gray-100 text-gray-500'
+                              }
+                            `}>
+                              <span className={`w-2 h-2 rounded-full ${
+                                post.status === 'published'
+                                  ? 'bg-green-500'
+                                  : post.status === 'scheduled'
+                                    ? 'bg-indigo-500'
+                                    : 'bg-gray-400'
+                              }`} />
+                              {post.status === 'scheduled' ? 'Ready' : post.status === 'published' ? 'Published' : 'Draft'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Grid View */}
+      {viewMode === 'grid' && (
+        <div>
+          {sortedPosts.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
+              <Icon icon="solar:calendar-bold" className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No scheduled posts</h3>
+              <p className="text-gray-500 mb-4">
+                Start by scheduling your first post to see it appear here.
+              </p>
+              <Button
+                onClick={() => handleScheduleNewPost()}
+                leftIcon="solar:add-circle-bold"
+              >
+                Schedule Your First Post
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-10">
+              {Object.entries(
+                sortedPosts.reduce<Record<string, ScheduledPost[]>>((groups, post) => {
+                  const dateKey = post.scheduledDate;
+                  if (!groups[dateKey]) groups[dateKey] = [];
+                  groups[dateKey].push(post);
+                  return groups;
+                }, {})
+              ).map(([dateKey, datePosts]) => {
+                const [y, m, d] = dateKey.split('-').map(Number);
+                const dateObj = new Date(y, m - 1, d);
+                const dayAbbr = dateObj.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+                const dayNum = d;
+                const fullDate = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+                const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+
+                return (
+                  <div key={dateKey}>
+                    {/* Date group header */}
+                    <div className="flex items-center gap-4 mb-5">
+                      <div className="w-14 h-14 rounded-full bg-indigo-50 border-2 border-indigo-200 flex flex-col items-center justify-center shrink-0">
+                        <span className="text-[10px] font-bold font-heading text-indigo-500 leading-none">{dayAbbr}</span>
+                        <span className="text-lg font-bold font-heading text-indigo-700 leading-tight">{dayNum}</span>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold font-heading text-gray-900">{fullDate}</h3>
+                        <p className="text-xs font-medium text-gray-400">
+                          {datePosts.length} post{datePosts.length !== 1 ? 's' : ''} scheduled
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Grid cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {datePosts.map((post) => (
+                        <div
+                          key={post.id}
+                          className="bg-white rounded-xl shadow-sm border border-gray-200 border-l-4 border-l-indigo-400 p-4 flex flex-col justify-between hover:shadow-md transition-shadow"
+                        >
+                          {/* Top row: platform icon + actions */}
+                          <div>
+                            <div className="flex items-center justify-between mb-3">
+                              <div
+                                className="w-9 h-9 rounded-full flex items-center justify-center"
+                                style={{ backgroundColor: `${platformColors[post.platform] || '#6B7280'}15` }}
+                              >
+                                <Icon
+                                  icon={platformIcons[post.platform] || 'solar:chat-round-bold'}
+                                  className="w-4.5 h-4.5"
+                                  style={{ color: platformColors[post.platform] || '#6B7280' }}
+                                />
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => handleEditPost(post.id)}
+                                  className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                  aria-label="Edit post"
+                                >
+                                  <Icon icon="solar:pen-bold" className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeletePost(post.id)}
+                                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                  aria-label="Delete post"
+                                >
+                                  <Icon icon="solar:trash-bin-trash-bold" className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Content */}
+                            <p className="text-base font-sans text-gray-800 leading-relaxed line-clamp-4 mb-4">
+                              {post.content}
+                            </p>
+                          </div>
+
+                          {/* Bottom: time + status */}
+                          <div className="flex items-center justify-between text-sm font-medium pt-3 border-t border-gray-100">
+                            <div className="flex items-center gap-1.5 text-gray-500">
+                              <Icon icon="solar:clock-circle-bold" className="w-3.5 h-3.5 text-gray-400" />
                               <span>{formatTime(post.scheduledTime)}</span>
                             </div>
-                            <StatusBadge status={post.status} />
-                          </div>
-
-                          <div className="flex items-center gap-2 border-t border-gray-100 pt-3">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditPost(post.id)}
-                              leftIcon="solar:pen-bold"
-                              aria-label="Edit post"
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeletePost(post.id)}
-                              leftIcon="solar:trash-bin-trash-bold"
-                              aria-label="Delete post"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              Delete
-                            </Button>
+                            <span className="text-xs font-bold tracking-wider uppercase text-indigo-500">
+                              {post.status}
+                            </span>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+
+                      {/* Add post placeholder card */}
+                      <button
+                        onClick={() => handleScheduleNewPost(dateObj)}
+                        className="rounded-xl border-2 border-dashed border-gray-200 p-4 flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-indigo-300 hover:text-indigo-500 hover:bg-indigo-50/30 transition-all min-h-[160px]"
+                      >
+                        <Icon icon="solar:add-circle-bold" className="w-8 h-8" />
+                        <span className="text-sm font-medium">Schedule {dayName} Post</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
