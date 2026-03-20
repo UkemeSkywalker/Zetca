@@ -12,7 +12,16 @@ export interface ConnectedAccount {
   platform: 'instagram' | 'twitter' | 'linkedin' | 'facebook';
   isConnected: boolean;
   username?: string;
+  profilePictureUrl?: string;
   connectedAt?: Date;
+}
+
+export interface LinkedInProfile {
+  isConnected: boolean;
+  name?: string;
+  pictureUrl?: string;
+  email?: string;
+  connectedAt?: string;
 }
 
 export interface GeneratedImage {

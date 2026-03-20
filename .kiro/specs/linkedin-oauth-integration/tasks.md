@@ -17,13 +17,14 @@ Each phase ends with a verification checkpoint where you can see the feature wor
 
 ## Phase 1: Foundation + Profile UI (See the Connect Button)
 
-- [ ] 1. Add LinkedIn environment variables and config
+- [x] 1.  environment variables and config
   - Add `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET`, `LINKEDIN_REDIRECT_URI=http://localhost:3000/api/auth/linkedin/callback` to `.env.local` (use the credentials from the LinkedIn Developer Portal)
   - Add the same variables to `.env.local.example` with placeholder values and comments explaining LinkedIn App setup
-  - Update `lib/config.ts` to read and export the new LinkedIn env vars (`linkedinClientId`, `linkedinClientSecret`, `linkedinRedirectUri`)
+  - Update   nl ;\.; v;
+  []9 `lib/config.ts` to read and export the new LinkedIn env vars (`linkedinClientId`, `linkedinClientSecret`, `linkedinRedirectUri`)
   - _Requirements: 6.1, 6.6_
 
-- [ ] 2. Update TypeScript types for LinkedIn data
+- [x] 2. Update TypeScript types for LinkedIn data
   - Update `ConnectedAccount` interface in `types/user.ts` to add optional `profilePictureUrl` field
   - Add `LinkedInProfile` interface to `types/user.ts` with fields: `isConnected: boolean`, `name?: string`, `pictureUrl?: string`, `email?: string`, `connectedAt?: string`
   - _Requirements: 3.6, 7.4_
