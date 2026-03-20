@@ -52,7 +52,7 @@ Each phase ends with a verification checkpoint where you can see the feature wor
   - Add `disconnectLinkedIn(userId: string)` method to `UserRepository` — uses DynamoDB `UpdateCommand` with `REMOVE` action to clear all LinkedIn fields
   - _Requirements: 7.1, 7.2, 7.3_
 
-- [ ] 6. Create OAuth initiation endpoint
+- [x] 6. Create OAuth initiation endpoint
   - Create `app/api/auth/linkedin/route.ts` with GET handler
   - Protect with `withAuth` middleware to ensure user is authenticated
   - Generate 32-byte cryptographically random state using `crypto.randomBytes(32).toString('hex')`
