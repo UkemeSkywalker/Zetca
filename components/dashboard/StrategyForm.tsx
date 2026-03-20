@@ -67,7 +67,7 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
 };
 
 interface StrategyFormProps {
-  onStrategyGenerated?: (strategy: StrategyOutput) => void;
+  onStrategyGenerated?: (strategy: StrategyOutput, meta?: { brandName: string; industry: string; targetAudience: string; goals: string }) => void;
 }
 
 export const StrategyForm: React.FC<StrategyFormProps> = ({ onStrategyGenerated }) => {
@@ -166,7 +166,12 @@ export const StrategyForm: React.FC<StrategyFormProps> = ({ onStrategyGenerated 
       
       // Call the callback if provided
       if (onStrategyGenerated) {
-        onStrategyGenerated(strategyOutput);
+        onStrategyGenerated(strategyOutput, {
+          brandName: formData.brandName,
+          industry: formData.industry,
+          targetAudience: formData.targetAudience,
+          goals: formData.goals,
+        });
       }
       
       // Expand the first section to show results
@@ -282,7 +287,13 @@ export const StrategyForm: React.FC<StrategyFormProps> = ({ onStrategyGenerated 
       {/* Display Generated Strategy */}
       {generatedStrategy && (
         <div className="mt-6">
-          <StrategyDisplay strategy={generatedStrategy} />
+          <StrategyDisplay
+            strategy={generatedStrategy}
+            brandName={formData.brandName}
+            industry={formData.industry}
+            targetAudience={formData.targetAudience}
+            goals={formData.goals}
+          />
         </div>
       )}
     </div>
