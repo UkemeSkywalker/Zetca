@@ -61,7 +61,7 @@ Each phase ends with a verification checkpoint where you can see the feature wor
   - Return `NextResponse.redirect()` to the LinkedIn URL
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 6.5_
 
-- [ ] 7. Create OAuth callback endpoint
+- [x] 7. Create OAuth callback endpoint
   - Create `app/api/auth/linkedin/callback/route.ts` with GET handler
   - Protect with `withAuth` middleware
   - Extract `code`, `state`, `error`, `error_description` from URL search params
