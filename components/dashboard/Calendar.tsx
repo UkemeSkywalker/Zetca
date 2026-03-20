@@ -165,17 +165,17 @@ export function Calendar({ posts, onDateClick, onMovePosts, className = '' }: Ca
       {/* Grid */}
       <div className="px-4 sm:px-6 pb-5">
         {/* Day headers */}
-        <div className="grid grid-cols-7 gap-[0.9rem] mb-2">
+        <div className="grid grid-cols-7 mb-0">
           {dayNames.map(day => (
-            <div key={day} className="text-center text-label-sm font-semibold text-outline tracking-wider py-2">
+            <div key={day} className="text-center text-xs font-semibold text-gray-400 tracking-wider py-2 border-b border-gray-200">
               <span className="hidden sm:inline">{day}</span>
               <span className="sm:hidden">{day.charAt(0)}</span>
             </div>
           ))}
         </div>
 
-        {/* Day cells - no borders, tonal shifts */}
-        <div className="grid grid-cols-7 gap-[0.9rem]">
+        {/* Day cells */}
+        <div className="grid grid-cols-7">
           {calendarDays.map((calendarDay, index) => {
             const isToday =
               calendarDay.date.getDate() === today.getDate() &&
@@ -197,21 +197,22 @@ export function Calendar({ posts, onDateClick, onMovePosts, className = '' }: Ca
                 onDragEnd={handleDragEnd}
                 onClick={() => onDateClick(calendarDay.date)}
                 className={`
-                  relative p-2 sm:p-3 h-20 sm:h-32 text-left rounded-xl transition-all overflow-hidden cursor-pointer select-none
-                  ${calendarDay.isCurrentMonth ? 'text-on-surface' : 'text-outline/40'}
-                  ${isDragSource ? 'opacity-40 scale-95 bg-surface-container-low' : ''}
-                  ${isDragOver ? 'bg-primary/10 scale-[1.02] shadow-ambient' : ''}
+                  relative p-2 sm:p-3 h-20 sm:h-32 text-left transition-all overflow-hidden cursor-pointer select-none border-b border-r border-gray-200
+                  ${index % 7 === 0 ? 'border-l border-gray-200' : ''}
+                  ${calendarDay.isCurrentMonth ? 'text-gray-900' : 'text-gray-300'}
+                  ${isDragSource ? 'opacity-40 scale-95 bg-gray-100' : ''}
+                  ${isDragOver ? 'bg-indigo-100 scale-[1.02] shadow-md' : ''}
                   ${!isDragSource && !isDragOver ? (
                     isToday
-                      ? 'bg-surface-container-highest'
+                      ? 'bg-white'
                       : hasPosts
-                        ? 'bg-surface-container-low hover:bg-primary/5'
-                        : 'bg-surface-container-lowest hover:bg-surface-container-low'
+                        ? 'bg-white hover:bg-gray-50'
+                        : 'bg-white hover:bg-gray-50'
                   ) : ''}
                   ${hasPosts ? 'cursor-grab active:cursor-grabbing' : ''}
                 `}
               >
-                <span className={`text-sm font-semibold ${isToday ? 'text-primary' : ''}`}>
+                <span className={`text-sm font-semibold ${isToday ? 'text-indigo-600' : ''}`}>
                   {calendarDay.day}
                 </span>
 
