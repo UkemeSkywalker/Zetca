@@ -130,7 +130,7 @@ Each phase ends with a verification checkpoint where you can see the feature wor
   - Update the `login` function to also accept LinkedIn data if present
   - _Requirements: 4.1, 4.4_
 
-- [ ] 14. Update dashboard layout header to show connected LinkedIn account
+- [x] 14. Update dashboard layout header to show connected LinkedIn account
   - Update `app/dashboard/layout.tsx` header section (the top bar area near the user menu):
   - If `user.linkedin?.isConnected` is true, display a compact LinkedIn badge: small circular avatar (28x28) showing the LinkedIn profile picture, with the LinkedIn name next to it, and a small LinkedIn icon indicator
   - Style it to fit naturally in the header bar near the notification/message icons area
