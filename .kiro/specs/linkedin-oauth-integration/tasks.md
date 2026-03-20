@@ -29,7 +29,7 @@ Each phase ends with a verification checkpoint where you can see the feature wor
   - Add `LinkedInProfile` interface to `types/user.ts` with fields: `isConnected: boolean`, `name?: string`, `pictureUrl?: string`, `email?: string`, `connectedAt?: string`
   - _Requirements: 3.6, 7.4_
 
-- [ ] 3. Update ProfileForm LinkedIn connect button to trigger OAuth
+- [x] 3. Update ProfileForm LinkedIn connect button to trigger OAuth
   - Update `components/dashboard/ProfileForm.tsx`:
   - For the LinkedIn account entry specifically, change the "Connect" button's `onClick` to navigate to `/api/auth/linkedin` using `window.location.href` (full page redirect to start OAuth)
   - Keep other platforms (Instagram, Twitter, Facebook) with the existing "coming soon" behavior

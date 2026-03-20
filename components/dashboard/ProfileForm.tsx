@@ -1,20 +1,22 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Button from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { UserProfile, ConnectedAccount } from '@/types';
 import { Icon } from '@iconify/react';
 import { useAuth } from '@/context/AuthContext';
+import { useSearchParams } from 'next/navigation';
 
 interface ProfileFormProps {
   className?: string;
 }
 
-export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
+const ProfileFormInner: React.FC<ProfileFormProps> = ({ className = '' }) => {
   const { user: authUser, updateUser } = useAuth();
-  
+  const searchParams = useSearchParams();
+
   // Profile state
   const [profile, setProfile] = useState<UserProfile>({
     id: '',
@@ -81,6 +83,32 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
 
     fetchProfile();
   }, []);
+
+  // Handle LinkedIn OAuth query params on mount
+  useEffect(() => {
+    const linkedinStatus = searchParams.get('linkedin');
+    const linkedinError = searchParams.get('linkedin_error');
+
+    if (linkedinStatus === 'connected') {
+      setConnectionMessage('LinkedIn connected successfully!');
+      setTimeout(() => setConnectionMessage(''), 5000);
+    } else if (linkedinError) {
+      const errorMessages: Record<string, string> = {
+        denied: 'LinkedIn authorization was denied.',
+        state_mismatch: 'Authorization failed. Please try again.',
+        exchange_failed: 'Failed to connect LinkedIn. Please try again.',
+      };
+      setConnectionMessage('');
+      setErrors(prev => ({
+        ...prev,
+        general: errorMessages[linkedinError] || 'Failed to connect LinkedIn. Please try again.',
+      }));
+      setTimeout(() => setErrors(prev => {
+        const { general, ...rest } = prev;
+        return rest;
+      }), 5000);
+    }
+  }, [searchParams]);
 
   // Start editing a field
   const startEditing = (field: keyof UserProfile) => {
@@ -176,11 +204,15 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
     }
   };
 
-  // Handle account connection toggle (to be implemented separately)
-  const handleAccountToggle = () => {
-    // Account connection will be implemented in a future task
+  // Handle account connection toggle
+  const handleAccountToggle = (platform: string) => {
+    if (platform === 'linkedin') {
+      // Full page redirect to start OAuth flow
+      window.location.href = '/api/auth/linkedin';
+      return;
+    }
+    // Other platforms coming soon
     setConnectionMessage(`Account connection feature coming soon!`);
-
     setTimeout(() => {
       setConnectionMessage('');
     }, 3000);
@@ -380,7 +412,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
                   <Button
                     variant={account.isConnected ? 'outline' : 'primary'}
                     size="sm"
-                    onClick={handleAccountToggle}
+                    onClick={() => handleAccountToggle(account.platform)}
                   >
                     {account.isConnected ? 'Disconnect' : 'Connect'}
                   </Button>
@@ -392,5 +424,13 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
       </div>
       )}
     </div>
+  );
+};
+
+export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
+  return (
+    <Suspense fallback={null}>
+      <ProfileFormInner className={className} />
+    </Suspense>
   );
 };
