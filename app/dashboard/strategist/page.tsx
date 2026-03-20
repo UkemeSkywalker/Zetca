@@ -8,15 +8,29 @@ import { StrategyDisplay } from '@/components/dashboard/StrategyDisplay';
 import { StrategyRecord, StrategyOutput } from '@/types/strategy';
 import { Icon } from '@iconify/react';
 
+interface GeneratedResult {
+  strategy: StrategyOutput;
+  brandName: string;
+  industry: string;
+  targetAudience: string;
+  goals: string;
+}
+
 type TabType = 'generate' | 'saved';
 
 export default function StrategistPage() {
   const [activeTab, setActiveTab] = useState<TabType>('generate');
-  const [generatedStrategy, setGeneratedStrategy] = useState<StrategyOutput | null>(null);
+  const [generatedResult, setGeneratedResult] = useState<GeneratedResult | null>(null);
   const [selectedStrategy, setSelectedStrategy] = useState<StrategyRecord | null>(null);
 
-  const handleStrategyGenerated = (strategy: StrategyOutput) => {
-    setGeneratedStrategy(strategy);
+  const handleStrategyGenerated = (strategy: StrategyOutput, meta?: { brandName: string; industry: string; targetAudience: string; goals: string }) => {
+    setGeneratedResult({
+      strategy,
+      brandName: meta?.brandName || 'Your Brand',
+      industry: meta?.industry || '',
+      targetAudience: meta?.targetAudience || '',
+      goals: meta?.goals || '',
+    });
   };
 
   const handleStrategyClick = (strategy: StrategyRecord) => {
@@ -28,7 +42,7 @@ export default function StrategistPage() {
   };
 
   const handleBackToForm = () => {
-    setGeneratedStrategy(null);
+    setGeneratedResult(null);
   };
 
   return (
@@ -57,7 +71,7 @@ export default function StrategistPage() {
           <button
             onClick={() => {
               setActiveTab('saved');
-              setGeneratedStrategy(null);
+              setGeneratedResult(null);
             }}
             className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors border-b-2 ${
               activeTab === 'saved'
@@ -74,7 +88,7 @@ export default function StrategistPage() {
       {/* Tab Content */}
       {activeTab === 'generate' && (
         <div>
-          {!generatedStrategy ? (
+          {!generatedResult ? (
             <StrategyForm onStrategyGenerated={handleStrategyGenerated} />
           ) : (
             <div>
@@ -85,7 +99,13 @@ export default function StrategistPage() {
                 <Icon icon="solar:alt-arrow-left-bold" width={20} />
                 Generate Another Strategy
               </button>
-              <StrategyDisplay strategy={generatedStrategy} />
+              <StrategyDisplay
+                strategy={generatedResult.strategy}
+                brandName={generatedResult.brandName}
+                industry={generatedResult.industry}
+                targetAudience={generatedResult.targetAudience}
+                goals={generatedResult.goals}
+              />
             </div>
           )}
         </div>
@@ -104,22 +124,14 @@ export default function StrategistPage() {
                 <Icon icon="solar:alt-arrow-left-bold" width={20} />
                 Back to Saved Strategies
               </button>
-              <div className="mb-5 bg-white rounded-xl border border-gray-200 p-5">
-                <div className="flex items-center gap-4 flex-wrap">
-                  {[
-                    { label: 'Brand', value: selectedStrategy.brandName },
-                    { label: 'Industry', value: selectedStrategy.industry },
-                    { label: 'Audience', value: selectedStrategy.targetAudience },
-                    { label: 'Goals', value: selectedStrategy.goals },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
-                      <span className="text-xs text-gray-400 uppercase tracking-wide">{item.label}</span>
-                      <span className="text-sm text-gray-900 font-medium">{item.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <StrategyDisplay strategy={selectedStrategy.strategyOutput} />
+              <StrategyDisplay
+                strategy={selectedStrategy.strategyOutput}
+                brandName={selectedStrategy.brandName}
+                industry={selectedStrategy.industry}
+                targetAudience={selectedStrategy.targetAudience}
+                goals={selectedStrategy.goals}
+                createdAt={selectedStrategy.createdAt}
+              />
             </div>
           )}
         </div>
