@@ -46,7 +46,7 @@ Each phase ends with a verification checkpoint where you can see the feature wor
 
 ## Phase 2: OAuth Flow + Connect Experience (Click Connect → Authorize → See Connected)
 
-- [ ] 5. Update UserRecord and UserRepository with LinkedIn fields
+- [x] 5. Update UserRecord and UserRepository with LinkedIn fields
   - Update `UserRecord` interface in `lib/db/userRepository.ts` to add optional fields: `linkedinSub?: string`, `linkedinAccessToken?: string`, `linkedinName?: string`, `linkedinPictureUrl?: string`, `linkedinEmail?: string`, `linkedinConnectedAt?: string`
   - Add `connectLinkedIn(userId: string, linkedinData: { linkedinSub: string, linkedinAccessToken: string, linkedinName: string, linkedinPictureUrl?: string, linkedinEmail?: string })` method to `UserRepository` — uses DynamoDB `UpdateCommand` to set all LinkedIn fields plus `linkedinConnectedAt` to current ISO timestamp
   - Add `disconnectLinkedIn(userId: string)` method to `UserRepository` — uses DynamoDB `UpdateCommand` with `REMOVE` action to clear all LinkedIn fields
