@@ -27,6 +27,17 @@ export async function GET(req: NextRequest) {
         throw new AuthError('User not found', 404, undefined, 'USER_NOT_FOUND');
       }
 
+      // Build LinkedIn connection data (never expose access token)
+      const linkedin = user.linkedinSub
+        ? {
+            isConnected: true,
+            name: user.linkedinName,
+            pictureUrl: user.linkedinPictureUrl,
+            email: user.linkedinEmail,
+            connectedAt: user.linkedinConnectedAt,
+          }
+        : { isConnected: false };
+
       // Return user data without password hash
       return NextResponse.json({
         success: true,
@@ -36,6 +47,7 @@ export async function GET(req: NextRequest) {
           name: user.name,
           company: user.company,
           bio: user.bio,
+          linkedin,
         },
       });
     } catch (error) {

@@ -91,7 +91,7 @@ Each phase ends with a verification checkpoint where you can see the feature wor
 
 ## Phase 3: Profile Display (See LinkedIn Name + Photo on Profile)
 
-- [ ] 9. Update profile API to include LinkedIn data in response
+- [x] 9. Update profile API to include LinkedIn data in response
   - Update GET handler in `app/api/profile/route.ts` to include a `linkedin` object in the user response
   - If `user.linkedinSub` exists: `{ isConnected: true, name: user.linkedinName, pictureUrl: user.linkedinPictureUrl, email: user.linkedinEmail, connectedAt: user.linkedinConnectedAt }`
   - If `user.linkedinSub` does not exist: `{ isConnected: false }`
