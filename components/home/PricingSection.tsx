@@ -62,14 +62,14 @@ const pricingTiers: PricingTier[] = [
 
 export default function PricingSection() {
   return (
-    <section className="py-20 px-4 bg-gray-50">
+    <section className="py-22 px-4 bg-surface-container-low">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+          <h2 className="text-display-md font-heading text-on-surface mb-4">
             Simple, Transparent Pricing
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-outline max-w-2xl mx-auto">
             Choose the perfect plan for your social media needs. All plans include a 14-day free trial.
           </p>
         </div>
@@ -79,61 +79,54 @@ export default function PricingSection() {
           {pricingTiers.map((tier) => (
             <div
               key={tier.name}
-              className={`relative ${
-                tier.isPopular ? 'transform lg:scale-105' : ''
-              }`}
+              className={`relative ${tier.isPopular ? 'transform lg:scale-105' : ''}`}
             >
               {/* Popular Badge */}
               {tier.isPopular && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
-                  <span className="bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
+                  <span className="text-on-primary px-4 py-1 rounded-full text-sm font-semibold gradient-primary">
                     Popular
                   </span>
                 </div>
               )}
 
-              {/* Pricing Card */}
               <Card
                 className={`h-full flex flex-col ${
                   tier.isPopular
-                    ? 'border-2 border-blue-600 shadow-xl'
-                    : 'border border-gray-200'
+                    ? 'shadow-ambient-lg'
+                    : 'ghost-border'
                 }`}
+                variant={tier.isPopular ? 'elevated' : 'default'}
               >
                 <div className="flex-1">
-                  {/* Tier Name */}
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  <h3 className="text-headline-lg font-heading text-on-surface mb-2">
                     {tier.name}
                   </h3>
+                  <p className="text-outline mb-6">{tier.description}</p>
 
-                  {/* Description */}
-                  <p className="text-gray-600 mb-6">{tier.description}</p>
-
-                  {/* Price */}
                   <div className="mb-8">
-                    <span className="text-5xl font-bold text-gray-900">
+                    <span className="text-5xl font-bold font-heading text-on-surface">
                       {tier.price}
                     </span>
                     {tier.price !== 'Custom' && (
-                      <span className="text-gray-600 ml-2">/month</span>
+                      <span className="text-outline ml-2">/month</span>
                     )}
                   </div>
 
-                  {/* Features List */}
+                  {/* Features - no dividers, spacing only */}
                   <ul className="space-y-4 mb-8">
                     {tier.features.map((feature, index) => (
                       <li key={index} className="flex items-start">
                         <Icon
                           icon="solar:check-circle-bold"
-                          className="text-green-500 text-xl mr-3 flex-shrink-0 mt-0.5"
+                          className="text-emerald-500 text-xl mr-3 flex-shrink-0 mt-0.5"
                         />
-                        <span className="text-gray-700">{feature}</span>
+                        <span className="text-on-surface/80">{feature}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                {/* CTA Button */}
                 <div className="mt-auto">
                   <Button
                     variant={tier.isPopular ? 'primary' : 'outline'}
@@ -147,9 +140,8 @@ export default function PricingSection() {
           ))}
         </div>
 
-        {/* Additional Info */}
         <div className="text-center mt-12">
-          <p className="text-gray-600">
+          <p className="text-outline">
             All plans include a 14-day free trial. No credit card required.
           </p>
         </div>

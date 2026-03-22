@@ -332,6 +332,38 @@ async def update_post(
         )
 
 
+@router.delete("/posts/clear-all", status_code=status.HTTP_200_OK)
+async def delete_all_posts(
+    user_id: str = Depends(auth_middleware.get_current_user),
+):
+    """
+    Delete all scheduled posts for the authenticated user.
+
+    Args:
+        user_id: Authenticated user ID from JWT token
+
+    Returns:
+        JSON with count of deleted posts
+
+    Raises:
+        HTTPException: 401, 500
+    """
+    try:
+        logger.info(f"Deleting all scheduled posts for user: {user_id}")
+        count = await scheduler_service.delete_all_posts(user_id)
+        logger.info(f"Deleted {count} scheduled posts for user: {user_id}")
+        return {"deleted": count}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete all posts: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete scheduled posts. Please try again.",
+        )
+
+
 @router.delete("/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_post(
     post_id: str,

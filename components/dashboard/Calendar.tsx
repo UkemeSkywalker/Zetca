@@ -1,94 +1,63 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Icon } from '@iconify/react';
-import { Post } from '@/types/post';
+import { ScheduledPost } from '@/types/scheduler';
 
 interface CalendarProps {
-  posts: Post[];
+  posts: ScheduledPost[];
   onDateClick: (date: Date) => void;
+  onMovePosts?: (postIds: string[], targetDate: string) => void;
   className?: string;
 }
 
-export function Calendar({ posts, onDateClick, className = '' }: CalendarProps) {
+export function Calendar({ posts, onDateClick, onMovePosts, className = '' }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [dragSourceDate, setDragSourceDate] = useState<string | null>(null);
+  const [dragOverDate, setDragOverDate] = useState<string | null>(null);
 
-  // Get first day of current month
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-  
-  // Get first day of the week for the first day of month (0 = Sunday)
   const firstDayOfWeek = firstDayOfMonth.getDay();
-  
-  // Get number of days in current month
   const daysInMonth = lastDayOfMonth.getDate();
-  
-  // Get number of days in previous month
   const prevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 0);
   const daysInPrevMonth = prevMonth.getDate();
 
-  // Navigate to previous month
   const goToPreviousMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   };
-
-  // Navigate to next month
   const goToNextMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   };
 
-  // Get posts for a specific date
-  const getPostsForDate = (date: Date) => {
-    return posts.filter(post => {
-      const postDate = new Date(post.scheduledDate);
-      // Compare only the date parts, ignoring time
-      return (
-        postDate.getDate() === date.getDate() &&
-        postDate.getMonth() === date.getMonth() &&
-        postDate.getFullYear() === date.getFullYear()
-      );
-    });
+  const toDateKey = (date: Date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   };
 
-  // Generate calendar days
+  const getPostsForDate = (date: Date) => {
+    const key = toDateKey(date);
+    return posts.filter(post => post.scheduledDate === key);
+  };
+
   const generateCalendarDays = () => {
     const days = [];
-    
-    // Previous month's trailing days
     for (let i = firstDayOfWeek - 1; i >= 0; i--) {
       const day = daysInPrevMonth - i;
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, day);
-      days.push({
-        date,
-        day,
-        isCurrentMonth: false,
-        posts: getPostsForDate(date)
-      });
+      days.push({ date, day, isCurrentMonth: false, posts: getPostsForDate(date) });
     }
-    
-    // Current month's days
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-      days.push({
-        date,
-        day,
-        isCurrentMonth: true,
-        posts: getPostsForDate(date)
-      });
+      days.push({ date, day, isCurrentMonth: true, posts: getPostsForDate(date) });
     }
-    
-    // Next month's leading days to fill the grid
-    const remainingCells = 42 - days.length; // 6 rows × 7 days = 42 cells
+    const remainingCells = 42 - days.length;
     for (let day = 1; day <= remainingCells; day++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, day);
-      days.push({
-        date,
-        day,
-        isCurrentMonth: false,
-        posts: getPostsForDate(date)
-      });
+      days.push({ date, day, isCurrentMonth: false, posts: getPostsForDate(date) });
     }
-    
     return days;
   };
 
@@ -97,119 +66,203 @@ export function Calendar({ posts, onDateClick, className = '' }: CalendarProps) 
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-  // Platform colors for post indicators
-  const platformColors = {
-    instagram: 'bg-pink-500',
-    twitter: 'bg-blue-500',
-    linkedin: 'bg-blue-700',
-    facebook: 'bg-blue-600'
+  const platformIcons: Record<string, string> = {
+    instagram: 'simple-icons:instagram',
+    twitter: 'ri:twitter-x-fill',
+    x: 'ri:twitter-x-fill',
+    linkedin: 'simple-icons:linkedin',
+    facebook: 'simple-icons:facebook',
   };
 
+  const platformColors: Record<string, string> = {
+    instagram: '#E4405F',
+    twitter: '#000000',
+    x: '#000000',
+    linkedin: '#0A66C2',
+    facebook: '#1877F2',
+  };
+
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
+  };
+
+  const today = new Date();
+
+  const handleDragStart = useCallback((e: React.DragEvent, dateKey: string, datePosts: ScheduledPost[]) => {
+    if (datePosts.length === 0) { e.preventDefault(); return; }
+    setDragSourceDate(dateKey);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', dateKey);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, dateKey: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dateKey !== dragSourceDate) setDragOverDate(dateKey);
+  }, [dragSourceDate]);
+
+  const handleDragLeave = useCallback(() => { setDragOverDate(null); }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, targetDateKey: string) => {
+    e.preventDefault();
+    setDragOverDate(null);
+    const sourceDateKey = e.dataTransfer.getData('text/plain');
+    if (!sourceDateKey || sourceDateKey === targetDateKey) { setDragSourceDate(null); return; }
+    const sourcePosts = posts.filter(p => p.scheduledDate === sourceDateKey);
+    if (sourcePosts.length > 0 && onMovePosts) {
+      onMovePosts(sourcePosts.map(p => p.id), targetDateKey);
+    }
+    setDragSourceDate(null);
+  }, [posts, onMovePosts]);
+
+  const handleDragEnd = useCallback(() => { setDragSourceDate(null); setDragOverDate(null); }, []);
+
   return (
-    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className}`}>
-      {/* Calendar Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <button
-          onClick={goToPreviousMonth}
-          className="p-2 md:p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-          aria-label="Previous month"
-        >
-          <Icon icon="solar:arrow-left-bold" className="w-5 h-5" />
-        </button>
-        
-        <h2 className="text-base sm:text-lg font-semibold text-gray-900">
-          {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-        </h2>
-        
-        <button
-          onClick={goToNextMonth}
-          className="p-2 md:p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-          aria-label="Next month"
-        >
-          <Icon icon="solar:arrow-right-bold" className="w-5 h-5" />
-        </button>
+    /* Calendar: surface-container-lowest, no borders, tonal shifts */
+    <div className={`bg-surface-container-lowest rounded-2xl shadow-ambient ${className}`}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-5">
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl sm:text-2xl font-bold font-heading text-on-surface">
+            {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+          </h2>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={goToPreviousMonth}
+              className="p-1.5 text-outline hover:text-primary hover:bg-primary/5 rounded-full transition-colors"
+              aria-label="Previous month"
+            >
+              <Icon icon="solar:alt-arrow-left-bold" className="w-5 h-5" />
+            </button>
+            <button
+              onClick={goToNextMonth}
+              className="p-1.5 text-outline hover:text-primary hover:bg-primary/5 rounded-full transition-colors"
+              aria-label="Next month"
+            >
+              <Icon icon="solar:alt-arrow-right-bold" className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="hidden sm:flex items-center gap-5 text-sm text-outline">
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-secondary" />
+            <span>Post Scheduled</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-surface-container-highest" style={{ border: '1px solid var(--outline-variant)' }} />
+            <span>Today</span>
+          </div>
+        </div>
       </div>
 
-      {/* Calendar Grid */}
-      <div className="p-2 sm:p-4">
-        {/* Day Headers */}
-        <div className="grid grid-cols-7 gap-1 mb-2">
+      {/* Grid */}
+      <div className="px-4 sm:px-6 pb-5">
+        {/* Day headers */}
+        <div className="grid grid-cols-7 mb-0">
           {dayNames.map(day => (
-            <div key={day} className="p-1 sm:p-2 text-center text-xs sm:text-sm font-medium text-gray-500">
+            <div key={day} className="text-center text-xs font-semibold text-gray-400 tracking-wider py-2 border-b border-gray-200">
               <span className="hidden sm:inline">{day}</span>
-              <span className="sm:hidden">{day.substring(0, 1)}</span>
+              <span className="sm:hidden">{day.charAt(0)}</span>
             </div>
           ))}
         </div>
 
-        {/* Calendar Days */}
-        <div className="grid grid-cols-7 gap-1">
+        {/* Day cells */}
+        <div className="grid grid-cols-7">
           {calendarDays.map((calendarDay, index) => {
-            const isToday = 
-              calendarDay.date.getDate() === new Date().getDate() &&
-              calendarDay.date.getMonth() === new Date().getMonth() &&
-              calendarDay.date.getFullYear() === new Date().getFullYear();
+            const isToday =
+              calendarDay.date.getDate() === today.getDate() &&
+              calendarDay.date.getMonth() === today.getMonth() &&
+              calendarDay.date.getFullYear() === today.getFullYear();
+            const hasPosts = calendarDay.posts.length > 0;
+            const dateKey = toDateKey(calendarDay.date);
+            const isDragSource = dragSourceDate === dateKey;
+            const isDragOver = dragOverDate === dateKey && dragSourceDate !== dateKey;
 
             return (
-              <button
+              <div
                 key={index}
+                draggable={hasPosts}
+                onDragStart={(e) => handleDragStart(e, dateKey, calendarDay.posts)}
+                onDragOver={(e) => handleDragOver(e, dateKey)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, dateKey)}
+                onDragEnd={handleDragEnd}
                 onClick={() => onDateClick(calendarDay.date)}
                 className={`
-                  relative p-1 sm:p-2 h-16 sm:h-20 text-left border border-gray-100 hover:bg-gray-50 transition-colors overflow-hidden min-h-[44px]
-                  ${calendarDay.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}
-                  ${isToday ? 'bg-blue-50 border-blue-200' : ''}
+                  relative p-2 sm:p-3 h-20 sm:h-32 text-left transition-all overflow-hidden cursor-pointer select-none border-b border-r border-gray-200
+                  ${index % 7 === 0 ? 'border-l border-gray-200' : ''}
+                  ${calendarDay.isCurrentMonth ? 'text-gray-900' : 'text-gray-300'}
+                  ${isDragSource ? 'opacity-40 scale-95 bg-gray-100' : ''}
+                  ${isDragOver ? 'bg-indigo-100 scale-[1.02] shadow-md' : ''}
+                  ${!isDragSource && !isDragOver ? (
+                    isToday
+                      ? 'bg-white'
+                      : hasPosts
+                        ? 'bg-white hover:bg-gray-50'
+                        : 'bg-white hover:bg-gray-50'
+                  ) : ''}
+                  ${hasPosts ? 'cursor-grab active:cursor-grabbing' : ''}
                 `}
               >
-                <span className={`text-xs sm:text-sm ${isToday ? 'font-semibold text-blue-600' : ''}`}>
+                <span className={`text-sm font-semibold ${isToday ? 'text-indigo-600' : ''}`}>
                   {calendarDay.day}
                 </span>
-                
-                {/* Post indicators - dots on mobile, content on desktop */}
-                {calendarDay.posts.length > 0 && (
+
+                {hasPosts && (
                   <>
-                    {/* Mobile: Show dots */}
-                    <div className="sm:hidden mt-1 flex gap-0.5 flex-wrap">
-                      {calendarDay.posts.slice(0, 3).map((post, postIndex) => (
-                        <div
-                          key={postIndex}
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            post.platform === 'instagram' ? 'bg-pink-500' :
-                            post.platform === 'twitter' ? 'bg-blue-500' :
-                            post.platform === 'linkedin' ? 'bg-blue-700' :
-                            'bg-blue-600'
-                          }`}
-                          title={`${post.platform.toUpperCase()}: ${post.content}`}
-                        />
+                    {/* Mobile: dots */}
+                    <div className="sm:hidden mt-1.5 flex gap-1 flex-wrap">
+                      {calendarDay.posts.slice(0, 3).map((_, postIndex) => (
+                        <div key={postIndex} className="w-2 h-2 rounded-full bg-secondary" />
                       ))}
                     </div>
-                    
-                    {/* Desktop: Show content preview */}
-                    <div className="hidden sm:block mt-1 space-y-1">
+
+                    {/* Desktop: event cards with secondary-container + left accent */}
+                    <div className="hidden sm:block mt-2 space-y-1.5">
                       {calendarDay.posts.slice(0, 2).map((post, postIndex) => (
                         <div
                           key={postIndex}
-                          className={`text-xs p-1 rounded text-white truncate ${
-                            post.platform === 'instagram' ? 'bg-pink-500' :
-                            post.platform === 'twitter' ? 'bg-blue-500' :
-                            post.platform === 'linkedin' ? 'bg-blue-700' :
-                            'bg-blue-600'
-                          }`}
-                          title={`${post.platform.toUpperCase()}: ${post.content}`}
+                          className="flex items-center gap-1.5 text-sm font-semibold leading-tight bg-secondary-container/30 rounded px-1.5 py-0.5"
+                          style={{ borderLeft: '2px solid var(--secondary)' }}
+                          title={`${post.strategyLabel || post.platform}: ${post.content}`}
                         >
-                          {post.content.length > 20 ? `${post.content.substring(0, 20)}...` : post.content}
+                          <Icon
+                            icon={platformIcons[post.platform.toLowerCase()] || 'solar:chat-round-bold'}
+                            className="w-4 h-4 shrink-0"
+                            style={{ color: platformColors[post.platform.toLowerCase()] || 'var(--outline)' }}
+                          />
+                          <span className="text-on-secondary-container truncate text-xs">{formatTime(post.scheduledTime)}</span>
                         </div>
                       ))}
                       {calendarDay.posts.length > 2 && (
-                        <div className="text-xs text-gray-500 font-medium">
+                        <div className="text-xs font-semibold text-secondary/60">
                           +{calendarDay.posts.length - 2} more
                         </div>
                       )}
                     </div>
+
+                    <div className="absolute bottom-2 right-2 hidden sm:block">
+                      <span className="w-2.5 h-2.5 rounded-full bg-secondary block" />
+                    </div>
                   </>
                 )}
-              </button>
+
+                {isDragOver && (
+                  <div className="absolute inset-0 flex items-center justify-center rounded-xl">
+                    <div className="text-on-primary text-xs font-semibold px-2 py-1 rounded-full shadow-ambient gradient-primary">
+                      Move here
+                    </div>
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>

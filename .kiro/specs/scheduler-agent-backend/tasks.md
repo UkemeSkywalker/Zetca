@@ -198,8 +198,8 @@ Each phase ends with a verification checkpoint.
 
 ## Phase 3: Real Scheduler Agent with Bedrock
 
-- [ ] 10. Implement real scheduler agent
-  - [ ] 10.1 Create `python/services/scheduler_agent.py`
+- [x] 10. Implement real scheduler agent
+  - [x] 10.1 Create `python/services/scheduler_agent.py`
     - Implement `SchedulerAgent` class following same pattern as `CopywriterAgent`
     - Initialize BedrockModel with AWS credentials and model_id
     - Create Agent with system prompt for social media scheduling optimization
@@ -215,14 +215,14 @@ Each phase ends with a verification checkpoint.
       - Raise `StructuredOutputException` if structured_output is None
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
-  - [ ]* 10.2 Write property test for no duplicate scheduling
+  - [x] 10.2 Write property test for no duplicate scheduling
     - **Property 9: Auto-Schedule No Duplicate Platform-Date-Time**
     - Create `python/tests/test_scheduler_no_duplicates_property.py`
     - Test that no two post assignments share the same (platform, scheduledDate, scheduledTime) and each references a valid copyId
     - **Validates: Requirements 1.3, 1.5**
 
-- [ ] 11. Wire real agent into routes
-  - [ ] 11.1 Update `python/routes/scheduler.py`
+- [x] 11. Wire real agent into routes
+  - [x] 11.1 Update `python/routes/scheduler.py`
     - Import `SchedulerAgent` from `services.scheduler_agent`
     - When `settings.use_mock_agent` is False, instantiate `SchedulerAgent` with AWS config
     - Ensure timeout handling (60 seconds) wraps agent calls
@@ -237,15 +237,15 @@ Each phase ends with a verification checkpoint.
 
 ## Phase 4: Frontend Integration
 
-- [ ] 13. Create TypeScript types for scheduler data
-  - [ ] 13.1 Create `types/scheduler.ts`
+- [x] 13. Create TypeScript types for scheduler data
+  - [x] 13.1 Create `types/scheduler.ts`
     - Define `ScheduledPost` interface with fields: `id`, `strategyId`, `copyId`, `userId`, `content`, `platform`, `hashtags`, `scheduledDate`, `scheduledTime`, `status` ('draft' | 'scheduled' | 'published'), `strategyColor`, `strategyLabel`, `createdAt`, `updatedAt`
     - Define `ManualScheduleInput` interface with fields: `copyId`, `scheduledDate`, `scheduledTime`, `platform`
     - Define `ScheduledPostUpdate` interface with optional fields: `scheduledDate`, `scheduledTime`, `content`, `platform`, `hashtags`, `status`
     - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5_
 
-- [ ] 14. Create scheduler API client
-  - [ ] 14.1 Create `lib/api/schedulerClient.ts`
+- [x] 14. Create scheduler API client
+  - [x] 14.1 Create `lib/api/schedulerClient.ts`
     - Follow same patterns as `copyClient.ts` and `strategyClient.ts`
     - Export `SchedulerAPIError` class for typed error handling
     - Implement `convertScheduledPost()` helper for snake_case to camelCase conversion
@@ -260,13 +260,13 @@ Each phase ends with a verification checkpoint.
     - Handle 401 (clear token, redirect to login), 403, 404 errors with descriptive messages
     - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 14.7_
 
-- [ ] 15. Update Next.js proxy config
-  - [ ] 15.1 Update `next.config.ts`
+- [x] 15. Update Next.js proxy config
+  - [x] 15.1 Update `next.config.ts`
     - Add rewrite rule for `/api/scheduler/*` to proxy to Python service (same pattern as `/api/strategy/*` and `/api/copy/*`)
     - _Requirements: 7.9_
 
-- [ ] 16. Update Scheduler component to use API
-  - [ ] 16.1 Update `components/dashboard/Scheduler.tsx`
+- [x] 16. Update Scheduler component to use API
+  - [x] 16.1 Update `components/dashboard/Scheduler.tsx`
     - Fetch posts from `schedulerClient.listPosts()` on mount instead of local state
     - Replace local state post mutations with API calls (manualSchedule, updatePost, deletePost)
     - Add "Auto Schedule" button next to "Schedule Post" with strategy selection dropdown
@@ -276,28 +276,28 @@ Each phase ends with a verification checkpoint.
     - On delete, call schedulerClient.deletePost and refresh calendar
     - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.5, 16.8, 18.1_
 
-- [ ] 17. Update Calendar and DateDetailsModal for strategy colors
-  - [ ] 17.1 Update `components/dashboard/Calendar.tsx`
+- [x] 17. Update Calendar and DateDetailsModal for strategy colors
+  - [x] 17.1 Update `components/dashboard/Calendar.tsx`
     - Accept `ScheduledPost[]` instead of `Post[]`
     - Use `strategyColor` for post indicator colors instead of hardcoded platform colors
     - Show strategy-colored dots/bars on calendar cells
     - _Requirements: 16.6_
 
-  - [ ] 17.2 Update `components/dashboard/DateDetailsModal.tsx`
+  - [x] 17.2 Update `components/dashboard/DateDetailsModal.tsx`
     - Display `strategyLabel` (brandName) for each post
     - Show strategy color indicator next to each post entry
     - _Requirements: 16.7_
 
-- [ ] 18. Wire Publish button in CaptionEditor to manual scheduling
-  - [ ] 18.1 Update `components/dashboard/CaptionEditor.tsx`
+- [x] 18. Wire Publish button in CaptionEditor to manual scheduling
+  - [x] 18.1 Update `components/dashboard/CaptionEditor.tsx`
     - Wire "Publish" button to open a scheduling modal pre-filled with active copy data (content, platform, hashtags)
     - On confirm, call `schedulerClient.manualSchedule()` with copyId, date, time, platform
     - Show success/error feedback after scheduling
     - Disable Publish button when no copy is selected or scheduling is in progress
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5, 17.6_
 
-- [ ] 19. Add auto-schedule UI to Scheduler page
-  - [ ] 19.1 Update `components/dashboard/Scheduler.tsx` (or scheduler page)
+- [x] 19. Add auto-schedule UI to Scheduler page
+  - [x] 19.1 Update `components/dashboard/Scheduler.tsx` (or scheduler page)
     - Add "Auto Schedule" button alongside "Schedule Post"
     - On click, display strategy selection dropdown listing user's strategies
     - On confirm, call `schedulerClient.autoSchedule(strategyId)`
@@ -306,8 +306,8 @@ Each phase ends with a verification checkpoint.
     - On failure, display error message with retry option
     - _Requirements: 18.1, 18.2, 18.3, 18.4, 18.5, 18.6_
 
-- [ ] 20. Update SchedulingModal for API integration
-  - [ ] 20.1 Update `components/dashboard/SchedulingModal.tsx`
+- [x] 20. Update SchedulingModal for API integration
+  - [x] 20.1 Update `components/dashboard/SchedulingModal.tsx`
     - Accept optional pre-fill props for content, platform, hashtags (from CaptionEditor publish flow)
     - Support both "create new" and "edit existing" modes via API
     - _Requirements: 16.3, 16.4, 17.1, 17.2_

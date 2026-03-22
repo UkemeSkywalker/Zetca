@@ -15,23 +15,24 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, helperText, leftIcon, rightIcon, className = '', id, ...props }, ref) => {
     const generatedId = useId();
     const inputId = id || generatedId;
-    const baseStyles = 'w-full px-4 py-3 border rounded-lg focus:ring-2 focus:outline-none transition-colors min-h-[44px]';
-    const normalStyles = 'border-gray-300 focus:ring-blue-500 focus:border-transparent';
-    const errorStyles = 'border-red-500 focus:ring-red-500';
+    /* Design System: surface-container-low bg, 0px border, focus = 2px ghost border primary 40% */
+    const baseStyles = 'w-full px-4 py-3 rounded focus:outline-none transition-all min-h-[44px]';
+    const normalStyles = 'bg-surface-container-low border-0 focus:ring-0';
+    const errorStyles = 'bg-on-error border-0 focus:ring-0';
     const iconPaddingLeft = leftIcon ? 'pl-11' : '';
     const iconPaddingRight = rightIcon ? 'pr-11' : '';
 
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor={inputId} className="block text-label-md font-medium text-on-surface mb-1">
             {label}
           </label>
         )}
         
         <div className="relative">
           {leftIcon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-outline">
               <Icon icon={leftIcon} width={20} />
             </div>
           )}
@@ -40,22 +41,38 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             className={`${baseStyles} ${error ? errorStyles : normalStyles} ${iconPaddingLeft} ${iconPaddingRight} ${className}`}
+            style={{
+              border: error ? '2px solid var(--error)' : 'none',
+            }}
+            onFocus={(e) => {
+              if (!error) {
+                e.currentTarget.style.border = '2px solid var(--ghost-border-focus)';
+                e.currentTarget.style.borderColor = 'rgba(74, 64, 224, 0.4)';
+              }
+              props.onFocus?.(e);
+            }}
+            onBlur={(e) => {
+              if (!error) {
+                e.currentTarget.style.border = 'none';
+              }
+              props.onBlur?.(e);
+            }}
             {...props}
           />
           
           {rightIcon && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-outline">
               <Icon icon={rightIcon} width={20} />
             </div>
           )}
         </div>
 
         {error && (
-          <p className="text-sm text-red-600 mt-1">{error}</p>
+          <p className="text-sm text-error mt-1">{error}</p>
         )}
         
         {helperText && !error && (
-          <p className="text-sm text-gray-500 mt-1">{helperText}</p>
+          <p className="text-sm text-outline mt-1">{helperText}</p>
         )}
       </div>
     );

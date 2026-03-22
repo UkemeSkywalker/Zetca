@@ -21,32 +21,27 @@ export default function Navbar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Hide navbar on dashboard routes
   if (pathname?.startsWith('/dashboard')) {
     return null;
   }
 
   const isActiveLink = (href: string) => {
-    if (href === '/') {
-      return pathname === '/';
-    }
+    if (href === '/') return pathname === '/';
     return pathname.startsWith(href);
   };
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 pt-4 px-4 sm:px-6 lg:px-8">
-      <nav className="bg-white/90 backdrop-blur-md shadow-sm rounded-full max-w-6xl mx-auto border border-gray-100">
+      {/* Glassmorphism nav */}
+      <nav className="glass-nav rounded-full max-w-6xl mx-auto" style={{ border: '1px solid var(--ghost-border)' }}>
         <div className="px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-              <div 
-                className="w-7 h-7 rounded-lg flex items-center justify-center" 
-                style={{ background: 'linear-gradient(45deg, var(--colors--linear-color-01), var(--colors--linear-color-02))' }}
-              >
-                <Icon icon="simple-icons:speedypage" className="w-4 h-4 text-white" />
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center gradient-primary">
+                <Icon icon="simple-icons:speedypage" className="w-4 h-4 text-on-primary" />
               </div>
-              <span className="text-xl font-bold text-gray-900">Zetca.</span>
+              <span className="text-xl font-bold font-heading text-on-surface">Zetca.</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -57,8 +52,8 @@ export default function Navbar() {
                   href={link.href}
                   className={`flex items-center gap-1 text-base font-medium transition-colors whitespace-nowrap ${
                     isActiveLink(link.href)
-                      ? 'text-[#3139FB]'
-                      : 'text-gray-700 hover:text-[#3139FB]'
+                      ? 'text-primary'
+                      : 'text-on-surface/70 hover:text-primary'
                   }`}
                   aria-current={isActiveLink(link.href) ? 'page' : undefined}
                 >
@@ -74,14 +69,13 @@ export default function Navbar() {
             <div className="hidden lg:flex items-center gap-4 flex-shrink-0">
               <Link
                 href="/login"
-                className="text-base font-medium text-gray-700 hover:text-[#3139FB] transition-colors"
+                className="text-base font-medium text-on-surface/70 hover:text-primary transition-colors"
               >
                 Login
               </Link>
               <Link
                 href="/signup"
-                className="px-5 py-2.5 text-white text-base font-semibold rounded-full transition-all shadow-sm hover:shadow-md"
-                style={{ background: 'linear-gradient(45deg, var(--colors--linear-color-01), var(--colors--linear-color-02))' }}
+                className="px-5 py-2.5 text-on-primary text-base font-semibold rounded-full transition-all shadow-ambient-sm hover:shadow-ambient gradient-primary"
               >
                 Get Started
               </Link>
@@ -90,12 +84,12 @@ export default function Navbar() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-3 rounded-lg hover:bg-gray-100 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="lg:hidden p-3 rounded-lg hover:bg-surface-container-low transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
               aria-label="Toggle mobile menu"
             >
               <Icon
                 icon={isMobileMenuOpen ? 'solar:close-square-bold' : 'solar:hamburger-menu-bold'}
-                className="w-6 h-6 text-gray-700"
+                className="w-6 h-6 text-on-surface"
               />
             </button>
           </div>
@@ -103,7 +97,7 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden border-t border-gray-100 rounded-b-3xl" role="navigation" aria-label="Mobile navigation">
+          <div className="lg:hidden rounded-b-3xl" style={{ borderTop: '1px solid var(--ghost-border)' }} role="navigation" aria-label="Mobile navigation">
             <div className="px-4 py-4 space-y-2">
               {navLinks.map((link) => (
                 <Link
@@ -112,8 +106,8 @@ export default function Navbar() {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`flex items-center justify-between px-4 py-3 rounded-lg text-base font-medium transition-colors min-h-[44px] ${
                     isActiveLink(link.href)
-                      ? 'text-[#3139FB] bg-blue-50'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      ? 'text-primary bg-primary/5'
+                      : 'text-on-surface/70 hover:bg-surface-container-low'
                   }`}
                 >
                   {link.label}
@@ -122,19 +116,18 @@ export default function Navbar() {
                   )}
                 </Link>
               ))}
-              <div className="pt-3 border-t border-gray-100 space-y-2">
+              <div className="pt-3 space-y-2" style={{ borderTop: '1px solid var(--ghost-border)' }}>
                 <Link
                   href="/login"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="block w-full px-4 py-3 text-gray-700 text-base font-medium rounded-lg text-center transition-all min-h-[44px] flex items-center justify-center hover:bg-gray-50"
+                  className="block w-full px-4 py-3 text-on-surface/70 text-base font-medium rounded-lg text-center transition-all min-h-[44px] flex items-center justify-center hover:bg-surface-container-low"
                 >
                   Login
                 </Link>
                 <Link
                   href="/signup"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="block w-full px-4 py-3 text-white text-base font-semibold rounded-full text-center transition-all min-h-[44px] flex items-center justify-center"
-                  style={{ background: 'linear-gradient(45deg, var(--colors--linear-color-01), var(--colors--linear-color-02))' }}
+                  className="block w-full px-4 py-3 text-on-primary text-base font-semibold rounded-full text-center transition-all min-h-[44px] flex items-center justify-center gradient-primary"
                 >
                   Get Started
                 </Link>

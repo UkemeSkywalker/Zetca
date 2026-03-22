@@ -8,13 +8,14 @@ interface StatusBadgeProps {
 }
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = '' }) => {
+  /* Design System: use secondary-container tones, no harsh borders */
   const colorMap: Record<BadgeStatus, string> = {
-    'scheduled': 'bg-yellow-100 text-yellow-800',
-    'published': 'bg-green-100 text-green-800',
-    'draft': 'bg-gray-100 text-gray-800',
-    'complete': 'bg-green-100 text-green-800',
-    'in-progress': 'bg-blue-100 text-blue-800',
-    'not-started': 'bg-gray-100 text-gray-800',
+    'scheduled': 'bg-primary/10 text-primary',
+    'published': 'bg-emerald-500/10 text-emerald-700',
+    'draft': 'bg-surface-container-high text-outline',
+    'complete': 'bg-emerald-500/10 text-emerald-700',
+    'in-progress': 'bg-secondary/10 text-secondary',
+    'not-started': 'bg-surface-container-high text-outline',
   };
 
   const labelMap: Record<BadgeStatus, string> = {

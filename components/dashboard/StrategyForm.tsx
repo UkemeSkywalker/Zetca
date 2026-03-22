@@ -35,30 +35,30 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
   children,
 }) => {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden transition-all hover:shadow-md">
+    <div className="bg-surface-container-lowest rounded-xl overflow-hidden transition-all hover:shadow-ambient">
       <button
         onClick={onToggle}
-        className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
+        className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-surface-container-low transition-colors"
       >
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-            <Icon icon={icon} className="w-5 h-5 text-blue-600" />
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Icon icon={icon} className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+            <h3 className="text-headline-sm font-heading text-on-surface">{title}</h3>
             {!isExpanded && (
-              <p className="text-sm text-gray-500 mt-0.5">{description}</p>
+              <p className="text-label-md text-outline mt-0.5">{description}</p>
             )}
           </div>
         </div>
         <Icon
           icon={isExpanded ? 'solar:alt-arrow-up-bold' : 'solar:alt-arrow-down-bold'}
-          className="w-5 h-5 text-gray-400 flex-shrink-0"
+          className="w-5 h-5 text-outline flex-shrink-0"
         />
       </button>
       
       {isExpanded && (
-        <div className="px-6 pb-6 pt-2 border-t border-gray-100">
+        <div className="px-6 pb-6 pt-2" style={{ borderTop: '1px solid var(--ghost-border)' }}>
           {children}
         </div>
       )}
@@ -67,7 +67,7 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
 };
 
 interface StrategyFormProps {
-  onStrategyGenerated?: (strategy: StrategyOutput) => void;
+  onStrategyGenerated?: (strategy: StrategyOutput, meta?: { brandName: string; industry: string; targetAudience: string; goals: string }) => void;
 }
 
 export const StrategyForm: React.FC<StrategyFormProps> = ({ onStrategyGenerated }) => {
@@ -166,7 +166,12 @@ export const StrategyForm: React.FC<StrategyFormProps> = ({ onStrategyGenerated 
       
       // Call the callback if provided
       if (onStrategyGenerated) {
-        onStrategyGenerated(strategyOutput);
+        onStrategyGenerated(strategyOutput, {
+          brandName: formData.brandName,
+          industry: formData.industry,
+          targetAudience: formData.targetAudience,
+          goals: formData.goals,
+        });
       }
       
       // Expand the first section to show results
@@ -189,14 +194,14 @@ export const StrategyForm: React.FC<StrategyFormProps> = ({ onStrategyGenerated 
     <div className="space-y-6">
       <div>
         <div className="mb-2">
-          <span className="text-sm font-medium text-blue-600 uppercase tracking-wide">
+          <span className="text-sm font-medium text-primary uppercase tracking-wide">
             Brand Strategy Generator
           </span>
         </div>
-        <h2 className="text-3xl font-bold text-gray-900 mb-3">
+        <h2 className="text-3xl font-bold font-heading text-on-surface mb-3">
           AI-Powered Strategy
         </h2>
-        <p className="text-gray-600">
+        <p className="text-outline">
           Generate a comprehensive social media strategy tailored to your brand with real-time insights and data-driven recommendations.
         </p>
       </div>
@@ -235,20 +240,23 @@ export const StrategyForm: React.FC<StrategyFormProps> = ({ onStrategyGenerated 
           />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-label-md font-medium text-on-surface mb-1">
               Goals
             </label>
             <textarea
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                errors.goals ? 'border-red-500' : 'border-gray-300'
+              className={`w-full px-4 py-2 rounded-lg transition-all ${
+                errors.goals ? 'bg-on-error' : 'bg-surface-container-low'
               }`}
+              style={{ border: errors.goals ? '2px solid var(--error)' : 'none' }}
+              onFocus={(e) => { if (!errors.goals) e.currentTarget.style.boxShadow = '0 0 0 2px rgba(74, 64, 224, 0.4)'; }}
+              onBlur={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
               placeholder="What are your social media goals?"
               rows={4}
               value={formData.goals}
               onChange={(e) => handleInputChange('goals', e.target.value)}
             />
             {errors.goals && (
-              <p className="text-sm text-red-600 mt-1">{errors.goals}</p>
+              <p className="text-sm text-error mt-1">{errors.goals}</p>
             )}
           </div>
 
@@ -263,12 +271,12 @@ export const StrategyForm: React.FC<StrategyFormProps> = ({ onStrategyGenerated 
           </Button>
 
           {errorMessage && (
-            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="mt-4 p-4 bg-on-error rounded-lg">
               <div className="flex items-start gap-3">
-                <Icon icon="solar:danger-circle-bold" className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <Icon icon="solar:danger-circle-bold" className="w-5 h-5 text-error flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-sm font-semibold text-red-900 mb-1">Error</h4>
-                  <p className="text-sm text-red-700">{errorMessage}</p>
+                  <h4 className="text-sm font-semibold text-error mb-1">Error</h4>
+                  <p className="text-sm text-error/80">{errorMessage}</p>
                 </div>
               </div>
             </div>
@@ -279,7 +287,13 @@ export const StrategyForm: React.FC<StrategyFormProps> = ({ onStrategyGenerated 
       {/* Display Generated Strategy */}
       {generatedStrategy && (
         <div className="mt-6">
-          <StrategyDisplay strategy={generatedStrategy} />
+          <StrategyDisplay
+            strategy={generatedStrategy}
+            brandName={formData.brandName}
+            industry={formData.industry}
+            targetAudience={formData.targetAudience}
+            goals={formData.goals}
+          />
         </div>
       )}
     </div>

@@ -6,7 +6,7 @@ export default function SchedulerPage() {
     <PageWrapper 
       title="Content Scheduler"
       description="Schedule your social media posts across different platforms"
-      showWorkflow={true}
+      showWorkflow={false}
     >
       <Scheduler />
     </PageWrapper>

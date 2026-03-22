@@ -6,6 +6,10 @@ import { StrategyRecord } from '@/types/strategy';
 import { Icon } from '@iconify/react';
 import { listStrategies } from '@/lib/api/strategyClient';
 import { generateCopies, listCopies, chatRefineCopy, deleteCopy } from '@/lib/api/copyClient';
+import { manualSchedule } from '@/lib/api/schedulerClient';
+import { Modal } from '@/components/ui/Modal';
+import Input from '@/components/ui/Input';
+import Button from '@/components/ui/Button';
 
 interface CaptionEditorProps {
   className?: string;
@@ -52,6 +56,12 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
   const [showPlatformMenu, setShowPlatformMenu] = useState(false);
   const [editedTexts, setEditedTexts] = useState<Record<string, string>>({});
   const [expandedAccordions, setExpandedAccordions] = useState<Record<string, boolean>>({});
+  const [publishModalOpen, setPublishModalOpen] = useState(false);
+  const [publishDate, setPublishDate] = useState('');
+  const [publishTime, setPublishTime] = useState('09:00');
+  const [publishErrors, setPublishErrors] = useState<{ date?: string; time?: string }>({});
+  const [isScheduling, setIsScheduling] = useState(false);
+  const [scheduleSuccess, setScheduleSuccess] = useState<string | null>(null);
   const platformMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -185,6 +195,55 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
 
   const toggleAccordion = (copyId: string) => {
     setExpandedAccordions(prev => ({ ...prev, [copyId]: !prev[copyId] }));
+  };
+
+  const handlePublishClick = () => {
+    if (!activeCopy) return;
+    setPublishDate('');
+    setPublishTime('09:00');
+    setPublishErrors({});
+    setPublishModalOpen(true);
+  };
+
+  const handlePublishConfirm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeCopy) return;
+
+    const newErrors: { date?: string; time?: string } = {};
+    if (!publishDate) {
+      newErrors.date = 'Date is required';
+    } else {
+      const selectedDateTime = new Date(`${publishDate}T${publishTime}`);
+      if (selectedDateTime <= new Date()) {
+        newErrors.date = 'Scheduled date must be in the future';
+      }
+    }
+    if (!publishTime) {
+      newErrors.time = 'Time is required';
+    }
+    if (Object.keys(newErrors).length > 0) {
+      setPublishErrors(newErrors);
+      return;
+    }
+
+    try {
+      setIsScheduling(true);
+      setError(null);
+      await manualSchedule({
+        copyId: activeCopy.id,
+        scheduledDate: publishDate,
+        scheduledTime: publishTime,
+        platform: normalizePlatform(activeCopy.platform),
+      });
+      setPublishModalOpen(false);
+      setScheduleSuccess(activeCopy.id);
+      setTimeout(() => setScheduleSuccess(null), 3000);
+    } catch (err: any) {
+      console.error('Failed to schedule post:', err);
+      setError(err.message || 'Failed to schedule post. Please try again.');
+    } finally {
+      setIsScheduling(false);
+    }
   };
 
   // Group copies by normalized platform, filtering to only allowed platforms
@@ -362,8 +421,13 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
           {activePlatformCopies.length > 1 && (
             <span className="text-sm text-gray-400 font-medium">1/{activePlatformCopies.length}</span>
           )}
-          <button className="inline-flex items-center gap-2.5 px-6 py-2.5 rounded-lg text-base font-semibold transition-colors" style={{ background: 'linear-gradient(45deg, #3139FB, #8B5CF6)', color: 'white' }}>
-            <Icon icon="solar:plain-bold" className="w-5 h-5" />
+          <button
+            onClick={handlePublishClick}
+            disabled={!activeCopy || isScheduling}
+            className="inline-flex items-center gap-2.5 px-6 py-2.5 rounded-lg text-base font-semibold transition-colors disabled:opacity-50"
+            style={{ background: 'linear-gradient(45deg, #3139FB, #8B5CF6)', color: 'white' }}
+          >
+            {isScheduling ? <Icon icon="svg-spinners:ring-resize" className="w-5 h-5" /> : <Icon icon="solar:plain-bold" className="w-5 h-5" />}
             Publish
           </button>
         </div>
@@ -498,6 +562,82 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
           </div>
         )}
       </div>
+      {/* Success banner */}
+      {scheduleSuccess && (
+        <div className="bg-green-50 border border-green-200 rounded-xl px-5 py-4 flex items-center gap-4" role="status">
+          <Icon icon="solar:check-circle-bold" className="w-6 h-6 text-green-500 flex-shrink-0" />
+          <p className="text-base text-green-700 flex-1">Post scheduled successfully.</p>
+          <button onClick={() => setScheduleSuccess(null)} className="text-green-400 hover:text-green-600" aria-label="Dismiss success message">
+            <Icon icon="solar:close-circle-bold" className="w-6 h-6" />
+          </button>
+        </div>
+      )}
+
+      {/* Publish Scheduling Modal */}
+      <Modal
+        isOpen={publishModalOpen}
+        onClose={() => { if (!isScheduling) setPublishModalOpen(false); }}
+        title="Schedule Post"
+        size="md"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setPublishModalOpen(false)} disabled={isScheduling}>
+              Cancel
+            </Button>
+            <Button type="submit" form="publish-schedule-form" isLoading={isScheduling} disabled={isScheduling}>
+              Schedule
+            </Button>
+          </>
+        }
+      >
+        {activeCopy && (
+          <form id="publish-schedule-form" onSubmit={handlePublishConfirm} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+              <p className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3 max-h-32 overflow-y-auto">
+                {getDisplayText(activeCopy)}
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Platform</label>
+              <p className="text-sm text-gray-600 flex items-center gap-2">
+                <Icon icon={getPlatformConfig(activeCopy.platform).icon} className="w-4 h-4" style={{ color: getPlatformConfig(activeCopy.platform).color }} />
+                {getPlatformConfig(activeCopy.platform).name}
+              </p>
+            </div>
+            {activeCopy.hashtags.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Hashtags</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {activeCopy.hashtags.map((h, i) => (
+                    <span key={i} className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700">
+                      {h.startsWith('#') ? h : `#${h}`}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Date"
+                type="date"
+                value={publishDate}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setPublishDate(e.target.value); setPublishErrors(prev => ({ ...prev, date: undefined })); }}
+                error={publishErrors.date}
+                id="publish-date-input"
+              />
+              <Input
+                label="Time"
+                type="time"
+                value={publishTime}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setPublishTime(e.target.value); setPublishErrors(prev => ({ ...prev, time: undefined })); }}
+                error={publishErrors.time}
+                id="publish-time-input"
+              />
+            </div>
+          </form>
+        )}
+      </Modal>
     </div>
   );
 };

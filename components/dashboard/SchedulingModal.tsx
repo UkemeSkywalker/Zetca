@@ -5,6 +5,7 @@ import { Modal } from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import { Post } from '@/types/post';
+import { ScheduledPost } from '@/types/scheduler';
 
 interface SchedulingModalProps {
   isOpen: boolean;
@@ -12,6 +13,14 @@ interface SchedulingModalProps {
   selectedDate: Date | null;
   onSchedulePost: (post: Omit<Post, 'id' | 'createdAt'>) => void;
   editingPost?: Post | null;
+  /** Optional pre-fill: content text (from CaptionEditor publish flow) */
+  prefillContent?: string;
+  /** Optional pre-fill: platform (from CaptionEditor publish flow) */
+  prefillPlatform?: 'instagram' | 'twitter' | 'linkedin' | 'facebook';
+  /** Optional pre-fill: hashtags list (from CaptionEditor publish flow) */
+  prefillHashtags?: string[];
+  /** Optional: ScheduledPost for API-backed editing */
+  editingScheduledPost?: ScheduledPost | null;
 }
 
 interface FormData {
@@ -19,6 +28,7 @@ interface FormData {
   platform: 'instagram' | 'twitter' | 'linkedin' | 'facebook';
   date: string;
   time: string;
+  hashtags: string[];
 }
 
 interface FormErrors {
@@ -33,52 +43,97 @@ export function SchedulingModal({
   onClose, 
   selectedDate, 
   onSchedulePost,
-  editingPost = null
+  editingPost = null,
+  prefillContent,
+  prefillPlatform,
+  prefillHashtags,
+  editingScheduledPost = null,
 }: SchedulingModalProps) {
-  const [formData, setFormData] = useState<FormData>({
-    content: '',
-    platform: 'instagram',
-    date: selectedDate ? selectedDate.toISOString().split('T')[0] : '',
-    time: '09:00'
-  });
+  const getInitialFormData = (): FormData => {
+    // Priority: editingScheduledPost > editingPost > prefill > defaults
+    if (editingScheduledPost) {
+      return {
+        content: editingScheduledPost.content,
+        platform: editingScheduledPost.platform as FormData['platform'],
+        date: editingScheduledPost.scheduledDate,
+        time: editingScheduledPost.scheduledTime,
+        hashtags: editingScheduledPost.hashtags || [],
+      };
+    }
+    if (editingPost) {
+      const postDate = new Date(editingPost.scheduledDate);
+      return {
+        content: editingPost.content,
+        platform: editingPost.platform,
+        date: postDate.toISOString().split('T')[0],
+        time: editingPost.scheduledTime,
+        hashtags: [],
+      };
+    }
+    return {
+      content: prefillContent || '',
+      platform: prefillPlatform || 'instagram',
+      date: selectedDate ? selectedDate.toISOString().split('T')[0] : '',
+      time: '09:00',
+      hashtags: prefillHashtags || [],
+    };
+  };
 
+  const [formData, setFormData] = useState<FormData>(getInitialFormData);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Update form when editing a post
+  const isEditing = !!(editingPost || editingScheduledPost);
+  const isPrefilled = !!(prefillContent || prefillPlatform);
+
+  // Update form when props change
   React.useEffect(() => {
-    if (editingPost) {
+    if (editingScheduledPost) {
+      setFormData({
+        content: editingScheduledPost.content,
+        platform: editingScheduledPost.platform as FormData['platform'],
+        date: editingScheduledPost.scheduledDate,
+        time: editingScheduledPost.scheduledTime,
+        hashtags: editingScheduledPost.hashtags || [],
+      });
+    } else if (editingPost) {
       const postDate = new Date(editingPost.scheduledDate);
       setFormData({
         content: editingPost.content,
         platform: editingPost.platform,
         date: postDate.toISOString().split('T')[0],
-        time: editingPost.scheduledTime
+        time: editingPost.scheduledTime,
+        hashtags: [],
       });
+    } else if (prefillContent || prefillPlatform) {
+      setFormData(prev => ({
+        ...prev,
+        content: prefillContent || prev.content,
+        platform: prefillPlatform || prev.platform,
+        hashtags: prefillHashtags || prev.hashtags,
+        date: selectedDate ? selectedDate.toISOString().split('T')[0] : prev.date,
+      }));
     } else if (selectedDate) {
       setFormData(prev => ({
         ...prev,
-        date: selectedDate.toISOString().split('T')[0]
+        date: selectedDate.toISOString().split('T')[0],
       }));
     }
-  }, [editingPost, selectedDate]);
+  }, [editingPost, editingScheduledPost, selectedDate, prefillContent, prefillPlatform, prefillHashtags]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    // Content validation
     if (!formData.content.trim()) {
       newErrors.content = 'Content is required';
     } else if (formData.content.length > 280 && formData.platform === 'twitter') {
       newErrors.content = 'Twitter posts must be 280 characters or less';
     }
 
-    // Platform validation
     if (!formData.platform) {
       newErrors.platform = 'Platform is required';
     }
 
-    // Date validation
     if (!formData.date) {
       newErrors.date = 'Date is required';
     } else {
@@ -89,7 +144,6 @@ export function SchedulingModal({
       }
     }
 
-    // Time validation
     if (!formData.time) {
       newErrors.time = 'Time is required';
     }
@@ -101,42 +155,27 @@ export function SchedulingModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsSubmitting(true);
 
     try {
-      // Create scheduled date from date and time
-      // Parse the date string to avoid timezone issues
       const [year, month, day] = formData.date.split('-').map(Number);
       const [hours, minutes] = formData.time.split(':').map(Number);
       const scheduledDate = new Date(year, month - 1, day, hours, minutes);
       
-      // Create post object
       const newPost: Omit<Post, 'id' | 'createdAt'> = {
         content: formData.content.trim(),
         platform: formData.platform,
         scheduledDate,
         scheduledTime: formData.time,
         status: 'scheduled',
-        publishedAt: undefined
+        publishedAt: undefined,
       };
 
-      // Call the onSchedulePost callback
       onSchedulePost(newPost);
 
-      // Reset form
-      setFormData({
-        content: '',
-        platform: 'instagram',
-        date: selectedDate ? selectedDate.toISOString().split('T')[0] : '',
-        time: '09:00'
-      });
-      setErrors({});
-
-      // Close modal
+      resetForm();
       onClose();
     } catch (error) {
       console.error('Error scheduling post:', error);
@@ -147,22 +186,24 @@ export function SchedulingModal({
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // Clear error for this field when user starts typing
-    if (errors[field]) {
+    if (errors[field as keyof FormErrors]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
 
-  const handleClose = () => {
-    // Reset form when closing
+  const resetForm = () => {
     setFormData({
       content: '',
       platform: 'instagram',
       date: selectedDate ? selectedDate.toISOString().split('T')[0] : '',
-      time: '09:00'
+      time: '09:00',
+      hashtags: [],
     });
     setErrors({});
+  };
+
+  const handleClose = () => {
+    resetForm();
     onClose();
   };
 
@@ -170,16 +211,23 @@ export function SchedulingModal({
     { value: 'instagram', label: 'Instagram' },
     { value: 'twitter', label: 'Twitter' },
     { value: 'linkedin', label: 'LinkedIn' },
-    { value: 'facebook', label: 'Facebook' }
+    { value: 'facebook', label: 'Facebook' },
   ];
+
+  const getModalTitle = () => {
+    if (isEditing) return 'Edit Post';
+    if (isPrefilled) return 'Schedule Post';
+    return 'Schedule New Post';
+  };
+
+  const getSubmitLabel = () => {
+    if (isEditing) return 'Update Post';
+    return 'Schedule Post';
+  };
 
   const footer = (
     <>
-      <Button
-        variant="outline"
-        onClick={handleClose}
-        disabled={isSubmitting}
-      >
+      <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
         Cancel
       </Button>
       <Button
@@ -188,7 +236,7 @@ export function SchedulingModal({
         isLoading={isSubmitting}
         disabled={isSubmitting}
       >
-        {editingPost ? "Update Post" : "Schedule Post"}
+        {getSubmitLabel()}
       </Button>
     </>
   );
@@ -197,59 +245,92 @@ export function SchedulingModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={editingPost ? "Edit Post" : "Schedule New Post"}
+      title={getModalTitle()}
       footer={footer}
       size="md"
     >
       <form id="scheduling-form" onSubmit={handleSubmit} className="space-y-4">
-        {/* Content */}
-        <div>
-          <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
-            Content
-          </label>
-          <textarea
-            id="content"
-            value={formData.content}
-            onChange={(e) => handleInputChange('content', e.target.value)}
-            placeholder="What would you like to share?"
-            rows={4}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${
-              errors.content ? 'border-red-500' : 'border-gray-300'
-            }`}
-          />
-          {errors.content && (
-            <p className="text-sm text-red-600 mt-1">{errors.content}</p>
-          )}
-          {formData.platform === 'twitter' && (
-            <p className="text-sm text-gray-500 mt-1">
-              {formData.content.length}/280 characters
+        {/* Pre-filled content preview (read-only when from CaptionEditor) */}
+        {isPrefilled && !isEditing ? (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+            <p className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3 max-h-32 overflow-y-auto whitespace-pre-wrap">
+              {formData.content}
             </p>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div>
+            <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
+              Content
+            </label>
+            <textarea
+              id="content"
+              value={formData.content}
+              onChange={(e) => handleInputChange('content', e.target.value)}
+              placeholder="What would you like to share?"
+              rows={4}
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${
+                errors.content ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
+            {errors.content && (
+              <p className="text-sm text-red-600 mt-1">{errors.content}</p>
+            )}
+            {formData.platform === 'twitter' && (
+              <p className="text-sm text-gray-500 mt-1">
+                {formData.content.length}/280 characters
+              </p>
+            )}
+          </div>
+        )}
 
-        {/* Platform */}
-        <div>
-          <label htmlFor="platform" className="block text-sm font-medium text-gray-700 mb-1">
-            Platform
-          </label>
-          <select
-            id="platform"
-            value={formData.platform}
-            onChange={(e) => handleInputChange('platform', e.target.value as FormData['platform'])}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              errors.platform ? 'border-red-500' : 'border-gray-300'
-            }`}
-          >
-            {platformOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          {errors.platform && (
-            <p className="text-sm text-red-600 mt-1">{errors.platform}</p>
-          )}
-        </div>
+        {/* Platform - read-only when pre-filled, editable otherwise */}
+        {isPrefilled && !isEditing ? (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Platform</label>
+            <p className="text-sm text-gray-600 capitalize">{formData.platform}</p>
+          </div>
+        ) : (
+          <div>
+            <label htmlFor="platform" className="block text-sm font-medium text-gray-700 mb-1">
+              Platform
+            </label>
+            <select
+              id="platform"
+              value={formData.platform}
+              onChange={(e) => handleInputChange('platform', e.target.value as FormData['platform'])}
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                errors.platform ? 'border-red-500' : 'border-gray-300'
+              }`}
+            >
+              {platformOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            {errors.platform && (
+              <p className="text-sm text-red-600 mt-1">{errors.platform}</p>
+            )}
+          </div>
+        )}
+
+        {/* Hashtags display (when pre-filled or editing a ScheduledPost) */}
+        {formData.hashtags.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Hashtags</label>
+            <div className="flex flex-wrap gap-1.5">
+              {formData.hashtags.map((tag, i) => (
+                <span
+                  key={i}
+                  className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700"
+                >
+                  {tag.startsWith('#') ? tag : `#${tag}`}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Date and Time */}
         <div className="grid grid-cols-2 gap-4">
