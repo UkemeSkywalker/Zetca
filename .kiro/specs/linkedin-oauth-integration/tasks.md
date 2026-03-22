@@ -148,7 +148,7 @@ Each phase ends with a verification checkpoint where you can see the feature wor
 
 ## Phase 5: Disconnect + Polish (Full Round-Trip)
 
-- [ ] 16. Create disconnect endpoint and wire up frontend
+- [x] 16. Create disconnect endpoint and wire up frontend
   - Create `app/api/auth/linkedin/disconnect/route.ts` with POST handler
   - Protect with `withAuth` middleware
   - Call `userRepository.disconnectLinkedIn(userId)`
@@ -157,7 +157,7 @@ Each phase ends with a verification checkpoint where you can see the feature wor
   - Update `components/dashboard/ProfileForm.tsx`: wire the "Disconnect" button to call `POST /api/auth/linkedin/disconnect`, then refresh the profile data on success (re-fetch from `/api/profile`) so the UI updates to show "Not connected"
   - _Requirements: 5.1, 5.2, 5.3, 5.4_
 
-- [ ] 17. Add error handling for edge cases
+- [x] 17. Add error handling for edge cases
   - Handle expired LinkedIn access tokens gracefully (if UserInfo call fails with 401 during callback, redirect with appropriate error)
   - Handle network errors during token exchange (catch and redirect with `linkedin_error=exchange_failed`)
   - Handle malformed LinkedIn responses (missing `sub` or `name` fields — redirect with error)
