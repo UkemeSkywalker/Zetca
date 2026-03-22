@@ -45,17 +45,27 @@ async function linkedinCallbackHandler(req: NextRequest, userId: string): Promis
     const config = getConfig();
 
     // Exchange authorization code for access token
-    const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri: config.linkedinRedirectUri,
-        client_id: config.linkedinClientId,
-        client_secret: config.linkedinClientSecret,
-      }),
-    });
+    let tokenResponse: globalThis.Response;
+    try {
+      tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: config.linkedinRedirectUri,
+          client_id: config.linkedinClientId,
+          client_secret: config.linkedinClientSecret,
+        }),
+      });
+    } catch (networkErr) {
+      logError(networkErr as Error, {
+        endpoint: '/api/auth/linkedin/callback',
+        step: 'token_exchange_fetch',
+        userId,
+      });
+      return profileRedirect(req, 'linkedin_error=exchange_failed');
+    }
 
     if (!tokenResponse.ok) {
       logError(new Error(`LinkedIn token exchange failed: ${tokenResponse.status}`), {
@@ -65,10 +75,20 @@ async function linkedinCallbackHandler(req: NextRequest, userId: string): Promis
       return profileRedirect(req, 'linkedin_error=exchange_failed');
     }
 
-    const tokenData = await tokenResponse.json();
-    const accessToken: string = tokenData.access_token;
+    let tokenData: Record<string, unknown>;
+    try {
+      tokenData = await tokenResponse.json();
+    } catch {
+      logError(new Error('LinkedIn token response returned non-JSON body'), {
+        endpoint: '/api/auth/linkedin/callback',
+        userId,
+      });
+      return profileRedirect(req, 'linkedin_error=exchange_failed');
+    }
 
-    if (!accessToken) {
+    const accessToken = tokenData.access_token;
+
+    if (typeof accessToken !== 'string' || !accessToken) {
       logError(new Error('LinkedIn token response missing access_token'), {
         endpoint: '/api/auth/linkedin/callback',
         userId,
@@ -77,9 +97,27 @@ async function linkedinCallbackHandler(req: NextRequest, userId: string): Promis
     }
 
     // Fetch user profile from LinkedIn UserInfo endpoint
-    const userInfoResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    let userInfoResponse: globalThis.Response;
+    try {
+      userInfoResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+    } catch (networkErr) {
+      logError(networkErr as Error, {
+        endpoint: '/api/auth/linkedin/callback',
+        step: 'userinfo_fetch',
+        userId,
+      });
+      return profileRedirect(req, 'linkedin_error=exchange_failed');
+    }
+
+    if (userInfoResponse.status === 401) {
+      logError(new Error('LinkedIn access token expired or invalid (401 on UserInfo)'), {
+        endpoint: '/api/auth/linkedin/callback',
+        userId,
+      });
+      return profileRedirect(req, 'linkedin_error=token_expired');
+    }
 
     if (!userInfoResponse.ok) {
       logError(new Error(`LinkedIn UserInfo failed: ${userInfoResponse.status}`), {
@@ -89,19 +127,39 @@ async function linkedinCallbackHandler(req: NextRequest, userId: string): Promis
       return profileRedirect(req, 'linkedin_error=exchange_failed');
     }
 
-    const profile = await userInfoResponse.json();
-    const { sub, name, picture, email } = profile;
-
-    if (!sub || !name) {
-      logError(new Error('LinkedIn profile missing required fields (sub or name)'), {
+    let profile: Record<string, unknown>;
+    try {
+      profile = await userInfoResponse.json();
+    } catch {
+      logError(new Error('LinkedIn UserInfo returned non-JSON response'), {
         endpoint: '/api/auth/linkedin/callback',
         userId,
       });
       return profileRedirect(req, 'linkedin_error=exchange_failed');
     }
 
-    // Validate picture URL is HTTPS if present
-    const pictureUrl = typeof picture === 'string' && picture.startsWith('https://') ? picture : undefined;
+    const { sub, name, picture, email } = profile;
+
+    if (typeof sub !== 'string' || !sub.trim() || typeof name !== 'string' || !name.trim()) {
+      logError(new Error('LinkedIn profile missing required fields (sub or name)'), {
+        endpoint: '/api/auth/linkedin/callback',
+        userId,
+        receivedSub: typeof sub,
+        receivedName: typeof name,
+      });
+      return profileRedirect(req, 'linkedin_error=exchange_failed');
+    }
+
+    // Validate picture URL is a valid HTTPS URL
+    let pictureUrl: string | undefined;
+    if (typeof picture === 'string') {
+      try {
+        const parsed = new URL(picture);
+        pictureUrl = parsed.protocol === 'https:' ? picture : undefined;
+      } catch {
+        pictureUrl = undefined;
+      }
+    }
 
     // Sanitize name and email before storing
     const sanitizedName = String(name).trim().slice(0, 200);

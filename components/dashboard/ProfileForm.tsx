@@ -103,6 +103,7 @@ const ProfileFormInner: React.FC<ProfileFormProps> = ({ className = '' }) => {
         denied: 'LinkedIn authorization was denied.',
         state_mismatch: 'Authorization failed. Please try again.',
         exchange_failed: 'Failed to connect LinkedIn. Please try again.',
+        token_expired: 'LinkedIn authorization expired. Please try connecting again.',
       };
       setConnectionMessage('');
       setErrors(prev => ({
@@ -211,10 +212,61 @@ const ProfileFormInner: React.FC<ProfileFormProps> = ({ className = '' }) => {
   };
 
   // Handle account connection toggle
-  const handleAccountToggle = (platform: string) => {
+  const handleAccountToggle = async (platform: string) => {
     if (platform === 'linkedin') {
       if (linkedinData.isConnected) {
-        // Disconnect will be wired up in Phase 5
+        // Disconnect LinkedIn
+        try {
+          const response = await fetch('/api/auth/linkedin/disconnect', {
+            method: 'POST',
+            credentials: 'include',
+          });
+
+          const data = await response.json();
+
+          if (response.ok && data.success) {
+            // Re-fetch profile to update LinkedIn state
+            const profileResponse = await fetch('/api/profile', {
+              method: 'GET',
+              credentials: 'include',
+            });
+
+            if (profileResponse.ok) {
+              const profileData = await profileResponse.json();
+              if (profileData.success && profileData.user) {
+                setLinkedinData(
+                  profileData.user.linkedin || { isConnected: false }
+                );
+              } else {
+                setLinkedinData({ isConnected: false });
+              }
+            } else {
+              setLinkedinData({ isConnected: false });
+            }
+
+            setConnectionMessage('LinkedIn disconnected successfully.');
+            setTimeout(() => setConnectionMessage(''), 5000);
+          } else {
+            setErrors(prev => ({
+              ...prev,
+              general: data.error || 'Failed to disconnect LinkedIn',
+            }));
+            setTimeout(() => setErrors(prev => {
+              const { general, ...rest } = prev;
+              return rest;
+            }), 5000);
+          }
+        } catch (error) {
+          console.error('Error disconnecting LinkedIn:', error);
+          setErrors(prev => ({
+            ...prev,
+            general: 'Failed to disconnect LinkedIn. Please try again.',
+          }));
+          setTimeout(() => setErrors(prev => {
+            const { general, ...rest } = prev;
+            return rest;
+          }), 5000);
+        }
         return;
       }
       // Full page redirect to start OAuth flow
