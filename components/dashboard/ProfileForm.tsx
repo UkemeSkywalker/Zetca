@@ -1,20 +1,22 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Button from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { UserProfile, ConnectedAccount } from '@/types';
+import { UserProfile, ConnectedAccount, LinkedInProfile } from '@/types';
 import { Icon } from '@iconify/react';
 import { useAuth } from '@/context/AuthContext';
+import { useSearchParams } from 'next/navigation';
 
 interface ProfileFormProps {
   className?: string;
 }
 
-export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
+const ProfileFormInner: React.FC<ProfileFormProps> = ({ className = '' }) => {
   const { user: authUser, updateUser } = useAuth();
-  
+  const searchParams = useSearchParams();
+
   // Profile state
   const [profile, setProfile] = useState<UserProfile>({
     id: '',
@@ -28,13 +30,15 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Connected accounts state
+  // Connected accounts state (non-LinkedIn platforms remain hardcoded)
   const [accounts] = useState<ConnectedAccount[]>([
     { platform: 'instagram', isConnected: false },
     { platform: 'twitter', isConnected: false },
-    { platform: 'linkedin', isConnected: false },
     { platform: 'facebook', isConnected: false },
   ]);
+
+  // LinkedIn connection data from API
+  const [linkedinData, setLinkedinData] = useState<LinkedInProfile>({ isConnected: false });
 
   // Editing state for each field
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -63,6 +67,10 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
               company: data.user.company || '',
               bio: data.user.bio || '',
             });
+            // Set LinkedIn connection data from API
+            if (data.user.linkedin) {
+              setLinkedinData(data.user.linkedin);
+            }
           }
         } else if (response.status === 401) {
           // Unauthorized - will be handled by AuthContext
@@ -81,6 +89,32 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
 
     fetchProfile();
   }, []);
+
+  // Handle LinkedIn OAuth query params on mount
+  useEffect(() => {
+    const linkedinStatus = searchParams.get('linkedin');
+    const linkedinError = searchParams.get('linkedin_error');
+
+    if (linkedinStatus === 'connected') {
+      setConnectionMessage('LinkedIn connected successfully!');
+      setTimeout(() => setConnectionMessage(''), 5000);
+    } else if (linkedinError) {
+      const errorMessages: Record<string, string> = {
+        denied: 'LinkedIn authorization was denied.',
+        state_mismatch: 'Authorization failed. Please try again.',
+        exchange_failed: 'Failed to connect LinkedIn. Please try again.',
+      };
+      setConnectionMessage('');
+      setErrors(prev => ({
+        ...prev,
+        general: errorMessages[linkedinError] || 'Failed to connect LinkedIn. Please try again.',
+      }));
+      setTimeout(() => setErrors(prev => {
+        const { general, ...rest } = prev;
+        return rest;
+      }), 5000);
+    }
+  }, [searchParams]);
 
   // Start editing a field
   const startEditing = (field: keyof UserProfile) => {
@@ -176,11 +210,19 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
     }
   };
 
-  // Handle account connection toggle (to be implemented separately)
-  const handleAccountToggle = () => {
-    // Account connection will be implemented in a future task
+  // Handle account connection toggle
+  const handleAccountToggle = (platform: string) => {
+    if (platform === 'linkedin') {
+      if (linkedinData.isConnected) {
+        // Disconnect will be wired up in Phase 5
+        return;
+      }
+      // Full page redirect to start OAuth flow
+      window.location.href = '/api/auth/linkedin';
+      return;
+    }
+    // Other platforms coming soon
     setConnectionMessage(`Account connection feature coming soon!`);
-
     setTimeout(() => {
       setConnectionMessage('');
     }, 3000);
@@ -337,6 +379,49 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
           </p>
 
           <div className="space-y-3">
+            {/* LinkedIn - uses real data from API */}
+            <div className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-3 flex-1">
+                  {linkedinData.isConnected && linkedinData.pictureUrl ? (
+                    <img
+                      src={linkedinData.pictureUrl}
+                      alt={`${linkedinData.name || 'LinkedIn'} profile picture`}
+                      className="w-10 h-10 rounded-full object-cover mt-1"
+                    />
+                  ) : (
+                    <Icon
+                      icon={platformIcons['linkedin']}
+                      className="text-3xl text-gray-700 mt-1"
+                    />
+                  )}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-medium text-gray-900">LinkedIn</p>
+                      <StatusBadge
+                        status={linkedinData.isConnected ? 'complete' : 'not-started'}
+                      />
+                    </div>
+                    {linkedinData.isConnected ? (
+                      <p className="text-sm text-gray-600">
+                        {linkedinData.name || 'Connected'}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-gray-500">Not connected</p>
+                    )}
+                  </div>
+                </div>
+                <Button
+                  variant={linkedinData.isConnected ? 'outline' : 'primary'}
+                  size="sm"
+                  onClick={() => handleAccountToggle('linkedin')}
+                >
+                  {linkedinData.isConnected ? 'Disconnect' : 'Connect'}
+                </Button>
+              </div>
+            </div>
+
+            {/* Other platforms - hardcoded as not connected */}
             {accounts.map((account) => (
               <div
                 key={account.platform}
@@ -380,7 +465,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
                   <Button
                     variant={account.isConnected ? 'outline' : 'primary'}
                     size="sm"
-                    onClick={handleAccountToggle}
+                    onClick={() => handleAccountToggle(account.platform)}
                   >
                     {account.isConnected ? 'Disconnect' : 'Connect'}
                   </Button>
@@ -392,5 +477,13 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
       </div>
       )}
     </div>
+  );
+};
+
+export const ProfileForm: React.FC<ProfileFormProps> = ({ className = '' }) => {
+  return (
+    <Suspense fallback={null}>
+      <ProfileFormInner className={className} />
+    </Suspense>
   );
 };

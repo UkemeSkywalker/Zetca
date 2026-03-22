@@ -17,18 +17,19 @@ Each phase ends with a verification checkpoint where you can see the feature wor
 
 ## Phase 1: Foundation + Profile UI (See the Connect Button)
 
-- [ ] 1. Add LinkedIn environment variables and config
+- [x] 1.  environment variables and config
   - Add `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET`, `LINKEDIN_REDIRECT_URI=http://localhost:3000/api/auth/linkedin/callback` to `.env.local` (use the credentials from the LinkedIn Developer Portal)
   - Add the same variables to `.env.local.example` with placeholder values and comments explaining LinkedIn App setup
-  - Update `lib/config.ts` to read and export the new LinkedIn env vars (`linkedinClientId`, `linkedinClientSecret`, `linkedinRedirectUri`)
+  - Update   nl ;\.; v;
+  []9 `lib/config.ts` to read and export the new LinkedIn env vars (`linkedinClientId`, `linkedinClientSecret`, `linkedinRedirectUri`)
   - _Requirements: 6.1, 6.6_
 
-- [ ] 2. Update TypeScript types for LinkedIn data
+- [x] 2. Update TypeScript types for LinkedIn data
   - Update `ConnectedAccount` interface in `types/user.ts` to add optional `profilePictureUrl` field
   - Add `LinkedInProfile` interface to `types/user.ts` with fields: `isConnected: boolean`, `name?: string`, `pictureUrl?: string`, `email?: string`, `connectedAt?: string`
   - _Requirements: 3.6, 7.4_
 
-- [ ] 3. Update ProfileForm LinkedIn connect button to trigger OAuth
+- [x] 3. Update ProfileForm LinkedIn connect button to trigger OAuth
   - Update `components/dashboard/ProfileForm.tsx`:
   - For the LinkedIn account entry specifically, change the "Connect" button's `onClick` to navigate to `/api/auth/linkedin` using `window.location.href` (full page redirect to start OAuth)
   - Keep other platforms (Instagram, Twitter, Facebook) with the existing "coming soon" behavior
@@ -45,13 +46,13 @@ Each phase ends with a verification checkpoint where you can see the feature wor
 
 ## Phase 2: OAuth Flow + Connect Experience (Click Connect → Authorize → See Connected)
 
-- [ ] 5. Update UserRecord and UserRepository with LinkedIn fields
+- [x] 5. Update UserRecord and UserRepository with LinkedIn fields
   - Update `UserRecord` interface in `lib/db/userRepository.ts` to add optional fields: `linkedinSub?: string`, `linkedinAccessToken?: string`, `linkedinName?: string`, `linkedinPictureUrl?: string`, `linkedinEmail?: string`, `linkedinConnectedAt?: string`
   - Add `connectLinkedIn(userId: string, linkedinData: { linkedinSub: string, linkedinAccessToken: string, linkedinName: string, linkedinPictureUrl?: string, linkedinEmail?: string })` method to `UserRepository` — uses DynamoDB `UpdateCommand` to set all LinkedIn fields plus `linkedinConnectedAt` to current ISO timestamp
   - Add `disconnectLinkedIn(userId: string)` method to `UserRepository` — uses DynamoDB `UpdateCommand` with `REMOVE` action to clear all LinkedIn fields
   - _Requirements: 7.1, 7.2, 7.3_
 
-- [ ] 6. Create OAuth initiation endpoint
+- [x] 6. Create OAuth initiation endpoint
   - Create `app/api/auth/linkedin/route.ts` with GET handler
   - Protect with `withAuth` middleware to ensure user is authenticated
   - Generate 32-byte cryptographically random state using `crypto.randomBytes(32).toString('hex')`
@@ -60,7 +61,7 @@ Each phase ends with a verification checkpoint where you can see the feature wor
   - Return `NextResponse.redirect()` to the LinkedIn URL
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 6.5_
 
-- [ ] 7. Create OAuth callback endpoint
+- [x] 7. Create OAuth callback endpoint
   - Create `app/api/auth/linkedin/callback/route.ts` with GET handler
   - Protect with `withAuth` middleware
   - Extract `code`, `state`, `error`, `error_description` from URL search params
@@ -90,14 +91,14 @@ Each phase ends with a verification checkpoint where you can see the feature wor
 
 ## Phase 3: Profile Display (See LinkedIn Name + Photo on Profile)
 
-- [ ] 9. Update profile API to include LinkedIn data in response
+- [x] 9. Update profile API to include LinkedIn data in response
   - Update GET handler in `app/api/profile/route.ts` to include a `linkedin` object in the user response
   - If `user.linkedinSub` exists: `{ isConnected: true, name: user.linkedinName, pictureUrl: user.linkedinPictureUrl, email: user.linkedinEmail, connectedAt: user.linkedinConnectedAt }`
   - If `user.linkedinSub` does not exist: `{ isConnected: false }`
   - NEVER include `linkedinAccessToken` in the response
   - _Requirements: 3.1, 3.6, 7.4, 7.5_
 
-- [ ] 10. Update ProfileForm to display LinkedIn connection status from API
+- [x] 10. Update ProfileForm to display LinkedIn connection status from API
   - Update `components/dashboard/ProfileForm.tsx`:
   - Fetch LinkedIn connection data from the profile API response (the `linkedin` object added in task 9)
   - Replace the hardcoded `accounts` state for LinkedIn with real data from the API
@@ -106,7 +107,7 @@ Each phase ends with a verification checkpoint where you can see the feature wor
   - Keep Instagram, Twitter, Facebook as hardcoded "not connected" with "coming soon" behavior
   - _Requirements: 1.5, 3.2, 3.3, 3.4, 3.5, 5.2_
 
-- [ ] 11. Update next.config.ts for LinkedIn profile images
+- [x] 11. Update next.config.ts for LinkedIn profile images
   - Add LinkedIn image domains to `images.remotePatterns` in `next.config.ts`:
     - `media.licdn-ei.com` with protocol `https` and pathname `/**`
     - `media.licdn.com` with protocol `https` and pathname `/**`
@@ -123,13 +124,13 @@ Each phase ends with a verification checkpoint where you can see the feature wor
 
 ## Phase 4: Dashboard Display (See LinkedIn Avatar in Dashboard Header)
 
-- [ ] 13. Update AuthContext to include LinkedIn data
+- [x] 13. Update AuthContext to include LinkedIn data
   - Update the `User` interface in `context/AuthContext.tsx` to add optional field: `linkedin?: { isConnected: boolean; name?: string; pictureUrl?: string }`
   - Update the `validateSession` function to map the LinkedIn data from the profile API response into the user state
   - Update the `login` function to also accept LinkedIn data if present
   - _Requirements: 4.1, 4.4_
 
-- [ ] 14. Update dashboard layout header to show connected LinkedIn account
+- [x] 14. Update dashboard layout header to show connected LinkedIn account
   - Update `app/dashboard/layout.tsx` header section (the top bar area near the user menu):
   - If `user.linkedin?.isConnected` is true, display a compact LinkedIn badge: small circular avatar (28x28) showing the LinkedIn profile picture, with the LinkedIn name next to it, and a small LinkedIn icon indicator
   - Style it to fit naturally in the header bar near the notification/message icons area

@@ -27,6 +27,14 @@ export interface UserRecord {
   bio?: string;
   createdAt: string;        // ISO 8601 timestamp
   lastModified: string;     // ISO 8601 timestamp
+
+  // LinkedIn OAuth fields (optional, set when user connects LinkedIn)
+  linkedinSub?: string;
+  linkedinAccessToken?: string;
+  linkedinName?: string;
+  linkedinPictureUrl?: string;
+  linkedinEmail?: string;
+  linkedinConnectedAt?: string;
 }
 
 /**
@@ -173,6 +181,103 @@ export class UserRepository {
         ExpressionAttributeValues: expressionAttributeValues,
         ReturnValues: 'ALL_NEW',
         // Ensure user exists before updating
+        ConditionExpression: 'attribute_exists(userId)',
+      })
+    );
+
+    return result.Attributes as UserRecord;
+  }
+
+  /**
+   * Store LinkedIn connection data for a user
+   */
+  async connectLinkedIn(
+    userId: string,
+    linkedinData: {
+      linkedinSub: string;
+      linkedinAccessToken: string;
+      linkedinName: string;
+      linkedinPictureUrl?: string;
+      linkedinEmail?: string;
+    }
+  ): Promise<UserRecord> {
+    const now = new Date().toISOString();
+
+    const expressionAttributeNames: Record<string, string> = {
+      '#linkedinSub': 'linkedinSub',
+      '#linkedinAccessToken': 'linkedinAccessToken',
+      '#linkedinName': 'linkedinName',
+      '#linkedinConnectedAt': 'linkedinConnectedAt',
+      '#lastModified': 'lastModified',
+    };
+    const expressionAttributeValues: Record<string, any> = {
+      ':linkedinSub': linkedinData.linkedinSub,
+      ':linkedinAccessToken': linkedinData.linkedinAccessToken,
+      ':linkedinName': linkedinData.linkedinName,
+      ':linkedinConnectedAt': now,
+      ':lastModified': now,
+    };
+
+    const setParts = [
+      '#linkedinSub = :linkedinSub',
+      '#linkedinAccessToken = :linkedinAccessToken',
+      '#linkedinName = :linkedinName',
+      '#linkedinConnectedAt = :linkedinConnectedAt',
+      '#lastModified = :lastModified',
+    ];
+
+    if (linkedinData.linkedinPictureUrl !== undefined) {
+      expressionAttributeNames['#linkedinPictureUrl'] = 'linkedinPictureUrl';
+      expressionAttributeValues[':linkedinPictureUrl'] = linkedinData.linkedinPictureUrl;
+      setParts.push('#linkedinPictureUrl = :linkedinPictureUrl');
+    }
+
+    if (linkedinData.linkedinEmail !== undefined) {
+      expressionAttributeNames['#linkedinEmail'] = 'linkedinEmail';
+      expressionAttributeValues[':linkedinEmail'] = linkedinData.linkedinEmail;
+      setParts.push('#linkedinEmail = :linkedinEmail');
+    }
+
+    const result = await this.docClient.send(
+      new UpdateCommand({
+        TableName: this.tableName,
+        Key: { userId },
+        UpdateExpression: `SET ${setParts.join(', ')}`,
+        ExpressionAttributeNames: expressionAttributeNames,
+        ExpressionAttributeValues: expressionAttributeValues,
+        ReturnValues: 'ALL_NEW',
+        ConditionExpression: 'attribute_exists(userId)',
+      })
+    );
+
+    return result.Attributes as UserRecord;
+  }
+
+  /**
+   * Remove all LinkedIn connection data from a user record
+   */
+  async disconnectLinkedIn(userId: string): Promise<UserRecord> {
+    const now = new Date().toISOString();
+
+    const result = await this.docClient.send(
+      new UpdateCommand({
+        TableName: this.tableName,
+        Key: { userId },
+        UpdateExpression:
+          'REMOVE #linkedinSub, #linkedinAccessToken, #linkedinName, #linkedinPictureUrl, #linkedinEmail, #linkedinConnectedAt SET #lastModified = :lastModified',
+        ExpressionAttributeNames: {
+          '#linkedinSub': 'linkedinSub',
+          '#linkedinAccessToken': 'linkedinAccessToken',
+          '#linkedinName': 'linkedinName',
+          '#linkedinPictureUrl': 'linkedinPictureUrl',
+          '#linkedinEmail': 'linkedinEmail',
+          '#linkedinConnectedAt': 'linkedinConnectedAt',
+          '#lastModified': 'lastModified',
+        },
+        ExpressionAttributeValues: {
+          ':lastModified': now,
+        },
+        ReturnValues: 'ALL_NEW',
         ConditionExpression: 'attribute_exists(userId)',
       })
     );
