@@ -36,3 +36,23 @@ output "dynamodb_scheduled_posts_table_arn" {
   value       = aws_dynamodb_table.scheduled_posts.arn
   description = "ARN of the DynamoDB scheduled posts table"
 }
+
+output "s3_post_media_bucket_name" {
+  value       = aws_s3_bucket.post_media.bucket
+  description = "Name of the S3 post media bucket"
+}
+
+output "s3_post_media_bucket_arn" {
+  value       = aws_s3_bucket.post_media.arn
+  description = "ARN of the S3 post media bucket"
+}
+
+output "dynamodb_post_media_table_name" {
+  value       = aws_dynamodb_table.post_media.name
+  description = "Name of the DynamoDB post media table"
+}
+
+output "dynamodb_post_media_table_arn" {
+  value       = aws_dynamodb_table.post_media.arn
+  description = "ARN of the DynamoDB post media table"
+}
