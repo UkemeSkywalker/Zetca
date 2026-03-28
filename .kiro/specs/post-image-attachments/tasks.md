@@ -27,15 +27,15 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
     - PAY_PER_REQUEST billing, point-in-time recovery enabled
     - _Requirements: 2.1, 2.2_
 
-- [ ] 2. Define types, constants, and shared validation
-  - [ ] 2.1 Create `types/media.ts` with MediaRecord interface and constants
+- [-] 2. Define types, constants, and shared validation
+  - [x] 2.1 Create `types/media.ts` with MediaRecord interface and constants
     - Define `MediaRecord` interface with all fields: mediaId, userId, s3Key, contentType, fileSize, mediaType, width, height, originalFilename, createdAt
     - Define `AllowedContentType` union type and `ALLOWED_CONTENT_TYPES` array
     - Define `MAX_IMAGE_SIZE` (10 MB), `MAX_VIDEO_SIZE` (100 MB)
     - Define `UPLOAD_URL_EXPIRY_IMAGE` (300s), `UPLOAD_URL_EXPIRY_VIDEO` (900s), `DOWNLOAD_URL_EXPIRY` (3600s)
     - _Requirements: 2.3, 2.4, 3.5, 5.1, 5.2_
 
-  - [ ] 2.2 Create `lib/media/validation.ts` with shared validation functions
+  - [x] 2.2 Create `lib/media/validation.ts` with shared validation functions
     - Implement `isAllowedContentType(contentType: string): boolean`
     - Implement `getMediaType(contentType: string): 'image' | 'video'`
     - Implement `getMaxFileSize(mediaType: 'image' | 'video'): number`
@@ -43,27 +43,27 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
     - Implement `generateS3Key(userId: string, mediaId: string, filename: string): string`
     - _Requirements: 3.3, 3.5, 3.6, 5.1, 5.2, 5.3, 5.4_
 
-  - [ ]* 2.3 Write property tests for content type validation
+  - [x] 2.3 Write property tests for content type validation
     - **Property 1: Content type validation**
     - **Validates: Requirements 3.5, 3.7**
 
-  - [ ]* 2.4 Write property tests for media type derivation
+  - [x] 2.4 Write property tests for media type derivation
     - **Property 2: Media type derivation from content type prefix**
     - **Validates: Requirements 2.4, 3.6**
 
-  - [ ]* 2.5 Write property tests for presigned URL expiry values
+  - [-] 2.5 Write property tests for presigned URL expiry values
     - **Property 3: Presigned URL expiry matches media type**
     - **Validates: Requirements 3.1, 3.2, 4.1**
 
-  - [ ]* 2.6 Write property tests for S3 key format
+  - [x] 2.6 Write property tests for S3 key format
     - **Property 4: S3 key format**
     - **Validates: Requirements 3.3**
 
-  - [ ]* 2.7 Write property tests for file size validation
+  - [x] 2.7 Write property tests for file size validation
     - **Property 5: File size validation by media type**
     - **Validates: Requirements 5.1, 5.2, 5.3, 5.4**
 
-  - [ ]* 2.8 Write property tests for client-server validation consistency
+  - [x] 2.8 Write property tests for client-server validation consistency
     - **Property 6: Client-server validation consistency**
     - **Validates: Requirements 5.5, 5.6**
 
