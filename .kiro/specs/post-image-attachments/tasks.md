@@ -126,15 +126,15 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
     - Return `{ valid: true, mediaId, mediaType }`
     - _Requirements: 6.3, 6.4_
 
-  - [ ]* 5.5 Write property test for user isolation
+  - [x] 5.5 Write property test for user isolation
     - **Property 7: User isolation for media access**
     - **Validates: Requirements 4.3, 6.3, 10.5**
 
-  - [ ]* 5.6 Write property test for media deletion
+  - [x] 5.6 Write property test for media deletion
     - **Property 9: Media deletion removes record and object**
     - **Validates: Requirements 10.1, 10.2**
 
-  - [ ]* 5.7 Write property test for cascading delete
+  - [x] 5.7 Write property test for cascading delete
     - **Property 10: Cascading delete clears post references**
     - **Validates: Requirements 10.3**
 
