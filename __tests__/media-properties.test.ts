@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 import { isAllowedContentType, getMediaType, getMaxFileSize, validateFileSize, generateS3Key } from '@/lib/media/validation';
-import { ALLOWED_CONTENT_TYPES, AllowedContentType, MAX_IMAGE_SIZE, MAX_VIDEO_SIZE } from '@/types/media';
+import { ALLOWED_CONTENT_TYPES, AllowedContentType, MediaRecord, MAX_IMAGE_SIZE, MAX_VIDEO_SIZE } from '@/types/media';
 
 // Feature: post-image-attachments, Property 1: Content type validation
 describe('Property 1: Content type validation', () => {
@@ -377,6 +377,128 @@ describe('Property 6: Client-server validation consistency', () => {
         ),
         (contentType, fileSize) => {
           expect(clientValidate(contentType, fileSize)).toBe(serverValidate(contentType, fileSize));
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+});
+
+// Feature: post-image-attachments, Property 8: Media record completeness
+describe('Property 8: Media record completeness', () => {
+  // Simulate the record creation that the upload-url API route performs
+  function buildMediaRecord(
+    userId: string,
+    mediaId: string,
+    contentType: AllowedContentType,
+    fileSize: number,
+    filename: string
+  ): MediaRecord {
+    const mediaType = getMediaType(contentType);
+    const s3Key = generateS3Key(userId, mediaId, filename);
+    return {
+      mediaId,
+      userId,
+      s3Key,
+      contentType,
+      fileSize,
+      mediaType,
+      originalFilename: filename,
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  const nonEmptyString = fc.stringOf(fc.char().filter((c) => c !== '/'), { minLength: 1 });
+  const validFileSize = fc.integer({ min: 1, max: MAX_IMAGE_SIZE });
+
+  it('should contain all required fields for any valid upload input', () => {
+    fc.assert(
+      fc.property(
+        nonEmptyString,
+        nonEmptyString,
+        fc.constantFrom(...ALLOWED_CONTENT_TYPES),
+        validFileSize,
+        nonEmptyString,
+        (userId, mediaId, contentType, fileSize, filename) => {
+          const record = buildMediaRecord(userId, mediaId, contentType, fileSize, filename);
+          expect(record.mediaId).toBe(mediaId);
+          expect(record.userId).toBe(userId);
+          expect(record.s3Key).toBeDefined();
+          expect(record.contentType).toBe(contentType);
+          expect(record.fileSize).toBe(fileSize);
+          expect(record.mediaType).toBeDefined();
+          expect(record.originalFilename).toBe(filename);
+          expect(record.createdAt).toBeDefined();
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  it('should derive mediaType correctly from the content type prefix', () => {
+    fc.assert(
+      fc.property(
+        nonEmptyString,
+        nonEmptyString,
+        fc.constantFrom(...ALLOWED_CONTENT_TYPES),
+        validFileSize,
+        nonEmptyString,
+        (userId, mediaId, contentType, fileSize, filename) => {
+          const record = buildMediaRecord(userId, mediaId, contentType, fileSize, filename);
+          const expected = contentType.startsWith('video/') ? 'video' : 'image';
+          expect(record.mediaType).toBe(expected);
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  it('should produce a valid S3 key containing userId, mediaId, and filename', () => {
+    fc.assert(
+      fc.property(
+        nonEmptyString,
+        nonEmptyString,
+        fc.constantFrom(...ALLOWED_CONTENT_TYPES),
+        validFileSize,
+        nonEmptyString,
+        (userId, mediaId, contentType, fileSize, filename) => {
+          const record = buildMediaRecord(userId, mediaId, contentType, fileSize, filename);
+          expect(record.s3Key).toBe(`${userId}/${mediaId}/${filename}`);
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  it('should produce a valid ISO 8601 createdAt timestamp', () => {
+    fc.assert(
+      fc.property(
+        nonEmptyString,
+        nonEmptyString,
+        fc.constantFrom(...ALLOWED_CONTENT_TYPES),
+        validFileSize,
+        nonEmptyString,
+        (userId, mediaId, contentType, fileSize, filename) => {
+          const record = buildMediaRecord(userId, mediaId, contentType, fileSize, filename);
+          const parsed = Date.parse(record.createdAt);
+          expect(Number.isNaN(parsed)).toBe(false);
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  it('should only allow "image" or "video" as mediaType values', () => {
+    fc.assert(
+      fc.property(
+        nonEmptyString,
+        nonEmptyString,
+        fc.constantFrom(...ALLOWED_CONTENT_TYPES),
+        validFileSize,
+        nonEmptyString,
+        (userId, mediaId, contentType, fileSize, filename) => {
+          const record = buildMediaRecord(userId, mediaId, contentType, fileSize, filename);
+          expect(['image', 'video']).toContain(record.mediaType);
         }
       ),
       { numRuns: 100 }

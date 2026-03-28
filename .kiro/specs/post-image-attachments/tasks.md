@@ -67,14 +67,14 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
     - **Property 6: Client-server validation consistency**
     - **Validates: Requirements 5.5, 5.6**
 
-- [ ] 3. Update application config and create media repository
-  - [ ] 3.1 Add `s3MediaBucket` and `dynamoDbMediaTableName` to `lib/config.ts`
+- [x] 3. Update application config and create media repository
+  - [x] 3.1 Add `s3MediaBucket` and `dynamoDbMediaTableName` to `lib/config.ts`
     - Add `s3MediaBucket` field reading from `S3_MEDIA_BUCKET` env var
     - Add `dynamoDbMediaTableName` field reading from `DYNAMODB_MEDIA_TABLE_NAME` env var
     - Update the `Config` interface accordingly
     - _Requirements: 2.5_
 
-  - [ ] 3.2 Create `lib/db/mediaRepository.ts` following `userRepository.ts` pattern
+  - [x] 3.2 Create `lib/db/mediaRepository.ts` following `userRepository.ts` pattern
     - Implement `MediaRepository` class with DynamoDBDocumentClient
     - Implement `createMedia(record: MediaRecord): Promise<MediaRecord>`
     - Implement `getMediaById(mediaId: string): Promise<MediaRecord | null>`
@@ -82,7 +82,7 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
     - Implement `deleteMedia(mediaId: string): Promise<void>`
     - _Requirements: 2.3, 3.8, 10.1_
 
-  - [ ]* 3.3 Write property test for media record completeness
+  - [x] 3.3 Write property test for media record completeness
     - **Property 8: Media record completeness**
     - **Validates: Requirements 2.3, 3.8**
 
