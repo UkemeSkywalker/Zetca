@@ -17,6 +17,7 @@ interface Config {
   linkedinRedirectUri: string;
   s3MediaBucket: string;
   dynamoDbMediaTableName: string;
+  dynamoDbScheduledPostsTableName: string;
 }
 
 // Use a function to get config so environment variables are read at runtime
@@ -35,6 +36,7 @@ export function getConfig(): Config {
     linkedinRedirectUri: process.env.LINKEDIN_REDIRECT_URI || 'http://localhost:3000/api/auth/linkedin/callback',
     s3MediaBucket: process.env.S3_MEDIA_BUCKET || 'zetca-post-media-dev',
     dynamoDbMediaTableName: process.env.DYNAMODB_MEDIA_TABLE_NAME || 'post-media-dev',
+    dynamoDbScheduledPostsTableName: process.env.DYNAMODB_SCHEDULED_POSTS_TABLE_NAME || 'scheduled-posts-dev',
   };
 
   // Validate required configuration in production

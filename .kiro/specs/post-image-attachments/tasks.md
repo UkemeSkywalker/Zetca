@@ -27,7 +27,7 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
     - PAY_PER_REQUEST billing, point-in-time recovery enabled
     - _Requirements: 2.1, 2.2_
 
-- [-] 2. Define types, constants, and shared validation
+- [x] 2. Define types, constants, and shared validation
   - [x] 2.1 Create `types/media.ts` with MediaRecord interface and constants
     - Define `MediaRecord` interface with all fields: mediaId, userId, s3Key, contentType, fileSize, mediaType, width, height, originalFilename, createdAt
     - Define `AllowedContentType` union type and `ALLOWED_CONTENT_TYPES` array
@@ -51,7 +51,7 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
     - **Property 2: Media type derivation from content type prefix**
     - **Validates: Requirements 2.4, 3.6**
 
-  - [-] 2.5 Write property tests for presigned URL expiry values
+  - [x] 2.5 Write property tests for presigned URL expiry values
     - **Property 3: Presigned URL expiry matches media type**
     - **Validates: Requirements 3.1, 3.2, 4.1**
 
@@ -86,11 +86,11 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
     - **Property 8: Media record completeness**
     - **Validates: Requirements 2.3, 3.8**
 
-- [ ] 4. Checkpoint - Ensure all tests pass
+- [x] 4. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 5. Implement media API routes
-  - [ ] 5.1 Create `app/api/media/upload-url/route.ts` (POST)
+- [x] 5. Implement media API routes
+  - [x] 5.1 Create `app/api/media/upload-url/route.ts` (POST)
     - Use `withAuth` middleware for JWT authentication
     - Accept `contentType`, `filename`, `fileSize` in request body
     - Validate content type against allowed list, return 400 if invalid
@@ -103,7 +103,7 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
     - Return `{ uploadUrl, mediaId, s3Key }`
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 5.1, 5.2, 5.3, 5.4_
 
-  - [ ] 5.2 Create `app/api/media/[mediaId]/download-url/route.ts` (GET)
+  - [x] 5.2 Create `app/api/media/[mediaId]/download-url/route.ts` (GET)
     - Use `withAuth` middleware
     - Look up MediaRecord by mediaId, return 404 if not found
     - Verify ownership (userId matches), return 403 if not owner
@@ -111,7 +111,7 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
     - Return `{ downloadUrl, mediaId, contentType, mediaType }`
     - _Requirements: 4.1, 4.2, 4.3_
 
-  - [ ] 5.3 Create `app/api/media/[mediaId]/route.ts` (DELETE)
+  - [x] 5.3 Create `app/api/media/[mediaId]/route.ts` (DELETE)
     - Use `withAuth` middleware
     - Look up MediaRecord, return 404 if not found, 403 if not owner
     - Clear `media_id` from any ScheduledPostRecords referencing this media
@@ -120,7 +120,7 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
     - Return `{ success: true }`
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
 
-  - [ ] 5.4 Create `app/api/media/[mediaId]/validate/route.ts` (POST)
+  - [x] 5.4 Create `app/api/media/[mediaId]/validate/route.ts` (POST)
     - Use `withAuth` middleware
     - Look up MediaRecord, return 400 if not found or not owned by user
     - Return `{ valid: true, mediaId, mediaType }`

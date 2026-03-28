@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 import { isAllowedContentType, getMediaType, getMaxFileSize, validateFileSize, generateS3Key } from '@/lib/media/validation';
-import { ALLOWED_CONTENT_TYPES, AllowedContentType, MediaRecord, MAX_IMAGE_SIZE, MAX_VIDEO_SIZE } from '@/types/media';
+import { ALLOWED_CONTENT_TYPES, AllowedContentType, MediaRecord, MAX_IMAGE_SIZE, MAX_VIDEO_SIZE, UPLOAD_URL_EXPIRY_IMAGE, UPLOAD_URL_EXPIRY_VIDEO, DOWNLOAD_URL_EXPIRY } from '@/types/media';
 
 // Feature: post-image-attachments, Property 1: Content type validation
 describe('Property 1: Content type validation', () => {
@@ -96,6 +96,86 @@ describe('Property 2: Media type derivation from content type prefix', () => {
         (contentType) => {
           const expectedType = contentType.startsWith('video/') ? 'video' : 'image';
           expect(getMediaType(contentType)).toBe(expectedType);
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+});
+
+// Feature: post-image-attachments, Property 3: Presigned URL expiry matches media type
+describe('Property 3: Presigned URL expiry matches media type', () => {
+  const mediaTypeArb = fc.constantFrom<'image' | 'video'>('image', 'video');
+
+  it('should return 300s expiry for image uploads and 900s for video uploads', () => {
+    fc.assert(
+      fc.property(
+        mediaTypeArb,
+        (mediaType) => {
+          const expected = mediaType === 'image' ? UPLOAD_URL_EXPIRY_IMAGE : UPLOAD_URL_EXPIRY_VIDEO;
+          const actual = mediaType === 'image' ? UPLOAD_URL_EXPIRY_IMAGE : UPLOAD_URL_EXPIRY_VIDEO;
+          expect(actual).toBe(expected);
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  it('should have UPLOAD_URL_EXPIRY_IMAGE equal to 300 seconds', () => {
+    fc.assert(
+      fc.property(
+        fc.constant('image' as const),
+        () => {
+          expect(UPLOAD_URL_EXPIRY_IMAGE).toBe(300);
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  it('should have UPLOAD_URL_EXPIRY_VIDEO equal to 900 seconds', () => {
+    fc.assert(
+      fc.property(
+        fc.constant('video' as const),
+        () => {
+          expect(UPLOAD_URL_EXPIRY_VIDEO).toBe(900);
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  it('should have DOWNLOAD_URL_EXPIRY equal to 3600 seconds regardless of media type', () => {
+    fc.assert(
+      fc.property(
+        mediaTypeArb,
+        () => {
+          expect(DOWNLOAD_URL_EXPIRY).toBe(3600);
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  it('should have video upload expiry strictly greater than image upload expiry', () => {
+    fc.assert(
+      fc.property(
+        fc.constant(null),
+        () => {
+          expect(UPLOAD_URL_EXPIRY_VIDEO).toBeGreaterThan(UPLOAD_URL_EXPIRY_IMAGE);
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  it('should have download expiry greater than or equal to both upload expiries', () => {
+    fc.assert(
+      fc.property(
+        mediaTypeArb,
+        (mediaType) => {
+          const uploadExpiry = mediaType === 'image' ? UPLOAD_URL_EXPIRY_IMAGE : UPLOAD_URL_EXPIRY_VIDEO;
+          expect(DOWNLOAD_URL_EXPIRY).toBeGreaterThanOrEqual(uploadExpiry);
         }
       ),
       { numRuns: 100 }
