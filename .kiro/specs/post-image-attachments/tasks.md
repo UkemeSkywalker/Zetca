@@ -141,8 +141,8 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
 - [x] 6. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 7. Create API client and frontend component
-  - [ ] 7.1 Create `lib/api/mediaClient.ts` following `copyClient.ts` pattern
+- [x] 7. Create API client and frontend component
+  - [x] 7.1 Create `lib/api/mediaClient.ts` following `copyClient.ts` pattern
     - Implement `requestUploadUrl(contentType, filename, fileSize)` calling POST `/api/media/upload-url`
     - Implement `uploadFileToS3(uploadUrl, file)` using fetch PUT with file body
     - Implement `getDownloadUrl(mediaId)` calling GET `/api/media/[mediaId]/download-url`
@@ -152,7 +152,7 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
     - On 401, clear token and redirect to `/login`
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6_
 
-  - [ ] 7.2 Create `components/dashboard/MediaUploader.tsx`
+  - [x] 7.2 Create `components/dashboard/MediaUploader.tsx`
     - Accept props: `onMediaAttached`, `onMediaRemoved`, `initialMediaId?`, `initialMediaType?`, `initialMediaUrl?`, `disabled?`
     - File input accepting `image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime,video/webm`
     - Client-side validation: file type and size (10 MB images, 100 MB videos)
