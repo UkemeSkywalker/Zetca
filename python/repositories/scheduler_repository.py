@@ -87,6 +87,8 @@ class SchedulerRepository:
             'platform': 'platform',
             'hashtags': 'hashtags',
             'status': 'status',
+            'media_id': 'mediaId',
+            'media_type': 'mediaType',
         }
 
         for py_field, db_field in field_mapping.items():
@@ -129,7 +131,7 @@ class SchedulerRepository:
 
     def _record_to_item(self, record: ScheduledPostRecord) -> dict:
         """Convert ScheduledPostRecord to DynamoDB item."""
-        return {
+        item = {
             'postId': record.id,
             'strategyId': record.strategy_id,
             'copyId': record.copy_id,
@@ -145,6 +147,11 @@ class SchedulerRepository:
             'createdAt': record.created_at.isoformat(),
             'updatedAt': record.updated_at.isoformat(),
         }
+        if record.media_id is not None:
+            item['mediaId'] = record.media_id
+        if record.media_type is not None:
+            item['mediaType'] = record.media_type
+        return item
 
     def _item_to_record(self, item: dict) -> ScheduledPostRecord:
         """Convert DynamoDB item to ScheduledPostRecord."""
@@ -161,6 +168,8 @@ class SchedulerRepository:
             status=item['status'],
             strategy_color=item.get('strategyColor', ''),
             strategy_label=item.get('strategyLabel', ''),
+            media_id=item.get('mediaId'),
+            media_type=item.get('mediaType'),
             created_at=datetime.fromisoformat(item['createdAt']),
             updated_at=datetime.fromisoformat(item['updatedAt']),
         )

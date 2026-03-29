@@ -60,7 +60,7 @@ function handleAuthError(): void {
  * Convert snake_case scheduled post record from Python to camelCase for TypeScript
  */
 function convertScheduledPost(record: any): ScheduledPost {
-  return {
+  const converted = {
     id: record.id,
     strategyId: record.strategy_id,
     copyId: record.copy_id,
@@ -75,7 +75,13 @@ function convertScheduledPost(record: any): ScheduledPost {
     strategyLabel: record.strategy_label || '',
     createdAt: record.created_at,
     updatedAt: record.updated_at,
+    ...(record.media_id ? { mediaId: record.media_id } : {}),
+    ...(record.media_type ? { mediaType: record.media_type } : {}),
   };
+  if (record.media_id || record.media_type) {
+    console.log('[schedulerClient] convertScheduledPost media fields:', { raw_media_id: record.media_id, raw_media_type: record.media_type, mapped_mediaId: converted.mediaId, mapped_mediaType: converted.mediaType });
+  }
+  return converted;
 }
 
 /**
@@ -155,7 +161,7 @@ export async function manualSchedule(input: ManualScheduleInput): Promise<Schedu
         scheduled_date: input.scheduledDate,
         scheduled_time: input.scheduledTime,
         platform: input.platform,
-        ...(input.mediaId ? { media_id: input.mediaId } : {}),
+        ...(input.mediaId ? { media_id: input.mediaId, media_type: input.mediaType } : {}),
       }),
     });
 
@@ -224,6 +230,7 @@ export async function listPosts(): Promise<ScheduledPost[]> {
     }
 
     const data = await response.json();
+    console.log('[schedulerClient] listPosts raw: count=', data.length, 'posts=', data.map((r: any) => ({ id: r.id, scheduled_date: r.scheduled_date, media_id: r.media_id })));
     return data.map(convertScheduledPost);
   } catch (error) {
     if (error instanceof SchedulerAPIError) throw error;
@@ -340,12 +347,18 @@ export async function updatePost(postId: string, data: ScheduledPostUpdate): Pro
     if (data.platform !== undefined) body.platform = data.platform;
     if (data.hashtags !== undefined) body.hashtags = data.hashtags;
     if (data.status !== undefined) body.status = data.status;
+    if (data.mediaId !== undefined) body.media_id = data.mediaId;
+    if (data.mediaType !== undefined) body.media_type = data.mediaType;
+
+    console.log('[schedulerClient] updatePost request:', { postId, body });
 
     const response = await fetch(`${API_BASE_URL}/api/scheduler/posts/${postId}`, {
       method: 'PUT',
       headers: createAuthHeaders(),
       body: JSON.stringify(body),
     });
+
+    console.log('[schedulerClient] updatePost response status:', response.status);
 
     if (response.status === 401) {
       handleAuthError();
@@ -375,6 +388,7 @@ export async function updatePost(postId: string, data: ScheduledPostUpdate): Pro
     }
 
     const responseData = await response.json();
+    console.log('[schedulerClient] updatePost raw response:', JSON.stringify(responseData));
     return convertScheduledPost(responseData);
   } catch (error) {
     if (error instanceof SchedulerAPIError) throw error;

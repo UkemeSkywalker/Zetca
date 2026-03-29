@@ -12,7 +12,7 @@ interface SchedulingModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedDate: Date | null;
-  onSchedulePost: (post: Omit<Post, 'id' | 'createdAt'>) => void;
+  onSchedulePost: (post: Omit<Post, 'id' | 'createdAt'>) => Promise<void> | void;
   editingPost?: Post | null;
   /** Optional pre-fill: content text (from CaptionEditor publish flow) */
   prefillContent?: string;
@@ -59,6 +59,10 @@ export function SchedulingModal({
   prefillMediaType,
   prefillMediaUrl,
 }: SchedulingModalProps) {
+  /** Format a Date to YYYY-MM-DD using local date components (avoids UTC shift from toISOString) */
+  const formatLocalDate = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
   const getInitialFormData = (): FormData => {
     // Priority: editingScheduledPost > editingPost > prefill > defaults
     if (editingScheduledPost) {
@@ -75,7 +79,7 @@ export function SchedulingModal({
       return {
         content: editingPost.content,
         platform: editingPost.platform,
-        date: postDate.toISOString().split('T')[0],
+        date: formatLocalDate(postDate),
         time: editingPost.scheduledTime,
         hashtags: [],
       };
@@ -83,7 +87,7 @@ export function SchedulingModal({
     return {
       content: prefillContent || '',
       platform: prefillPlatform || 'instagram',
-      date: selectedDate ? selectedDate.toISOString().split('T')[0] : '',
+      date: selectedDate ? formatLocalDate(selectedDate) : '',
       time: '09:00',
       hashtags: prefillHashtags || [],
     };
@@ -92,8 +96,8 @@ export function SchedulingModal({
   const [formData, setFormData] = useState<FormData>(getInitialFormData);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [mediaId, setMediaId] = useState<string | null>(prefillMediaId ?? null);
-  const [mediaType, setMediaType] = useState<'image' | 'video' | null>(prefillMediaType ?? null);
+  const [mediaId, setMediaId] = useState<string | null>(prefillMediaId ?? editingPost?.mediaId ?? null);
+  const [mediaType, setMediaType] = useState<'image' | 'video' | null>(prefillMediaType ?? editingPost?.mediaType ?? null);
   const [isMediaUploading, setIsMediaUploading] = useState(false);
 
   const isEditing = !!(editingPost || editingScheduledPost);
@@ -114,22 +118,24 @@ export function SchedulingModal({
       setFormData({
         content: editingPost.content,
         platform: editingPost.platform,
-        date: postDate.toISOString().split('T')[0],
+        date: formatLocalDate(postDate),
         time: editingPost.scheduledTime,
         hashtags: [],
       });
+      setMediaId(editingPost.mediaId ?? null);
+      setMediaType(editingPost.mediaType ?? null);
     } else if (prefillContent || prefillPlatform) {
       setFormData(prev => ({
         ...prev,
         content: prefillContent || prev.content,
         platform: prefillPlatform || prev.platform,
         hashtags: prefillHashtags || prev.hashtags,
-        date: selectedDate ? selectedDate.toISOString().split('T')[0] : prev.date,
+        date: selectedDate ? formatLocalDate(selectedDate) : prev.date,
       }));
     } else if (selectedDate) {
       setFormData(prev => ({
         ...prev,
-        date: selectedDate.toISOString().split('T')[0],
+        date: formatLocalDate(selectedDate),
       }));
     }
   }, [editingPost, editingScheduledPost, selectedDate, prefillContent, prefillPlatform, prefillHashtags]);
@@ -187,7 +193,17 @@ export function SchedulingModal({
         ...(mediaId ? { mediaId, mediaType: mediaType ?? undefined } : {}),
       };
 
-      onSchedulePost(newPost);
+      console.log('[SchedulingModal] submitting post:', {
+        isEditing,
+        content: newPost.content?.substring(0, 50),
+        platform: newPost.platform,
+        scheduledDate: newPost.scheduledDate,
+        scheduledTime: newPost.scheduledTime,
+        mediaId: newPost.mediaId,
+        mediaType: newPost.mediaType,
+      });
+
+      await onSchedulePost(newPost);
 
       resetForm();
       onClose();
@@ -209,7 +225,7 @@ export function SchedulingModal({
     setFormData({
       content: '',
       platform: 'instagram',
-      date: selectedDate ? selectedDate.toISOString().split('T')[0] : '',
+      date: selectedDate ? formatLocalDate(selectedDate) : '',
       time: '09:00',
       hashtags: [],
     });
@@ -363,8 +379,8 @@ export function SchedulingModal({
               setMediaType(null);
               setIsMediaUploading(false);
             }}
-            initialMediaId={prefillMediaId}
-            initialMediaType={prefillMediaType}
+            initialMediaId={prefillMediaId ?? editingPost?.mediaId}
+            initialMediaType={prefillMediaType ?? editingPost?.mediaType}
             initialMediaUrl={prefillMediaUrl}
             disabled={isSubmitting}
           />

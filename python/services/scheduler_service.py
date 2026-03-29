@@ -229,6 +229,8 @@ class SchedulerService:
             status="scheduled",
             strategy_color=strategy_color,
             strategy_label=strategy_label,
+            media_id=input.media_id,
+            media_type=input.media_type,
         )
 
         return await self.scheduler_repository.create_post(record)

@@ -188,20 +188,20 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
     - Fetch presigned download URLs only for posts visible in the current month view
     - _Requirements: 9.1, 9.2, 9.3, 9.4_
 
-- [ ] 10. Update Python models and TypeScript types for media fields
-  - [ ] 10.1 Add `media_id` to Python Pydantic models in `python/models/scheduler.py`
+- [x] 10. Update Python models and TypeScript types for media fields
+  - [x] 10.1 Add `media_id` to Python Pydantic models in `python/models/scheduler.py`
     - Add `media_id: Optional[str] = None` to `ManualScheduleInput`
     - Add `media_id: Optional[str] = None` to `ScheduledPostRecord`
     - Add `media_id: Optional[str] = None` to `ScheduledPostUpdate`
     - _Requirements: 6.1, 6.2, 6.5_
 
-  - [ ] 10.2 Add media fields to TypeScript types in `types/scheduler.ts`
+  - [x] 10.2 Add media fields to TypeScript types in `types/scheduler.ts`
     - Add `mediaId?: string`, `mediaUrl?: string`, `mediaType?: 'image' | 'video'` to `ScheduledPost`
     - Add `mediaId?: string` to `ManualScheduleInput`
     - Add `mediaId?: string | null` to `ScheduledPostUpdate`
     - _Requirements: 12.1, 12.2, 12.3, 12.4_
 
-  - [ ] 10.3 Update `convertScheduledPost` in `lib/api/schedulerClient.ts`
+  - [x] 10.3 Update `convertScheduledPost` in `lib/api/schedulerClient.ts`
     - Map `media_id` → `mediaId` and `media_type` → `mediaType` from API response
     - Include `mediaId` in `manualSchedule` and `updatePost` request bodies
     - _Requirements: 12.5, 12.6_

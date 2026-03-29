@@ -35,6 +35,7 @@ export interface ManualScheduleInput {
   scheduledTime: string;
   platform: string;
   mediaId?: string;
+  mediaType?: 'image' | 'video';
 }
 
 /**
@@ -47,4 +48,6 @@ export interface ScheduledPostUpdate {
   platform?: string;
   hashtags?: string[];
   status?: 'draft' | 'scheduled' | 'published';
+  mediaId?: string | null;
+  mediaType?: 'image' | 'video' | null;
 }

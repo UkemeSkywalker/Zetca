@@ -12,6 +12,7 @@ import { Post } from '@/types/post';
 import { StrategyRecord } from '@/types/strategy';
 import * as schedulerClient from '@/lib/api/schedulerClient';
 import { listStrategies } from '@/lib/api/strategyClient';
+import { getDownloadUrl } from '@/lib/api/mediaClient';
 
 interface SchedulerProps {
   className?: string;
@@ -28,6 +29,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
   const [isDateDetailsModalOpen, setIsDateDetailsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [editingMediaUrl, setEditingMediaUrl] = useState<string | undefined>(undefined);
 
   // Auto-schedule state
   const [strategies, setStrategies] = useState<StrategyRecord[]>([]);
@@ -58,9 +60,12 @@ export function Scheduler({ className = '' }: SchedulerProps) {
   const fetchPosts = useCallback(async () => {
     try {
       setError(null);
+      console.log('[Scheduler] fetchPosts: fetching...');
       const data = await schedulerClient.listPosts();
+      console.log('[Scheduler] fetchPosts: received', data.length, 'posts', data.map(p => ({ id: p.id, date: p.scheduledDate, mediaId: p.mediaId, mediaType: p.mediaType })));
       setPosts(data);
     } catch (err) {
+      console.error('[Scheduler] fetchPosts: error', err);
       const message = err instanceof schedulerClient.SchedulerAPIError
         ? err.message
         : 'Failed to load scheduled posts';
@@ -105,37 +110,62 @@ export function Scheduler({ className = '' }: SchedulerProps) {
   // Handle scheduling a new post or updating an existing one via API
   const handleSchedulePost = async (postData: Omit<Post, 'id' | 'createdAt'>) => {
     setOperationError(null);
+    console.log('[Scheduler] handleSchedulePost called', {
+      isEditing: !!editingPost,
+      editingPostId: editingPost?.id,
+      postData: {
+        content: postData.content?.substring(0, 50),
+        platform: postData.platform,
+        scheduledDate: postData.scheduledDate,
+        scheduledTime: postData.scheduledTime,
+        status: postData.status,
+        mediaId: postData.mediaId,
+        mediaType: postData.mediaType,
+      },
+    });
     try {
       if (editingPost) {
         // Update existing post via API
-        await schedulerClient.updatePost(editingPost.id, {
+        const dateStr = postData.scheduledDate instanceof Date
+          ? `${postData.scheduledDate.getFullYear()}-${String(postData.scheduledDate.getMonth() + 1).padStart(2, '0')}-${String(postData.scheduledDate.getDate()).padStart(2, '0')}`
+          : String(postData.scheduledDate);
+        const updatePayload = {
           content: postData.content,
           platform: postData.platform,
-          scheduledDate: postData.scheduledDate instanceof Date
-            ? postData.scheduledDate.toISOString().split('T')[0]
-            : String(postData.scheduledDate),
+          scheduledDate: dateStr,
           scheduledTime: postData.scheduledTime,
           status: postData.status,
-        });
+          ...(postData.mediaId !== undefined ? { mediaId: postData.mediaId, mediaType: postData.mediaType } : {}),
+        };
+        console.log('[Scheduler] updatePost payload', { postId: editingPost.id, ...updatePayload });
+        const result = await schedulerClient.updatePost(editingPost.id, updatePayload);
+        console.log('[Scheduler] updatePost result', result);
         setEditingPost(null);
       } else {
         // Create new post via manual-schedule API
         const dateStr = postData.scheduledDate instanceof Date
-          ? postData.scheduledDate.toISOString().split('T')[0]
+          ? `${postData.scheduledDate.getFullYear()}-${String(postData.scheduledDate.getMonth() + 1).padStart(2, '0')}-${String(postData.scheduledDate.getDate()).padStart(2, '0')}`
           : String(postData.scheduledDate);
-        await schedulerClient.manualSchedule({
+        const schedulePayload = {
           copyId: 'manual-' + Date.now(),
           scheduledDate: dateStr,
           scheduledTime: postData.scheduledTime,
           platform: postData.platform,
-        });
+          ...(postData.mediaId ? { mediaId: postData.mediaId, mediaType: postData.mediaType } : {}),
+        };
+        console.log('[Scheduler] manualSchedule payload', schedulePayload);
+        const result = await schedulerClient.manualSchedule(schedulePayload);
+        console.log('[Scheduler] manualSchedule result', result);
       }
-      await fetchPosts();
     } catch (err) {
+      console.error('[Scheduler] handleSchedulePost error', err);
       const message = err instanceof schedulerClient.SchedulerAPIError
         ? err.message
         : 'Failed to save post';
       setOperationError(message);
+    } finally {
+      console.log('[Scheduler] handleSchedulePost: re-fetching posts...');
+      await fetchPosts();
     }
   };
 
@@ -166,10 +196,9 @@ export function Scheduler({ className = '' }: SchedulerProps) {
   };
 
   // Handle editing a post
-  const handleEditPost = (postId: string) => {
+  const handleEditPost = async (postId: string) => {
     const post = posts.find(p => p.id === postId);
     if (post) {
-      // Convert to legacy Post format for SchedulingModal (until task 20 updates it)
       const [year, month, day] = post.scheduledDate.split('-').map(Number);
       const legacyPost = {
         id: post.id,
@@ -179,8 +208,22 @@ export function Scheduler({ className = '' }: SchedulerProps) {
         scheduledTime: post.scheduledTime,
         status: post.status as 'scheduled' | 'published' | 'draft',
         createdAt: new Date(post.createdAt),
+        ...(post.mediaId ? { mediaId: post.mediaId, mediaType: post.mediaType } : {}),
       };
+
+      // Fetch media download URL if post has media
+      let mediaUrl: string | undefined;
+      if (post.mediaId) {
+        try {
+          const res = await getDownloadUrl(post.mediaId);
+          mediaUrl = res.downloadUrl;
+        } catch {
+          // Silently skip — MediaUploader will still show mediaId without preview
+        }
+      }
+
       setEditingPost(legacyPost);
+      setEditingMediaUrl(mediaUrl);
       setSelectedDate(new Date(year, month - 1, day));
       setIsDateDetailsModalOpen(false);
       setIsSchedulingModalOpen(true);
@@ -745,10 +788,14 @@ export function Scheduler({ className = '' }: SchedulerProps) {
           setIsSchedulingModalOpen(false);
           setSelectedDate(null);
           setEditingPost(null);
+          setEditingMediaUrl(undefined);
         }}
         selectedDate={selectedDate}
         onSchedulePost={handleSchedulePost}
         editingPost={editingPost}
+        prefillMediaId={editingPost?.mediaId}
+        prefillMediaType={editingPost?.mediaType}
+        prefillMediaUrl={editingMediaUrl}
       />
 
       {/* Clear All Confirmation Dialog */}

@@ -16,6 +16,18 @@ export function Calendar({ posts, onDateClick, onMovePosts, className = '' }: Ca
   const [dragSourceDate, setDragSourceDate] = useState<string | null>(null);
   const [dragOverDate, setDragOverDate] = useState<string | null>(null);
 
+  // Debug: log when posts change
+  React.useEffect(() => {
+    const currentMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+    const postsThisMonth = posts.filter(p => p.scheduledDate.startsWith(currentMonth));
+    console.log('[Calendar] posts updated:', {
+      total: posts.length,
+      currentMonth,
+      postsThisMonth: postsThisMonth.length,
+      dates: postsThisMonth.map(p => ({ id: p.id.substring(0, 8), date: p.scheduledDate, time: p.scheduledTime })),
+    });
+  }, [posts, currentDate]);
+
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
   const firstDayOfWeek = firstDayOfMonth.getDay();

@@ -34,6 +34,8 @@ class ManualScheduleInput(BaseModel):
     scheduled_date: str = Field(..., description="ISO 8601 date string (YYYY-MM-DD)")
     scheduled_time: str = Field(..., description="Time in HH:MM format")
     platform: str = Field(..., min_length=1, description="Target social media platform")
+    media_id: Optional[str] = Field(default=None, description="Optional media attachment ID")
+    media_type: Optional[str] = Field(default=None, description="Media type: image or video")
 
     @field_validator('copy_id', 'platform')
     @classmethod
@@ -115,6 +117,8 @@ class ScheduledPostRecord(BaseModel):
         default_factory=lambda: datetime.now(UTC),
         description="Creation timestamp"
     )
+    media_id: Optional[str] = Field(default=None, description="Optional media attachment ID")
+    media_type: Optional[str] = Field(default=None, description="Media type: image or video")
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         description="Last modification timestamp"
@@ -139,6 +143,8 @@ class ScheduledPostUpdate(BaseModel):
     platform: Optional[str] = None
     hashtags: Optional[List[str]] = None
     status: Optional[str] = None
+    media_id: Optional[str] = None
+    media_type: Optional[str] = None
 
     @field_validator('status')
     @classmethod
