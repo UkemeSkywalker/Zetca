@@ -240,6 +240,12 @@ export function Calendar({ posts, onDateClick, onMovePosts, className = '' }: Ca
                             style={{ color: platformColors[post.platform.toLowerCase()] || 'var(--outline)' }}
                           />
                           <span className="text-on-secondary-container truncate text-xs">{formatTime(post.scheduledTime)}</span>
+                          {post.mediaType === 'image' && (
+                            <Icon icon="solar:gallery-bold" className="w-3.5 h-3.5 shrink-0 text-secondary" aria-label="Has image" />
+                          )}
+                          {post.mediaType === 'video' && (
+                            <Icon icon="solar:videocamera-record-bold" className="w-3.5 h-3.5 shrink-0 text-secondary" aria-label="Has video" />
+                          )}
                         </div>
                       ))}
                       {calendarDay.posts.length > 2 && (

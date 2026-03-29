@@ -1,11 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import { Modal } from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ScheduledPost } from '@/types/scheduler';
+import { getDownloadUrl } from '@/lib/api/mediaClient';
 
 interface DateDetailsModalProps {
   isOpen: boolean;
@@ -27,6 +28,38 @@ export function DateDetailsModal({
   onDeletePost
 }: DateDetailsModalProps) {
   if (!selectedDate) return null;
+
+  // Track fetched media download URLs by mediaId
+  const [mediaUrls, setMediaUrls] = useState<Record<string, string>>({});
+
+  // Fetch presigned download URLs for posts with media when modal opens
+  useEffect(() => {
+    if (!isOpen || posts.length === 0) return;
+
+    const postsWithMedia = posts.filter(p => p.mediaId && !p.mediaUrl);
+    if (postsWithMedia.length === 0) return;
+
+    let cancelled = false;
+    const fetchUrls = async () => {
+      const urls: Record<string, string> = {};
+      await Promise.all(
+        postsWithMedia.map(async (post) => {
+          try {
+            const res = await getDownloadUrl(post.mediaId!);
+            if (!cancelled) urls[post.mediaId!] = res.downloadUrl;
+          } catch {
+            // Silently skip failed fetches
+          }
+        })
+      );
+      if (!cancelled) setMediaUrls(prev => ({ ...prev, ...urls }));
+    };
+    fetchUrls();
+    return () => { cancelled = true; };
+  }, [isOpen, posts]);
+
+  const getMediaUrl = (post: ScheduledPost): string | undefined =>
+    post.mediaUrl || (post.mediaId ? mediaUrls[post.mediaId] : undefined);
 
   // Platform icons
   const platformIcons: Record<string, string> = {
@@ -119,6 +152,45 @@ export function DateDetailsModal({
                       <p className="text-gray-900 mb-3 leading-relaxed">
                         {post.content}
                       </p>
+
+                      {/* Media preview */}
+                      {post.mediaType && (
+                        <div className="mb-3">
+                          {(() => {
+                            const url = getMediaUrl(post);
+                            if (!url) {
+                              return (
+                                <div className="flex items-center gap-2 text-sm text-gray-400">
+                                  <Icon
+                                    icon={post.mediaType === 'image' ? 'solar:gallery-bold' : 'solar:videocamera-record-bold'}
+                                    className="w-4 h-4"
+                                  />
+                                  <span>Loading {post.mediaType} preview…</span>
+                                </div>
+                              );
+                            }
+                            if (post.mediaType === 'image') {
+                              return (
+                                <img
+                                  src={url}
+                                  alt="Post attachment"
+                                  className="max-h-48 rounded-lg object-cover border border-gray-200"
+                                />
+                              );
+                            }
+                            return (
+                              <video
+                                src={url}
+                                controls
+                                preload="metadata"
+                                className="max-h-48 rounded-lg border border-gray-200"
+                              >
+                                <track kind="captions" />
+                              </video>
+                            );
+                          })()}
+                        </div>
+                      )}
                       
                       {/* Post metadata */}
                       <div className="flex items-center gap-4 text-sm text-gray-500">
@@ -134,6 +206,19 @@ export function DateDetailsModal({
                           <Icon icon="solar:clock-circle-bold" className="w-4 h-4" />
                           <span>{formatTime(post.scheduledTime)}</span>
                         </div>
+
+                        {post.mediaType === 'image' && (
+                          <div className="flex items-center gap-1">
+                            <Icon icon="solar:gallery-bold" className="w-4 h-4" />
+                            <span>Image</span>
+                          </div>
+                        )}
+                        {post.mediaType === 'video' && (
+                          <div className="flex items-center gap-1">
+                            <Icon icon="solar:videocamera-record-bold" className="w-4 h-4" />
+                            <span>Video</span>
+                          </div>
+                        )}
                         
                         <StatusBadge status={post.status} />
                       </div>

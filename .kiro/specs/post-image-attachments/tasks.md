@@ -180,8 +180,8 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
     - Disable Schedule button while upload is in progress
     - _Requirements: 8.1, 8.4, 8.5_
 
-- [ ] 9. Update Calendar for media indicators
-  - [ ] 9.1 Add media indicator icons to Calendar post cards
+- [x] 9. Update Calendar for media indicators
+  - [x] 9.1 Add media indicator icons to Calendar post cards
     - Show image icon when `post.mediaType === 'image'`
     - Show video icon when `post.mediaType === 'video'`
     - In DateDetailsModal, display image thumbnails or video thumbnails alongside post content

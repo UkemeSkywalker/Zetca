@@ -21,6 +21,9 @@ export interface ScheduledPost {
   strategyLabel: string;
   createdAt: string;
   updatedAt: string;
+  mediaId?: string;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video';
 }
 
 /**
