@@ -138,7 +138,7 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
     - **Property 10: Cascading delete clears post references**
     - **Validates: Requirements 10.3**
 
-- [ ] 6. Checkpoint - Ensure all tests pass
+- [x] 6. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 7. Create API client and frontend component

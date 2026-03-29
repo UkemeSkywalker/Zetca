@@ -17,6 +17,7 @@
     "@aws-sdk/lib-dynamodb": "^3.986.0",
     "@aws-sdk/s3-request-presigner": "^3.1014.0",
     "@iconify/react": "^5.0.2",
+    "@next/swc-darwin-arm64": "^16.2.1",
     "@types/bcrypt": "^6.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "bcrypt": "^6.0.0",
