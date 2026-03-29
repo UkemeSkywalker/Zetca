@@ -31,6 +31,7 @@ export interface ManualScheduleInput {
   scheduledDate: string;
   scheduledTime: string;
   platform: string;
+  mediaId?: string;
 }
 
 /**

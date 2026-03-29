@@ -155,6 +155,7 @@ export async function manualSchedule(input: ManualScheduleInput): Promise<Schedu
         scheduled_date: input.scheduledDate,
         scheduled_time: input.scheduledTime,
         platform: input.platform,
+        ...(input.mediaId ? { media_id: input.mediaId } : {}),
       }),
     });
 

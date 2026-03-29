@@ -10,6 +10,7 @@ import { manualSchedule } from '@/lib/api/schedulerClient';
 import { Modal } from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import MediaUploader from '@/components/dashboard/MediaUploader';
 
 interface CaptionEditorProps {
   className?: string;
@@ -62,6 +63,9 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
   const [publishErrors, setPublishErrors] = useState<{ date?: string; time?: string }>({});
   const [isScheduling, setIsScheduling] = useState(false);
   const [scheduleSuccess, setScheduleSuccess] = useState<string | null>(null);
+  const [attachedMediaId, setAttachedMediaId] = useState<string | null>(null);
+  const [attachedMediaType, setAttachedMediaType] = useState<'image' | 'video' | null>(null);
+  const [isMediaUploading, setIsMediaUploading] = useState(false);
   const platformMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -234,6 +238,7 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
         scheduledDate: publishDate,
         scheduledTime: publishTime,
         platform: normalizePlatform(activeCopy.platform),
+        ...(attachedMediaId ? { mediaId: attachedMediaId } : {}),
       });
       setPublishModalOpen(false);
       setScheduleSuccess(activeCopy.id);
@@ -423,7 +428,7 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
           )}
           <button
             onClick={handlePublishClick}
-            disabled={!activeCopy || isScheduling}
+            disabled={!activeCopy || isScheduling || isMediaUploading}
             className="inline-flex items-center gap-2.5 px-6 py-2.5 rounded-lg text-base font-semibold transition-colors disabled:opacity-50"
             style={{ background: 'linear-gradient(45deg, #3139FB, #8B5CF6)', color: 'white' }}
           >
@@ -445,6 +450,23 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
                 aria-label="Edit copy text"
               />
               <p className="mt-2 text-sm text-gray-400">{charCount} characters</p>
+            </div>
+
+            {/* Media Uploader */}
+            <div className="px-8 pb-6">
+              <MediaUploader
+                onMediaAttached={(id, type) => {
+                  setAttachedMediaId(id);
+                  setAttachedMediaType(type);
+                  setIsMediaUploading(false);
+                }}
+                onMediaRemoved={() => {
+                  setAttachedMediaId(null);
+                  setAttachedMediaType(null);
+                  setIsMediaUploading(false);
+                }}
+                disabled={isScheduling}
+              />
             </div>
 
             {/* Hashtags */}

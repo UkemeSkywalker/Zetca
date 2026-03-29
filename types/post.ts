@@ -7,6 +7,8 @@ export interface Post {
   scheduledTime: string;
   status: 'scheduled' | 'published' | 'draft';
   imageUrl?: string;
+  mediaId?: string;
+  mediaType?: 'image' | 'video';
   captionId?: string;
   createdAt: Date;
   publishedAt?: Date;

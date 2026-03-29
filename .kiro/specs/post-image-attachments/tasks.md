@@ -164,8 +164,8 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
     - Display inline error messages for validation failures and upload errors with retry
     - _Requirements: 5.5, 5.6, 7.2, 7.3, 7.5, 7.6, 7.7, 8.2, 8.3, 8.5, 8.6_
 
-- [ ] 8. Integrate MediaUploader into CaptionEditor and SchedulingModal
-  - [ ] 8.1 Add MediaUploader to CaptionEditor toolbar
+- [x] 8. Integrate MediaUploader into CaptionEditor and SchedulingModal
+  - [x] 8.1 Add MediaUploader to CaptionEditor toolbar
     - Import and render `MediaUploader` in the toolbar area of `CaptionEditor`
     - Track `mediaId` and `mediaType` state in CaptionEditor
     - On Publish click with media selected, upload file to S3 via presigned URL before scheduling
@@ -173,7 +173,7 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
     - Pass `mediaId` to `manualSchedule` call
     - _Requirements: 7.1, 7.4, 7.5_
 
-  - [ ] 8.2 Add MediaUploader to SchedulingModal form
+  - [x] 8.2 Add MediaUploader to SchedulingModal form
     - Import and render `MediaUploader` within the SchedulingModal form
     - Accept optional `prefillMediaId`, `prefillMediaType`, `prefillMediaUrl` props for CaptionEditor flow
     - Track `mediaId` state, include in `onSchedulePost` call

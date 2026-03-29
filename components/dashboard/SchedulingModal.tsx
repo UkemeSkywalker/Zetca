@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import MediaUploader from '@/components/dashboard/MediaUploader';
 import { Post } from '@/types/post';
 import { ScheduledPost } from '@/types/scheduler';
 
@@ -21,6 +22,12 @@ interface SchedulingModalProps {
   prefillHashtags?: string[];
   /** Optional: ScheduledPost for API-backed editing */
   editingScheduledPost?: ScheduledPost | null;
+  /** Optional pre-fill: media ID (from CaptionEditor publish flow) */
+  prefillMediaId?: string;
+  /** Optional pre-fill: media type (from CaptionEditor publish flow) */
+  prefillMediaType?: 'image' | 'video';
+  /** Optional pre-fill: media presigned URL (from CaptionEditor publish flow) */
+  prefillMediaUrl?: string;
 }
 
 interface FormData {
@@ -48,6 +55,9 @@ export function SchedulingModal({
   prefillPlatform,
   prefillHashtags,
   editingScheduledPost = null,
+  prefillMediaId,
+  prefillMediaType,
+  prefillMediaUrl,
 }: SchedulingModalProps) {
   const getInitialFormData = (): FormData => {
     // Priority: editingScheduledPost > editingPost > prefill > defaults
@@ -82,6 +92,9 @@ export function SchedulingModal({
   const [formData, setFormData] = useState<FormData>(getInitialFormData);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mediaId, setMediaId] = useState<string | null>(prefillMediaId ?? null);
+  const [mediaType, setMediaType] = useState<'image' | 'video' | null>(prefillMediaType ?? null);
+  const [isMediaUploading, setIsMediaUploading] = useState(false);
 
   const isEditing = !!(editingPost || editingScheduledPost);
   const isPrefilled = !!(prefillContent || prefillPlatform);
@@ -171,6 +184,7 @@ export function SchedulingModal({
         scheduledTime: formData.time,
         status: 'scheduled',
         publishedAt: undefined,
+        ...(mediaId ? { mediaId, mediaType: mediaType ?? undefined } : {}),
       };
 
       onSchedulePost(newPost);
@@ -200,6 +214,9 @@ export function SchedulingModal({
       hashtags: [],
     });
     setErrors({});
+    setMediaId(null);
+    setMediaType(null);
+    setIsMediaUploading(false);
   };
 
   const handleClose = () => {
@@ -234,7 +251,7 @@ export function SchedulingModal({
         type="submit"
         form="scheduling-form"
         isLoading={isSubmitting}
-        disabled={isSubmitting}
+        disabled={isSubmitting || isMediaUploading}
       >
         {getSubmitLabel()}
       </Button>
@@ -331,6 +348,27 @@ export function SchedulingModal({
             </div>
           </div>
         )}
+
+        {/* Media Uploader */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Media</label>
+          <MediaUploader
+            onMediaAttached={(id, type) => {
+              setMediaId(id);
+              setMediaType(type);
+              setIsMediaUploading(false);
+            }}
+            onMediaRemoved={() => {
+              setMediaId(null);
+              setMediaType(null);
+              setIsMediaUploading(false);
+            }}
+            initialMediaId={prefillMediaId}
+            initialMediaType={prefillMediaType}
+            initialMediaUrl={prefillMediaUrl}
+            disabled={isSubmitting}
+          />
+        </div>
 
         {/* Date and Time */}
         <div className="grid grid-cols-2 gap-4">
