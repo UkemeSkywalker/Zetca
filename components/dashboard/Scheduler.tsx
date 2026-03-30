@@ -135,7 +135,8 @@ export function Scheduler({ className = '' }: SchedulerProps) {
           scheduledDate: dateStr,
           scheduledTime: postData.scheduledTime,
           status: postData.status,
-          ...(postData.mediaId !== undefined ? { mediaId: postData.mediaId, mediaType: postData.mediaType } : {}),
+          mediaId: postData.mediaId ?? null,
+          mediaType: postData.mediaType ?? null,
         };
         console.log('[Scheduler] updatePost payload', { postId: editingPost.id, ...updatePayload });
         const result = await schedulerClient.updatePost(editingPost.id, updatePayload);

@@ -77,6 +77,7 @@ class SchedulerRepository:
 
         # Build update expression dynamically from provided fields
         update_parts = []
+        remove_parts = []
         attr_names = {}
         attr_values = {':updated_at': now}
 
@@ -91,18 +92,29 @@ class SchedulerRepository:
             'media_type': 'mediaType',
         }
 
+        # Fields that can be explicitly set to None to remove them
+        nullable_fields = {'media_id', 'media_type'}
+
         for py_field, db_field in field_mapping.items():
-            if py_field in updates and updates[py_field] is not None:
-                placeholder = f':{py_field}'
-                name_placeholder = f'#{py_field}'
-                update_parts.append(f'{name_placeholder} = {placeholder}')
-                attr_names[name_placeholder] = db_field
-                attr_values[placeholder] = updates[py_field]
+            if py_field in updates:
+                if updates[py_field] is None and py_field in nullable_fields:
+                    # Explicitly remove the attribute from DynamoDB
+                    name_placeholder = f'#{py_field}'
+                    remove_parts.append(name_placeholder)
+                    attr_names[name_placeholder] = db_field
+                elif updates[py_field] is not None:
+                    placeholder = f':{py_field}'
+                    name_placeholder = f'#{py_field}'
+                    update_parts.append(f'{name_placeholder} = {placeholder}')
+                    attr_names[name_placeholder] = db_field
+                    attr_values[placeholder] = updates[py_field]
 
         update_parts.append('#updatedAt = :updated_at')
         attr_names['#updatedAt'] = 'updatedAt'
 
         update_expr = 'SET ' + ', '.join(update_parts)
+        if remove_parts:
+            update_expr += ' REMOVE ' + ', '.join(remove_parts)
 
         response = self.table.update_item(
             Key={'postId': post_id},

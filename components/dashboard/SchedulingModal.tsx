@@ -190,7 +190,11 @@ export function SchedulingModal({
         scheduledTime: formData.time,
         status: 'scheduled',
         publishedAt: undefined,
-        ...(mediaId ? { mediaId, mediaType: mediaType ?? undefined } : {}),
+        ...(mediaId
+          ? { mediaId, mediaType: mediaType ?? undefined }
+          : isEditing
+            ? { mediaId: undefined, mediaType: undefined }
+            : {}),
       };
 
       console.log('[SchedulingModal] submitting post:', {
@@ -225,7 +229,7 @@ export function SchedulingModal({
     setFormData({
       content: '',
       platform: 'instagram',
-      date: selectedDate ? formatLocalDate(selectedDate) : '',
+      date: selectedDate ? selectedDate.toISOString().split('T')[0] : '',
       time: '09:00',
       hashtags: [],
     });
