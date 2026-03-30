@@ -5,6 +5,7 @@ import { Icon } from '@iconify/react';
 import { Calendar } from './Calendar';
 import { SchedulingModal } from './SchedulingModal';
 import { DateDetailsModal } from './DateDetailsModal';
+import { PostPreviewModal } from './PostPreviewModal';
 import Button from '@/components/ui/Button';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ScheduledPost } from '@/types/scheduler';
@@ -21,7 +22,7 @@ interface SchedulerProps {
 type ViewMode = 'calendar' | 'grid';
 
 export function Scheduler({ className = '' }: SchedulerProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>('calendar');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [posts, setPosts] = useState<ScheduledPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +32,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [editingMediaUrl, setEditingMediaUrl] = useState<string | undefined>(undefined);
   const [mediaUrls, setMediaUrls] = useState<Record<string, string>>({});
+  const [previewPost, setPreviewPost] = useState<ScheduledPost | null>(null);
 
   // Auto-schedule state
   const [strategies, setStrategies] = useState<StrategyRecord[]>([]);
@@ -424,20 +426,20 @@ export function Scheduler({ className = '' }: SchedulerProps) {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <Button
-            variant={viewMode === 'calendar' ? 'primary' : 'outline'}
-            size="sm"
-            onClick={() => setViewMode('calendar')}
-            leftIcon="solar:calendar-bold"
-          >
-            Calendar
-          </Button>
-          <Button
             variant={viewMode === 'grid' ? 'primary' : 'outline'}
             size="sm"
             onClick={() => setViewMode('grid')}
             leftIcon="solar:widget-bold"
           >
             Grid
+          </Button>
+          <Button
+            variant={viewMode === 'calendar' ? 'primary' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('calendar')}
+            leftIcon="solar:calendar-bold"
+          >
+            Calendar
           </Button>
         </div>
 
@@ -565,7 +567,8 @@ export function Scheduler({ className = '' }: SchedulerProps) {
                         return (
                         <div
                           key={post.id}
-                          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col hover:shadow-md transition-shadow"
+                          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => setPreviewPost(post)}
                         >
                           {/* Media preview on top */}
                           {mUrl && post.mediaType === 'image' ? (
@@ -616,14 +619,14 @@ export function Scheduler({ className = '' }: SchedulerProps) {
                               </div>
                               <div className="flex items-center gap-1">
                                 <button
-                                  onClick={() => handleEditPost(post.id)}
+                                  onClick={(e) => { e.stopPropagation(); handleEditPost(post.id); }}
                                   className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                                   aria-label="Edit post"
                                 >
                                   <Icon icon="solar:pen-bold" className="w-4 h-4" />
                                 </button>
                                 <button
-                                  onClick={() => handleDeletePost(post.id)}
+                                  onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id); }}
                                   className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                   aria-label="Delete post"
                                 >
@@ -650,14 +653,14 @@ export function Scheduler({ className = '' }: SchedulerProps) {
                               {(mUrl) && (
                                 <>
                                   <button
-                                    onClick={() => handleEditPost(post.id)}
+                                    onClick={(e) => { e.stopPropagation(); handleEditPost(post.id); }}
                                     className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                                     aria-label="Edit post"
                                   >
                                     <Icon icon="solar:pen-bold" className="w-4 h-4" />
                                   </button>
                                   <button
-                                    onClick={() => handleDeletePost(post.id)}
+                                    onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id); }}
                                     className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                     aria-label="Delete post"
                                   >
@@ -724,6 +727,16 @@ export function Scheduler({ className = '' }: SchedulerProps) {
         prefillMediaId={editingPost?.mediaId}
         prefillMediaType={editingPost?.mediaType}
         prefillMediaUrl={editingMediaUrl}
+      />
+
+      {/* Post Preview Modal */}
+      <PostPreviewModal
+        isOpen={!!previewPost}
+        onClose={() => setPreviewPost(null)}
+        post={previewPost}
+        onEdit={(postId) => { setPreviewPost(null); handleEditPost(postId); }}
+        onDelete={(postId) => { setPreviewPost(null); handleDeletePost(postId); }}
+        onScheduleNew={() => { setPreviewPost(null); handleScheduleNewPost(); }}
       />
 
       {/* Clear All Confirmation Dialog */}
