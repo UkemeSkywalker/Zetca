@@ -34,6 +34,7 @@ export interface ManualScheduleInput {
   scheduledDate: string;
   scheduledTime: string;
   platform: string;
+  content?: string;
   mediaId?: string;
   mediaType?: 'image' | 'video';
 }

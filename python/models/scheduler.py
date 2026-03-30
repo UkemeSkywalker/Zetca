@@ -30,10 +30,11 @@ class AutoScheduleInput(BaseModel):
 
 class ManualScheduleInput(BaseModel):
     """Input model for manual scheduling of a single post."""
-    copy_id: str = Field(..., min_length=1, description="ID of the copy to schedule")
+    copy_id: str = Field(default="manual", min_length=1, description="ID of the copy to schedule (use 'manual' for direct content)")
     scheduled_date: str = Field(..., description="ISO 8601 date string (YYYY-MM-DD)")
     scheduled_time: str = Field(..., description="Time in HH:MM format")
     platform: str = Field(..., min_length=1, description="Target social media platform")
+    content: Optional[str] = Field(default=None, description="Post content (required when copy_id is not a real copy)")
     media_id: Optional[str] = Field(default=None, description="Optional media attachment ID")
     media_type: Optional[str] = Field(default=None, description="Media type: image or video")
 

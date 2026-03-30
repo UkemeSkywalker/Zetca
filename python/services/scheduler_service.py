@@ -198,6 +198,23 @@ class SchedulerService:
         # Reject past dates with a clear message
         self._validate_future_date(input.scheduled_date, input.scheduled_time)
 
+        # If content is provided directly (manual post from calendar), skip copy lookup
+        if input.content and input.copy_id.startswith('manual'):
+            record = ScheduledPostRecord(
+                strategy_id='manual',
+                copy_id=input.copy_id,
+                user_id=user_id,
+                content=input.content,
+                platform=input.platform,
+                hashtags=[],
+                scheduled_date=input.scheduled_date,
+                scheduled_time=input.scheduled_time,
+                status="scheduled",
+                media_id=input.media_id,
+                media_type=input.media_type,
+            )
+            return await self.scheduler_repository.create_post(record)
+
         # Verify copy exists and belongs to user
         copy_exists = await self.copy_repository.copy_exists(input.copy_id)
         if not copy_exists:

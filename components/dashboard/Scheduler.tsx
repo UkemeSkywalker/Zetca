@@ -18,7 +18,7 @@ interface SchedulerProps {
   className?: string;
 }
 
-type ViewMode = 'calendar' | 'list' | 'grid';
+type ViewMode = 'calendar' | 'grid';
 
 export function Scheduler({ className = '' }: SchedulerProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
@@ -30,6 +30,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [editingMediaUrl, setEditingMediaUrl] = useState<string | undefined>(undefined);
+  const [mediaUrls, setMediaUrls] = useState<Record<string, string>>({});
 
   // Auto-schedule state
   const [strategies, setStrategies] = useState<StrategyRecord[]>([]);
@@ -60,9 +61,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
   const fetchPosts = useCallback(async () => {
     try {
       setError(null);
-      console.log('[Scheduler] fetchPosts: fetching...');
       const data = await schedulerClient.listPosts();
-      console.log('[Scheduler] fetchPosts: received', data.length, 'posts', data.map(p => ({ id: p.id, date: p.scheduledDate, mediaId: p.mediaId, mediaType: p.mediaType })));
       setPosts(data);
     } catch (err) {
       console.error('[Scheduler] fetchPosts: error', err);
@@ -78,6 +77,28 @@ export function Scheduler({ className = '' }: SchedulerProps) {
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
+
+  // Fetch media download URLs for grid view
+  useEffect(() => {
+    if (viewMode !== 'grid') return;
+    const postsWithMedia = posts.filter(p => p.mediaId && !mediaUrls[p.mediaId]);
+    if (postsWithMedia.length === 0) return;
+    let cancelled = false;
+    const fetchUrls = async () => {
+      const urls: Record<string, string> = {};
+      await Promise.all(
+        postsWithMedia.map(async (post) => {
+          try {
+            const res = await getDownloadUrl(post.mediaId!);
+            if (!cancelled) urls[post.mediaId!] = res.downloadUrl;
+          } catch { /* skip */ }
+        })
+      );
+      if (!cancelled) setMediaUrls(prev => ({ ...prev, ...urls }));
+    };
+    fetchUrls();
+    return () => { cancelled = true; };
+  }, [viewMode, posts]);
 
   // Fetch strategies for auto-schedule dropdown
   const fetchStrategies = useCallback(async () => {
@@ -110,19 +131,6 @@ export function Scheduler({ className = '' }: SchedulerProps) {
   // Handle scheduling a new post or updating an existing one via API
   const handleSchedulePost = async (postData: Omit<Post, 'id' | 'createdAt'>) => {
     setOperationError(null);
-    console.log('[Scheduler] handleSchedulePost called', {
-      isEditing: !!editingPost,
-      editingPostId: editingPost?.id,
-      postData: {
-        content: postData.content?.substring(0, 50),
-        platform: postData.platform,
-        scheduledDate: postData.scheduledDate,
-        scheduledTime: postData.scheduledTime,
-        status: postData.status,
-        mediaId: postData.mediaId,
-        mediaType: postData.mediaType,
-      },
-    });
     try {
       if (editingPost) {
         // Update existing post via API
@@ -138,9 +146,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
           mediaId: postData.mediaId ?? null,
           mediaType: postData.mediaType ?? null,
         };
-        console.log('[Scheduler] updatePost payload', { postId: editingPost.id, ...updatePayload });
-        const result = await schedulerClient.updatePost(editingPost.id, updatePayload);
-        console.log('[Scheduler] updatePost result', result);
+        await schedulerClient.updatePost(editingPost.id, updatePayload);
         setEditingPost(null);
       } else {
         // Create new post via manual-schedule API
@@ -149,23 +155,20 @@ export function Scheduler({ className = '' }: SchedulerProps) {
           : String(postData.scheduledDate);
         const schedulePayload = {
           copyId: 'manual-' + Date.now(),
+          content: postData.content,
           scheduledDate: dateStr,
           scheduledTime: postData.scheduledTime,
           platform: postData.platform,
           ...(postData.mediaId ? { mediaId: postData.mediaId, mediaType: postData.mediaType } : {}),
         };
-        console.log('[Scheduler] manualSchedule payload', schedulePayload);
-        const result = await schedulerClient.manualSchedule(schedulePayload);
-        console.log('[Scheduler] manualSchedule result', result);
+        await schedulerClient.manualSchedule(schedulePayload);
       }
     } catch (err) {
-      console.error('[Scheduler] handleSchedulePost error', err);
       const message = err instanceof schedulerClient.SchedulerAPIError
         ? err.message
         : 'Failed to save post';
       setOperationError(message);
     } finally {
-      console.log('[Scheduler] handleSchedulePost: re-fetching posts...');
       await fetchPosts();
     }
   };
@@ -429,14 +432,6 @@ export function Scheduler({ className = '' }: SchedulerProps) {
             Calendar
           </Button>
           <Button
-            variant={viewMode === 'list' ? 'primary' : 'outline'}
-            size="sm"
-            onClick={() => setViewMode('list')}
-            leftIcon="solar:list-bold"
-          >
-            List
-          </Button>
-          <Button
             variant={viewMode === 'grid' ? 'primary' : 'outline'}
             size="sm"
             onClick={() => setViewMode('grid')}
@@ -513,130 +508,6 @@ export function Scheduler({ className = '' }: SchedulerProps) {
         />
       )}
 
-      {/* List View */}
-      {viewMode === 'list' && (
-        <div>
-          {sortedPosts.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
-              <Icon icon="solar:calendar-bold" className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium font-heading text-gray-900 mb-2">No scheduled posts</h3>
-              <p className="text-gray-500 mb-4">
-                Start by scheduling your first post to see it appear here.
-              </p>
-              <Button
-                onClick={() => handleScheduleNewPost()}
-                leftIcon="solar:add-circle-bold"
-              >
-                Schedule Your First Post
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-8">
-              {Object.entries(
-                sortedPosts.reduce<Record<string, ScheduledPost[]>>((groups, post) => {
-                  const dateKey = post.scheduledDate;
-                  if (!groups[dateKey]) groups[dateKey] = [];
-                  groups[dateKey].push(post);
-                  return groups;
-                }, {})
-              ).map(([dateKey, datePosts]) => {
-                const [y, m, d] = dateKey.split('-').map(Number);
-                const dateObj = new Date(y, m - 1, d);
-                const dateLabel = dateObj.toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                }).toUpperCase();
-
-                return (
-                  <div key={dateKey}>
-                    {/* Date separator */}
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="flex-1 border-t border-gray-200" />
-                      <span className="text-xs font-bold font-heading tracking-widest text-gray-400 whitespace-nowrap">
-                        {dateLabel}
-                      </span>
-                      <div className="flex-1 border-t border-gray-200" />
-                    </div>
-
-                    {/* Post rows */}
-                    <div className="space-y-3">
-                      {datePosts.map((post) => (
-                        <div
-                          key={post.id}
-                          className="bg-white rounded-xl border border-gray-200 border-l-4 border-l-indigo-400 px-5 py-4 flex items-center gap-4 hover:shadow-md transition-shadow"
-                        >
-                          {/* Strategy avatar */}
-                          <div
-                            className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold text-white"
-                            style={{ backgroundColor: post.strategyColor || '#6366F1' }}
-                          >
-                            {(post.strategyLabel || 'Post').substring(0, 4)}
-                          </div>
-
-                          {/* Content block */}
-                          <div className="flex-1 min-w-0">
-                            {/* Top row: label + platform icons */}
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-sm font-semibold text-gray-900">
-                                {post.strategyLabel || 'Post'}
-                              </span>
-                              <span className="text-gray-300">·</span>
-                              <Icon
-                                icon={platformIcons[post.platform.toLowerCase()] || 'solar:chat-round-bold'}
-                                className="w-4 h-4"
-                                style={{ color: platformColors[post.platform.toLowerCase()] || '#6B7280' }}
-                              />
-                            </div>
-                            {/* Content preview */}
-                            <p className="text-sm text-gray-500 truncate">
-                              {post.content}
-                            </p>
-                          </div>
-
-                          {/* Time + status */}
-                          <div className="text-right shrink-0">
-                            <div className="text-base font-bold font-heading text-gray-900">
-                              {formatTime(post.scheduledTime)}
-                            </div>
-                            <div className="text-[10px] font-bold tracking-wider uppercase text-gray-400">
-                              {post.status}
-                            </div>
-                          </div>
-
-                          {/* Status badge */}
-                          <div className="shrink-0">
-                            <span className={`
-                              inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold
-                              ${post.status === 'published'
-                                ? 'bg-green-50 text-green-600'
-                                : post.status === 'scheduled'
-                                  ? 'bg-indigo-50 text-indigo-600'
-                                  : 'bg-gray-100 text-gray-500'
-                              }
-                            `}>
-                              <span className={`w-2 h-2 rounded-full ${
-                                post.status === 'published'
-                                  ? 'bg-green-500'
-                                  : post.status === 'scheduled'
-                                    ? 'bg-indigo-500'
-                                    : 'bg-gray-400'
-                              }`} />
-                              {post.status === 'scheduled' ? 'Ready' : post.status === 'published' ? 'Published' : 'Draft'}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Grid View */}
       {viewMode === 'grid' && (
         <div>
@@ -689,14 +560,50 @@ export function Scheduler({ className = '' }: SchedulerProps) {
 
                     {/* Grid cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {datePosts.map((post) => (
+                      {datePosts.map((post) => {
+                        const mUrl = post.mediaId ? mediaUrls[post.mediaId] : undefined;
+                        return (
                         <div
                           key={post.id}
-                          className="bg-white rounded-xl shadow-sm border border-gray-200 border-l-4 border-l-indigo-400 p-4 flex flex-col justify-between hover:shadow-md transition-shadow"
+                          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col hover:shadow-md transition-shadow"
                         >
-                          {/* Top row: platform icon + actions */}
-                          <div>
-                            <div className="flex items-center justify-between mb-3">
+                          {/* Media preview on top */}
+                          {mUrl && post.mediaType === 'image' ? (
+                            <div className="relative h-48 bg-gray-100">
+                              <img src={mUrl} alt="" className="w-full h-full object-cover" />
+                              <div className="absolute top-3 left-3">
+                                <div
+                                  className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/90 shadow-sm"
+                                >
+                                  <Icon
+                                    icon={platformIcons[post.platform] || 'solar:chat-round-bold'}
+                                    className="w-5 h-5"
+                                    style={{ color: platformColors[post.platform] || '#6B7280' }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ) : mUrl && post.mediaType === 'video' ? (
+                            <div className="relative h-48 bg-gray-900">
+                              <video src={mUrl} className="w-full h-full object-cover" preload="metadata"><track kind="captions" /></video>
+                              <div className="absolute top-3 left-3">
+                                <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/90 shadow-sm">
+                                  <Icon
+                                    icon={platformIcons[post.platform] || 'solar:chat-round-bold'}
+                                    className="w-5 h-5"
+                                    style={{ color: platformColors[post.platform] || '#6B7280' }}
+                                  />
+                                </div>
+                              </div>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-12 h-12 rounded-full bg-white/80 flex items-center justify-center">
+                                  <Icon icon="solar:play-bold" className="w-6 h-6 text-gray-800 ml-0.5" />
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            /* No media — show platform icon header */
+                            <div className="flex items-center justify-between px-4 pt-4 pb-2">
                               <div
                                 className="w-9 h-9 rounded-full flex items-center justify-center"
                                 style={{ backgroundColor: `${platformColors[post.platform] || '#6B7280'}15` }}
@@ -724,25 +631,45 @@ export function Scheduler({ className = '' }: SchedulerProps) {
                                 </button>
                               </div>
                             </div>
+                          )}
 
-                            {/* Content */}
-                            <p className="text-base font-sans text-gray-800 leading-relaxed line-clamp-4 mb-4">
+                          {/* Content */}
+                          <div className="px-4 pt-3 pb-2 flex-1">
+                            <p className="text-base font-sans text-gray-800 leading-relaxed line-clamp-4">
                               {post.content}
                             </p>
                           </div>
 
-                          {/* Bottom: time + status */}
-                          <div className="flex items-center justify-between text-sm font-medium pt-3 border-t border-gray-100">
-                            <div className="flex items-center gap-1.5 text-gray-500">
-                              <Icon icon="solar:clock-circle-bold" className="w-3.5 h-3.5 text-gray-400" />
-                              <span>{formatTime(post.scheduledTime)}</span>
+                          {/* Bottom: time + actions */}
+                          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+                            <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                              <Icon icon="solar:clock-circle-bold" className="w-4 h-4 text-gray-400" />
+                              <span className="font-medium">{formatTime(post.scheduledTime)}</span>
                             </div>
-                            <span className="text-xs font-bold tracking-wider uppercase text-indigo-500">
-                              {post.status}
-                            </span>
+                            <div className="flex items-center gap-1">
+                              {(mUrl) && (
+                                <>
+                                  <button
+                                    onClick={() => handleEditPost(post.id)}
+                                    className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                    aria-label="Edit post"
+                                  >
+                                    <Icon icon="solar:pen-bold" className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeletePost(post.id)}
+                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                    aria-label="Delete post"
+                                  >
+                                    <Icon icon="solar:trash-bin-trash-bold" className="w-4 h-4" />
+                                  </button>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
 
                       {/* Add post placeholder card */}
                       <button
