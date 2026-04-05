@@ -56,3 +56,13 @@ output "dynamodb_post_media_table_arn" {
   value       = aws_dynamodb_table.post_media.arn
   description = "ARN of the DynamoDB post media table"
 }
+
+output "dynamodb_publish_log_table_name" {
+  value       = aws_dynamodb_table.publish_log.name
+  description = "Name of the DynamoDB publish log table"
+}
+
+output "dynamodb_publish_log_table_arn" {
+  value       = aws_dynamodb_table.publish_log.arn
+  description = "ARN of the DynamoDB publish log table"
+}

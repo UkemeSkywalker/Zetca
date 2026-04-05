@@ -8,8 +8,8 @@ This plan implements the Publisher Agent Backend incrementally, starting with in
 
 ### Phase 1: Infrastructure and Configuration
 
-- [ ] 1. Provision publish-log DynamoDB table and update config
-  - [ ] 1.1 Create `terraform/publish-log-table.tf`
+- [x] 1. Provision publish-log DynamoDB table and update config
+  - [x] 1.1 Create `terraform/publish-log-table.tf`
     - Define `aws_dynamodb_table` resource named `publish-log-${var.environment}`
     - Set `logId` as partition key (String)
     - Add `PostIdIndex` GSI with `postId` as hash key
@@ -18,7 +18,7 @@ This plan implements the Publisher Agent Backend incrementally, starting with in
     - Enable point-in-time recovery and server-side encryption
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
 
-  - [ ] 1.2 Add publisher settings to `python/config.py`
+  - [x] 1.2 Add publisher settings to `python/config.py`
     - Add `dynamodb_publish_log_table: str = "publish-log-dev"`
     - Add `publisher_scan_interval_seconds: int = 60`
     - Add `linkedin_api_timeout_seconds: int = 30`
