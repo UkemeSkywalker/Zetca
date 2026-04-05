@@ -5,9 +5,8 @@ import { PostsTable } from '@/components/dashboard/PostsTable';
 export default function PublisherPage() {
   return (
     <PageWrapper
-      title="Content Publisher"
-      description="Manage and publish your scheduled social media posts"
-      showWorkflow={true}
+      title="Content Pipeline"
+      description="Manage and curate your cross-platform digital presence."
     >
       <PostsTable />
     </PageWrapper>
