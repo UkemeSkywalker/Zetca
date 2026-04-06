@@ -29,8 +29,8 @@ This plan implements the Publisher Agent Backend incrementally, starting with in
 
 ### Phase 2: Pydantic Models
 
-- [ ] 2. Define publisher Pydantic models
-  - [ ] 2.1 Create `python/models/publisher.py`
+- [x] 2. Define publisher Pydantic models
+  - [x] 2.1 Create `python/models/publisher.py`
     - Define `PublishLogRecord` with fields: log_id, post_id, user_id, platform, status, linkedin_post_id, error_code, error_message, attempted_at
     - Add `@field_validator` on status to accept only "published", "failed", "skipped"
     - Define `LinkedInPostRequest` with fields: author, commentary, visibility, distribution, lifecycle_state, is_reshare_disabled_by_author, content (Optional)
@@ -38,7 +38,7 @@ This plan implements the Publisher Agent Backend incrementally, starting with in
     - Define `LinkedInImageUploadResponse` with fields: upload_url, image_urn
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
 
-  - [ ]* 2.2 Write property test: PublishLogRecord completeness and validation
+  - [x] 2.2 Write property test: PublishLogRecord completeness and validation
     - **Property 11: Publish Log Record Completeness and Validation**
     - Generate random publish outcomes and verify all required fields are present
     - Generate random status strings and verify only "published", "failed", "skipped" pass validation
@@ -46,8 +46,8 @@ This plan implements the Publisher Agent Backend incrementally, starting with in
 
 ### Phase 3: LinkedIn Client
 
-- [ ] 3. Implement LinkedIn API client
-  - [ ] 3.1 Create `python/services/linkedin_client.py`
+- [x] 3. Implement LinkedIn API client
+  - [x] 3.1 Create `python/services/linkedin_client.py`
     - Implement `LinkedInClient` class with configurable timeout
     - Implement `_headers(access_token)` returning Authorization, Linkedin-Version, X-Restli-Protocol-Version, Content-Type headers
     - Implement `format_commentary(content, hashtags)` that appends hashtags prefixed with "#" to content, returns content unchanged when hashtags is empty
@@ -58,27 +58,27 @@ This plan implements the Publisher Agent Backend incrementally, starting with in
     - Use `httpx.AsyncClient` with configured timeout for all requests
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 3.2, 3.3, 3.4, 3.5, 5.7_
 
-  - [ ]* 3.2 Write property test: Commentary formatting with hashtags
+  - [x] 3.2 Write property test: Commentary formatting with hashtags
     - **Property 4: Commentary Formatting with Hashtags**
     - Generate random content strings and hashtag lists
     - Verify: empty hashtags → content unchanged; non-empty → appended with "#" prefix; no double "#" prefix
     - **Validates: Requirements 12.1, 12.2, 12.3, 2.3, 9.8**
 
-  - [ ]* 3.3 Write property test: LinkedIn request headers and author URN
+  - [x] 3.3 Write property test: LinkedIn request headers and author URN
     - **Property 5: LinkedIn Request Headers and Author URN**
     - Generate random access tokens and linkedinSub values
     - Verify headers contain correct Authorization, Linkedin-Version, X-Restli-Protocol-Version, Content-Type
     - Verify author field equals `urn:li:person:{linkedinSub}`
     - **Validates: Requirements 2.2, 2.5, 9.6, 9.7**
 
-  - [ ]* 3.4 Write property test: Text vs image post routing
+  - [x] 3.4 Write property test: Text vs image post routing
     - **Property 6: Text vs Image Post Routing**
     - Generate random posts with and without mediaId
     - Verify text-only path when mediaId is null, image path when mediaId is present
     - Verify both paths produce requests with identical base fields
     - **Validates: Requirements 2.1, 3.1, 3.4, 3.5**
 
-  - [ ]* 3.5 Write property test: LinkedIn error code mapping
+  - [x] 3.5 Write property test: LinkedIn error code mapping
     - **Property 7: LinkedIn Error Code Mapping**
     - Generate random LinkedIn error status codes (400, 401, 403, 500, 503, network error)
     - Verify correct errorCode mapping: 401→token_expired, 403→access_denied, 400→validation_error, 500/503→linkedin_server_error, network→network_error
