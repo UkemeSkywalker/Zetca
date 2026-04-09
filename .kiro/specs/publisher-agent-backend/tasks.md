@@ -84,27 +84,27 @@ This plan implements the Publisher Agent Backend incrementally, starting with in
     - Verify correct errorCode mapping: 401→token_expired, 403→access_denied, 400→validation_error, 500/503→linkedin_server_error, network→network_error
     - **Validates: Requirements 5.1, 5.2, 5.4, 5.5, 5.6**
 
-- [ ] 4. Checkpoint - Verify models and LinkedIn client
+- [x] 4. Checkpoint - Verify models and LinkedIn client
   - Ensure all tests pass, ask the user if questions arise.
 
 ### Phase 4: Repositories
 
-- [ ] 5. Create user and media repositories
-  - [ ] 5.1 Create `python/repositories/user_repository.py`
+- [x] 5. Create user and media repositories
+  - [x] 5.1 Create `python/repositories/user_repository.py`
     - Implement `UserRepository` class with read-only access to users DynamoDB table
     - Implement `get_user_linkedin_credentials(user_id)` returning linkedinAccessToken, linkedinSub, linkedinName
     - Use `dynamodb_users_table` setting for table name
     - No write methods (user management stays in Next.js)
     - _Requirements: 13.1, 13.2, 13.3, 13.4_
 
-  - [ ] 5.2 Create `python/repositories/media_repository.py`
+  - [x] 5.2 Create `python/repositories/media_repository.py`
     - Implement `MediaRepository` class with read-only access to post-media DynamoDB table
     - Implement `get_media_by_id(media_id)` returning s3Key, contentType, mediaType
     - Use `dynamodb_media_table` setting for table name
     - _Requirements: 15.1_
 
-- [ ] 6. Create publisher repository
-  - [ ] 6.1 Create `python/repositories/publisher_repository.py`
+- [x] 6. Create publisher repository
+  - [x] 6.1 Create `python/repositories/publisher_repository.py`
     - Implement `PublisherRepository` class for publish-log DynamoDB table
     - Implement `create_log(record)` to store a PublishLogRecord
     - Implement `list_logs_by_user(user_id)` querying UserIdIndex, sorted by attemptedAt descending
