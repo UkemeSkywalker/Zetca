@@ -113,7 +113,7 @@ This plan implements the Publisher Agent Backend incrementally, starting with in
     - Implement `_record_to_item()` and `_item_to_record()` conversion helpers
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7_
 
-  - [ ]* 6.2 Write property test: User isolation on publish logs
+  - [x] 6.2 Write property test: User isolation on publish logs
     - **Property 12: User Isolation on Publish Logs**
     - Generate log records for multiple users
     - Verify querying for User A returns only User A's records
@@ -122,8 +122,8 @@ This plan implements the Publisher Agent Backend incrementally, starting with in
 
 ### Phase 5: Publisher Service
 
-- [ ] 7. Implement publisher service
-  - [ ] 7.1 Create `python/services/publisher_service.py`
+- [x] 7. Implement publisher service
+  - [x] 7.1 Create `python/services/publisher_service.py`
     - Implement `PublisherService` class with injected dependencies: LinkedInClient, PublisherRepository, SchedulerRepository, UserRepository, MediaRepository, S3 client
     - Implement `get_due_posts()` querying scheduled-posts table for posts where status="scheduled", platform="linkedin", scheduledDate+scheduledTime <= now UTC
     - Implement `publish_post(post, user_credentials)` orchestrating the full publish flow:
@@ -155,19 +155,19 @@ This plan implements the Publisher Agent Backend incrementally, starting with in
     - Verify successful posts are published regardless of other failures
     - **Validates: Requirements 1.3**
 
-  - [ ]* 7.4 Write property test: Concurrency guard skips in-progress posts
+  - [x] 7.4 Write property test: Concurrency guard skips in-progress posts
     - **Property 3: Concurrency Guard Skips In-Progress Posts**
     - Generate sets of due post IDs and processing post IDs
     - Verify attempted set is disjoint from processing set
     - **Validates: Requirements 1.5**
 
-  - [ ]* 7.5 Write property test: Rate limit skips remaining user posts
+  - [x] 7.5 Write property test: Rate limit skips remaining user posts
     - **Property 8: Rate Limit Skips Remaining User Posts**
     - Generate lists of posts per user with a 429 at a random position
     - Verify subsequent posts for that user are skipped, other users unaffected
     - **Validates: Requirements 5.3**
 
-  - [ ]* 7.6 Write property test: Missing credentials produces skipped log
+  - [x] 7.6 Write property test: Missing credentials produces skipped log
     - **Property 9: Missing Credentials Produces Skipped Log**
     - Generate user records with missing LinkedIn fields
     - Verify correct skip reason: linkedin_not_connected or linkedin_sub_missing
