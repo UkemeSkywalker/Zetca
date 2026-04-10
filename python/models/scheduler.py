@@ -30,10 +30,13 @@ class AutoScheduleInput(BaseModel):
 
 class ManualScheduleInput(BaseModel):
     """Input model for manual scheduling of a single post."""
-    copy_id: str = Field(..., min_length=1, description="ID of the copy to schedule")
+    copy_id: str = Field(default="manual", min_length=1, description="ID of the copy to schedule (use 'manual' for direct content)")
     scheduled_date: str = Field(..., description="ISO 8601 date string (YYYY-MM-DD)")
     scheduled_time: str = Field(..., description="Time in HH:MM format")
     platform: str = Field(..., min_length=1, description="Target social media platform")
+    content: Optional[str] = Field(default=None, description="Post content (required when copy_id is not a real copy)")
+    media_id: Optional[str] = Field(default=None, description="Optional media attachment ID")
+    media_type: Optional[str] = Field(default=None, description="Media type: image or video")
 
     @field_validator('copy_id', 'platform')
     @classmethod
@@ -115,6 +118,8 @@ class ScheduledPostRecord(BaseModel):
         default_factory=lambda: datetime.now(UTC),
         description="Creation timestamp"
     )
+    media_id: Optional[str] = Field(default=None, description="Optional media attachment ID")
+    media_type: Optional[str] = Field(default=None, description="Media type: image or video")
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         description="Last modification timestamp"
@@ -139,6 +144,8 @@ class ScheduledPostUpdate(BaseModel):
     platform: Optional[str] = None
     hashtags: Optional[List[str]] = None
     status: Optional[str] = None
+    media_id: Optional[str] = None
+    media_type: Optional[str] = None
 
     @field_validator('status')
     @classmethod

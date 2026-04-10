@@ -21,6 +21,9 @@ export interface ScheduledPost {
   strategyLabel: string;
   createdAt: string;
   updatedAt: string;
+  mediaId?: string;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video';
 }
 
 /**
@@ -31,6 +34,9 @@ export interface ManualScheduleInput {
   scheduledDate: string;
   scheduledTime: string;
   platform: string;
+  content?: string;
+  mediaId?: string;
+  mediaType?: 'image' | 'video';
 }
 
 /**
@@ -43,4 +49,6 @@ export interface ScheduledPostUpdate {
   platform?: string;
   hashtags?: string[];
   status?: 'draft' | 'scheduled' | 'published';
+  mediaId?: string | null;
+  mediaType?: 'image' | 'video' | null;
 }

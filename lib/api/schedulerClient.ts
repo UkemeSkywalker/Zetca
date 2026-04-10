@@ -75,6 +75,8 @@ function convertScheduledPost(record: any): ScheduledPost {
     strategyLabel: record.strategy_label || '',
     createdAt: record.created_at,
     updatedAt: record.updated_at,
+    ...(record.media_id ? { mediaId: record.media_id } : {}),
+    ...(record.media_type ? { mediaType: record.media_type } : {}),
   };
 }
 
@@ -155,6 +157,8 @@ export async function manualSchedule(input: ManualScheduleInput): Promise<Schedu
         scheduled_date: input.scheduledDate,
         scheduled_time: input.scheduledTime,
         platform: input.platform,
+        ...(input.content ? { content: input.content } : {}),
+        ...(input.mediaId ? { media_id: input.mediaId, media_type: input.mediaType } : {}),
       }),
     });
 
@@ -339,6 +343,8 @@ export async function updatePost(postId: string, data: ScheduledPostUpdate): Pro
     if (data.platform !== undefined) body.platform = data.platform;
     if (data.hashtags !== undefined) body.hashtags = data.hashtags;
     if (data.status !== undefined) body.status = data.status;
+    if (data.mediaId !== undefined) body.media_id = data.mediaId;
+    if (data.mediaType !== undefined) body.media_type = data.mediaType;
 
     const response = await fetch(`${API_BASE_URL}/api/scheduler/posts/${postId}`, {
       method: 'PUT',

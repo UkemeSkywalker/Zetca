@@ -77,6 +77,7 @@ class SchedulerRepository:
 
         # Build update expression dynamically from provided fields
         update_parts = []
+        remove_parts = []
         attr_names = {}
         attr_values = {':updated_at': now}
 
@@ -87,20 +88,33 @@ class SchedulerRepository:
             'platform': 'platform',
             'hashtags': 'hashtags',
             'status': 'status',
+            'media_id': 'mediaId',
+            'media_type': 'mediaType',
         }
 
+        # Fields that can be explicitly set to None to remove them
+        nullable_fields = {'media_id', 'media_type'}
+
         for py_field, db_field in field_mapping.items():
-            if py_field in updates and updates[py_field] is not None:
-                placeholder = f':{py_field}'
-                name_placeholder = f'#{py_field}'
-                update_parts.append(f'{name_placeholder} = {placeholder}')
-                attr_names[name_placeholder] = db_field
-                attr_values[placeholder] = updates[py_field]
+            if py_field in updates:
+                if updates[py_field] is None and py_field in nullable_fields:
+                    # Explicitly remove the attribute from DynamoDB
+                    name_placeholder = f'#{py_field}'
+                    remove_parts.append(name_placeholder)
+                    attr_names[name_placeholder] = db_field
+                elif updates[py_field] is not None:
+                    placeholder = f':{py_field}'
+                    name_placeholder = f'#{py_field}'
+                    update_parts.append(f'{name_placeholder} = {placeholder}')
+                    attr_names[name_placeholder] = db_field
+                    attr_values[placeholder] = updates[py_field]
 
         update_parts.append('#updatedAt = :updated_at')
         attr_names['#updatedAt'] = 'updatedAt'
 
         update_expr = 'SET ' + ', '.join(update_parts)
+        if remove_parts:
+            update_expr += ' REMOVE ' + ', '.join(remove_parts)
 
         response = self.table.update_item(
             Key={'postId': post_id},
@@ -129,7 +143,7 @@ class SchedulerRepository:
 
     def _record_to_item(self, record: ScheduledPostRecord) -> dict:
         """Convert ScheduledPostRecord to DynamoDB item."""
-        return {
+        item = {
             'postId': record.id,
             'strategyId': record.strategy_id,
             'copyId': record.copy_id,
@@ -145,6 +159,11 @@ class SchedulerRepository:
             'createdAt': record.created_at.isoformat(),
             'updatedAt': record.updated_at.isoformat(),
         }
+        if record.media_id is not None:
+            item['mediaId'] = record.media_id
+        if record.media_type is not None:
+            item['mediaType'] = record.media_type
+        return item
 
     def _item_to_record(self, item: dict) -> ScheduledPostRecord:
         """Convert DynamoDB item to ScheduledPostRecord."""
@@ -161,6 +180,8 @@ class SchedulerRepository:
             status=item['status'],
             strategy_color=item.get('strategyColor', ''),
             strategy_label=item.get('strategyLabel', ''),
+            media_id=item.get('mediaId'),
+            media_type=item.get('mediaType'),
             created_at=datetime.fromisoformat(item['createdAt']),
             updated_at=datetime.fromisoformat(item['updatedAt']),
         )

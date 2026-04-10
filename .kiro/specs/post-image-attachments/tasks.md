@@ -138,11 +138,11 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
     - **Property 10: Cascading delete clears post references**
     - **Validates: Requirements 10.3**
 
-- [ ] 6. Checkpoint - Ensure all tests pass
+- [x] 6. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 7. Create API client and frontend component
-  - [ ] 7.1 Create `lib/api/mediaClient.ts` following `copyClient.ts` pattern
+- [x] 7. Create API client and frontend component
+  - [x] 7.1 Create `lib/api/mediaClient.ts` following `copyClient.ts` pattern
     - Implement `requestUploadUrl(contentType, filename, fileSize)` calling POST `/api/media/upload-url`
     - Implement `uploadFileToS3(uploadUrl, file)` using fetch PUT with file body
     - Implement `getDownloadUrl(mediaId)` calling GET `/api/media/[mediaId]/download-url`
@@ -152,7 +152,7 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
     - On 401, clear token and redirect to `/login`
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6_
 
-  - [ ] 7.2 Create `components/dashboard/MediaUploader.tsx`
+  - [x] 7.2 Create `components/dashboard/MediaUploader.tsx`
     - Accept props: `onMediaAttached`, `onMediaRemoved`, `initialMediaId?`, `initialMediaType?`, `initialMediaUrl?`, `disabled?`
     - File input accepting `image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime,video/webm`
     - Client-side validation: file type and size (10 MB images, 100 MB videos)
@@ -164,8 +164,8 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
     - Display inline error messages for validation failures and upload errors with retry
     - _Requirements: 5.5, 5.6, 7.2, 7.3, 7.5, 7.6, 7.7, 8.2, 8.3, 8.5, 8.6_
 
-- [ ] 8. Integrate MediaUploader into CaptionEditor and SchedulingModal
-  - [ ] 8.1 Add MediaUploader to CaptionEditor toolbar
+- [x] 8. Integrate MediaUploader into CaptionEditor and SchedulingModal
+  - [x] 8.1 Add MediaUploader to CaptionEditor toolbar
     - Import and render `MediaUploader` in the toolbar area of `CaptionEditor`
     - Track `mediaId` and `mediaType` state in CaptionEditor
     - On Publish click with media selected, upload file to S3 via presigned URL before scheduling
@@ -173,35 +173,35 @@ Add media attachment capabilities (images and videos) to scheduled posts. The im
     - Pass `mediaId` to `manualSchedule` call
     - _Requirements: 7.1, 7.4, 7.5_
 
-  - [ ] 8.2 Add MediaUploader to SchedulingModal form
+  - [x] 8.2 Add MediaUploader to SchedulingModal form
     - Import and render `MediaUploader` within the SchedulingModal form
     - Accept optional `prefillMediaId`, `prefillMediaType`, `prefillMediaUrl` props for CaptionEditor flow
     - Track `mediaId` state, include in `onSchedulePost` call
     - Disable Schedule button while upload is in progress
     - _Requirements: 8.1, 8.4, 8.5_
 
-- [ ] 9. Update Calendar for media indicators
-  - [ ] 9.1 Add media indicator icons to Calendar post cards
+- [x] 9. Update Calendar for media indicators
+  - [x] 9.1 Add media indicator icons to Calendar post cards
     - Show image icon when `post.mediaType === 'image'`
     - Show video icon when `post.mediaType === 'video'`
     - In DateDetailsModal, display image thumbnails or video thumbnails alongside post content
     - Fetch presigned download URLs only for posts visible in the current month view
     - _Requirements: 9.1, 9.2, 9.3, 9.4_
 
-- [ ] 10. Update Python models and TypeScript types for media fields
-  - [ ] 10.1 Add `media_id` to Python Pydantic models in `python/models/scheduler.py`
+- [x] 10. Update Python models and TypeScript types for media fields
+  - [x] 10.1 Add `media_id` to Python Pydantic models in `python/models/scheduler.py`
     - Add `media_id: Optional[str] = None` to `ManualScheduleInput`
     - Add `media_id: Optional[str] = None` to `ScheduledPostRecord`
     - Add `media_id: Optional[str] = None` to `ScheduledPostUpdate`
     - _Requirements: 6.1, 6.2, 6.5_
 
-  - [ ] 10.2 Add media fields to TypeScript types in `types/scheduler.ts`
+  - [x] 10.2 Add media fields to TypeScript types in `types/scheduler.ts`
     - Add `mediaId?: string`, `mediaUrl?: string`, `mediaType?: 'image' | 'video'` to `ScheduledPost`
     - Add `mediaId?: string` to `ManualScheduleInput`
     - Add `mediaId?: string | null` to `ScheduledPostUpdate`
     - _Requirements: 12.1, 12.2, 12.3, 12.4_
 
-  - [ ] 10.3 Update `convertScheduledPost` in `lib/api/schedulerClient.ts`
+  - [x] 10.3 Update `convertScheduledPost` in `lib/api/schedulerClient.ts`
     - Map `media_id` → `mediaId` and `media_type` → `mediaType` from API response
     - Include `mediaId` in `manualSchedule` and `updatePost` request bodies
     - _Requirements: 12.5, 12.6_
