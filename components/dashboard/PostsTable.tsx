@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { Post } from '@/types/post';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { ScheduledPost } from '@/types/scheduler';
 import { Icon } from '@iconify/react';
-import mockPostsData from '@/data/mockPosts.json';
+import { listPosts } from '@/lib/api/schedulerClient';
+import { publishPost } from '@/lib/api/publisherClient';
 
 type StatusFilter = 'all' | 'scheduled' | 'published' | 'draft';
 type PlatformFilter = 'all' | 'linkedin' | 'instagram' | 'twitter' | 'facebook';
@@ -91,23 +92,32 @@ const StatusDot: React.FC<{ status: string }> = ({ status }) => {
 };
 
 export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<ScheduledPost[]>([]);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [platformFilter, setPlatformFilter] = useState<PlatformFilter>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [publishingPostId, setPublishingPostId] = useState<string | null>(null);
+
+  const fetchPosts = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await listPosts();
+      setPosts(data);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load posts');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const loadedPosts = mockPostsData.posts.map((post) => ({
-      ...post,
-      platform: post.platform as Post['platform'],
-      status: post.status as Post['status'],
-      scheduledDate: new Date(post.scheduledDate),
-      createdAt: new Date(post.scheduledDate),
-    }));
-    setPosts(loadedPosts);
-  }, []);
+    fetchPosts();
+  }, [fetchPosts]);
 
   const filteredPosts = useMemo(() => {
     const filtered = posts.filter((post) => {
@@ -116,7 +126,11 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
       return true;
     });
     return [...filtered].sort(
-      (a, b) => a.scheduledDate.getTime() - b.scheduledDate.getTime()
+      (a, b) => {
+        const dateA = `${a.scheduledDate}T${a.scheduledTime}`;
+        const dateB = `${b.scheduledDate}T${b.scheduledTime}`;
+        return dateA.localeCompare(dateB);
+      }
     );
   }, [posts, statusFilter, platformFilter]);
 
@@ -126,21 +140,30 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
     currentPage * POSTS_PER_PAGE
   );
 
-  const handlePublish = (postId: string) => {
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === postId
-          ? { ...post, status: 'published' as const, publishedAt: new Date() }
-          : post
-      )
-    );
+  const handlePublish = async (postId: string) => {
+    try {
+      setPublishingPostId(postId);
+      setError(null);
+      await publishPost(postId);
+      await fetchPosts();
+    } catch (err: any) {
+      setError(err.message || 'Failed to publish post');
+    } finally {
+      setPublishingPostId(null);
+    }
   };
 
-  const formatDate = (date: Date) =>
-    date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
 
-  const formatTime = (date: Date) =>
-    date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  const formatTime = (timeStr: string) => {
+    const [hours, minutes] = timeStr.split(':');
+    const date = new Date();
+    date.setHours(parseInt(hours, 10), parseInt(minutes, 10));
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  };
 
   const getPlatformIcon = (platform: string) => {
     const map: Record<string, string> = {
@@ -158,6 +181,33 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
 
   return (
     <div className={`w-full ${className}`}>
+      {/* Error Banner */}
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between">
+          <div className="flex items-center gap-2 text-red-700 text-sm">
+            <Icon icon="solar:danger-triangle-bold" className="w-5 h-5" />
+            {error}
+          </div>
+          <button
+            onClick={() => setError(null)}
+            className="text-red-400 hover:text-red-600 transition-colors"
+            aria-label="Dismiss error"
+          >
+            <Icon icon="solar:close-circle-bold" className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-16 text-outline">
+          <Icon icon="solar:refresh-bold" className="w-6 h-6 animate-spin mr-2" />
+          Loading posts...
+        </div>
+      )}
+
+      {!loading && (
+        <>
       {/* Header Controls */}
       <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         {/* View Toggle */}
@@ -363,7 +413,7 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
 
                   {/* Time */}
                   <span className={`text-base ${post.status === 'draft' ? 'text-outline/50' : 'text-on-surface font-medium'}`}>
-                    {post.status === 'draft' ? '--:--' : formatTime(post.scheduledDate)}
+                    {post.status === 'draft' ? '--:--' : formatTime(post.scheduledTime)}
                   </span>
 
                   {/* Status */}
@@ -379,21 +429,17 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
                         <Icon icon="solar:eye-bold" className="w-5 h-5" />
                       </button>
                     )}
-                    {post.status === 'scheduled' && (
-                      <button
-                        className="p-2.5 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors"
-                        aria-label="Edit post"
-                      >
-                        <Icon icon="solar:pen-2-bold" className="w-5 h-5" />
-                      </button>
-                    )}
-                    {post.status === 'draft' && (
+                    {(post.status === 'scheduled' || post.status === 'draft') && post.platform === 'linkedin' && (
                       <button
                         onClick={() => handlePublish(post.id)}
-                        className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-600 transition-colors"
+                        disabled={publishingPostId === post.id}
+                        className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
                         aria-label={`Publish post: ${post.content.substring(0, 40)}`}
                       >
-                        Publish
+                        {publishingPostId === post.id && (
+                          <Icon icon="solar:refresh-bold" className="w-4 h-4 animate-spin" />
+                        )}
+                        {publishingPostId === post.id ? 'Publishing...' : 'Publish'}
                       </button>
                     )}
                     <button
@@ -465,12 +511,16 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
                     </span>
                   </div>
                   <div className="flex items-center justify-between pt-4 border-t border-surface-container-high/50">
-                    {post.status === 'draft' ? (
+                    {(post.status === 'scheduled' || post.status === 'draft') && post.platform === 'linkedin' ? (
                       <button
                         onClick={() => handlePublish(post.id)}
-                        className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-600 transition-colors"
+                        disabled={publishingPostId === post.id}
+                        className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
                       >
-                        Publish
+                        {publishingPostId === post.id && (
+                          <Icon icon="solar:refresh-bold" className="w-4 h-4 animate-spin" />
+                        )}
+                        {publishingPostId === post.id ? 'Publishing...' : 'Publish'}
                       </button>
                     ) : (
                       <div />
@@ -547,27 +597,23 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
                   <span>
                     {post.status === 'draft'
                       ? 'No date set'
-                      : `${formatDate(post.scheduledDate)} · ${formatTime(post.scheduledDate)}`}
+                      : `${formatDate(post.scheduledDate)} · ${formatTime(post.scheduledTime)}`}
                   </span>
                 </div>
 
                 {/* Bottom row: status + action */}
                 <div className="flex items-center justify-between pt-4 border-t border-surface-container-high/50">
                   <StatusDot status={post.status} />
-                  {post.status === 'draft' && (
+                  {(post.status === 'scheduled' || post.status === 'draft') && post.platform === 'linkedin' && (
                     <button
                       onClick={() => handlePublish(post.id)}
-                      className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-600 transition-colors"
+                      disabled={publishingPostId === post.id}
+                      className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
                     >
-                      Publish
-                    </button>
-                  )}
-                  {post.status === 'scheduled' && (
-                    <button
-                      className="p-2 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors"
-                      aria-label="Edit post"
-                    >
-                      <Icon icon="solar:pen-2-bold" className="w-5 h-5" />
+                      {publishingPostId === post.id && (
+                        <Icon icon="solar:refresh-bold" className="w-4 h-4 animate-spin" />
+                      )}
+                      {publishingPostId === post.id ? 'Publishing...' : 'Publish'}
                     </button>
                   )}
                   {post.status === 'published' && (
@@ -627,6 +673,8 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
             </button>
           </div>
         </div>
+      )}
+      </>
       )}
     </div>
   );

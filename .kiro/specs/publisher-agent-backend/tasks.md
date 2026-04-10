@@ -218,13 +218,13 @@ This plan implements the Publisher Agent Backend incrementally, starting with in
     - Return 401 when no valid JWT is provided
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 11.1, 11.2, 11.3, 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7, 16.8, 16.9, 16.10_
 
-- [ ] 11. Checkpoint - Verify API endpoints and manual publish
+- [x] 11. Checkpoint - Verify API endpoints and manual publish
   - Ensure all tests pass, ask the user if questions arise.
 
 ### Phase 8: Frontend Integration
 
-- [ ] 12. Create publisher API client and wire PostsTable to backend
-  - [ ] 12.1 Create `lib/api/publisherClient.ts`
+- [x] 12. Create publisher API client and wire PostsTable to backend
+  - [x] 12.1 Create `lib/api/publisherClient.ts`
     - Export `PublisherAPIError` class for typed error handling
     - Export `publishPost(postId)` calling `POST /api/publisher/publish/{postId}`
     - Export `listLogs()` calling `GET /api/publisher/logs`
@@ -233,7 +233,7 @@ This plan implements the Publisher Agent Backend incrementally, starting with in
     - Handle 401 by clearing token and redirecting to login
     - _Requirements: 17.7, 17.8_
 
-  - [ ] 12.2 Update `components/dashboard/PostsTable.tsx` to use real API data
+  - [x] 12.2 Update `components/dashboard/PostsTable.tsx` to use real API data
     - Replace `mockPostsData` import with `schedulerClient.listPosts()` API call on mount
     - Replace local `handlePublish` with `publisherClient.publishPost(postId)` API call
     - Add loading/disabled state on the Publish button during API call
@@ -242,7 +242,7 @@ This plan implements the Publisher Agent Backend incrementally, starting with in
     - Show Publish button for "scheduled" and "draft" posts with platform "linkedin"
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5, 17.6_
 
-- [ ] 13. Final checkpoint - Full system verification
+- [x] 13. Final checkpoint - Full system verification
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
