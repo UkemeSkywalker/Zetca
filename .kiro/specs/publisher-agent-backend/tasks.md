@@ -202,8 +202,8 @@ This plan implements the Publisher Agent Backend incrementally, starting with in
 
 ### Phase 7: API Endpoints and Manual Publish
 
-- [ ] 10. Implement publisher API routes
-  - [ ] 10.1 Create `python/routes/publisher.py`
+- [x] 10. Implement publisher API routes
+  - [x] 10.1 Create `python/routes/publisher.py`
     - Create FastAPI router with prefix `/api/publisher`
     - Implement `GET /logs` returning all PublishLogRecords for authenticated user, ordered by attemptedAt descending
     - Implement `GET /logs/{post_id}` returning all PublishLogRecords for a specific post
