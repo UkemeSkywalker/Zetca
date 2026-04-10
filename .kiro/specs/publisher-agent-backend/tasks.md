@@ -179,13 +179,13 @@ This plan implements the Publisher Agent Backend incrementally, starting with in
     - Verify post status → "published" and log contains linkedinPostId
     - **Validates: Requirements 2.6, 2.7, 6.3**
 
-- [ ] 8. Checkpoint - Verify publisher service logic
+- [x] 8. Checkpoint - Verify publisher service logic
   - Ensure all tests pass, ask the user if questions arise.
 
 ### Phase 6: Background Scanner
 
-- [ ] 9. Implement publish scanner background task
-  - [ ] 9.1 Create `python/services/publish_scanner.py`
+- [x] 9. Implement publish scanner background task
+  - [x] 9.1 Create `python/services/publish_scanner.py`
     - Implement `PublishScanner` class with injected `PublisherService`
     - Use configurable interval from `publisher_scan_interval_seconds` setting
     - Implement `start()` creating an asyncio background task
@@ -194,7 +194,7 @@ This plan implements the Publisher Agent Backend incrementally, starting with in
     - Maintain a `_processing_post_ids` set for concurrency guard
     - _Requirements: 1.2, 1.5, 14.1, 14.2, 14.3, 14.4_
 
-  - [ ] 9.2 Register scanner in `python/main.py`
+  - [x] 9.2 Register scanner in `python/main.py`
     - Import publisher routes and include router
     - Add startup event handler: if `publisher_enabled`, instantiate LinkedInClient, all repositories, PublisherService, PublishScanner, and call `scanner.start()`
     - Add shutdown event handler: call `scanner.stop()`
