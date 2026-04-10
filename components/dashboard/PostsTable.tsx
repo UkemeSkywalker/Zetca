@@ -1,51 +1,134 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Post } from '@/types/post';
-import { StatusBadge } from '@/components/ui/StatusBadge';
-import Button from '@/components/ui/Button';
 import { Icon } from '@iconify/react';
 import mockPostsData from '@/data/mockPosts.json';
 
 type StatusFilter = 'all' | 'scheduled' | 'published' | 'draft';
+type PlatformFilter = 'all' | 'linkedin' | 'instagram' | 'twitter' | 'facebook';
 type ViewMode = 'list' | 'grid';
 
 interface PostsTableProps {
   className?: string;
 }
 
+const POSTS_PER_PAGE = 10;
+
+// Derive a short title from content
+const deriveTitle = (content: string) => {
+  const words = content.split(' ').slice(0, 4).join(' ');
+  return words.length < content.length ? `${words}...` : words;
+};
+
+// Random time-ago labels for display
+const updatedAgoLabels = ['2h ago', '5h ago', '1d ago', '3h ago', '30m ago', '6h ago', '2d ago', '1h ago'];
+
+const platformColors: Record<string, string> = {
+  linkedin: 'bg-blue-600',
+  instagram: 'bg-pink-500',
+  twitter: 'bg-sky-500',
+  facebook: 'bg-blue-500',
+};
+
+const platformLabels: Record<string, string> = {
+  linkedin: 'LinkedIn',
+  instagram: 'Instagram',
+  twitter: 'Twitter / X',
+  facebook: 'Facebook',
+};
+
+const thumbnailColors = [
+  'from-teal-400 to-teal-600',
+  'from-green-400 to-green-600',
+  'from-indigo-400 to-indigo-600',
+  'from-slate-400 to-slate-600',
+  'from-purple-400 to-purple-600',
+  'from-rose-400 to-rose-600',
+  'from-amber-400 to-amber-600',
+  'from-cyan-400 to-cyan-600',
+];
+
+const thumbnailIcons = [
+  'solar:planet-3-bold',
+  'solar:leaf-bold',
+  'solar:chat-square-bold',
+  'solar:rocket-2-bold',
+  'solar:star-bold',
+  'solar:lightbulb-bolt-bold',
+  'solar:graph-up-bold',
+  'solar:heart-bold',
+];
+
+const StatusDot: React.FC<{ status: string }> = ({ status }) => {
+  const dotColor =
+    status === 'published'
+      ? 'bg-emerald-500'
+      : status === 'scheduled'
+      ? 'bg-primary'
+      : 'bg-gray-400';
+
+  const labelColor =
+    status === 'published'
+      ? 'text-emerald-700'
+      : status === 'scheduled'
+      ? 'text-primary'
+      : 'text-gray-500';
+
+  const label =
+    status === 'published'
+      ? 'Published'
+      : status === 'scheduled'
+      ? 'Scheduled'
+      : 'Draft';
+
+  return (
+    <span className={`inline-flex items-center gap-2 text-sm font-medium ${labelColor}`}>
+      <span className={`w-2.5 h-2.5 rounded-full ${dotColor}`} />
+      {label}
+    </span>
+  );
+};
+
 export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [platformFilter, setPlatformFilter] = useState<PlatformFilter>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showFilters, setShowFilters] = useState(false);
 
-  // Load mock posts on mount
   useEffect(() => {
-    const loadedPosts = mockPostsData.posts.map(post => ({
+    const loadedPosts = mockPostsData.posts.map((post) => ({
       ...post,
-      platform: post.platform as 'instagram' | 'twitter' | 'linkedin' | 'facebook',
-      status: post.status as 'scheduled' | 'published' | 'draft',
+      platform: post.platform as Post['platform'],
+      status: post.status as Post['status'],
       scheduledDate: new Date(post.scheduledDate),
       createdAt: new Date(post.scheduledDate),
     }));
     setPosts(loadedPosts);
   }, []);
 
-  // Filter posts by status
-  const filteredPosts = posts.filter(post => {
-    if (statusFilter === 'all') return true;
-    return post.status === statusFilter;
-  });
+  const filteredPosts = useMemo(() => {
+    const filtered = posts.filter((post) => {
+      if (statusFilter !== 'all' && post.status !== statusFilter) return false;
+      if (platformFilter !== 'all' && post.platform !== platformFilter) return false;
+      return true;
+    });
+    return [...filtered].sort(
+      (a, b) => a.scheduledDate.getTime() - b.scheduledDate.getTime()
+    );
+  }, [posts, statusFilter, platformFilter]);
 
-  // Sort posts chronologically (nearest first)
-  const sortedPosts = [...filteredPosts].sort((a, b) => {
-    return a.scheduledDate.getTime() - b.scheduledDate.getTime();
-  });
+  const totalPages = Math.ceil(filteredPosts.length / POSTS_PER_PAGE);
+  const paginatedPosts = filteredPosts.slice(
+    (currentPage - 1) * POSTS_PER_PAGE,
+    currentPage * POSTS_PER_PAGE
+  );
 
-  // Handle publish action
   const handlePublish = (postId: string) => {
-    setPosts(prevPosts =>
-      prevPosts.map(post =>
+    setPosts((prev) =>
+      prev.map((post) =>
         post.id === postId
           ? { ...post, status: 'published' as const, publishedAt: new Date() }
           : post
@@ -53,269 +136,498 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
     );
   };
 
-  // Format date for display
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
+  const formatDate = (date: Date) =>
+    date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  const formatTime = (date: Date) =>
+    date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+  const getPlatformIcon = (platform: string) => {
+    const map: Record<string, string> = {
+      instagram: 'mdi:instagram',
+      twitter: 'simple-icons:x',
+      linkedin: 'mdi:linkedin',
+      facebook: 'mdi:facebook',
+    };
+    return map[platform] || 'solar:global-bold';
   };
 
-  // Get platform icon
-  const getPlatformIcon = (platform: string) => {
-    const iconMap: Record<string, string> = {
-      instagram: 'solar:instagram-bold',
-      twitter: 'solar:twitter-bold',
-      linkedin: 'solar:linkedin-bold',
-      facebook: 'solar:facebook-bold',
-    };
-    return iconMap[platform] || 'solar:global-bold';
-  };
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, platformFilter]);
 
   return (
     <div className={`w-full ${className}`}>
-      {/* Filter and View Toggle */}
+      {/* Header Controls */}
       <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-2">
-          <label htmlFor="status-filter" className="text-sm font-medium text-gray-700">
-            Filter by status:
-          </label>
-          <select
-            id="status-filter"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        {/* View Toggle */}
+        <div
+          className="flex items-center bg-surface-container-low rounded-xl p-1 ghost-border"
+          role="group"
+          aria-label="View mode"
+        >
+          <button
+            onClick={() => setViewMode('list')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              viewMode === 'list'
+                ? 'bg-white text-primary shadow-ambient-sm'
+                : 'text-outline hover:text-on-surface'
+            }`}
+            aria-label="List view"
+            aria-pressed={viewMode === 'list'}
           >
-            <option value="all">All</option>
-            <option value="scheduled">Scheduled</option>
-            <option value="published">Published</option>
-            <option value="draft">Draft</option>
-          </select>
+            <Icon icon="solar:list-bold" className="w-4 h-4" />
+            List
+          </button>
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              viewMode === 'grid'
+                ? 'bg-white text-primary shadow-ambient-sm'
+                : 'text-outline hover:text-on-surface'
+            }`}
+            aria-label="Grid view"
+            aria-pressed={viewMode === 'grid'}
+          >
+            <Icon icon="solar:widget-4-bold" className="w-4 h-4" />
+            Grid
+          </button>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="text-sm text-gray-600">
-            {sortedPosts.length} {sortedPosts.length === 1 ? 'post' : 'posts'}
-          </div>
-          
-          {/* View Mode Toggle */}
-          <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1" role="group" aria-label="View mode">
-            <button
-              onClick={() => setViewMode('list')}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                viewMode === 'list'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-              aria-label="List view"
-              aria-pressed={viewMode === 'list'}
-            >
-              <Icon icon="solar:list-bold" className="w-5 h-5" aria-hidden="true" />
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                viewMode === 'grid'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-              aria-label="Grid view"
-              aria-pressed={viewMode === 'grid'}
-            >
-              <Icon icon="solar:widget-4-bold" className="w-5 h-5" aria-hidden="true" />
-            </button>
-          </div>
+        {/* Filters */}
+        <div className="relative">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-outline hover:text-on-surface ghost-border hover:bg-surface-container-low transition-colors"
+          >
+            <Icon icon="solar:tuning-2-bold" className="w-4 h-4" />
+            Filters
+            {(statusFilter !== 'all' || platformFilter !== 'all') && (
+              <span className="w-2 h-2 rounded-full bg-primary" />
+            )}
+          </button>
+          {showFilters && (
+            <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-ambient p-3 z-20 min-w-[200px] ghost-border space-y-3">
+              {/* Status filter */}
+              <div>
+                <p className="text-[11px] font-semibold text-outline uppercase tracking-wider mb-1.5 px-1">
+                  Status
+                </p>
+                {(['all', 'scheduled', 'published', 'draft'] as StatusFilter[]).map(
+                  (filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => setStatusFilter(filter)}
+                      className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                        statusFilter === filter
+                          ? 'bg-primary/10 text-primary font-medium'
+                          : 'text-on-surface hover:bg-surface-container-low'
+                      }`}
+                    >
+                      {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                    </button>
+                  )
+                )}
+              </div>
+
+              {/* Platform filter */}
+              <div className="border-t border-surface-container-high/50 pt-3">
+                <p className="text-[11px] font-semibold text-outline uppercase tracking-wider mb-1.5 px-1">
+                  Platform
+                </p>
+                {(['all', 'linkedin', 'instagram', 'twitter', 'facebook'] as PlatformFilter[]).map(
+                  (filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => setPlatformFilter(filter)}
+                      className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors flex items-center gap-2 ${
+                        platformFilter === filter
+                          ? 'bg-primary/10 text-primary font-medium'
+                          : 'text-on-surface hover:bg-surface-container-low'
+                      }`}
+                    >
+                      {filter !== 'all' && (
+                        <span
+                          className={`w-4 h-4 rounded flex items-center justify-center ${platformColors[filter]}`}
+                        >
+                          <Icon
+                            icon={getPlatformIcon(filter)}
+                            className="w-2.5 h-2.5 text-white"
+                          />
+                        </span>
+                      )}
+                      {filter === 'all' ? 'All' : platformLabels[filter]}
+                    </button>
+                  )
+                )}
+              </div>
+
+              {/* Clear filters */}
+              {(statusFilter !== 'all' || platformFilter !== 'all') && (
+                <button
+                  onClick={() => {
+                    setStatusFilter('all');
+                    setPlatformFilter('all');
+                    setShowFilters(false);
+                  }}
+                  className="w-full text-center px-3 py-1.5 rounded-lg text-xs font-medium text-primary hover:bg-primary/5 transition-colors border-t border-surface-container-high/50 pt-3"
+                >
+                  Clear all filters
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Desktop Table View */}
+      {/* List View - Desktop */}
       {viewMode === 'list' && (
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Content
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Platform
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Time
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {sortedPosts.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                    No posts found
-                  </td>
-                </tr>
-              ) : (
-                sortedPosts.map((post) => (
-                  <tr key={post.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900 max-w-md truncate">
-                        {post.content}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Icon icon={getPlatformIcon(post.platform)} className="w-5 h-5 text-gray-600" />
-                        <span className="text-sm text-gray-900 capitalize">{post.platform}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {formatDate(post.scheduledDate)}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {post.scheduledTime}
-                    </td>
-                    <td className="px-6 py-4">
-                      <StatusBadge status={post.status} />
-                    </td>
-                    <td className="px-6 py-4">
-                      {post.status === 'scheduled' && (
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => handlePublish(post.id)}
-                          leftIcon="solar:send-square-bold"
-                          aria-label={`Publish post: ${post.content.substring(0, 50)}...`}
-                        >
-                          Publish
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        <div className="hidden md:block bg-white rounded-2xl ghost-border overflow-hidden">
+          {/* Table Header */}
+          <div className="grid grid-cols-[2.5fr_1fr_1fr_1fr_1fr_auto] gap-6 px-8 py-4 bg-surface-container-low/50">
+            <span className="text-xs font-semibold text-outline uppercase tracking-wider">
+              Content Snippet
+            </span>
+            <span className="text-xs font-semibold text-outline uppercase tracking-wider">
+              Platform
+            </span>
+            <span className="text-xs font-semibold text-outline uppercase tracking-wider">
+              Date
+            </span>
+            <span className="text-xs font-semibold text-outline uppercase tracking-wider">
+              Time
+            </span>
+            <span className="text-xs font-semibold text-outline uppercase tracking-wider">
+              Status
+            </span>
+            <span className="text-xs font-semibold text-outline uppercase tracking-wider">
+              Actions
+            </span>
+          </div>
+
+          {/* Table Rows */}
+          {paginatedPosts.length === 0 ? (
+            <div className="px-8 py-16 text-center text-outline text-base">No posts found</div>
+          ) : (
+            paginatedPosts.map((post, idx) => {
+              const globalIdx =
+                (currentPage - 1) * POSTS_PER_PAGE + idx;
+              return (
+                <div
+                  key={post.id}
+                  className="grid grid-cols-[2.5fr_1fr_1fr_1fr_1fr_auto] gap-6 px-8 py-5 items-center border-t border-surface-container-high/50 hover:bg-surface-container-low/30 transition-colors"
+                >
+                  {/* Content Snippet */}
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div
+                      className={`w-12 h-12 rounded-xl bg-gradient-to-br ${
+                        thumbnailColors[globalIdx % thumbnailColors.length]
+                      } flex items-center justify-center flex-shrink-0`}
+                    >
+                      <Icon
+                        icon={thumbnailIcons[globalIdx % thumbnailIcons.length]}
+                        className="w-6 h-6 text-white"
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-base font-medium text-on-surface truncate">
+                        {deriveTitle(post.content)}
+                      </p>
+                      <p className="text-sm text-outline mt-0.5">
+                        Updated {updatedAgoLabels[globalIdx % updatedAgoLabels.length]}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Platform */}
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className={`w-6 h-6 rounded flex items-center justify-center ${
+                        platformColors[post.platform]
+                      }`}
+                    >
+                      <Icon
+                        icon={getPlatformIcon(post.platform)}
+                        className="w-3.5 h-3.5 text-white"
+                      />
+                    </span>
+                    <span className="text-base text-on-surface">
+                      {platformLabels[post.platform]}
+                    </span>
+                  </div>
+
+                  {/* Date */}
+                  <span className={`text-base ${post.status === 'draft' ? 'text-outline/50 italic' : 'text-on-surface'}`}>
+                    {post.status === 'draft' ? 'No date set' : formatDate(post.scheduledDate)}
+                  </span>
+
+                  {/* Time */}
+                  <span className={`text-base ${post.status === 'draft' ? 'text-outline/50' : 'text-on-surface font-medium'}`}>
+                    {post.status === 'draft' ? '--:--' : formatTime(post.scheduledDate)}
+                  </span>
+
+                  {/* Status */}
+                  <StatusDot status={post.status} />
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1.5">
+                    {post.status === 'published' && (
+                      <button
+                        className="p-2.5 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors"
+                        aria-label="View post"
+                      >
+                        <Icon icon="solar:eye-bold" className="w-5 h-5" />
+                      </button>
+                    )}
+                    {post.status === 'scheduled' && (
+                      <button
+                        className="p-2.5 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors"
+                        aria-label="Edit post"
+                      >
+                        <Icon icon="solar:pen-2-bold" className="w-5 h-5" />
+                      </button>
+                    )}
+                    {post.status === 'draft' && (
+                      <button
+                        onClick={() => handlePublish(post.id)}
+                        className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-600 transition-colors"
+                        aria-label={`Publish post: ${post.content.substring(0, 40)}`}
+                      >
+                        Publish
+                      </button>
+                    )}
+                    <button
+                      className="p-2.5 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors"
+                      aria-label="More options"
+                    >
+                      <Icon icon="solar:menu-dots-bold" className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       )}
 
-      {/* Desktop Grid View */}
+      {/* Grid View - Desktop */}
       {viewMode === 'grid' && (
         <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sortedPosts.length === 0 ? (
-            <div className="col-span-full text-center py-8 text-gray-500">
+          {paginatedPosts.length === 0 ? (
+            <div className="col-span-full text-center py-12 text-outline">
               No posts found
             </div>
           ) : (
-            sortedPosts.map((post) => (
-              <div
-                key={post.id}
-                className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow"
-              >
-                {/* Platform and Status */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Icon icon={getPlatformIcon(post.platform)} className="w-5 h-5 text-gray-600" />
-                    <span className="text-sm font-medium text-gray-700 capitalize">{post.platform}</span>
+            paginatedPosts.map((post, idx) => {
+              const globalIdx = (currentPage - 1) * POSTS_PER_PAGE + idx;
+              return (
+                <div
+                  key={post.id}
+                  className="bg-white rounded-2xl ghost-border p-6 hover:shadow-ambient transition-shadow"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div
+                      className={`w-12 h-12 rounded-xl bg-gradient-to-br ${
+                        thumbnailColors[globalIdx % thumbnailColors.length]
+                      } flex items-center justify-center`}
+                    >
+                      <Icon
+                        icon={thumbnailIcons[globalIdx % thumbnailIcons.length]}
+                        className="w-6 h-6 text-white"
+                      />
+                    </div>
+                    <StatusDot status={post.status} />
                   </div>
-                  <StatusBadge status={post.status} />
+                  <p className="text-base font-medium text-on-surface mb-1.5 line-clamp-2">
+                    {post.content}
+                  </p>
+                  <p className="text-sm text-outline mb-5">
+                    Updated {updatedAgoLabels[globalIdx % updatedAgoLabels.length]}
+                  </p>
+                  <div className="flex items-center gap-3 text-sm text-outline mb-5">
+                    <span className="flex items-center gap-2">
+                      <span
+                        className={`w-5 h-5 rounded flex items-center justify-center ${
+                          platformColors[post.platform]
+                        }`}
+                      >
+                        <Icon
+                          icon={getPlatformIcon(post.platform)}
+                          className="w-3 h-3 text-white"
+                        />
+                      </span>
+                      {platformLabels[post.platform]}
+                    </span>
+                    <span>
+                      {post.status === 'draft'
+                        ? 'No date set'
+                        : formatDate(post.scheduledDate)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between pt-4 border-t border-surface-container-high/50">
+                    {post.status === 'draft' ? (
+                      <button
+                        onClick={() => handlePublish(post.id)}
+                        className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-600 transition-colors"
+                      >
+                        Publish
+                      </button>
+                    ) : (
+                      <div />
+                    )}
+                    <button
+                      className="p-2 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors"
+                      aria-label="More options"
+                    >
+                      <Icon icon="solar:menu-dots-bold" className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
-
-                {/* Content */}
-                <p className="text-sm text-gray-900 mb-4 line-clamp-3">
-                  {post.content}
-                </p>
-
-                {/* Date and Time */}
-                <div className="flex items-center gap-4 text-xs text-gray-600 mb-4">
-                  <div className="flex items-center gap-1">
-                    <Icon icon="solar:calendar-bold" className="w-4 h-4" />
-                    <span>{formatDate(post.scheduledDate)}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Icon icon="solar:clock-circle-bold" className="w-4 h-4" />
-                    <span>{post.scheduledTime}</span>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                {post.status === 'scheduled' && (
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => handlePublish(post.id)}
-                    leftIcon="solar:send-square-bold"
-                    className="w-full"
-                  >
-                    Publish
-                  </Button>
-                )}
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       )}
 
       {/* Mobile Card View */}
-      <div className="md:hidden space-y-4">
-        {sortedPosts.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            No posts found
-          </div>
+      <div className="md:hidden space-y-3">
+        {paginatedPosts.length === 0 ? (
+          <div className="text-center py-16 text-outline text-base">No posts found</div>
         ) : (
-          sortedPosts.map((post) => (
-            <div
-              key={post.id}
-              className="bg-white border border-gray-200 rounded-lg p-4 space-y-3"
-            >
-              {/* Content */}
-              <div className="text-sm text-gray-900">
-                {post.content}
-              </div>
-
-              {/* Platform */}
-              <div className="flex items-center gap-2">
-                <Icon icon={getPlatformIcon(post.platform)} className="w-5 h-5 text-gray-600" />
-                <span className="text-sm text-gray-700 capitalize">{post.platform}</span>
-              </div>
-
-              {/* Date and Time */}
-              <div className="flex items-center gap-4 text-sm text-gray-600">
-                <div className="flex items-center gap-1">
-                  <Icon icon="solar:calendar-bold" className="w-4 h-4" />
-                  <span>{formatDate(post.scheduledDate)}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Icon icon="solar:clock-circle-bold" className="w-4 h-4" />
-                  <span>{post.scheduledTime}</span>
-                </div>
-              </div>
-
-              {/* Status and Actions */}
-              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                <StatusBadge status={post.status} />
-                {post.status === 'scheduled' && (
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => handlePublish(post.id)}
-                    leftIcon="solar:send-square-bold"
+          paginatedPosts.map((post, idx) => {
+            const globalIdx = (currentPage - 1) * POSTS_PER_PAGE + idx;
+            return (
+              <div
+                key={post.id}
+                className="bg-white rounded-2xl ghost-border p-5"
+              >
+                {/* Top row: thumbnail + title + kebab */}
+                <div className="flex items-start gap-3.5 mb-4">
+                  <div
+                    className={`w-12 h-12 rounded-xl bg-gradient-to-br ${
+                      thumbnailColors[globalIdx % thumbnailColors.length]
+                    } flex items-center justify-center flex-shrink-0`}
                   >
-                    Publish
-                  </Button>
-                )}
+                    <Icon
+                      icon={thumbnailIcons[globalIdx % thumbnailIcons.length]}
+                      className="w-6 h-6 text-white"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-base font-medium text-on-surface truncate">
+                      {deriveTitle(post.content)}
+                    </p>
+                    <p className="text-sm text-outline mt-0.5">
+                      Updated {updatedAgoLabels[globalIdx % updatedAgoLabels.length]}
+                    </p>
+                  </div>
+                  <button
+                    className="p-2 rounded-lg text-outline hover:text-on-surface"
+                    aria-label="More options"
+                  >
+                    <Icon icon="solar:menu-dots-bold" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Meta row */}
+                <div className="flex flex-wrap items-center gap-3 text-sm text-outline mb-4">
+                  <span className="flex items-center gap-2">
+                    <span
+                      className={`w-5 h-5 rounded flex items-center justify-center ${
+                        platformColors[post.platform]
+                      }`}
+                    >
+                      <Icon
+                        icon={getPlatformIcon(post.platform)}
+                        className="w-3 h-3 text-white"
+                      />
+                    </span>
+                    {platformLabels[post.platform]}
+                  </span>
+                  <span>
+                    {post.status === 'draft'
+                      ? 'No date set'
+                      : `${formatDate(post.scheduledDate)} · ${formatTime(post.scheduledDate)}`}
+                  </span>
+                </div>
+
+                {/* Bottom row: status + action */}
+                <div className="flex items-center justify-between pt-4 border-t border-surface-container-high/50">
+                  <StatusDot status={post.status} />
+                  {post.status === 'draft' && (
+                    <button
+                      onClick={() => handlePublish(post.id)}
+                      className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-600 transition-colors"
+                    >
+                      Publish
+                    </button>
+                  )}
+                  {post.status === 'scheduled' && (
+                    <button
+                      className="p-2 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors"
+                      aria-label="Edit post"
+                    >
+                      <Icon icon="solar:pen-2-bold" className="w-5 h-5" />
+                    </button>
+                  )}
+                  {post.status === 'published' && (
+                    <button
+                      className="p-2 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors"
+                      aria-label="View post"
+                    >
+                      <Icon icon="solar:eye-bold" className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
+
+      {/* Pagination */}
+      {filteredPosts.length > POSTS_PER_PAGE && (
+        <div className="mt-6 flex items-center justify-between">
+          <p className="text-sm text-outline">
+            Showing {(currentPage - 1) * POSTS_PER_PAGE + 1} to{' '}
+            {Math.min(currentPage * POSTS_PER_PAGE, filteredPosts.length)} of{' '}
+            {filteredPosts.length} posts
+          </p>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="p-2.5 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-low disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              aria-label="Previous page"
+            >
+              <Icon icon="solar:alt-arrow-left-bold" className="w-5 h-5" />
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
+                  currentPage === page
+                    ? 'bg-primary text-white'
+                    : 'text-outline hover:text-on-surface hover:bg-surface-container-low'
+                }`}
+                aria-label={`Page ${page}`}
+                aria-current={currentPage === page ? 'page' : undefined}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="p-2.5 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-low disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              aria-label="Next page"
+            >
+              <Icon icon="solar:alt-arrow-right-bold" className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

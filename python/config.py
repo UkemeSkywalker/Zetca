@@ -41,6 +41,14 @@ class Settings(BaseSettings):
     # Agent Configuration
     use_mock_agent: bool = False  # Set to True to use mock agent instead of real Bedrock
     
+    # Publisher Configuration
+    dynamodb_publish_log_table: str = "publish-log-dev"
+    publisher_scan_interval_seconds: int = 60
+    linkedin_api_timeout_seconds: int = 30
+    publisher_enabled: bool = True
+    s3_media_bucket: str = "zetca-post-media-dev"
+    dynamodb_media_table: str = "post-media-dev"
+    
     # Timeout Configuration
     agent_timeout_seconds: int = 60
     
