@@ -83,6 +83,122 @@ function convertChatResponse(response: any): ChatResponse {
 }
 
 /**
+ * Streaming event types from the copy generation SSE endpoint
+ */
+export interface CopyStreamEvent {
+  event: 'thinking' | 'lifecycle' | 'result' | 'saved' | 'error' | 'done';
+  text?: string;
+  phase?: string;
+  copies?: Array<{ text: string; platform: string; hashtags: string[] }>;
+  message?: string;
+}
+
+/**
+ * Generate copies with real-time streaming of agent thinking events.
+ *
+ * Connects to the SSE endpoint and yields events as they arrive.
+ * The final 'saved' event contains the persisted CopyRecords.
+ *
+ * @param strategyId - ID of the strategy to generate copies from
+ * @param onEvent - Callback invoked for each streamed event
+ * @returns Promise resolving to the saved CopyRecord array
+ */
+export async function generateCopiesStream(
+  strategyId: string,
+  onEvent: (event: CopyStreamEvent) => void
+): Promise<CopyRecord[]> {
+  const token = getAuthToken();
+  if (!token) {
+    throw new CopyAPIError('Authentication required. Please log in again.', 401);
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/copy/generate-stream`, {
+    method: 'POST',
+    headers: createAuthHeaders(),
+    body: JSON.stringify({ strategy_id: strategyId }),
+  });
+
+  if (response.status === 401) {
+    handleAuthError();
+    throw new CopyAPIError('Authentication required. Please log in again.', 401);
+  }
+  if (response.status === 403) {
+    throw new CopyAPIError('Access denied.', 403);
+  }
+  if (response.status === 404) {
+    throw new CopyAPIError('Strategy not found.', 404);
+  }
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new CopyAPIError(
+      errorData.detail || `Failed to generate copies: ${response.statusText}`,
+      response.status,
+      errorData
+    );
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new CopyAPIError('Streaming not supported by browser.');
+  }
+
+  const decoder = new TextDecoder();
+  let savedRecords: CopyRecord[] = [];
+  let buffer = '';
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      // Parse SSE frames from the buffer
+      const lines = buffer.split('\n');
+      buffer = '';
+
+      let currentEventType = '';
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        if (line.startsWith('event: ')) {
+          currentEventType = line.slice(7).trim();
+        } else if (line.startsWith('data: ')) {
+          const dataStr = line.slice(6);
+          try {
+            const data = JSON.parse(dataStr);
+
+            if (currentEventType === 'saved' && Array.isArray(data)) {
+              savedRecords = data.map(convertCopyRecord);
+            }
+
+            onEvent({
+              event: currentEventType as CopyStreamEvent['event'],
+              ...data,
+            });
+          } catch {
+            // Incomplete JSON, put back in buffer
+            buffer = lines.slice(i).join('\n');
+            break;
+          }
+          currentEventType = '';
+        } else if (line === '' && currentEventType === '') {
+          // Empty line between events, skip
+        } else if (line !== '') {
+          // Incomplete line, put back in buffer
+          buffer = lines.slice(i).join('\n');
+          break;
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  return savedRecords;
+}
+
+/**
  * Generate copies from a strategy using the Copywriter Agent
  * 
  * @param strategyId - ID of the strategy to generate copies from

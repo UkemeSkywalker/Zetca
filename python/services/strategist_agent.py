@@ -7,6 +7,7 @@ The agent returns structured output validated by Pydantic models.
 """
 
 import boto3
+from botocore.config import Config as BotoConfig
 from strands import Agent
 from strands.models.bedrock import BedrockModel
 from models.strategy import StrategyInput, StrategyOutput
@@ -43,6 +44,13 @@ class StrategistAgent:
             aws_access_key_id: AWS access key ID (if None, uses default credential chain)
             aws_secret_access_key: AWS secret access key (if None, uses default credential chain)
         """
+        # Increase read timeout for large structured output generation
+        boto_config = BotoConfig(
+            read_timeout=300,
+            connect_timeout=10,
+            retries={"max_attempts": 2}
+        )
+        
         # Create boto3 session with explicit credentials if provided
         if aws_access_key_id and aws_secret_access_key:
             boto_session = boto3.Session(
@@ -52,13 +60,15 @@ class StrategistAgent:
             )
             self.model = BedrockModel(
                 boto_session=boto_session,
-                model_id=model_id
+                model_id=model_id,
+                boto_client_config=boto_config
             )
         else:
             # Fall back to default credential chain
             self.model = BedrockModel(
                 region_name=aws_region,
-                model_id=model_id
+                model_id=model_id,
+                boto_client_config=boto_config
             )
         
         self.agent = Agent(

@@ -30,9 +30,10 @@ class StrategyRepository:
         self.table_name = table_name or settings.dynamodb_strategies_table
         self.region = region or settings.aws_region
         
-        # Initialize DynamoDB resource using default profile from ~/.aws/credentials
-        # (explicitly using profile_name to avoid env var credentials meant for Bedrock)
-        session = boto3.Session(profile_name='default', region_name=self.region)
+        # Initialize DynamoDB resource
+        # Uses env vars (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY) in containers,
+        # or falls back to ~/.aws/credentials locally
+        session = boto3.Session(region_name=self.region)
         dynamodb = session.resource('dynamodb')
         self.table = dynamodb.Table(self.table_name)
     

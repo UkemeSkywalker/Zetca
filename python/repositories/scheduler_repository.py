@@ -20,9 +20,8 @@ class SchedulerRepository:
     def __init__(self, table_name: str = None, region: str = None):
         self.table_name = table_name or settings.dynamodb_scheduled_posts_table
         self.region = region or settings.aws_region
-        # Initialize DynamoDB resource using default profile from ~/.aws/credentials
-        # (explicitly using profile_name to avoid env var credentials meant for Bedrock)
-        session = boto3.Session(profile_name='default', region_name=self.region)
+        # Initialize DynamoDB resource
+        session = boto3.Session(region_name=self.region)
         dynamodb = session.resource('dynamodb')
         self.table = dynamodb.Table(self.table_name)
 

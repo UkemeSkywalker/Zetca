@@ -4,9 +4,10 @@
  */
 
 import { NextResponse } from 'next/server';
-import { config } from '@/lib/config';
+import { getConfig } from '@/lib/config';
 
 export async function GET() {
+  const config = getConfig();
   return NextResponse.json({
     success: true,
     config: {

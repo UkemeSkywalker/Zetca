@@ -17,7 +17,7 @@ class UserRepository:
     def __init__(self, table_name: str = None, region: str = None):
         self.table_name = table_name or settings.dynamodb_users_table
         self.region = region or settings.aws_region
-        session = boto3.Session(profile_name='default', region_name=self.region)
+        session = boto3.Session(region_name=self.region)
         dynamodb = session.resource('dynamodb')
         self.table = dynamodb.Table(self.table_name)
 

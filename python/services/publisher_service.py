@@ -43,7 +43,7 @@ class PublisherService:
         self.user_repository = user_repository
         self.media_repository = media_repository
         self.s3_bucket = s3_bucket or settings.s3_media_bucket
-        session = boto3.Session(profile_name='default', region_name=settings.aws_region)
+        session = boto3.Session(region_name=settings.aws_region)
         self.s3_client = session.client('s3')
 
     async def get_due_posts(self) -> List[ScheduledPostRecord]:
