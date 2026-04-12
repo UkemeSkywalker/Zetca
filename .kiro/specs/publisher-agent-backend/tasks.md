@@ -242,8 +242,7 @@ This plan implements the Publisher Agent Backend incrementally, starting with in
     - Show Publish button for "scheduled" and "draft" posts with platform "linkedin"
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5, 17.6_
 
-- [x] 13. Final checkpoint - Full system verification
-  - Ensure all tests pass, ask the user if questions arise.
+- [x] 13. Final checkpoint -  `- Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
 
