@@ -57,7 +57,7 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
   const [aiMessages, setAiMessages] = useState<Record<string, string>>({});
   const [deletingCopyId, setDeletingCopyId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
+  const [selectedCopyId, setSelectedCopyId] = useState<string | null>(null);  const [error, setError] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
   const [showPlatformMenu, setShowPlatformMenu] = useState(false);
   const [editedTexts, setEditedTexts] = useState<Record<string, string>>({});
@@ -141,6 +141,7 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
     setAiMessages({});
     setChatInputs({});
     setEditedTexts({});
+    setSelectedCopyId(null);
     if (strategyId) { loadCopiesForStrategy(strategyId); }
     else { setCopies([]); setActiveTab(''); }
   };
@@ -300,8 +301,8 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
 
   const availablePlatforms = Object.keys(copiesByPlatform);
   const activePlatformCopies = activeTab ? (copiesByPlatform[activeTab] || []) : [];
-  const activeCopy = activePlatformCopies[0] || null;
-  const additionalCopies = activePlatformCopies.slice(1);
+  const activeCopy = (selectedCopyId && activePlatformCopies.find(c => c.id === selectedCopyId)) || activePlatformCopies[0] || null;
+  const additionalCopies = activePlatformCopies.filter(c => c.id !== activeCopy?.id);
 
   const getPlatformConfig = (platform: string) => {
     return platformConfig[normalizePlatform(platform)] || platformConfig.other;
@@ -614,7 +615,7 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
               const config = getPlatformConfig(platform);
               const isActive = activeTab === platform;
               return (
-                <button key={platform} onClick={() => setActiveTab(platform)} className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${isActive ? 'bg-white border-2 border-[var(--primary)] text-[var(--primary)] shadow-sm' : 'text-[var(--outline)] hover:text-[var(--on-surface)] hover:bg-[var(--surface-container-low)]'}`} role="tab" aria-selected={isActive}>
+                <button key={platform} onClick={() => { setActiveTab(platform); setSelectedCopyId(null); }} className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${isActive ? 'bg-white border-2 border-[var(--primary)] text-[var(--primary)] shadow-sm' : 'text-[var(--outline)] hover:text-[var(--on-surface)] hover:bg-[var(--surface-container-low)]'}`} role="tab" aria-selected={isActive}>
                   <Icon icon={config.icon} className="w-4 h-4" style={{ color: isActive ? config.color : undefined }} />
                   {config.name}
                 </button>
@@ -727,7 +728,7 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
               const isActiveCopy = activeCopy?.id === copy.id;
               const relTime = formatRelTime(copy.updatedAt || copy.createdAt);
               return (
-                <button key={copy.id} onClick={() => setActiveTab(platform)} className={`w-full grid grid-cols-12 gap-4 items-center px-5 py-4 rounded-2xl text-left transition-all ${isActiveCopy ? 'bg-white border-2 border-[var(--primary)]/20 shadow-sm' : 'bg-white border border-[var(--ghost-border)] hover:shadow-sm hover:border-[var(--ghost-border-focus)]'}`}>
+                <button key={copy.id} onClick={() => { setActiveTab(platform); setSelectedCopyId(copy.id); }} className={`w-full grid grid-cols-12 gap-4 items-center px-5 py-4 rounded-2xl text-left transition-all ${isActiveCopy ? 'bg-white border-2 border-[var(--primary)]/20 shadow-sm' : 'bg-white border border-[var(--ghost-border)] hover:shadow-sm hover:border-[var(--ghost-border-focus)]'}`}>
                   <div className="col-span-5 min-w-0">
                     <p className="text-[10px] font-bold tracking-wider uppercase text-[var(--primary)] mb-1">{selectedStrategy?.industry || platform.toUpperCase()}</p>
                     <p className="text-sm font-bold text-[var(--on-surface)] truncate">{title}</p>
