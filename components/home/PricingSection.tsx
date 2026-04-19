@@ -62,7 +62,7 @@ const pricingTiers: PricingTier[] = [
 
 export default function PricingSection() {
   return (
-    <section className="py-22 px-4 bg-surface-container-low">
+    <section id="pricing" className="py-22 px-4 bg-surface-container-low">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-16">
