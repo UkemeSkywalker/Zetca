@@ -22,21 +22,29 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Rewrites only needed for local dev (npm run dev).
+  // In production (Docker), Caddy routes /api/strategy, /api/copy,
+  // /api/scheduler, /api/publisher directly to the backend container.
   async rewrites() {
-    const pythonServiceUrl = process.env.PYTHON_SERVICE_URL || 'http://localhost:8000';
-    
+    if (process.env.NODE_ENV === 'production') {
+      return [];
+    }
     return [
       {
         source: '/api/strategy/:path*',
-        destination: `${pythonServiceUrl}/api/strategy/:path*`,
+        destination: 'http://localhost:8000/api/strategy/:path*',
       },
       {
         source: '/api/copy/:path*',
-        destination: `${pythonServiceUrl}/api/copy/:path*`,
+        destination: 'http://localhost:8000/api/copy/:path*',
       },
       {
         source: '/api/scheduler/:path*',
-        destination: `${pythonServiceUrl}/api/scheduler/:path*`,
+        destination: 'http://localhost:8000/api/scheduler/:path*',
+      },
+      {
+        source: '/api/publisher/:path*',
+        destination: 'http://localhost:8000/api/publisher/:path*',
       },
     ];
   },
