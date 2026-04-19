@@ -79,13 +79,19 @@ export function DateDetailsModal({
   const getMediaUrl = (post: ScheduledPost): string | undefined =>
     post.mediaUrl || (post.mediaId ? mediaUrls[post.mediaId] : undefined);
 
-  const formatTime = (time: string) => {
-    const [h, m] = time.split(':');
-    const hour = parseInt(h);
+  const formatTime = (dateStr: string, timeStr: string) => {
+    // Convert UTC stored date/time to local for display
+    const d = new Date(`${dateStr}T${timeStr}:00Z`);
+    const hour = d.getHours();
+    const m = String(d.getMinutes()).padStart(2, '0');
     return `${hour % 12 || 12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
   };
 
-  const sortedPosts = [...posts].sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
+  const sortedPosts = [...posts].sort((a, b) => {
+    const aUtc = `${a.scheduledDate}T${a.scheduledTime}`;
+    const bUtc = `${b.scheduledDate}T${b.scheduledTime}`;
+    return aUtc.localeCompare(bUtc);
+  });
   const uniquePlatforms = new Set(posts.map(p => p.platform));
   const monthShort = selectedDate.toLocaleString('en-US', { month: 'short' });
   const day = selectedDate.getDate();
@@ -138,7 +144,7 @@ export function DateDetailsModal({
                   <div>
                     <p className="text-lg font-semibold text-on-surface">Time Range</p>
                     <p className="text-base text-outline">
-                      {formatTime(sortedPosts[0].scheduledTime)} — {formatTime(sortedPosts[sortedPosts.length - 1].scheduledTime)}
+                      {formatTime(sortedPosts[0].scheduledDate, sortedPosts[0].scheduledTime)} — {formatTime(sortedPosts[sortedPosts.length - 1].scheduledDate, sortedPosts[sortedPosts.length - 1].scheduledTime)}
                     </p>
                   </div>
                 </div>
@@ -201,7 +207,7 @@ export function DateDetailsModal({
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-2 text-base text-outline">
-                                <span className="font-medium">{formatTime(post.scheduledTime)}</span>
+                                <span className="font-medium">{formatTime(post.scheduledDate, post.scheduledTime)}</span>
                                 <span>•</span>
                                 <span className="capitalize">{post.platform}</span>
                               </div>

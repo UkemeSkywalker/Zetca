@@ -6,11 +6,13 @@ Python SDK to generate platform-specific social media copies via Amazon Bedrock.
 The agent consumes strategy data and returns structured output validated by Pydantic models.
 """
 
+import json
 import boto3
+from botocore.config import Config as BotoConfig
 from strands import Agent
 from strands.models.bedrock import BedrockModel
 from models.copy import CopyOutput, ChatResponse
-from typing import Optional, List
+from typing import Optional, List, AsyncIterator
 
 
 class StructuredOutputException(Exception):
@@ -43,6 +45,13 @@ class CopywriterAgent:
             aws_access_key_id: AWS access key ID (if None, uses default credential chain)
             aws_secret_access_key: AWS secret access key (if None, uses default credential chain)
         """
+        # Increase read timeout for large structured output generation
+        boto_config = BotoConfig(
+            read_timeout=300,
+            connect_timeout=10,
+            retries={"max_attempts": 2}
+        )
+        
         # Create boto3 session with explicit credentials if provided
         if aws_access_key_id and aws_secret_access_key:
             boto_session = boto3.Session(
@@ -52,13 +61,15 @@ class CopywriterAgent:
             )
             self.model = BedrockModel(
                 boto_session=boto_session,
-                model_id=model_id
+                model_id=model_id,
+                boto_client_config=boto_config
             )
         else:
             # Fall back to default credential chain
             self.model = BedrockModel(
                 region_name=aws_region,
-                model_id=model_id
+                model_id=model_id,
+                boto_client_config=boto_config
             )
         
         self.agent = Agent(
@@ -177,6 +188,109 @@ Each of the 7 variations per platform should take a different angle:
             )
 
         return result.structured_output
+
+    async def generate_copies_stream(
+        self, strategy_data: dict
+    ) -> AsyncIterator[dict]:
+        """
+        Stream copy generation events from the agent in real time.
+
+        Yields SSE-compatible dicts with event type and data as the agent
+        processes the request. The final event contains the structured output.
+
+        Args:
+            strategy_data: Strategy record data
+
+        Yields:
+            dict with 'event' key and event-specific data:
+              - {"event": "thinking", "text": "..."} for text deltas
+              - {"event": "lifecycle", "phase": "..."} for lifecycle events
+              - {"event": "result", "copies": [...]} for the final output
+              - {"event": "error", "message": "..."} on failure
+        """
+        platforms = strategy_data.get("platform_recommendations", [])
+        if platforms and isinstance(platforms[0], dict):
+            platform_names = [p.get("platform", "") for p in platforms]
+        else:
+            platform_names = platforms
+        platform_list = ", ".join(platform_names) if platform_names else "Instagram, Twitter, LinkedIn"
+
+        content_pillars = strategy_data.get("content_pillars", [])
+        content_themes = strategy_data.get("content_themes", [])
+        engagement_tactics = strategy_data.get("engagement_tactics", [])
+        pillars_str = ", ".join(content_pillars) if isinstance(content_pillars, list) else str(content_pillars)
+        themes_str = ", ".join(content_themes) if isinstance(content_themes, list) else str(content_themes)
+        tactics_str = ", ".join(engagement_tactics) if isinstance(engagement_tactics, list) else str(engagement_tactics)
+
+        user_prompt = f"""Generate social media copies for the following brand strategy:
+
+Brand Name: {strategy_data.get("brand_name", "N/A")}
+Industry: {strategy_data.get("industry", "N/A")}
+Target Audience: {strategy_data.get("target_audience", "N/A")}
+Goals: {strategy_data.get("goals", "N/A")}
+
+Content Pillars: {pillars_str}
+Content Themes: {themes_str}
+Engagement Tactics: {tactics_str}
+Posting Schedule: {strategy_data.get("posting_schedule", "N/A")}
+
+IMPORTANT: Generate exactly 7 unique copy variations for EACH of these 4 platforms: Twitter/X, Instagram, LinkedIn, Facebook.
+That means 28 total CopyItems in the output (7 for Twitter, 7 for Instagram, 7 for LinkedIn, 7 for Facebook).
+
+Each copy must include engaging caption text and relevant hashtags tailored to the platform.
+Each of the 7 variations per platform should take a different angle:
+1. Bold hook — attention-grabbing opening
+2. Storytelling — emotional narrative
+3. Question-driven — sparks conversation
+4. Educational — thought leadership
+5. Social proof — credibility and trust
+6. Short and punchy — scroll-stopping brevity
+7. CTA-focused — drives action (clicks, saves, shares)"""
+
+        # Use a separate non-streaming agent for structured output
+        # but stream the thinking process via stream_async first
+        yield {"event": "lifecycle", "phase": "Connecting to Bedrock model..."}
+
+        accumulated_text = ""
+        result = None
+
+        try:
+            async for event in self.agent.stream_async(
+                user_prompt, structured_output_model=CopyOutput
+            ):
+                # Text delta from the model
+                if "data" in event:
+                    chunk = event["data"]
+                    accumulated_text += chunk
+                    yield {"event": "thinking", "text": chunk}
+
+                # Reasoning / thinking content (if model supports it)
+                elif event.get("reasoningText"):
+                    yield {"event": "thinking", "text": event["reasoningText"]}
+
+                # Lifecycle: event loop init
+                elif event.get("init_event_loop", False):
+                    yield {"event": "lifecycle", "phase": "Agent loop initialized"}
+
+                # Lifecycle: event loop cycle start
+                elif event.get("start_event_loop", False):
+                    yield {"event": "lifecycle", "phase": "Processing strategy data..."}
+
+                # Final result
+                elif "result" in event:
+                    result = event["result"]
+
+            if result and result.structured_output is not None:
+                copies_data = [
+                    {"text": c.text, "platform": c.platform, "hashtags": c.hashtags}
+                    for c in result.structured_output.copies
+                ]
+                yield {"event": "result", "copies": copies_data}
+            else:
+                yield {"event": "error", "message": "Agent did not return structured output"}
+
+        except Exception as e:
+            yield {"event": "error", "message": str(e)}
 
     async def chat_refine(
         self,

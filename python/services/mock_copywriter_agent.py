@@ -7,7 +7,7 @@ swapped via the USE_MOCK_AGENT flag.
 """
 
 import asyncio
-from typing import List
+from typing import List, AsyncIterator
 
 from models.copy import CopyItem, CopyOutput, ChatResponse
 
@@ -136,6 +136,46 @@ class MockCopywriterAgent:
             )
 
         return CopyOutput(copies=copies)
+
+    async def generate_copies_stream(self, strategy_data: dict) -> AsyncIterator[dict]:
+        """
+        Mock streaming version of generate_copies.
+
+        Simulates the real agent's streaming events with delays so the
+        frontend can be tested without Bedrock.
+        """
+        yield {"event": "lifecycle", "phase": "Connecting to mock model..."}
+        await asyncio.sleep(0.3)
+
+        yield {"event": "lifecycle", "phase": "Agent loop initialized"}
+        await asyncio.sleep(0.2)
+
+        yield {"event": "lifecycle", "phase": "Processing strategy data..."}
+        await asyncio.sleep(0.3)
+
+        # Simulate text generation thinking
+        thinking_chunks = [
+            "Analyzing brand strategy for ",
+            strategy_data.get("brand_name", "your brand"),
+            "... ",
+            "Identifying key content pillars... ",
+            "Crafting platform-specific copies for Twitter/X... ",
+            "Generating Instagram variations... ",
+            "Building LinkedIn thought leadership angles... ",
+            "Creating Facebook community-focused content... ",
+            "Finalizing 28 copy variations with hashtags...",
+        ]
+        for chunk in thinking_chunks:
+            yield {"event": "thinking", "text": chunk}
+            await asyncio.sleep(0.4)
+
+        # Generate the actual mock copies
+        output = await self.generate_copies(strategy_data)
+        copies_data = [
+            {"text": c.text, "platform": c.platform, "hashtags": c.hashtags}
+            for c in output.copies
+        ]
+        yield {"event": "result", "copies": copies_data}
 
     async def chat_refine(
         self,

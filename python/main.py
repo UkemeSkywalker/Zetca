@@ -5,18 +5,56 @@ This FastAPI application provides AI-powered social media strategy generation
 using the Strands Agents Python SDK with Amazon Bedrock (Claude 4 Sonnet).
 """
 
+import logging
+from contextlib import asynccontextmanager
+
+# Suppress noisy botocore credential discovery logs
+logging.getLogger("botocore.credentials").setLevel(logging.WARNING)
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes.strategy import router as strategy_router
 from routes.copy import router as copy_router
 from routes.scheduler import router as scheduler_router
+from routes.publisher import router as publisher_router
 from config import settings
+from services.linkedin_client import LinkedInClient
+from services.publisher_service import PublisherService
+from services.publish_scanner import PublishScanner
+from repositories.publisher_repository import PublisherRepository
+from repositories.scheduler_repository import SchedulerRepository
+from repositories.user_repository import UserRepository
+from repositories.media_repository import MediaRepository
+
+# Publisher background task reference
+publish_scanner: PublishScanner = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage startup and shutdown of background tasks."""
+    global publish_scanner
+    if settings.publisher_enabled:
+        linkedin_client = LinkedInClient(timeout_seconds=settings.linkedin_api_timeout_seconds)
+        publisher_service = PublisherService(
+            linkedin_client=linkedin_client,
+            publisher_repository=PublisherRepository(),
+            scheduler_repository=SchedulerRepository(),
+            user_repository=UserRepository(),
+            media_repository=MediaRepository(),
+        )
+        publish_scanner = PublishScanner(publisher_service)
+        await publish_scanner.start()
+    yield
+    if publish_scanner:
+        await publish_scanner.stop()
 
 # Initialize FastAPI app
 app = FastAPI(
     title="Zetca Agent API",
     description="AI-powered social media strategy, copy generation, and scheduling service",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
 # Configure CORS
@@ -32,6 +70,7 @@ app.add_middleware(
 app.include_router(strategy_router)
 app.include_router(copy_router)
 app.include_router(scheduler_router)
+app.include_router(publisher_router)
 
 
 @app.get("/health")

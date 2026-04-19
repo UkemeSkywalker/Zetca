@@ -59,7 +59,7 @@ class SchedulerService:
 
     @staticmethod
     def _validate_future_date(scheduled_date: str, scheduled_time: str = "23:59") -> None:
-        """Raise 400 if the given date/time is in the past."""
+        """Raise 400 if the given date/time is in the past (UTC)."""
         try:
             dt = datetime.strptime(f"{scheduled_date} {scheduled_time}", "%Y-%m-%d %H:%M")
         except ValueError:
@@ -67,7 +67,7 @@ class SchedulerService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid date or time format: {scheduled_date} {scheduled_time}",
             )
-        if dt <= datetime.now():
+        if dt <= datetime.utcnow():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Cannot schedule a post in the past. The date {scheduled_date} at {scheduled_time} has already passed. Please choose a future date and time.",

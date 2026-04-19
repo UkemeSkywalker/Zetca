@@ -45,14 +45,16 @@ export function PostPreviewModal({ isOpen, onClose, post, onEdit, onDelete, onSc
 
   if (!isOpen || !post) return null;
 
-  const formatTime = (time: string) => {
-    const [h, m] = time.split(':');
-    const hour = parseInt(h);
+  const formatTime = (dateStr: string, timeStr: string) => {
+    const dt = new Date(`${dateStr}T${timeStr}:00Z`);
+    const hour = dt.getHours();
+    const m = String(dt.getMinutes()).padStart(2, '0');
     return `${hour % 12 || 12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
   };
 
-  const [y, mo, d] = post.scheduledDate.split('-').map(Number);
-  const dateObj = new Date(y, mo - 1, d);
+  // Convert UTC stored date/time to local for display
+  const localDt = new Date(`${post.scheduledDate}T${post.scheduledTime}:00Z`);
+  const dateObj = new Date(localDt.getFullYear(), localDt.getMonth(), localDt.getDate());
   const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
   const fullDate = dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
@@ -135,7 +137,7 @@ export function PostPreviewModal({ isOpen, onClose, post, onEdit, onDelete, onSc
             {/* Title */}
             <div className="px-8 pb-6">
               <h2 className="text-2xl font-bold text-on-surface">Scheduled for {dayName}</h2>
-              <p className="text-base text-outline mt-1">{fullDate} at {formatTime(post.scheduledTime)}</p>
+              <p className="text-base text-outline mt-1">{fullDate} at {formatTime(post.scheduledDate, post.scheduledTime)}</p>
             </div>
 
             {/* Stats */}

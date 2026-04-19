@@ -101,3 +101,18 @@ class ChatResponse(BaseModel):
         ...,
         description="AI explanation of changes made"
     )
+
+
+class RefineTextRequest(BaseModel):
+    """Input for standalone text refinement (no copy ID required)."""
+    text: str = Field(..., min_length=1, description="Current post text to refine")
+    platform: str = Field(..., min_length=1, description="Target platform")
+    message: str = Field(..., min_length=1, description="User's refinement instruction")
+    hashtags: List[str] = Field(default_factory=list, description="Current hashtags")
+
+    @field_validator('text', 'platform', 'message')
+    @classmethod
+    def validate_non_empty(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError('Field cannot be empty or whitespace only')
+        return v.strip()

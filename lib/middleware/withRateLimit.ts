@@ -31,12 +31,16 @@ export function withRateLimit(
       req.headers.get('x-real-ip') ||
       'unknown';
 
+    // Include the route path in the key so each endpoint has its own counter
+    const routePath = new URL(req.url).pathname;
+    const rateLimitKey = `${clientIp}:${routePath}`;
+
     const now = Date.now();
-    const entry = rateLimitStore.get(clientIp);
+    const entry = rateLimitStore.get(rateLimitKey);
 
     if (!entry || now > entry.resetTime) {
       // Create new entry or reset expired entry
-      rateLimitStore.set(clientIp, {
+      rateLimitStore.set(rateLimitKey, {
         count: 1,
         resetTime: now + windowMs,
       });

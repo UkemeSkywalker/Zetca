@@ -39,13 +39,5 @@ export function getConfig(): Config {
     dynamoDbScheduledPostsTableName: process.env.DYNAMODB_SCHEDULED_POSTS_TABLE_NAME || 'scheduled-posts-dev',
   };
 
-  // Validate required configuration in production
-  if (process.env.NODE_ENV === 'production' && !cfg.jwtSecret) {
-    throw new Error('JWT_SECRET environment variable is required in production');
-  }
-
   return cfg;
 }
-
-// Export a default config instance for convenience
-export const config: Config = getConfig();

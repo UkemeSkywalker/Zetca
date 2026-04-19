@@ -7,7 +7,8 @@ Bedrock and mock agent for development.
 """
 
 from fastapi import APIRouter, HTTPException, status, Depends, Response
-from models.copy import CopyGenerateInput, CopyRecord, ChatRequest, ChatResponse
+from fastapi.responses import StreamingResponse
+from models.copy import CopyGenerateInput, CopyRecord, ChatRequest, ChatResponse, RefineTextRequest
 from services.copywriter_agent import CopywriterAgent, StructuredOutputException
 from services.mock_copywriter_agent import MockCopywriterAgent
 from services.copy_service import CopyService
@@ -115,6 +116,120 @@ async def generate_copies(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Copy generation failed. Please try again.",
         )
+
+
+@router.post("/generate-stream", status_code=status.HTTP_200_OK)
+async def generate_copies_stream(
+    copy_input: CopyGenerateInput,
+    user_id: str = Depends(auth_middleware.get_current_user),
+):
+    """
+    Stream copy generation events via Server-Sent Events (SSE).
+
+    Streams real-time agent thinking, lifecycle phases, and the final
+    structured result as SSE events so the frontend can display the
+    agent's thought process as it generates copies.
+
+    Event types:
+      - thinking: text delta from the model
+      - lifecycle: phase change (e.g. "Agent loop initialized")
+      - result: final structured copies array
+      - saved: persisted CopyRecords
+      - error: generation failure
+      - done: stream complete
+    """
+    import json as json_mod
+
+    # Verify strategy ownership upfront before streaming
+    try:
+        strategy = await copy_service._get_strategy_with_ownership(
+            copy_input.strategy_id, user_id
+        )
+    except HTTPException:
+        raise
+
+    # Build strategy data dict for the agent
+    strategy_data = {
+        "brand_name": strategy.brand_name,
+        "industry": strategy.industry,
+        "target_audience": strategy.target_audience,
+        "goals": strategy.goals,
+    }
+    if strategy.strategy_output:
+        strategy_data.update(strategy.strategy_output.model_dump())
+
+    strategy_data["platform_recommendations"] = [
+        {"platform": "Twitter"},
+        {"platform": "Instagram"},
+        {"platform": "LinkedIn"},
+        {"platform": "Facebook"},
+    ]
+
+    async def event_generator():
+        try:
+            final_copies_data = None
+
+            async for event in agent.generate_copies_stream(strategy_data):
+                event_type = event.get("event", "unknown")
+                payload = json_mod.dumps(event, default=str)
+                yield f"event: {event_type}\ndata: {payload}\n\n"
+
+                if event_type == "result":
+                    final_copies_data = event.get("copies", [])
+
+            # Persist copies to DB after streaming completes
+            if final_copies_data:
+                from models.copy import CopyRecord as CopyRecordModel
+
+                def _normalize_platform(p: str) -> str:
+                    lower = p.lower().strip()
+                    if lower in ("twitter", "twitter/x", "x (twitter)", "x/twitter", "tiktok"):
+                        return "x"
+                    return lower
+
+                records = [
+                    CopyRecordModel(
+                        strategy_id=copy_input.strategy_id,
+                        user_id=user_id,
+                        text=item["text"],
+                        platform=_normalize_platform(item["platform"]),
+                        hashtags=item.get("hashtags", []),
+                    )
+                    for item in final_copies_data
+                ]
+
+                saved_records = await copy_repository.create_copies(records)
+                saved_data = [
+                    {
+                        "id": r.id,
+                        "strategy_id": r.strategy_id,
+                        "user_id": r.user_id,
+                        "text": r.text,
+                        "platform": r.platform,
+                        "hashtags": r.hashtags,
+                        "created_at": r.created_at.isoformat(),
+                        "updated_at": r.updated_at.isoformat(),
+                    }
+                    for r in saved_records
+                ]
+                yield f"event: saved\ndata: {json_mod.dumps(saved_data)}\n\n"
+
+            yield "event: done\ndata: {}\n\n"
+
+        except Exception as e:
+            logger.error(f"Streaming copy generation failed: {str(e)}", exc_info=True)
+            error_payload = json_mod.dumps({"event": "error", "message": str(e)})
+            yield f"event: error\ndata: {error_payload}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.get("/list/{strategy_id}", response_model=List[CopyRecord], status_code=status.HTTP_200_OK)
@@ -265,6 +380,70 @@ async def chat_refine(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Chat refinement failed. Please try again.",
+        )
+
+
+@router.post("/refine-text", response_model=ChatResponse, status_code=status.HTTP_200_OK)
+async def refine_text(
+    request: RefineTextRequest,
+    user_id: str = Depends(auth_middleware.get_current_user),
+):
+    """
+    Refine arbitrary post text using the Copywriter Agent.
+
+    Unlike the copy-specific chat endpoint, this does not require a copyId.
+    It takes raw text, platform, and a refinement prompt, and returns
+    updated text via the AI. Useful for the scheduler editor workspace.
+
+    Args:
+        request: Contains text, platform, message, and optional hashtags
+        user_id: Authenticated user ID from JWT token
+
+    Returns:
+        ChatResponse: Updated text, hashtags, and AI explanation
+    """
+    try:
+        logger.info(f"Refining text for platform: {request.platform}")
+
+        chat_response = await asyncio.wait_for(
+            agent.chat_refine(
+                copy_text=request.text,
+                platform=request.platform,
+                hashtags=request.hashtags,
+                strategy_data={},
+                user_message=request.message,
+            ),
+            timeout=settings.agent_timeout_seconds,
+        )
+
+        logger.info("Successfully refined text")
+        return chat_response
+
+    except asyncio.TimeoutError:
+        logger.error(f"Text refinement timed out after {settings.agent_timeout_seconds}s")
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="Text refinement timed out. Please try again.",
+        )
+    except StructuredOutputException as e:
+        logger.error(f"Structured output error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to refine text. Please try again.",
+        )
+    except HTTPException:
+        raise
+    except (BotoCoreError, ClientError) as e:
+        logger.error(f"Bedrock service error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI service temporarily unavailable. Please try again later.",
+        )
+    except Exception as e:
+        logger.error(f"Text refinement failed: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Text refinement failed. Please try again.",
         )
 
 

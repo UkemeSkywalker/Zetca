@@ -39,7 +39,12 @@ export function Calendar({ posts, onDateClick, onMovePosts, className = '' }: Ca
 
   const getPostsForDate = (date: Date) => {
     const key = toDateKey(date);
-    return posts.filter(post => post.scheduledDate === key);
+    return posts.filter(post => {
+      // Convert UTC stored date/time to local date for calendar matching
+      const localDt = new Date(`${post.scheduledDate}T${post.scheduledTime}:00Z`);
+      const localKey = `${localDt.getFullYear()}-${String(localDt.getMonth() + 1).padStart(2, '0')}-${String(localDt.getDate()).padStart(2, '0')}`;
+      return localKey === key;
+    });
   };
 
   const generateCalendarDays = () => {
@@ -84,9 +89,10 @@ export function Calendar({ posts, onDateClick, onMovePosts, className = '' }: Ca
     facebook: '#1877F2',
   };
 
-  const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours);
+  const formatTime = (dateStr: string, timeStr: string) => {
+    const dt = new Date(`${dateStr}T${timeStr}:00Z`);
+    const hour = dt.getHours();
+    const minutes = String(dt.getMinutes()).padStart(2, '0');
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minutes} ${ampm}`;
@@ -114,7 +120,11 @@ export function Calendar({ posts, onDateClick, onMovePosts, className = '' }: Ca
     setDragOverDate(null);
     const sourceDateKey = e.dataTransfer.getData('text/plain');
     if (!sourceDateKey || sourceDateKey === targetDateKey) { setDragSourceDate(null); return; }
-    const sourcePosts = posts.filter(p => p.scheduledDate === sourceDateKey);
+    const sourcePosts = posts.filter(p => {
+      const localDt = new Date(`${p.scheduledDate}T${p.scheduledTime}:00Z`);
+      const localKey = `${localDt.getFullYear()}-${String(localDt.getMonth() + 1).padStart(2, '0')}-${String(localDt.getDate()).padStart(2, '0')}`;
+      return localKey === sourceDateKey;
+    });
     if (sourcePosts.length > 0 && onMovePosts) {
       onMovePosts(sourcePosts.map(p => p.id), targetDateKey);
     }
@@ -239,7 +249,7 @@ export function Calendar({ posts, onDateClick, onMovePosts, className = '' }: Ca
                             className="w-4 h-4 shrink-0"
                             style={{ color: platformColors[post.platform.toLowerCase()] || 'var(--outline)' }}
                           />
-                          <span className="text-on-secondary-container truncate text-xs">{formatTime(post.scheduledTime)}</span>
+                          <span className="text-on-secondary-container truncate text-xs">{formatTime(post.scheduledDate, post.scheduledTime)}</span>
                           {post.mediaType === 'image' && (
                             <Icon icon="solar:gallery-bold" className="w-3.5 h-3.5 shrink-0 text-secondary" aria-label="Has image" />
                           )}
