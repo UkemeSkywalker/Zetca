@@ -30,7 +30,6 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV PYTHON_SERVICE_URL=http://backend:8000
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs
