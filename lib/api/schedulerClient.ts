@@ -5,7 +5,8 @@
 
 import { ScheduledPost, ManualScheduleInput, ScheduledPostUpdate } from '@/types/scheduler';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_PYTHON_SERVICE_URL || 'http://localhost:8000';
+// Use relative URLs — Next.js rewrites proxy /api/scheduler/* to the Python backend
+const API_BASE_URL = '';
 
 /**
  * Custom error class for Scheduler API errors
