@@ -47,7 +47,7 @@ const features: Feature[] = [
 
 export default function FeaturesSection({ className = '' }: FeaturesSectionProps) {
   return (
-    <section className={`py-22 px-4 md:px-8 lg:px-16 bg-gradient-to-b from-surface-container-low/40 via-surface/40 to-surface-container-low/40 ${className}`}>
+    <section id="features" className={`py-22 px-4 md:px-8 lg:px-16 bg-gradient-to-b from-surface-container-low/40 via-surface/40 to-surface-container-low/40 ${className}`}>
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-16">

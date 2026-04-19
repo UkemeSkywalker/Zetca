@@ -13,8 +13,8 @@ interface NavLink {
 
 const navLinks: NavLink[] = [
   { label: 'Home', href: '/' },
-  { label: 'Features', href: '/features', hasDropdown: true },
-  { label: 'Pricing', href: '/pricing', hasDropdown: true },
+  { label: 'Features', href: '/#features', hasDropdown: true },
+  { label: 'Pricing', href: '/#pricing', hasDropdown: true },
 ];
 
 export default function Navbar() {

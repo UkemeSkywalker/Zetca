@@ -124,7 +124,7 @@ export default function DashboardPage() {
                 ))}
               </div>
 
-              <svg className="w-full h-full" preserveAspectRatio="none">
+              <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                 <defs>
                   <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.3" />
@@ -134,35 +134,37 @@ export default function DashboardPage() {
                 
                 <path
                   d={`
-                    M 0,${((maxValue - chartData[0].value) / range) * 100}%
+                    M 0,${((maxValue - chartData[0].value) / range) * 100}
                     ${chartData.map((point, i) => 
-                      `L ${(i / (chartData.length - 1)) * 100}%,${((maxValue - point.value) / range) * 100}%`
+                      `L ${(i / (chartData.length - 1)) * 100},${((maxValue - point.value) / range) * 100}`
                     ).join(' ')}
-                    L 100%,100% L 0,100% Z
+                    L 100,100 L 0,100 Z
                   `}
                   fill="url(#chartGradient)"
                 />
                 
                 <polyline
                   points={chartData.map((point, i) => 
-                    `${(i / (chartData.length - 1)) * 100}%,${((maxValue - point.value) / range) * 100}%`
+                    `${(i / (chartData.length - 1)) * 100},${((maxValue - point.value) / range) * 100}`
                   ).join(' ')}
                   fill="none"
                   stroke="var(--primary)"
                   strokeWidth="3"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke"
                 />
                 
                 {chartData.map((point, i) => (
                   <circle
                     key={i}
-                    cx={`${(i / (chartData.length - 1)) * 100}%`}
-                    cy={`${((maxValue - point.value) / range) * 100}%`}
+                    cx={(i / (chartData.length - 1)) * 100}
+                    cy={((maxValue - point.value) / range) * 100}
                     r="4"
                     fill="white"
                     stroke="var(--primary)"
                     strokeWidth="2"
+                    vectorEffect="non-scaling-stroke"
                   />
                 ))}
               </svg>
