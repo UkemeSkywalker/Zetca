@@ -1,0 +1,29 @@
+# With a custom domain (automatic HTTPS):
+#   Set DOMAIN=yourdomain.com in your .env.local
+#   Caddy will auto-provision a Let's Encrypt cert
+#
+# Without a domain (IP-only access, HTTP only):
+#   Leave DOMAIN unset or set DOMAIN=:80
+#   Access via http://<your-lightsail-ip>
+
+{$DOMAIN::80} {
+    # Frontend - Next.js
+    reverse_proxy frontend:3000
+
+    # Compression
+    encode gzip zstd
+
+    # Security headers
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy strict-origin-when-cross-origin
+        -Server
+    }
+
+    # Logging
+    log {
+        output stdout
+        format console
+    }
+}

@@ -6,6 +6,7 @@ import { Icon } from '@iconify/react';
 import MediaUploader from '@/components/dashboard/MediaUploader';
 import { Post } from '@/types/post';
 import { ScheduledPost } from '@/types/scheduler';
+import { refineText } from '@/lib/api/copyClient';
 
 interface SchedulingModalProps {
   isOpen: boolean;
@@ -75,6 +76,9 @@ export function SchedulingModal({
   const [mediaId, setMediaId] = useState<string | null>(prefillMediaId ?? editingPost?.mediaId ?? null);
   const [mediaType, setMediaType] = useState<'image' | 'video' | null>(prefillMediaType ?? editingPost?.mediaType ?? null);
   const [isMediaUploading, setIsMediaUploading] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [isRefining, setIsRefining] = useState(false);
+  const [aiMessage, setAiMessage] = useState<string | null>(null);
 
   const isEditing = !!(editingPost || editingScheduledPost);
   const maxChars = MAX_CHARS[formData.platform] || 3000;
@@ -118,9 +122,13 @@ export function SchedulingModal({
     try {
       const [year, month, day] = formData.date.split('-').map(Number);
       const [hours, minutes] = formData.time.split(':').map(Number);
-      const scheduledDate = new Date(year, month - 1, day, hours, minutes);
+      // Build a Date in the user's local timezone, then extract UTC components
+      // so the backend stores and compares everything in UTC.
+      const localDate = new Date(year, month - 1, day, hours, minutes);
+      const utcDate = `${localDate.getUTCFullYear()}-${String(localDate.getUTCMonth() + 1).padStart(2, '0')}-${String(localDate.getUTCDate()).padStart(2, '0')}`;
+      const utcTime = `${String(localDate.getUTCHours()).padStart(2, '0')}:${String(localDate.getUTCMinutes()).padStart(2, '0')}`;
       const newPost: Omit<Post, 'id' | 'createdAt'> = {
-        content: formData.content.trim(), platform: formData.platform, scheduledDate, scheduledTime: formData.time, status: 'scheduled', publishedAt: undefined,
+        content: formData.content.trim(), platform: formData.platform, scheduledDate: localDate, scheduledTime: utcTime, status: 'scheduled', publishedAt: undefined,
         ...(mediaId ? { mediaId, mediaType: mediaType ?? undefined } : isEditing ? { mediaId: undefined, mediaType: undefined } : {}),
       };
       await onSchedulePost(newPost);
@@ -138,9 +146,37 @@ export function SchedulingModal({
   const resetForm = () => {
     setFormData({ content: '', platform: 'linkedin', date: selectedDate ? formatLocalDate(selectedDate) : '', time: '09:00', hashtags: [] });
     setErrors({}); setMediaId(null); setMediaType(null); setIsMediaUploading(false);
+    setAiPrompt(''); setAiMessage(null); setIsRefining(false);
   };
 
   const handleClose = () => { resetForm(); onClose(); };
+
+  const handleAiRefine = async () => {
+    const prompt = aiPrompt.trim();
+    if (!prompt || !formData.content.trim()) return;
+    setIsRefining(true);
+    setAiMessage(null);
+    try {
+      const response = await refineText(
+        formData.content,
+        formData.platform,
+        prompt,
+        formData.hashtags
+      );
+      setFormData(prev => ({
+        ...prev,
+        content: response.updatedText,
+        hashtags: response.updatedHashtags.length > 0 ? response.updatedHashtags : prev.hashtags,
+      }));
+      setAiMessage(response.aiMessage);
+      setAiPrompt('');
+    } catch (err: any) {
+      console.error('AI refinement failed:', err);
+      setAiMessage(`Error: ${err.message || 'Failed to refine text. Please try again.'}`);
+    } finally {
+      setIsRefining(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -193,6 +229,42 @@ export function SchedulingModal({
                       {tag.startsWith('#') ? tag : `#${tag}`}
                     </span>
                   ))}
+                </div>
+              )}
+
+              {/* AI Refine Bar */}
+              <div className="mt-4 flex items-center gap-2 bg-white/60 rounded-xl border border-gray-200/60 px-4 py-2.5">
+                <Icon icon="solar:magic-stick-3-bold" className="w-5 h-5 text-primary flex-shrink-0" />
+                <label htmlFor="ai-refine-prompt" className="sr-only">Refine with AI</label>
+                <input
+                  id="ai-refine-prompt"
+                  type="text"
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAiRefine(); } }}
+                  placeholder="Refine with AI: 'Make it shorter' or 'Add a hook'..."
+                  className="flex-1 text-sm bg-transparent focus:outline-none placeholder-gray-400"
+                  disabled={isRefining || !formData.content.trim()}
+                />
+                <button
+                  type="button"
+                  onClick={handleAiRefine}
+                  disabled={isRefining || !aiPrompt.trim() || !formData.content.trim()}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                >
+                  {isRefining && <Icon icon="svg-spinners:ring-resize" className="w-3.5 h-3.5" />}
+                  {isRefining ? 'Refining...' : 'Refine'}
+                </button>
+              </div>
+
+              {/* AI Message */}
+              {aiMessage && (
+                <div className={`mt-2 px-4 py-3 rounded-xl text-sm flex items-start gap-2 ${aiMessage.startsWith('Error:') ? 'bg-red-50 border border-red-100 text-red-700' : 'bg-blue-50 border border-blue-100 text-blue-700'}`}>
+                  <Icon icon={aiMessage.startsWith('Error:') ? 'solar:danger-triangle-bold' : 'solar:magic-stick-3-bold'} className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <p>{aiMessage}</p>
+                  <button type="button" onClick={() => setAiMessage(null)} className="ml-auto flex-shrink-0 opacity-50 hover:opacity-100" aria-label="Dismiss">
+                    <Icon icon="solar:close-circle-bold" className="w-4 h-4" />
+                  </button>
                 </div>
               )}
 

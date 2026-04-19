@@ -22,6 +22,26 @@ interface SchedulerProps {
 type ViewMode = 'calendar' | 'grid';
 
 export function Scheduler({ className = '' }: SchedulerProps) {
+  /**
+   * Convert a UTC date string ("YYYY-MM-DD") and UTC time string ("HH:MM")
+   * to a local Date object so the UI displays the user's local time.
+   */
+  const utcToLocal = (dateStr: string, timeStr: string): Date => {
+    return new Date(`${dateStr}T${timeStr}:00Z`);
+  };
+
+  /** Return a local "YYYY-MM-DD" string for a post stored in UTC. */
+  const localDateKey = (post: ScheduledPost): string => {
+    const d = utcToLocal(post.scheduledDate, post.scheduledTime);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  /** Return a local "HH:MM" string for a post stored in UTC. */
+  const localTimeStr = (post: ScheduledPost): string => {
+    const d = utcToLocal(post.scheduledDate, post.scheduledTime);
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  };
+
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [posts, setPosts] = useState<ScheduledPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -116,7 +136,8 @@ export function Scheduler({ className = '' }: SchedulerProps) {
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);
     const postsForDate = posts.filter(post => {
-      const [year, month, day] = post.scheduledDate.split('-').map(Number);
+      const localKey = localDateKey(post);
+      const [year, month, day] = localKey.split('-').map(Number);
       return (
         day === date.getDate() &&
         month - 1 === date.getMonth() &&
@@ -135,9 +156,9 @@ export function Scheduler({ className = '' }: SchedulerProps) {
     setOperationError(null);
     try {
       if (editingPost) {
-        // Update existing post via API
+        // Update existing post via API — extract UTC date since times are stored in UTC
         const dateStr = postData.scheduledDate instanceof Date
-          ? `${postData.scheduledDate.getFullYear()}-${String(postData.scheduledDate.getMonth() + 1).padStart(2, '0')}-${String(postData.scheduledDate.getDate()).padStart(2, '0')}`
+          ? `${postData.scheduledDate.getUTCFullYear()}-${String(postData.scheduledDate.getUTCMonth() + 1).padStart(2, '0')}-${String(postData.scheduledDate.getUTCDate()).padStart(2, '0')}`
           : String(postData.scheduledDate);
         const updatePayload = {
           content: postData.content,
@@ -151,9 +172,9 @@ export function Scheduler({ className = '' }: SchedulerProps) {
         await schedulerClient.updatePost(editingPost.id, updatePayload);
         setEditingPost(null);
       } else {
-        // Create new post via manual-schedule API
+        // Create new post via manual-schedule API — extract UTC date
         const dateStr = postData.scheduledDate instanceof Date
-          ? `${postData.scheduledDate.getFullYear()}-${String(postData.scheduledDate.getMonth() + 1).padStart(2, '0')}-${String(postData.scheduledDate.getDate()).padStart(2, '0')}`
+          ? `${postData.scheduledDate.getUTCFullYear()}-${String(postData.scheduledDate.getUTCMonth() + 1).padStart(2, '0')}-${String(postData.scheduledDate.getUTCDate()).padStart(2, '0')}`
           : String(postData.scheduledDate);
         const schedulePayload = {
           copyId: 'manual-' + Date.now(),
@@ -205,13 +226,16 @@ export function Scheduler({ className = '' }: SchedulerProps) {
   const handleEditPost = async (postId: string) => {
     const post = posts.find(p => p.id === postId);
     if (post) {
-      const [year, month, day] = post.scheduledDate.split('-').map(Number);
+      // Convert UTC stored date/time to local for the editing modal
+      const localDt = utcToLocal(post.scheduledDate, post.scheduledTime);
+      const localDate = `${localDt.getFullYear()}-${String(localDt.getMonth() + 1).padStart(2, '0')}-${String(localDt.getDate()).padStart(2, '0')}`;
+      const localTime = `${String(localDt.getHours()).padStart(2, '0')}:${String(localDt.getMinutes()).padStart(2, '0')}`;
       const legacyPost = {
         id: post.id,
         content: post.content,
         platform: post.platform as 'instagram' | 'twitter' | 'linkedin' | 'facebook',
-        scheduledDate: new Date(year, month - 1, day),
-        scheduledTime: post.scheduledTime,
+        scheduledDate: new Date(localDt.getFullYear(), localDt.getMonth(), localDt.getDate()),
+        scheduledTime: localTime,
         status: post.status as 'scheduled' | 'published' | 'draft',
         createdAt: new Date(post.createdAt),
         ...(post.mediaId ? { mediaId: post.mediaId, mediaType: post.mediaType } : {}),
@@ -230,7 +254,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
 
       setEditingPost(legacyPost);
       setEditingMediaUrl(mediaUrl);
-      setSelectedDate(new Date(year, month - 1, day));
+      setSelectedDate(new Date(localDt.getFullYear(), localDt.getMonth(), localDt.getDate()));
       setIsDateDetailsModalOpen(false);
       setIsSchedulingModalOpen(true);
     }
@@ -291,7 +315,17 @@ export function Scheduler({ className = '' }: SchedulerProps) {
     setOperationError(null);
     try {
       await Promise.all(
-        postIds.map(id => schedulerClient.updatePost(id, { scheduledDate: targetDate }))
+        postIds.map(id => {
+          const post = posts.find(p => p.id === id);
+          if (!post) return schedulerClient.updatePost(id, { scheduledDate: targetDate });
+          // Convert current UTC time to local, combine with new local target date, convert back to UTC
+          const currentLocalDt = utcToLocal(post.scheduledDate, post.scheduledTime);
+          const [ty, tm, td] = targetDate.split('-').map(Number);
+          const newLocalDt = new Date(ty, tm - 1, td, currentLocalDt.getHours(), currentLocalDt.getMinutes());
+          const utcDate = `${newLocalDt.getUTCFullYear()}-${String(newLocalDt.getUTCMonth() + 1).padStart(2, '0')}-${String(newLocalDt.getUTCDate()).padStart(2, '0')}`;
+          const utcTime = `${String(newLocalDt.getUTCHours()).padStart(2, '0')}:${String(newLocalDt.getUTCMinutes()).padStart(2, '0')}`;
+          return schedulerClient.updatePost(id, { scheduledDate: utcDate, scheduledTime: utcTime });
+        })
       );
       await fetchPosts();
     } catch (err) {
@@ -302,11 +336,14 @@ export function Scheduler({ className = '' }: SchedulerProps) {
     }
   };
 
-  // Sort posts chronologically (nearest first)
-  const sortedPosts = [...posts].sort((a, b) =>
-    a.scheduledDate.localeCompare(b.scheduledDate) ||
-    a.scheduledTime.localeCompare(b.scheduledTime)
-  );
+  // Sort posts chronologically (nearest first) using local date/time
+  const sortedPosts = [...posts].sort((a, b) => {
+    const aKey = localDateKey(a);
+    const bKey = localDateKey(b);
+    const aTime = localTimeStr(a);
+    const bTime = localTimeStr(b);
+    return aKey.localeCompare(bKey) || aTime.localeCompare(bTime);
+  });
 
   // Platform icons and brand colors
   const platformIcons: Record<string, string> = {
@@ -325,10 +362,9 @@ export function Scheduler({ className = '' }: SchedulerProps) {
     facebook: '#1877F2',
   };
 
-  // Format date for display
-  const formatDate = (dateStr: string) => {
-    const [year, month, day] = dateStr.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
+  // Format date for display (converts UTC stored date to local)
+  const formatDate = (dateStr: string, timeStr: string = '12:00') => {
+    const date = utcToLocal(dateStr, timeStr);
     return new Intl.DateTimeFormat('en-US', {
       weekday: 'short',
       year: 'numeric',
@@ -337,10 +373,11 @@ export function Scheduler({ className = '' }: SchedulerProps) {
     }).format(date);
   };
 
-  // Format time for display
-  const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours);
+  // Format time for display (converts UTC stored time to local)
+  const formatTime = (dateStr: string, timeStr: string) => {
+    const date = utcToLocal(dateStr, timeStr);
+    const hour = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minutes} ${ampm}`;
@@ -531,7 +568,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
             <div className="space-y-10">
               {Object.entries(
                 sortedPosts.reduce<Record<string, ScheduledPost[]>>((groups, post) => {
-                  const dateKey = post.scheduledDate;
+                  const dateKey = localDateKey(post);
                   if (!groups[dateKey]) groups[dateKey] = [];
                   groups[dateKey].push(post);
                   return groups;
@@ -647,7 +684,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
                           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
                             <div className="flex items-center gap-1.5 text-sm text-gray-500">
                               <Icon icon="solar:clock-circle-bold" className="w-4 h-4 text-gray-400" />
-                              <span className="font-medium">{formatTime(post.scheduledTime)}</span>
+                              <span className="font-medium">{formatTime(post.scheduledDate, post.scheduledTime)}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               {(mUrl) && (
@@ -700,7 +737,8 @@ export function Scheduler({ className = '' }: SchedulerProps) {
         }}
         selectedDate={selectedDate}
         posts={selectedDate ? posts.filter(post => {
-          const [year, month, day] = post.scheduledDate.split('-').map(Number);
+          const localKey = localDateKey(post);
+          const [year, month, day] = localKey.split('-').map(Number);
           return (
             day === selectedDate.getDate() &&
             month - 1 === selectedDate.getMonth() &&

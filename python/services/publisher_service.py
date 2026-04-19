@@ -11,7 +11,7 @@ import logging
 import boto3
 from collections import defaultdict
 from typing import List, Optional, Set
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 
 from models.publisher import PublishLogRecord, LinkedInPostResponse
 from models.scheduler import ScheduledPostRecord
@@ -53,10 +53,14 @@ class PublisherService:
         - platform = "linkedin"
         - scheduledDate + scheduledTime <= now (UTC)
 
+        The frontend converts the user's local time to UTC before sending,
+        so scheduled_date and scheduled_time are stored in UTC. We compare
+        against the current UTC time.
+
         Uses a table scan with filter expression since we need to check
         across all users.
         """
-        now = datetime.now(UTC)
+        now = datetime.now(timezone.utc)
         all_posts = await self._scan_scheduled_posts()
 
         due_posts = []
@@ -69,7 +73,7 @@ class PublisherService:
                 post_dt = datetime.strptime(
                     f"{post.scheduled_date} {post.scheduled_time}",
                     "%Y-%m-%d %H:%M",
-                ).replace(tzinfo=UTC)
+                ).replace(tzinfo=timezone.utc)
                 if post_dt <= now:
                     due_posts.append(post)
             except (ValueError, TypeError) as e:

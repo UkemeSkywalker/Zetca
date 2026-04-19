@@ -5,7 +5,11 @@ This FastAPI application provides AI-powered social media strategy generation
 using the Strands Agents Python SDK with Amazon Bedrock (Claude 4 Sonnet).
 """
 
+import logging
 from contextlib import asynccontextmanager
+
+# Suppress noisy botocore credential discovery logs
+logging.getLogger("botocore.credentials").setLevel(logging.WARNING)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

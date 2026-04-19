@@ -8,7 +8,7 @@ Bedrock and mock agent for development.
 
 from fastapi import APIRouter, HTTPException, status, Depends, Response
 from fastapi.responses import StreamingResponse
-from models.copy import CopyGenerateInput, CopyRecord, ChatRequest, ChatResponse
+from models.copy import CopyGenerateInput, CopyRecord, ChatRequest, ChatResponse, RefineTextRequest
 from services.copywriter_agent import CopywriterAgent, StructuredOutputException
 from services.mock_copywriter_agent import MockCopywriterAgent
 from services.copy_service import CopyService
@@ -380,6 +380,70 @@ async def chat_refine(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Chat refinement failed. Please try again.",
+        )
+
+
+@router.post("/refine-text", response_model=ChatResponse, status_code=status.HTTP_200_OK)
+async def refine_text(
+    request: RefineTextRequest,
+    user_id: str = Depends(auth_middleware.get_current_user),
+):
+    """
+    Refine arbitrary post text using the Copywriter Agent.
+
+    Unlike the copy-specific chat endpoint, this does not require a copyId.
+    It takes raw text, platform, and a refinement prompt, and returns
+    updated text via the AI. Useful for the scheduler editor workspace.
+
+    Args:
+        request: Contains text, platform, message, and optional hashtags
+        user_id: Authenticated user ID from JWT token
+
+    Returns:
+        ChatResponse: Updated text, hashtags, and AI explanation
+    """
+    try:
+        logger.info(f"Refining text for platform: {request.platform}")
+
+        chat_response = await asyncio.wait_for(
+            agent.chat_refine(
+                copy_text=request.text,
+                platform=request.platform,
+                hashtags=request.hashtags,
+                strategy_data={},
+                user_message=request.message,
+            ),
+            timeout=settings.agent_timeout_seconds,
+        )
+
+        logger.info("Successfully refined text")
+        return chat_response
+
+    except asyncio.TimeoutError:
+        logger.error(f"Text refinement timed out after {settings.agent_timeout_seconds}s")
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="Text refinement timed out. Please try again.",
+        )
+    except StructuredOutputException as e:
+        logger.error(f"Structured output error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to refine text. Please try again.",
+        )
+    except HTTPException:
+        raise
+    except (BotoCoreError, ClientError) as e:
+        logger.error(f"Bedrock service error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI service temporarily unavailable. Please try again later.",
+        )
+    except Exception as e:
+        logger.error(f"Text refinement failed: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Text refinement failed. Please try again.",
         )
 
 

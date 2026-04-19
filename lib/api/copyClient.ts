@@ -378,8 +378,56 @@ export async function chatRefineCopy(copyId: string, message: string): Promise<C
 }
 
 /**
+ * Refine arbitrary post text using the Copywriter Agent.
+ * Does not require a copyId — works with raw text.
+ *
+ * @param text - Current post text to refine
+ * @param platform - Target platform (e.g. 'linkedin', 'twitter')
+ * @param message - User's refinement instruction
+ * @param hashtags - Optional current hashtags
+ * @returns Promise resolving to the chat response with updated text
+ * @throws CopyAPIError if the request fails
+ */
+export async function refineText(
+  text: string,
+  platform: string,
+  message: string,
+  hashtags: string[] = []
+): Promise<ChatResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/copy/refine-text`, {
+      method: 'POST',
+      headers: createAuthHeaders(),
+      body: JSON.stringify({ text, platform, message, hashtags }),
+    });
+
+    if (response.status === 401) {
+      handleAuthError();
+      throw new CopyAPIError('Authentication required. Please log in again.', 401);
+    }
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new CopyAPIError(
+        errorData.detail || `Failed to refine text: ${response.statusText}`,
+        response.status,
+        errorData
+      );
+    }
+
+    const data = await response.json();
+    return convertChatResponse(data);
+  } catch (error) {
+    if (error instanceof CopyAPIError) throw error;
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new CopyAPIError('Network error: Unable to connect to the copy service.', undefined, error);
+    }
+    throw new CopyAPIError('An unexpected error occurred while refining text', undefined, error);
+  }
+}
+
+/**
  * Delete a specific copy
- * 
+ *
  * @param copyId - ID of the copy to delete
  * @throws CopyAPIError if the request fails
  */

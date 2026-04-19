@@ -1,10 +1,27 @@
 services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+    networks:
+      - zetca-network
+    mem_limit: 64m
+
   frontend:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
+    restart: unless-stopped
+    expose:
+      - "3000"
     env_file:
       - .env.local
     environment:
@@ -14,20 +31,27 @@ services:
       - backend
     networks:
       - zetca-network
+    mem_limit: 256m
 
   backend:
     build:
       context: ./python
       dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
+    restart: unless-stopped
+    expose:
+      - "8000"
     env_file:
       - ./python/.env
     environment:
-      - FRONTEND_URL=http://localhost:3000
+      - FRONTEND_URL=https://${DOMAIN:-localhost}
     networks:
       - zetca-network
+    mem_limit: 192m
 
 networks:
   zetca-network:
     driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:

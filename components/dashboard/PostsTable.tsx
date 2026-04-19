@@ -153,15 +153,15 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr + 'T00:00:00');
+  const formatDate = (dateStr: string, timeStr: string = '00:00') => {
+    // Convert UTC stored date/time to local for display
+    const date = new Date(`${dateStr}T${timeStr}:00Z`);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  const formatTime = (timeStr: string) => {
-    const [hours, minutes] = timeStr.split(':');
-    const date = new Date();
-    date.setHours(parseInt(hours, 10), parseInt(minutes, 10));
+  const formatTime = (dateStr: string, timeStr: string) => {
+    // Convert UTC stored date/time to local for display
+    const date = new Date(`${dateStr}T${timeStr}:00Z`);
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
@@ -408,12 +408,12 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
 
                   {/* Date */}
                   <span className={`text-base ${post.status === 'draft' ? 'text-outline/50 italic' : 'text-on-surface'}`}>
-                    {post.status === 'draft' ? 'No date set' : formatDate(post.scheduledDate)}
+                    {post.status === 'draft' ? 'No date set' : formatDate(post.scheduledDate, post.scheduledTime)}
                   </span>
 
                   {/* Time */}
                   <span className={`text-base ${post.status === 'draft' ? 'text-outline/50' : 'text-on-surface font-medium'}`}>
-                    {post.status === 'draft' ? '--:--' : formatTime(post.scheduledTime)}
+                    {post.status === 'draft' ? '--:--' : formatTime(post.scheduledDate, post.scheduledTime)}
                   </span>
 
                   {/* Status */}
@@ -507,7 +507,7 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
                     <span>
                       {post.status === 'draft'
                         ? 'No date set'
-                        : formatDate(post.scheduledDate)}
+                        : formatDate(post.scheduledDate, post.scheduledTime)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between pt-4 border-t border-surface-container-high/50">
@@ -597,7 +597,7 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
                   <span>
                     {post.status === 'draft'
                       ? 'No date set'
-                      : `${formatDate(post.scheduledDate)} · ${formatTime(post.scheduledTime)}`}
+                      : `${formatDate(post.scheduledDate, post.scheduledTime)} · ${formatTime(post.scheduledDate, post.scheduledTime)}`}
                   </span>
                 </div>
 
