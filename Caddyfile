@@ -7,8 +7,24 @@
 #   Access via http://<your-lightsail-ip>
 
 {$DOMAIN::80} {
-    # Frontend - Next.js
-    reverse_proxy frontend:3000
+    # Python backend API routes
+    handle /api/strategy/* {
+        reverse_proxy backend:8000
+    }
+    handle /api/copy/* {
+        reverse_proxy backend:8000
+    }
+    handle /api/scheduler/* {
+        reverse_proxy backend:8000
+    }
+    handle /api/publisher/* {
+        reverse_proxy backend:8000
+    }
+
+    # Everything else goes to Next.js frontend
+    handle {
+        reverse_proxy frontend:3000
+    }
 
     # Compression
     encode gzip zstd
