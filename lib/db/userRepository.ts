@@ -116,6 +116,22 @@ export class UserRepository {
   }
 
   /**
+   * Retrieve LinkedIn credentials for a user (used by the publisher service).
+   * Returns null if the user is not found.
+   */
+  async getUserLinkedInCredentials(
+    userId: string
+  ): Promise<{ linkedinAccessToken?: string; linkedinSub?: string; linkedinName?: string } | null> {
+    const user = await this.getUserById(userId);
+    if (!user) return null;
+    return {
+      linkedinAccessToken: user.linkedinAccessToken,
+      linkedinSub: user.linkedinSub,
+      linkedinName: user.linkedinName,
+    };
+  }
+
+  /**
    * Get user by email using Global Secondary Index
    * @param email User's email address
    * @returns User record or null if not found

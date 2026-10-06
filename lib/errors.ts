@@ -2,6 +2,19 @@
  * Centralized error handling for authentication system
  */
 
+/**
+ * Generic HTTP error for the agent/service API routes (strategy, copy,
+ * scheduler, publisher). Mirrors FastAPI's HTTPException: route handlers
+ * catch this and respond with `{ detail: message }` at `statusCode`,
+ * matching the response envelope the existing API clients already expect.
+ */
+export class ApiError extends Error {
+  constructor(message: string, public statusCode: number) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 export class AuthError extends Error {
   constructor(
     message: string,

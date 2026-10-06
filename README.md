@@ -1,139 +1,134 @@
 # Zetca AI Social Media Automation Platform
 
-A production-grade web application that provides AI-powered social media automation capabilities, built with a microservices architecture.
+A production-grade web application that provides AI-powered social media automation capabilities.
 
 ![Zetca Dashboard](public/images/Dashboard.png)
 
 ## Architecture
 
-The platform consists of two services:
-
-- **Next.js Frontend** (port 3000) — App Router-based UI handling authentication, dashboard, and all user-facing pages. Proxies `/api/strategy/*` requests to the Python backend.
-- **Python Agent Service** (port 8000) — FastAPI service hosting a Strands Agents-powered Strategist Agent that generates social media strategies via Amazon Bedrock (Claude Sonnet). Manages strategy persistence in DynamoDB.
-
-Both services share a JWT secret for authentication and connect to the same DynamoDB tables.
+Zetca is a single Next.js application. The App Router UI and the AI agent API routes
+(strategy, copy, scheduler, publisher) run in the same process, sharing the same JWT
+auth, DynamoDB repositories, and config. A background scanner (started via
+`instrumentation.ts`) polls for scheduled posts that are due and auto-publishes them
+to LinkedIn.
 
 ```
-Browser → Next.js (3000) → /api/strategy/* proxy → Python FastAPI (8000) → Bedrock / DynamoDB
+Browser → Next.js (3000) → App Router pages + /api/* routes → Bedrock / DynamoDB / LinkedIn
 ```
+
+Agent logic is built on the [Strands Agents TypeScript SDK](https://strandsagents.com/),
+using Amazon Bedrock (Claude) as the model provider. Each agent (Strategist, Copywriter,
+Scheduler) has a mock counterpart used when `USE_MOCK_AGENT=true`, so the app can run
+end-to-end without AWS credentials.
 
 ## Tech Stack
 
-- **Frontend**: Next.js 16 (App Router), TypeScript, Tailwind CSS, Iconify Solar
-- **Backend**: Python 3.11, FastAPI, Strands Agents SDK, Pydantic
-- **AI**: Amazon Bedrock (Claude Sonnet) via Strands Agents
-- **Database**: DynamoDB (users, strategies tables)
-- **Infra**: Docker, Docker Compose, Terraform (DynamoDB provisioning)
-- **Testing**: Jest, React Testing Library, fast-check, pytest, Hypothesis
+- **Framework**: Next.js 16 (App Router), TypeScript, Tailwind CSS, Iconify Solar
+- **Agents**: Strands Agents TypeScript SDK, Zod (structured output schemas)
+- **AI**: Amazon Bedrock (Claude) via Strands Agents
+- **Database**: DynamoDB (users, strategies, copies, scheduled-posts, publish-log, post-media)
+- **Infra**: Docker, Docker Compose, Caddy, Terraform (DynamoDB + S3 provisioning)
+- **Testing**: Jest, React Testing Library, fast-check
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
-- Python 3.11+
+- Node.js 22+ (required by `@strands-agents/sdk`)
 - AWS account with Bedrock access enabled
-- AWS credentials configured (for DynamoDB and Bedrock)
+- AWS credentials configured (for DynamoDB, Bedrock, and S3)
 
-### 1. Frontend Setup
+### Setup
 
 ```bash
 npm install
 cp .env.local.example .env.local
-# Edit .env.local with your JWT_SECRET and other values
+# Edit .env.local with your JWT_SECRET, AWS credentials, and other values
 npm run dev
 ```
 
-### 2. Python Backend Setup
+### Running with Docker Compose
 
 ```bash
-cd python
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-# Edit .env with your AWS credentials, JWT_SECRET, etc.
-uvicorn main:app --reload --port 8000
-```
-
-### 3. Running Both Services with Docker Compose
-
-```bash
-# Make sure .env.local and python/.env are configured
+# Make sure .env.local is configured
 docker-compose up --build
 ```
 
-This starts the frontend on `http://localhost:3000` and the backend on `http://localhost:8000`.
+This starts Caddy on `:80` in front of the Next.js app on `:3000`.
 
 ### Environment Variables
 
-**Frontend** (`.env.local`):
-| Variable | Description |
-|---|---|
-| `JWT_SECRET` | Shared secret for JWT token signing/validation |
-| `PYTHON_SERVICE_URL` | Python backend URL (default: `http://localhost:8000`) |
+See `.env.local.example` for the full list. Key groups:
 
-**Backend** (`python/.env`):
 | Variable | Description |
 |---|---|
-| `AWS_REGION` | AWS region (default: `us-east-1`) |
-| `AWS_ACCESS_KEY_ID` | AWS access key |
-| `AWS_SECRET_ACCESS_KEY` | AWS secret key |
-| `JWT_SECRET` | Must match the frontend's JWT_SECRET |
+| `JWT_SECRET` | Secret for JWT token signing/validation |
+| `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | AWS credentials for DynamoDB, Bedrock, S3 |
 | `BEDROCK_MODEL_ID` | Bedrock model (default: `anthropic.claude-sonnet-4-6`) |
-| `DYNAMODB_STRATEGIES_TABLE` | DynamoDB table name (default: `strategies-dev`) |
-| `FRONTEND_URL` | Frontend origin for CORS (default: `http://localhost:3000`) |
-| `USE_MOCK_AGENT` | Set `true` to skip Bedrock and use a mock agent |
+| `DYNAMODB_*_TABLE_NAME` | DynamoDB table names for each resource |
+| `USE_MOCK_AGENT` | Set `true` to skip Bedrock and use mock agents |
+| `PUBLISHER_ENABLED`, `PUBLISHER_SCAN_INTERVAL_SECONDS` | Background LinkedIn auto-publish scanner |
+| `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET`, `LINKEDIN_REDIRECT_URI` | LinkedIn OAuth |
 
 ## Project Structure
 
 ```
 zetca-platform/
-├── app/              # Next.js App Router pages
+├── app/
+│   ├── api/
+│   │   ├── auth/            # Login, signup, LinkedIn OAuth
+│   │   ├── media/           # S3 media upload/download
+│   │   ├── strategy/        # Strategist agent routes
+│   │   ├── copy/            # Copywriter agent routes (incl. SSE streaming)
+│   │   ├── scheduler/       # Scheduler agent + CRUD routes
+│   │   └── publisher/       # LinkedIn publishing routes
+│   └── dashboard/           # App Router pages
 ├── components/       # Reusable React components
-├── types/           # TypeScript type definitions (shared strategy types)
-├── data/            # Mock data JSON files
-├── hooks/           # Custom React hooks
-├── context/         # React Context providers (Auth, Agent)
-├── lib/             # Utility functions and API clients
-├── python/          # Python Agent Service (FastAPI)
-│   ├── main.py          # FastAPI entry point
-│   ├── config.py        # Pydantic settings
-│   ├── models/          # Pydantic data models
-│   ├── services/        # Agent and business logic
-│   ├── routes/          # API route handlers
-│   ├── repositories/    # DynamoDB data access
-│   ├── middleware/       # JWT auth middleware
-│   └── tests/           # pytest + Hypothesis tests
-├── terraform/       # Infrastructure as Code (DynamoDB tables)
+├── types/             # Shared TypeScript types
+├── lib/
+│   ├── agents/             # Strands agents (real + mock)
+│   ├── models/             # Zod schemas / wire-format types
+│   ├── services/           # Business logic, service container, publish scanner
+│   ├── db/                 # DynamoDB repositories
+│   ├── auth/, middleware/  # JWT auth
+│   └── api/                # Frontend API clients + route helpers
+├── instrumentation.ts  # Starts the publish scanner at server boot
+├── terraform/          # Infrastructure as Code (DynamoDB tables, S3 buckets)
 └── docker-compose.yml
 ```
 
 ## Available Scripts
 
-**Frontend:**
 - `npm run dev` — Start Next.js dev server
 - `npm run build` — Build for production
 - `npm run start` — Start production server
 - `npm run lint` — Run ESLint
 - `npm run type-check` — Run TypeScript type checking
-
-**Backend:**
-- `uvicorn main:app --reload --port 8000` — Start FastAPI dev server (from `python/`)
-- `pytest` — Run Python tests (from `python/`)
+- `npm test` — Run Jest tests
 
 **Docker:**
-- `docker-compose up --build` — Build and start both services
+- `docker-compose up --build` — Build and start the stack
 - `docker-compose down` — Stop all services
 
-## API Endpoints (Python Service)
+## API Endpoints
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | `POST` | `/api/strategy/generate` | JWT | Generate a new strategy |
 | `GET` | `/api/strategy/list` | JWT | List user's saved strategies |
 | `GET` | `/api/strategy/{id}` | JWT | Get a specific strategy |
-| `GET` | `/health` | No | Health check |
+| `POST` | `/api/copy/generate` | JWT | Generate copies from a strategy |
+| `POST` | `/api/copy/generate-stream` | JWT | Same, streamed via SSE |
+| `GET` | `/api/copy/list/{strategyId}` | JWT | List copies for a strategy |
+| `GET`/`DELETE` | `/api/copy/{copyId}` | JWT | Get / delete a copy |
+| `POST` | `/api/copy/{copyId}/chat` | JWT | Chat-refine a copy |
+| `POST` | `/api/copy/refine-text` | JWT | Refine arbitrary text |
+| `POST` | `/api/scheduler/auto-schedule` | JWT | AI-schedule all copies for a strategy |
+| `POST` | `/api/scheduler/manual-schedule` | JWT | Manually schedule one copy |
+| `GET`/`PUT`/`DELETE` | `/api/scheduler/posts/{postId}` | JWT | CRUD a scheduled post |
+| `GET` | `/api/scheduler/posts` | JWT | List user's scheduled posts |
+| `POST` | `/api/publisher/publish/{postId}` | JWT | Publish a post to LinkedIn on demand |
+| `GET` | `/api/publisher/logs` | JWT | List publish attempt logs |
 
 ## Features
 
@@ -141,33 +136,28 @@ zetca-platform/
 - Smart Copywriting
 - Content Scheduler
 - Image Designer
-- Content Publisher
+- Content Publisher (LinkedIn, auto + on-demand)
 - Analytics Dashboard
 - Profile Management
 
 ## Troubleshooting
 
-**Python service won't start**
-- Verify your virtual environment is activated: `source python/venv/bin/activate`
-- Check all dependencies are installed: `pip install -r python/requirements.txt`
-- Ensure `python/.env` exists and has valid values
-
 **"Could not connect to Bedrock" / 503 errors**
-- Confirm `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_REGION` are set correctly in `python/.env`
+- Confirm `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_REGION` are set correctly in `.env.local`
 - Verify Bedrock model access is enabled in your AWS account for the configured region
 - Try setting `USE_MOCK_AGENT=true` to bypass Bedrock and test the rest of the flow
 
-**401 Unauthorized on strategy endpoints**
-- Ensure `JWT_SECRET` is identical in both `.env.local` (frontend) and `python/.env` (backend)
+**401 Unauthorized on agent endpoints**
 - Log in again to get a fresh token — tokens expire
 
-**CORS errors in browser console**
-- Check that `FRONTEND_URL` in `python/.env` matches the origin your frontend is running on (e.g., `http://localhost:3000`)
-
-**Strategy generation times out (504)**
+**Strategy/copy/scheduling generation times out (504)**
 - The default timeout is 60 seconds. Bedrock can be slow on first calls. Retry once.
-- Increase `AGENT_TIMEOUT_SECONDS` in `python/.env` if needed
+- Increase `AGENT_TIMEOUT_SECONDS` in `.env.local` if needed
 
 **DynamoDB errors**
-- Ensure the strategies table exists. Provision it with: `cd terraform && terraform init && terraform apply`
-- Verify `DYNAMODB_STRATEGIES_TABLE` matches the actual table name in AWS
+- Ensure the relevant table exists. Provision infra with: `cd terraform && terraform init && terraform apply`
+- Verify the `DYNAMODB_*_TABLE_NAME` env vars match the actual table names in AWS
+
+**Scheduled posts aren't auto-publishing**
+- Confirm `PUBLISHER_ENABLED=true` and the server process is the long-running `next start` (not a serverless deploy)
+- Check server logs for "Publish Scanner started" at boot
