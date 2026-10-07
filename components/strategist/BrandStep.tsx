@@ -73,19 +73,6 @@ export function BrandStep({ brandName, platforms, onBrandNameChange, onTogglePla
 
       {/* Primary form card */}
       <div className="bg-white rounded-2xl p-6 sm:p-8 md:p-10 shadow-[0_4px_25px_-4px_rgba(15,23,42,0.06),0_1px_3px_0_rgba(15,23,42,0.04)] relative overflow-hidden transition-all duration-300">
-        {/* AI assistant capsule */}
-        <div className="mb-7 flex items-start gap-3.5 p-3.5 sm:p-4 rounded-xl bg-indigo-50 text-slate-800">
-          <div className="shrink-0 w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-sm shadow-indigo-500/25">
-            <Icon icon="material-symbols:arrow-back-ios-new" width={18} height={18} />
-          </div>
-          <div className="flex-1 text-xs sm:text-[13px] leading-relaxed">
-            <span className="font-bold text-indigo-950 block mb-0.5">Zetca Strategy Engine</span>
-            <span className="text-slate-600">
-              Starting with a clear brand identity sets up your platform-specific voice! We tailor distribution angles to where you focus today.
-            </span>
-          </div>
-        </div>
-
         {/* Eyebrow */}
         <div className="flex items-center gap-2 mb-2">
           <span className="text-[11px] font-extrabold uppercase tracking-widest text-indigo-600">Step 1 · Brand Foundation</span>
