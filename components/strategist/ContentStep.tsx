@@ -1,0 +1,312 @@
+'use client';
+
+import { Icon } from '@iconify/react';
+import { useEffect, useMemo } from 'react';
+import type { Niche, NicheTopic } from './NicheStep';
+import type { SkillLevel } from './AudienceStep';
+
+export const CONTENT_TYPES: { id: string; label: string; icon: string; iconSelected: string }[] = [
+  { id: 'tutorials', label: 'Tutorials', icon: 'material-symbols:play-lesson-outline', iconSelected: 'material-symbols:play-lesson' },
+  { id: 'reviews', label: 'Reviews', icon: 'material-symbols:rate-review-outline', iconSelected: 'material-symbols:rate-review' },
+  { id: 'vlogs', label: 'Vlogs', icon: 'material-symbols:videocam-outline', iconSelected: 'material-symbols:videocam' },
+  { id: 'tips', label: 'Tips', icon: 'material-symbols:lightbulb-outline', iconSelected: 'material-symbols:lightbulb' },
+  { id: 'fun', label: 'Fun & challenges', icon: 'material-symbols:celebration-outline', iconSelected: 'material-symbols:celebration' },
+  { id: 'shorts', label: 'Shorts / Reels', icon: 'material-symbols:smart-display-outline', iconSelected: 'material-symbols:smart-display' },
+  { id: 'live', label: 'Live', icon: 'material-symbols:sensors', iconSelected: 'material-symbols:sensors' },
+  { id: 'podcast', label: 'Podcast', icon: 'material-symbols:podcasts', iconSelected: 'material-symbols:podcasts' },
+];
+
+export type GoalId = 'grow' | 'authority' | 'sell' | 'community';
+
+const GOALS: { id: GoalId; emoji: string; label: string }[] = [
+  { id: 'grow', emoji: '📈', label: 'Grow audience' },
+  { id: 'authority', emoji: '🏆', label: 'Build authority' },
+  { id: 'sell', emoji: '🛍️', label: 'Sell products' },
+  { id: 'community', emoji: '🤝', label: 'Build community' },
+];
+
+export const MIN_CADENCE = 1;
+export const MAX_CADENCE = 14;
+export const MAX_SECONDARY_KEYWORDS = 3;
+const MAX_KEYWORD_CHIPS = 8;
+
+// Common search phrases per niche, used to fill out the keyword list
+const NICHE_KEYWORDS: Record<string, string[]> = {
+  Fitness: ['no equipment workout', '15 minute workout', 'beginner fitness', 'full body workout', 'workout at home', 'fat burning workout'],
+  Tech: ['tech tips', 'best budget phone', 'ai tools for productivity', 'unboxing and review', 'tech for beginners'],
+  Finance: ['how to invest', 'money saving tips', 'budgeting for beginners', 'passive income ideas', 'personal finance tips'],
+  Cooking: ['easy recipes', 'quick dinner ideas', 'healthy meal prep', 'cooking for beginners', 'budget meals'],
+  Gaming: ['gameplay walkthrough', 'best games 2026', 'gaming tips', 'pro tips and tricks', 'game review'],
+  Education: ['study tips', 'how to learn faster', 'exam preparation', 'study with me', 'learning hacks'],
+  Travel: ['travel tips', 'budget travel guide', 'things to do in', 'travel vlog', 'packing tips'],
+  Beauty: ['skincare routine', 'makeup tutorial', 'drugstore dupes', 'beauty tips', 'everyday makeup'],
+};
+
+/** Build keyword suggestions from the niches, topics and audience skill picked earlier */
+export function suggestKeywords(niches: Niche[], topics: NicheTopic[], skill: SkillLevel | null): string[] {
+  const forSkill = (phrase: string) =>
+    skill === 'beginner' ? `${phrase} for beginners` : skill === 'pro' ? `advanced ${phrase}` : `${phrase} tips`;
+  const result: string[] = [];
+  const add = (k: string) => {
+    const clean = k.toLowerCase();
+    if (!result.includes(clean)) result.push(clean);
+  };
+  topics.forEach((t) => add(forSkill(t.topic)));
+  niches.forEach((n) => {
+    if (!topics.some((t) => t.niche === n.label)) add(forSkill(n.label));
+  });
+  topics.forEach((t) => add(t.topic));
+  const extras = niches.map((n) => NICHE_KEYWORDS[n.label] ?? []);
+  for (let i = 0; i < 6; i++) extras.forEach((list) => list[i] && add(list[i]));
+  return result.slice(0, MAX_KEYWORD_CHIPS);
+}
+
+const CARD = 'bg-white rounded-2xl shadow-sm border border-[#c7c4d8]/20 p-6 sm:p-7 flex flex-col space-y-6';
+const TILE_ON = 'bg-[#e5eeff] text-[#3525cd] shadow-sm hover:shadow-md';
+const TILE_OFF = 'bg-white border border-[#c7c4d8]/30 text-[#0b1c30] shadow-sm hover:bg-[#eff4ff]';
+const LABEL = 'text-[13px] leading-[18px] tracking-[0.01em] font-semibold text-[#0b1c30]';
+
+interface ContentStepProps {
+  niches: Niche[];
+  topics: NicheTopic[];
+  skill: SkillLevel | null;
+  contentTypes: string[];
+  cadence: number;
+  primaryKeyword: string | null;
+  secondaryKeywords: string[];
+  goal: GoalId | null;
+  onContentTypesChange: (types: string[]) => void;
+  onCadenceChange: (cadence: number) => void;
+  onPrimaryKeywordChange: (keyword: string | null) => void;
+  onSecondaryKeywordsChange: (keywords: string[]) => void;
+  onGoalChange: (goal: GoalId) => void;
+  onBack: () => void;
+  onContinue: () => void;
+}
+
+export function ContentStep({
+  niches,
+  topics,
+  skill,
+  contentTypes,
+  cadence,
+  primaryKeyword,
+  secondaryKeywords,
+  goal,
+  onContentTypesChange,
+  onCadenceChange,
+  onPrimaryKeywordChange,
+  onSecondaryKeywordsChange,
+  onGoalChange,
+  onBack,
+  onContinue,
+}: ContentStepProps) {
+  const keywords = useMemo(() => suggestKeywords(niches, topics, skill), [niches, topics, skill]);
+  const canContinue = contentTypes.length > 0 && primaryKeyword !== null && goal !== null;
+  const secondaryFull = secondaryKeywords.length >= MAX_SECONDARY_KEYWORDS;
+
+  // Enter continues, unless a button has focus
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Enter') return;
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'BUTTON') return;
+      if (canContinue) onContinue();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [canContinue, onContinue]);
+
+  const toggleType = (id: string) =>
+    onContentTypesChange(
+      contentTypes.includes(id)
+        ? contentTypes.filter((t) => t !== id)
+        : CONTENT_TYPES.map((c) => c.id).filter((c) => c === id || contentTypes.includes(c))
+    );
+
+  // Starring a chip makes it the main keyword; tapping it again unstars it
+  const starKeyword = (k: string) => {
+    if (primaryKeyword === k) {
+      onPrimaryKeywordChange(null);
+      return;
+    }
+    onPrimaryKeywordChange(k);
+    if (secondaryKeywords.includes(k)) onSecondaryKeywordsChange(secondaryKeywords.filter((s) => s !== k));
+  };
+
+  // Tapping the label picks it as one of up to 3 secondary keywords
+  const toggleSecondary = (k: string) => {
+    if (primaryKeyword === k) return starKeyword(k);
+    if (secondaryKeywords.includes(k)) onSecondaryKeywordsChange(secondaryKeywords.filter((s) => s !== k));
+    else if (!secondaryFull) onSecondaryKeywordsChange([...secondaryKeywords, k]);
+  };
+
+  return (
+    <section className="flex flex-col space-y-6 w-full">
+      {/* Card 1: content types & cadence */}
+      <div className={CARD}>
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0b1c30] tracking-tight">What do you create?</h2>
+          <p className="text-base text-[#464555] mt-1.5 font-normal">Pick all that apply.</p>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" role="group" aria-label="Content types">
+          {CONTENT_TYPES.map((c) => {
+            const selected = contentTypes.includes(c.id);
+            return (
+              <button
+                key={c.id}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => toggleType(c.id)}
+                className={`group relative flex flex-col items-center justify-center p-4 min-h-[96px] rounded-xl transition-all text-center ${selected ? TILE_ON : TILE_OFF}`}
+              >
+                {selected && (
+                  <span className="absolute top-2 right-2 size-5 rounded-full bg-[#4f46e5] text-white flex items-center justify-center">
+                    <Icon icon="material-symbols:check" width={12} height={12} />
+                  </span>
+                )}
+                <Icon
+                  icon={selected ? c.iconSelected : c.icon}
+                  width={24}
+                  height={24}
+                  className={`mb-1.5 transition-colors ${selected ? 'text-[#3525cd]' : 'text-[#777587] group-hover:text-[#3525cd]'}`}
+                />
+                <span className={LABEL}>{c.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center justify-between gap-4 p-4 bg-[#eff4ff] rounded-xl">
+          <div className="flex flex-col">
+            <span className="text-[20px] leading-[28px] tracking-[-0.02em] text-[#0b1c30] font-semibold">How often?</span>
+            <span className="text-[14px] leading-[22px] text-[#464555]">Weekly scheduled publishing frequency</span>
+          </div>
+          <div className="flex items-center gap-4 bg-white px-3 py-1.5 rounded-full shadow-sm">
+            <button
+              type="button"
+              aria-label="Post less often"
+              disabled={cadence <= MIN_CADENCE}
+              onClick={() => onCadenceChange(Math.max(MIN_CADENCE, cadence - 1))}
+              className="size-8 rounded-full bg-[#eff4ff] shadow-sm flex items-center justify-center text-[#0b1c30] hover:bg-[#e5eeff] transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Icon icon="material-symbols:remove" width={16} height={16} />
+            </button>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-[28px] leading-[36px] tracking-[-0.025em] text-[#3525cd] font-bold">{cadence}</span>
+              <span className="text-[13px] leading-[18px] tracking-[0.01em] font-semibold text-[#464555]">per week</span>
+            </div>
+            <button
+              type="button"
+              aria-label="Post more often"
+              disabled={cadence >= MAX_CADENCE}
+              onClick={() => onCadenceChange(Math.min(MAX_CADENCE, cadence + 1))}
+              className="size-8 rounded-full bg-[#eff4ff] shadow-sm flex items-center justify-center text-[#0b1c30] hover:bg-[#e5eeff] transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Icon icon="material-symbols:add" width={16} height={16} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Card 2: keywords & goal */}
+      <div className={CARD}>
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0b1c30] tracking-tight">Pick your keywords</h2>
+          <p className="text-base text-[#464555] mt-1.5 font-normal">Star your main one, then pick up to 3 more.</p>
+        </div>
+
+        <div className="flex flex-wrap gap-2.5" role="group" aria-label="Keywords">
+          {keywords.map((k) => {
+            const isPrimary = primaryKeyword === k;
+            const isSecondary = secondaryKeywords.includes(k);
+            const locked = !isPrimary && !isSecondary && secondaryFull && primaryKeyword !== null;
+            const chipClass = isPrimary
+              ? 'bg-[#4f46e5] text-white hover:opacity-95'
+              : isSecondary
+                ? 'bg-[#e5eeff] text-[#3525cd] hover:bg-[#dce9ff]'
+                : 'bg-[#eff4ff] text-[#464555] hover:bg-[#e5eeff]';
+            return (
+              <div key={k} className={`h-10 pl-1.5 pr-4 rounded-full shadow-sm flex items-center gap-1 transition ${chipClass} ${locked ? 'opacity-50' : ''}`}>
+                <button
+                  type="button"
+                  aria-label={isPrimary ? `Unstar ${k}` : `Star ${k} as main keyword`}
+                  aria-pressed={isPrimary}
+                  onClick={() => starKeyword(k)}
+                  className="size-7 rounded-full flex items-center justify-center hover:bg-black/5"
+                >
+                  <Icon
+                    icon={isPrimary || isSecondary ? 'material-symbols:star' : 'material-symbols:star-outline'}
+                    width={14}
+                    height={14}
+                    className={isPrimary ? 'text-white' : isSecondary ? 'text-[#3525cd]' : 'text-[#777587]'}
+                  />
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={isSecondary}
+                  disabled={locked}
+                  onClick={() => (primaryKeyword === null ? starKeyword(k) : toggleSecondary(k))}
+                  className={`text-[13px] leading-[18px] tracking-[0.01em] font-semibold disabled:cursor-not-allowed ${isPrimary ? 'text-white' : 'text-[#0b1c30]'}`}
+                >
+                  {k}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="pt-2 flex flex-col space-y-3">
+          <span className="text-[20px] leading-[28px] tracking-[-0.02em] text-[#0b1c30] font-semibold">Your main goal</span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" role="radiogroup" aria-label="Main goal">
+            {GOALS.map((g) => {
+              const selected = goal === g.id;
+              return (
+                <button
+                  key={g.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => onGoalChange(g.id)}
+                  className={`relative flex flex-col items-center justify-center p-3.5 rounded-xl transition text-center ${
+                    selected ? 'bg-[#e5eeff] text-[#3525cd] shadow-sm' : 'bg-white border border-[#c7c4d8]/30 text-[#0b1c30] shadow-sm hover:bg-[#eff4ff]'
+                  }`}
+                >
+                  {selected && (
+                    <span className="absolute top-2 right-2 size-4 rounded-full bg-[#4f46e5] text-white flex items-center justify-center">
+                      <Icon icon="material-symbols:check" width={10} height={10} />
+                    </span>
+                  )}
+                  <span className="text-xl mb-1">{g.emoji}</span>
+                  <span className={LABEL}>{g.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation, aligned right */}
+      <div className="flex items-center justify-end gap-3 pt-2 pb-6">
+        <button
+          type="button"
+          onClick={onBack}
+          className="px-5 py-2.5 rounded-xl bg-[#e5eeff] text-[#0b1c30] text-[13px] leading-[18px] tracking-[0.01em] font-semibold hover:bg-[#dce9ff] transition flex items-center gap-1.5"
+        >
+          <Icon icon="material-symbols:arrow-back" width={14} height={14} />
+          <span className="text-inherit">Back</span>
+        </button>
+        <button
+          type="button"
+          onClick={onContinue}
+          disabled={!canContinue}
+          className="px-7 py-3 rounded-xl bg-[#4f46e5] text-white text-[13px] leading-[18px] tracking-[0.01em] font-semibold shadow-md hover:opacity-95 active:scale-[0.98] transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+        >
+          <span className="text-inherit">Continue</span>
+          <Icon icon="material-symbols:arrow-forward" width={16} height={16} />
+        </button>
+      </div>
+    </section>
+  );
+}

@@ -6,11 +6,12 @@ import { WelcomeStep } from '@/components/strategist/WelcomeStep';
 import { BrandStep, PlatformId } from '@/components/strategist/BrandStep';
 import { NicheStep, Niche, NicheTopic } from '@/components/strategist/NicheStep';
 import { AudienceStep, SkillLevel } from '@/components/strategist/AudienceStep';
+import { ContentStep, GoalId } from '@/components/strategist/ContentStep';
 import { listStrategies } from '@/lib/api/strategyClient';
 
 const TOTAL_STEPS = 7;
 
-type Screen = 'welcome' | 'brand' | 'niche' | 'audience' | 'content';
+type Screen = 'welcome' | 'brand' | 'niche' | 'audience' | 'content' | 'review';
 
 // Step number and progress shown in the top bar for each screen
 const SCREEN_PROGRESS: Record<Screen, { step: number; progress: number }> = {
@@ -19,6 +20,7 @@ const SCREEN_PROGRESS: Record<Screen, { step: number; progress: number }> = {
   niche: { step: 2, progress: 28 },
   audience: { step: 4, progress: 57 },
   content: { step: 5, progress: 71 },
+  review: { step: 7, progress: 100 },
 };
 
 export default function StrategistPage() {
@@ -32,6 +34,11 @@ export default function StrategistPage() {
   const [skill, setSkill] = useState<SkillLevel | null>(null);
   const [interests, setInterests] = useState<string[]>([]);
   const [struggles, setStruggles] = useState<string[]>([]);
+  const [contentTypes, setContentTypes] = useState<string[]>([]);
+  const [cadence, setCadence] = useState(3);
+  const [primaryKeyword, setPrimaryKeyword] = useState<string | null>(null);
+  const [secondaryKeywords, setSecondaryKeywords] = useState<string[]>([]);
+  const [goal, setGoal] = useState<GoalId | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,6 +62,7 @@ export default function StrategistPage() {
   const goToNiche = useCallback(() => setScreen('niche'), []);
   const goToAudience = useCallback(() => setScreen('audience'), []);
   const goToContent = useCallback(() => setScreen('content'), []);
+  const goToReview = useCallback(() => setScreen('review'), []);
 
   const { step, progress } = SCREEN_PROGRESS[screen];
 
@@ -66,6 +74,10 @@ export default function StrategistPage() {
       {...(screen === 'audience' && {
         background: '#f8f9ff',
         mainClassName: 'flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8 items-center',
+      })}
+      {...(screen === 'content' && {
+        background: '#f9f8fb',
+        mainClassName: 'flex-1 max-w-7xl w-full mx-auto px-6 py-8',
       })}
     >
       {screen === 'welcome' && <WelcomeStep savedCount={savedCount} onStart={goToBrand} />}
@@ -109,16 +121,36 @@ export default function StrategistPage() {
         />
       )}
 
-      {/* Placeholder until the next design is built */}
       {screen === 'content' && (
+        <ContentStep
+          niches={niches}
+          topics={topics}
+          skill={skill}
+          contentTypes={contentTypes}
+          cadence={cadence}
+          primaryKeyword={primaryKeyword}
+          secondaryKeywords={secondaryKeywords}
+          goal={goal}
+          onContentTypesChange={setContentTypes}
+          onCadenceChange={setCadence}
+          onPrimaryKeywordChange={setPrimaryKeyword}
+          onSecondaryKeywordsChange={setSecondaryKeywords}
+          onGoalChange={setGoal}
+          onBack={goToAudience}
+          onContinue={goToReview}
+        />
+      )}
+
+      {/* Placeholder until the Review design is built */}
+      {screen === 'review' && (
         <div className="w-full max-w-[640px] mx-auto bg-white rounded-2xl border border-slate-200/70 p-10 text-center">
-          <p className="text-[15px] font-semibold text-slate-900">What do you create? is coming next.</p>
+          <p className="text-[15px] font-semibold text-slate-900">Review your answers is coming next.</p>
           <button
             type="button"
-            onClick={goToAudience}
+            onClick={goToContent}
             className="mt-5 text-[13px] font-medium text-indigo-600 hover:text-indigo-700"
           >
-            ← Back to audience
+            ← Back to content &amp; keywords
           </button>
         </div>
       )}
