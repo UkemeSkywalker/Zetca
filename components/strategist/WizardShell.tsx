@@ -9,8 +9,14 @@ interface WizardShellProps {
   totalSteps: number;
   /** Progress bar fill, 0–100 */
   progress: number;
+  /** Page background colour; screens from Stitch don't all use the same one */
+  background?: string;
+  /** Layout classes for the main area; defaults to a vertically centred column */
+  mainClassName?: string;
   children: React.ReactNode;
 }
+
+const DEFAULT_MAIN = 'flex-1 w-full flex flex-col items-center justify-center px-4 py-8 sm:py-12';
 
 function getInitials(name?: string): string {
   if (!name) return 'U';
@@ -18,11 +24,11 @@ function getInitials(name?: string): string {
   return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? parts[0]?.[1] ?? '')).toUpperCase();
 }
 
-export function WizardShell({ step, totalSteps, progress, children }: WizardShellProps) {
+export function WizardShell({ step, totalSteps, progress, background = '#EEF2F7', mainClassName = DEFAULT_MAIN, children }: WizardShellProps) {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#EEF2F7] text-slate-900 font-heading antialiased">
+    <div className="min-h-screen flex flex-col text-slate-900 font-heading antialiased" style={{ backgroundColor: background }}>
       {/* Slim distraction-free header bar */}
       <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-200/80">
         <div className="max-w-7xl mx-auto h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
@@ -69,7 +75,7 @@ export function WizardShell({ step, totalSteps, progress, children }: WizardShel
         </div>
       </header>
 
-      <main className="flex-1 w-full flex flex-col items-center justify-center px-4 py-8 sm:py-12">{children}</main>
+      <main className={mainClassName}>{children}</main>
 
       {/* Bottom minimal footer */}
       <footer className="w-full py-4 px-6 border-t border-slate-200/80 bg-white/60 backdrop-blur-sm">
