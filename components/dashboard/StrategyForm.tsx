@@ -248,7 +248,7 @@ export const StrategyForm: React.FC<StrategyFormProps> = ({ onStrategyGenerated 
                 errors.goals ? 'bg-on-error' : 'bg-surface-container-low'
               }`}
               style={{ border: errors.goals ? '2px solid var(--error)' : 'none' }}
-              onFocus={(e) => { if (!errors.goals) e.currentTarget.style.boxShadow = '0 0 0 2px rgba(74, 64, 224, 0.4)'; }}
+              onFocus={(e) => { if (!errors.goals) e.currentTarget.style.boxShadow = '0 0 0 2px rgba(79, 70, 229, 0.4)'; }}
               onBlur={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
               placeholder="What are your social media goals?"
               rows={4}
