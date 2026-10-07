@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useId } from 'react';
+import React, { useId, useState } from 'react';
 import { Icon } from '@iconify/react';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -12,15 +12,18 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, helperText, leftIcon, rightIcon, className = '', id, ...props }, ref) => {
+  ({ label, error, helperText, leftIcon, rightIcon, className = '', id, type, ...props }, ref) => {
     const generatedId = useId();
     const inputId = id || generatedId;
+    const [showPassword, setShowPassword] = useState(false);
+    const isPassword = type === 'password';
+    const resolvedType = isPassword ? (showPassword ? 'text' : 'password') : type;
     /* Design System: surface-container-low bg, 0px border, focus = 2px ghost border primary 40% */
     const baseStyles = 'w-full px-4 py-3 rounded focus:outline-none transition-all min-h-[44px]';
     const normalStyles = 'bg-surface-container-low border-0 focus:ring-0';
     const errorStyles = 'bg-on-error border-0 focus:ring-0';
     const iconPaddingLeft = leftIcon ? 'pl-11' : '';
-    const iconPaddingRight = rightIcon ? 'pr-11' : '';
+    const iconPaddingRight = rightIcon || isPassword ? 'pr-11' : '';
 
     return (
       <div className="w-full">
@@ -40,6 +43,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           <input
             ref={ref}
             id={inputId}
+            type={resolvedType}
             className={`${baseStyles} ${error ? errorStyles : normalStyles} ${iconPaddingLeft} ${iconPaddingRight} ${className}`}
             style={{
               border: error ? '2px solid var(--error)' : 'none',
@@ -60,10 +64,22 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {...props}
           />
           
-          {rightIcon && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-outline">
-              <Icon icon={rightIcon} width={20} />
-            </div>
+          {isPassword ? (
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface transition-colors"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-pressed={showPassword}
+            >
+              <Icon icon={showPassword ? 'solar:eye-closed-bold' : 'solar:eye-bold'} width={20} />
+            </button>
+          ) : (
+            rightIcon && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-outline">
+                <Icon icon={rightIcon} width={20} />
+              </div>
+            )
           )}
         </div>
 
