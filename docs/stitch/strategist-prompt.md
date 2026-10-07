@@ -4,9 +4,11 @@ Prompts for designing the new **AI Strategy Generator** experience in [Google St
 
 **How to use**
 1. Start a new Stitch project in **Web** mode.
-2. Paste the **Master prompt** together with **Screen 1**.
-3. Generate the remaining screens one at a time, in order, in the same project so Stitch keeps the style consistent. Each screen prompt refers back to the earlier ones.
-4. Budget 3–5 refinement rounds per screen. Use the follow-up prompts at the end for states and mobile.
+2. Paste the **Master prompt** together with **Screen 1**, and let Stitch build it.
+3. Paste the **Quiz screen rules** block as its own message.
+4. Paste each remaining screen on its own, in order, letting Stitch build each one before the next. Stay in the same project so the style stays consistent.
+5. If a screen drifts (jargon, extra panels, long text), reply: "Follow the quiz screen rules strictly. Remove anything not listed in the screen prompt."
+6. Use the follow-up prompts at the end for states and mobile.
 
 Research and reasoning behind each choice: [Strategist redesign reference board](https://claude.ai/artifact/We5YybdbKEtLKnSTwDzxD4).
 
@@ -37,137 +39,247 @@ Wizard layout (all quiz steps):
 
 ---
 
+## Quiz screen rules (paste right after Screen 1 is built)
+
+The master prompt alone left Stitch room to invent jargon labels, extra panels, footers, fake statistics and long copy. Paste this block on its own as a message straight after Screen 1 is built. If you already have screens, paste it and then regenerate them.
+
+```
+Rules for every screen in this project. Follow them strictly:
+
+1. Keep it simple. Show ONLY the elements listed in each screen prompt. Do not add extra sections, cards, banners, tips, statistics, scores, badges, footers or labels.
+2. One progress indicator only: the top bar ("Step 2 of 7" with a thin indigo bar). No second step or phase header, no percentages, no time-remaining text. The top bar holds only the Zetca logo, the step text with its bar, an "Exit" link and the user avatar: no "AI Strategist" tag, no "Discovery Flow" label. No bottom footer bar on any screen.
+3. Use plain, friendly words a creator would use. Never use jargon such as: engine, anchor, matrix, semantic, algorithm, foundation, spec, cohesion, index, synergy, flywheel, module, high-intent, saturation, context memory.
+4. Text limits: question headline max 8 words; helper text max one line (about 10 words); AI bubble one short sentence (max 12 words); option labels 1–3 words.
+5. Type hierarchy: the question headline is the biggest, most obvious thing on screen (32px bold #0F172A). Helper text 15px #64748B. Option labels 15px semibold. Everything else 13px or smaller.
+6. Left column contains only three things, top to bottom: the AI bubble, the white question card (40px padding, 32px gap between groups), and the nav row. Nothing else.
+7. AI bubble: one line, 14px, indigo spark avatar, light indigo tint background. No title, label or heading on the bubble.
+8. Keyboard hints: a tiny muted letter (A, B, C…) in the corner of each option, 11px #94A3B8. No written instructions like "Press 1–9 to select".
+9. Nav row: "← Back" text button on the left, solid indigo "Continue →" button on the right, a small muted "or press Enter" next to it. Nothing below the nav row.
+10. Right column: one white card titled "Your strategy". It shows only what the user has already answered. Anything not answered yet is a faint grey skeleton bar with no text: no locks, no step numbers, no "upcoming" lists, no scores.
+```
+
+---
+
 ## Screen 1: Welcome
 
 ```
-Screen 1, "Welcome" (full width, no live preview panel yet).
-Purpose: invite the user to start building their content strategy and set expectations.
-Content:
-- Centered white card, max-width 640px, on the #EEF2F7 background.
-- Indigo spark icon inside a soft indigo-tinted circle.
-- Headline: "Let's build your content strategy"
-- Subtext: "Answer a few quick questions about your brand and audience. We'll craft a multi-platform strategy and SEO-ready channel descriptions."
-- Three small feature rows with outline icons: "7 quick steps", "About 2 minutes", "Descriptions for YouTube, Instagram, TikTok, LinkedIn & X".
-- Primary button: "Start building →". Below it a text link "View saved strategies (4)".
-Style: calm, welcoming, lots of whitespace.
+Screen 1, "Welcome". Slim top bar with the Zetca logo and an "Exit" text button only: no step counter or progress bar on this screen. One white card centred on the #EEF2F7 page, max-width 560px, 48px padding. Calm and welcoming, with lots of white space.
+
+Inside the card, top to bottom:
+1. A 56px indigo spark icon in a soft indigo-tint rounded square.
+2. Headline, 32px bold: "Let's build your content strategy"
+3. One line, 16px grey: "A few quick questions, then we'll do the rest."
+4. Three short rows, each a small outline icon plus one plain line of 14px text (no badges, no second lines):
+   - "7 quick questions"
+   - "About 2 minutes"
+   - "Bios for YouTube, Instagram, TikTok, LinkedIn & X"
+5. A full-width solid indigo button, 52px tall: "Start building →"
+6. A small grey text link, centred: "View saved strategies"
+
+Do NOT add: badges or pills above or inside the card (like "Ready to begin" or version numbers), descriptions under the three rows, tags like "Guided" or "Instant", a footer strip, security or encryption notes, keyboard hints, or any jargon.
 ```
 
 ## Screen 2: Brand & platforms
 
 ```
-Screen 2, "Brand & platforms" (Step 1 of 7), using the wizard layout from the master prompt.
-Purpose: capture the brand name and which platforms to create a strategy for.
-Left question card:
-- Eyebrow label "STEP 1 · BRAND" in small indigo caps.
-- Question: "What's your brand or channel called?"
-- Large text input with placeholder "e.g. Fit with Ade".
-- Second question: "Where do you want to grow?" with helper text "Pick all that apply".
-- Grid of 6 selectable platform cards (3 × 2), each with platform logo, name and a tiny line: YouTube "Long-form & Shorts", Instagram "Reels & carousels", TikTok "Short video", LinkedIn "Professional audience", X "Real-time threads", Facebook "Communities". Show YouTube and Instagram selected.
-Right live preview: a profile card with a placeholder avatar circle, the brand name "Fit with Ade", and small platform logo chips for the selected platforms. Below it, greyed placeholder rows: "Niche", "Audience", "Content mix", "Keywords".
+Screen 2, "Brand & platforms". Top bar shows "Step 1 of 7" with the progress bar about 14% filled. Follow the quiz screen rules strictly.
+
+LEFT COLUMN, top to bottom:
+1. AI bubble (one line): "Hi! Let's start with the basics."
+2. White question card containing:
+   a. Headline, 32px bold: "What's your channel called?"
+   b. A large text input, 52px tall, with "Fit with Ade" typed in it. No character counter, no "valid" badge.
+   c. 32px of space, then sub-heading, 18px semibold: "Where do you want to grow?"
+   d. Helper, one line, 15px grey: "Pick all that apply."
+   e. A 3 × 2 grid of equal platform cards, about 88px tall. Each card has the platform's logo and its name only: YouTube, Instagram, TikTok, LinkedIn, X, Facebook. YouTube and Instagram are selected (indigo border, indigo tint, check badge in the corner). Tiny muted keyboard letters A–F in each card's corner.
+3. Nav row: "← Back" (disabled grey) on the left, "Continue →" on the right.
+
+RIGHT COLUMN, the "Your strategy" card:
+- Profile row: round initials avatar "FA", "Fit with Ade", and small YouTube and Instagram logos, with a soft indigo glow because they just updated.
+- Below that, four faint grey skeleton bars with no text.
+
+Do NOT add: a phase or step header above the card, time estimates, step eyebrow labels, description lines under the platform cards, "platforms active" counters, locked or upcoming module lists, tips, statistics, footers or security badges.
 ```
 
 ## Screen 3: Niche & core topic
 
 ```
-Screen 3, "Niche & core topic" (Step 2 of 7), same wizard layout.
-Purpose: identify the creator's niche and specific core topic in a fun, low-effort way.
-Left question card:
-- AI bubble: "Nice! Two platforms is a great start."
-- Question: "What's your channel all about?"
-- Large text input with placeholder "Describe it in a few words…"
-- "Popular niches" row of pill chips with emoji: 💪 Fitness, 💻 Tech, 💰 Personal finance, 🍳 Cooking, 🎮 Gaming, 📚 Education, ✈️ Travel, 💄 Beauty, + "Something else". Fitness is selected.
-- When a niche is selected, a second row slides in: "Narrow it down: what's your core topic?" with sub-chips: Home workouts, Weight loss, Strength training, Yoga, Running, Nutrition. "Home workouts" selected.
-Right live preview: persona card now shows a niche tag "Fitness › Home workouts" with a small indigo highlight animation.
+Screen 3, "Niche & core topic". Top bar shows "Step 2 of 7" with the progress bar about 28% filled. Follow the quiz screen rules strictly. It should feel light and quick: one obvious question, big friendly chips, lots of white space.
+
+LEFT COLUMN, top to bottom:
+1. AI bubble (one line): "Nice, two platforms is a great start!"
+2. White question card containing:
+   a. Headline, 32px bold: "What's your channel about?"
+   b. Helper, one line, 15px grey: "Pick a niche, or add your own."
+   c. Niche chips: 8 rounded pill chips wrapping over two rows. Each chip is an emoji plus a 1-word label: 💪 Fitness, 💻 Tech, 💰 Finance, 🍳 Cooking, 🎮 Gaming, 📚 Education, ✈️ Travel, 💄 Beauty, then a dashed-outline chip "+ Other". Chips are 44px tall, fully rounded, white with a 1px #E2E8F0 border, 12px gap between chips. "Fitness" is selected: indigo #4F46E5 border, #EEF2FF fill, indigo text, small check icon.
+   d. 32px of space, then a smaller sub-heading, 18px semibold: "Narrow it down"
+   e. Topic chips, smaller pills (36px tall), same style: Home workouts, Weight loss, Strength, Yoga, Running, Nutrition, "+ Other". "Home workouts" is selected.
+3. Nav row: "← Back" on the left, "Continue →" on the right.
+
+RIGHT COLUMN, the "Your strategy" card:
+- Profile row: round initials avatar "FA", the name "Fit with Ade", and small YouTube and Instagram logos.
+- "Niche" label (12px grey) with one indigo-tint chip "💪 Fitness › Home workouts". Give it a soft indigo glow to show it just updated.
+- Below that, three faint grey skeleton bars (no text) for the parts not answered yet.
+
+Do NOT add: a free-text input box, a second progress or phase header, percentages or time remaining, labels like "Mandatory", "Anchor", "Level 2" or "Spec", content pillar lists, upcoming steps or locked modules, scores, tips, statistics, footers or security badges.
 ```
 
 ## Screen 4: Who's watching?
 
 ```
-Screen 4, "Who's watching?" (Step 3 of 7), same wizard layout.
-Purpose: define the target audience's age group and skill level.
-Left question card:
-- AI bubble: "Home workouts: love it. Who are you making them for?"
-- Question 1: "How old is your audience?" with a row of 5 selectable cards: 13–17, 18–24, 25–34, 35–44, 45+ (multi-select; 25–34 and 35–44 selected).
-- Question 2: "What's their skill level?" with 3 larger cards with simple friendly illustrations: 🌱 Beginner "Just getting started", 🌿 Intermediate "Knows the basics", 🌳 Pro "Advanced & experienced". Beginner selected.
-Right live preview: an audience persona card appears: avatar illustration, "Busy beginners, 25–44", skill badge "Beginner".
+Screen 4, "Who's watching?". Top bar shows "Step 3 of 7" (about 43% filled). Follow the quiz screen rules strictly. Same layout and chip/card styles as Screen 3.
+
+LEFT COLUMN, top to bottom:
+1. AI bubble (one line): "Home workouts, love it! Who are they for?"
+2. White question card containing:
+   a. Headline, 32px bold: "Who's watching?"
+   b. Helper, one line, 15px grey: "Pick all the ages that fit."
+   c. Age chips in one row: 13–17, 18–24, 25–34, 35–44, 45+. Pill chips 44px tall. 25–34 and 35–44 are selected (indigo selected style).
+   d. 32px of space, then sub-heading, 18px semibold: "Their skill level"
+   e. Three equal cards side by side, each about 120px tall: a large emoji on top, a bold label, and a 3–4 word grey line. 🌱 Beginner "Just getting started", 🌿 Intermediate "Knows the basics", 🌳 Pro "Ready for more". Beginner is selected (indigo border, indigo tint, check badge in the corner).
+3. Nav row: "← Back" on the left, "Continue →" on the right.
+
+RIGHT COLUMN, the "Your strategy" card:
+- Same profile row and Niche chip as Screen 3.
+- New "Audience" row: label (12px grey) and two chips, "25–44" and "🌱 Beginner", with a soft indigo glow because they just updated.
+- Two faint grey skeleton bars (no text) for the parts not answered yet.
+
+Do NOT add: extra explanation text, persona illustrations, demographic statistics, a second progress header, percentages, upcoming steps, tips or footers.
 ```
 
 ## Screen 5: Interests & pain points
 
 ```
-Screen 5, "Interests & pain points" (Step 4 of 7), same wizard layout.
-Purpose: capture audience interests and pain points with AI suggestions plus free typing.
-Left question card:
-- AI bubble: "Here are some ideas based on your niche. Tap to add, or type your own."
-- Question 1: "What are they interested in?" A "pick or type" chip input field: selected chips inside the field (Healthy eating ×, Quick workouts ×), a text cursor to type more, and below it suggested chips with a "+" icon: Meal prep, Mental health, Home gym gear, Weight loss.
-- Question 2: "What problems do they struggle with?" Same chip input pattern with rose-tinted chips: No time to work out ×, Don't know where to start ×; suggestions: + Lack of motivation, + Gym anxiety, + Plateaus, + Sore joints.
-- Small sparkle link: "✨ Suggest more".
-Right live preview: the persona card gains "Interests" and "Pain points" chip groups.
+Screen 5, "Interests & pain points". Top bar shows "Step 4 of 7" (about 57% filled). Follow the quiz screen rules strictly. Same layout and styles as the previous steps.
+
+LEFT COLUMN, top to bottom:
+1. AI bubble (one line): "Here are some ideas. Tap to add, or type your own."
+2. White question card containing:
+   a. Headline, 32px bold: "What do they care about?"
+   b. Sub-heading, 18px semibold: "Interests"
+   c. A tag input box (white, 1px #E2E8F0 border, 12px radius, min 52px tall). Inside it are two selected indigo chips with a small ×: "Healthy eating ×", "Quick workouts ×", then a grey placeholder "Type to add…". Directly below, a row of suggestion chips, white with a dashed border and a "+": "+ Meal prep", "+ Home gym gear", "+ Mental health".
+   d. 32px of space, then sub-heading, 18px semibold: "Struggles"
+   e. The same tag input pattern, with chips in a soft rose tint (#FFF1F2 fill, rose text): "No time ×", "Where to start? ×". Suggestions below: "+ Low motivation", "+ Gym anxiety", "+ Plateaus".
+3. Nav row: "← Back" on the left, "Continue →" on the right.
+
+RIGHT COLUMN, the "Your strategy" card:
+- Same profile, Niche and Audience rows as before.
+- New "Interests" row with two small indigo chips, and a "Struggles" row with two small rose chips. Soft glow on the new rows.
+- One faint grey skeleton bar (no text) for what's left.
+
+Do NOT add: helper paragraphs, a "Suggest more" link, AI labels, counts or limits text, a second progress header, percentages, tips or footers.
 ```
 
 ## Screen 6: What do you create?
 
 ```
-Screen 6, "What do you create?" (Step 5 of 7), same wizard layout.
-Purpose: identify the types of content the creator produces and how often they post.
-Left question card:
-- AI bubble: "Beginners love step-by-step content."
-- Question: "What kind of content do you make?" with helper "Pick all that apply".
-- Grid of 8 selectable icon cards (4 × 2), each with an outline icon and a one-line description: Tutorials "Step-by-step how-tos", Reviews "Gear & product reviews", Vlogs "Behind the scenes", Tips "Quick tips & hacks", Entertainment "Challenges & fun", Shorts / Reels "Under 60 seconds", Live "Streams & Q&As", Podcast "Long conversations". Tutorials, Tips and Shorts/Reels selected.
-- Second question: "How often will you post?" A stepper control: [ − ] 3 [ + ] "videos per week", with the friendly hint "Consistency beats volume".
-Right live preview: a "Content mix" donut chart (Tutorials / Tips / Shorts in indigo, emerald and purple) and "3× per week" cadence badge.
+Screen 6, "What do you create?". Top bar shows "Step 5 of 7" (about 71% filled). Follow the quiz screen rules strictly. Same layout and styles as the previous steps.
+
+LEFT COLUMN, top to bottom:
+1. AI bubble (one line): "Beginners love step-by-step videos!"
+2. White question card containing:
+   a. Headline, 32px bold: "What do you create?"
+   b. Helper, one line, 15px grey: "Pick all that apply."
+   c. A 4 × 2 grid of equal square-ish cards (about 96px tall). Each card has a 24px outline icon on top and a bold 1–2 word label under it, with no description lines: Tutorials, Reviews, Vlogs, Tips, Fun & challenges, Shorts / Reels, Live, Podcast. Tutorials, Tips and Shorts / Reels are selected (indigo border, indigo tint, check badge in the corner).
+   d. 32px of space, then one row: label "How often?" (18px semibold) on the left, and on the right a stepper: a "−" circle button, a big "3", a "+" circle button, then the grey text "per week".
+3. Nav row: "← Back" on the left, "Continue →" on the right.
+
+RIGHT COLUMN, the "Your strategy" card:
+- Same rows as before (profile, Niche, Audience, Interests, Struggles).
+- New "Content" row: three small chips (Tutorials, Tips, Shorts) and a "3× / week" chip. Soft glow on the new row.
+- One faint grey skeleton bar (no text) for keywords.
+
+Do NOT add: description lines under the content cards, charts or donut graphs, hints like "consistency beats volume", a second progress header, percentages, tips or footers.
 ```
 
 ## Screen 7: Keywords & goals
 
 ```
-Screen 7, "Keywords & goals" (Step 6 of 7), same wizard layout.
-Purpose: choose the primary and secondary SEO keywords and the main goal.
-Left question card:
-- AI bubble: "These are terms people actually search for in your niche."
-- Question 1: "Pick your keywords". Helper: "Star ⭐ one primary keyword, then choose up to 3 secondary ones." A wrap of keyword chips: "home workouts for beginners" (starred, solid indigo = PRIMARY label), "no equipment workout" (selected, indigo outline = Secondary), "15 minute workout" (secondary), "beginner fitness" (secondary), "full body workout", "workout at home", "fat burning workout". Small search-volume dots (●●●) on each chip.
-- Question 2: "What's your main goal?" 4 cards: 📈 Grow my audience, 🏆 Build authority, 🛍️ Sell a product, 🤝 Build a community. "Grow my audience" selected.
-Right live preview: a "Keywords" section showing the primary keyword in a solid indigo chip and secondary keywords in outline chips; a goal badge.
+Screen 7, "Keywords & goals". Top bar shows "Step 6 of 7" (about 86% filled). Follow the quiz screen rules strictly. Same layout and styles as the previous steps.
+
+LEFT COLUMN, top to bottom:
+1. AI bubble (one line): "People search for these in your niche."
+2. White question card containing:
+   a. Headline, 32px bold: "Pick your keywords"
+   b. Helper, one line, 15px grey: "Star your main one, then pick up to 3 more."
+   c. Keyword chips wrapping over 2–3 rows, pill chips 40px tall, each with a small ☆ star icon on its left:
+      - "home workouts for beginners": the MAIN keyword, shown as a solid indigo #4F46E5 chip with white text and a filled ★.
+      - "no equipment workout", "15 minute workout", "beginner fitness": selected, indigo border, #EEF2FF fill, indigo text.
+      - "full body workout", "workout at home", "fat burning workout": unselected, white with a grey border.
+   d. 32px of space, then sub-heading, 18px semibold: "Your main goal"
+   e. Four equal cards in one row, each with a big emoji and a 2-word bold label: 📈 Grow audience, 🏆 Build authority, 🛍️ Sell products, 🤝 Build community. "Grow audience" is selected.
+3. Nav row: "← Back" on the left, "Continue →" on the right.
+
+RIGHT COLUMN, the "Your strategy" card:
+- Same rows as before.
+- New "Keywords" row: the main keyword as a solid indigo chip, then three outline chips. And a "Goal" row: "📈 Grow audience". Soft glow on the new rows. No skeleton bars left: the card is complete.
+
+Do NOT add: search volume numbers or dots, a "primary/secondary" legend, SEO explanations, a second progress header, percentages, tips or footers.
 ```
 
 ## Screen 8: Review
 
 ```
-Screen 8, "Review your answers" (Step 7 of 7), same wizard layout but the right panel becomes the full persona summary.
-Purpose: let the user check and edit everything before generating.
-Left: heading "Looking good! Review your answers". A stack of compact white summary cards, each with an outline icon, label, the answer, and a pencil "Edit" button on the right: Brand & platforms (Fit with Ade · YouTube, Instagram); Niche (Fitness › Home workouts); Audience (25–44 · Beginner); Interests & pain points (chips); Content (Tutorials, Tips, Shorts · 3×/week); Keywords & goal (primary keyword chip + 3 secondary · Grow my audience).
-Bottom: large primary button "✨ Generate my strategy", and the small note "Takes about 30 seconds".
+Screen 8, "Review". Top bar shows "Step 7 of 7" (bar full). Follow the quiz screen rules strictly. This screen is ONE centred column, max-width 720px: no right "Your strategy" card, because this page is the summary.
+
+Top to bottom:
+1. AI bubble (one line): "Looking great! Check everything before we build."
+2. Headline, 32px bold: "Review your answers"
+3. A white card containing six rows separated by thin #E2E8F0 lines. Each row is 56–64px tall: a grey 20px outline icon, a grey 13px label, the answer as chips or short text, and a small pencil "Edit" text button on the far right.
+   - Brand: "Fit with Ade" + YouTube and Instagram logos
+   - Niche: chip "💪 Fitness › Home workouts"
+   - Audience: chips "25–44", "🌱 Beginner"
+   - Interests & struggles: 2 indigo chips + 2 rose chips
+   - Content: chips "Tutorials", "Tips", "Shorts", "3× / week"
+   - Keywords & goal: solid indigo chip "home workouts for beginners", "+3 more", and "📈 Grow audience"
+4. A full-width, large solid indigo button, 56px tall: "✨ Generate my strategy", with one small grey line under it: "Takes about 30 seconds".
+5. "← Back" text button.
+
+Do NOT add: a right-side panel, scores, completion percentages, extra explanations, tips or footers.
 ```
 
 ## Screen 9: Generating
 
 ```
-Screen 9, "Generating" (full width, centred, no progress bar).
-Purpose: keep the user engaged while the AI works.
-Content: centered card with an animated indigo spark/orb, headline "Crafting your strategy…", and a vertical checklist that ticks off one by one: ✓ Reading your niche, ✓ Picking the best keywords, ◌ Writing channel descriptions (in progress, indigo spinner), ○ Planning your posting schedule. A thin indigo progress bar at the bottom. A rotating tip in muted text: "Tip: the first 100 characters of a YouTube description show up in search."
+Screen 9, "Generating". Same slim top bar but with no step text and no progress bar. One white card centred on the page, max-width 480px, 48px padding. Calm and minimal.
+
+Inside the card, top to bottom:
+1. A soft indigo glowing orb or spark icon, about 64px.
+2. Headline, 24px bold: "Building your strategy…"
+3. A checklist of four rows, 15px, 16px apart:
+   - ✓ (emerald) "Reading your niche"
+   - ✓ (emerald) "Picking keywords"
+   - small indigo spinner, "Writing descriptions", in bold dark text (this is the current step)
+   - ○ (light grey), "Planning your schedule", in grey text
+4. A thin indigo progress bar, about 60% full.
+
+Do NOT add: tips, statistics, percentages, extra text, buttons or any second card.
 ```
 
 ## Screen 10: Result + Channel Description builder
 
 ```
-Screen 10, "Your strategy" (back inside the normal dashboard shell: dark navy #0B1220 left sidebar with "Strategist" active in solid indigo, white top header with search and avatar).
-Purpose: present the generated strategy, with the channel description builder as the hero.
-Top: page title "Fit with Ade · Content strategy", badges "Fitness", "Beginners 25–44", and buttons "Edit answers" (secondary) and "Save strategy" (primary).
+Screen 10, "Your strategy". This screen is back inside the normal dashboard: dark navy #0B1220 left sidebar (248px) with "Strategist" active as a solid indigo pill, and a white top header with search and avatar. Page background #EEF2F7. The quiz rules about short copy and no invented extras still apply: no jargon, no scores, no made-up statistics.
 
-Hero card, "Channel descriptions":
-- Platform tabs with logos: YouTube (active), Instagram, TikTok, LinkedIn, X.
-- The generated YouTube description shown as flowing text, split into 5 colour-coded highlighted segments with numbered labels:
-  1 Hook & primary keyword (indigo highlight): "Home workouts for beginners that actually fit your busy schedule, no gym or equipment needed."
-  2 Audience & secondary keyword (emerald): "Whether you're brand new to fitness or getting back into it, these no equipment workouts meet you where you are."
-  3 Content (sky): "Expect 15 minute workouts, full-body routines and simple beginner fitness tips you can follow from your living room…"
-  4 Value & upload (amber): "New beginner-friendly workouts every Monday, Wednesday and Friday."
-  5 Call to action (purple): "Hit subscribe and start your first workout today 💪"
-- A legend row with the five colour dots and names.
-- Keyword chips inside the text are underlined and highlighted.
-- Under the text: a character counter bar "412 / 1,000"; a vertical marker at 100 characters labelled "Shown in search results ✓"; a "Keyword check: primary in first 100 chars ✓ · no stuffing ✓" row.
-- Actions: "Copy", "Regenerate" (whole), and a small ↻ regenerate icon on hover of each segment.
+Top to bottom:
+1. Page header row: title, 28px bold, "Fit with Ade"; under it two small chips "💪 Fitness" and "🌱 Beginners 25–44". On the right: "Edit answers" (white secondary button) and "Save strategy" (solid indigo button).
 
-Below the hero, a 3-column grid of white cards: Content pillars, Posting schedule (7-day mini grid M–S with 3 active days), Platform recommendations (each with priority badge High/Medium and a one-line rationale), Content themes, Engagement tactics, Visual prompts.
+2. HERO CARD (full width, white, 32px padding), titled "Channel descriptions" (20px bold):
+   a. Platform tabs as a row of pills with logos: YouTube (active, indigo), Instagram, TikTok, LinkedIn, X.
+   b. The description as normal paragraph text, 16px, line height 1.8, dark #0F172A. Each of its five parts has a soft colour highlight behind the text (like a highlighter pen), with a tiny round number badge at its start:
+      ① indigo #EEF2FF: "Home workouts for beginners that actually fit your busy schedule, no gym or equipment needed."
+      ② emerald #ECFDF5: "Whether you're brand new to fitness or getting back into it, these no equipment workouts meet you where you are."
+      ③ sky #F0F9FF: "Expect 15 minute workouts, full-body routines and simple beginner fitness tips you can follow from your living room."
+      ④ amber #FFFBEB: "New beginner-friendly workouts every Monday, Wednesday and Friday."
+      ⑤ purple #FAF5FF: "Hit subscribe and start your first workout today 💪"
+      Keywords inside the text are bold and underlined.
+   c. One small legend row of five coloured dots: Hook, Audience, Content, Value, Call to action.
+   d. Bottom row: on the left, a thin character bar with "412 / 1,000" and a small marker at the start labelled "First 100 characters show in search ✓". On the right: "↻ Regenerate" (white button) and "Copy" (solid indigo button).
+
+3. Below the hero, a 3-column grid of six equal white cards. Each has a bold title and a short list of 3–4 items:
+   Content pillars · Posting schedule (a row of 7 day circles M T W T F S S, with Mon, Wed and Fri filled indigo) · Platforms (YouTube "High" and Instagram "Medium" chips, one short line each) · Content themes · Engagement ideas · Image ideas.
+
+Do NOT add: scores, keyword check panels, analytics, extra banners, or long paragraphs inside the grid cards.
 ```
 
 ---
@@ -181,7 +293,7 @@ On Screen 10, switch the Channel descriptions card to the Instagram tab. Show a 
 
 **Validation state**
 ```
-On Screen 3, show the state where the user clicks Continue without choosing a niche: the input gets a soft rose border, a helper message "Pick a niche or type your own to continue", and the Continue button stays enabled but shakes gently.
+On Screen 3, show the state where the user clicks Continue without choosing a niche: nothing is selected, a one-line rose message appears under the niche chips, "Pick a niche to continue", and the niche chips get a soft rose outline. Nothing else changes.
 ```
 
 **Error state**
