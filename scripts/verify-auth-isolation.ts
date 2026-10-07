@@ -8,7 +8,6 @@
  * 4. Cross-user access returns 403
  */
 
-const PYTHON_API_URL = 'http://localhost:8000';
 const NEXTJS_API_URL = 'http://localhost:3000';
 
 interface StrategyInput {
@@ -96,7 +95,7 @@ async function loginUser(email: string, password: string): Promise<string> {
 async function generateStrategy(input: StrategyInput, token: string): Promise<any> {
   console.log(`\n🤖 Generating strategy for ${input.brandName}...`);
   
-  const response = await fetch(`${PYTHON_API_URL}/api/strategy/generate`, {
+  const response = await fetch(`${NEXTJS_API_URL}/api/strategy/generate`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -123,7 +122,7 @@ async function generateStrategy(input: StrategyInput, token: string): Promise<an
 async function listStrategies(token: string): Promise<any[]> {
   console.log(`\n📋 Fetching strategy list...`);
   
-  const response = await fetch(`${PYTHON_API_URL}/api/strategy/list`, {
+  const response = await fetch(`${NEXTJS_API_URL}/api/strategy/list`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`
@@ -143,7 +142,7 @@ async function listStrategies(token: string): Promise<any[]> {
 async function getStrategy(strategyId: string, token: string): Promise<any> {
   console.log(`\n🔍 Fetching strategy ${strategyId}...`);
   
-  const response = await fetch(`${PYTHON_API_URL}/api/strategy/${strategyId}`, {
+  const response = await fetch(`${NEXTJS_API_URL}/api/strategy/${strategyId}`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`

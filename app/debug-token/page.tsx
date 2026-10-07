@@ -54,7 +54,7 @@ export default function DebugTokenPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/strategy/list', {
+      const response = await fetch('/api/strategy/list', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

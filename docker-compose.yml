@@ -26,26 +26,9 @@ services:
       - .env.local
     environment:
       - NODE_ENV=production
-    depends_on:
-      - backend
     networks:
       - zetca-network
-    mem_limit: 256m
-
-  backend:
-    build:
-      context: ./python
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    expose:
-      - "8000"
-    env_file:
-      - ./python/.env
-    environment:
-      - FRONTEND_URL=https://${DOMAIN:-localhost}
-    networks:
-      - zetca-network
-    mem_limit: 192m
+    mem_limit: 320m
 
 networks:
   zetca-network:

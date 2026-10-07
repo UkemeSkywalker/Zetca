@@ -1,5 +1,10 @@
+data "aws_caller_identity" "current" {}
+
 resource "aws_s3_bucket" "post_media" {
-  bucket = "zetca-post-media-${var.environment}"
+  # Account ID suffix keeps the name globally unique across all AWS
+  # accounts (S3 bucket names are global) — "zetca-post-media-dev" was
+  # already claimed by an unrelated, inaccessible account.
+  bucket = "zetca-post-media-${var.environment}-${data.aws_caller_identity.current.account_id}"
 
   tags = {
     Name        = "Post Media Bucket"

@@ -48,7 +48,7 @@ if (token && token !== 'your-jwt-token-here') {
 }
 
 // Test 3: Make API call
-const API_URL = process.env.NEXT_PUBLIC_PYTHON_SERVICE_URL || 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 async function testAPICall() {
   console.log('\n3. Testing API Call:');

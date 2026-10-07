@@ -1,9 +1,0 @@
-__pycache__
-.pytest_cache
-.hypothesis
-venv
-.env
-.DS_Store
-*.pyc
-tests
-.gitignore
