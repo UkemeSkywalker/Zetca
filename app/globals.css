@@ -5,8 +5,8 @@
 :root {
   /* Design System: "The Editorial Architect" */
   /* Primary palette */
-  --primary: #4a40e0;
-  --primary-container: #9795ff;
+  --primary: #4f46e5;
+  --primary-container: #6366f1;
   --on-primary: #ffffff;
 
   /* Secondary palette */
@@ -15,30 +15,30 @@
   --on-secondary-container: #2a1a48;
 
   /* Surface hierarchy */
-  --surface: #f6f6ff;
-  --surface-container-low: #eef0ff;
+  --surface: #eef2f7;
+  --surface-container-low: #f1f5f9;
   --surface-container-lowest: #ffffff;
-  --surface-container-high: #dde2f5;
-  --surface-container-highest: #d1dcff;
+  --surface-container-high: #e2e8f0;
+  --surface-container-highest: #cbd5e1;
 
   /* On-surface */
-  --on-surface: #272e42;
-  --outline: #6f768e;
-  --outline-variant: #a5adc6;
+  --on-surface: #0f172a;
+  --outline: #64748b;
+  --outline-variant: #94a3b8;
 
   /* Semantic */
   --tertiary: #983772;
-  --error: #dc2626;
-  --on-error: #ffefef;
+  --error: #f43f5e;
+  --on-error: #fff1f2;
 
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #4a40e0, #9795ff);
-  --colors--linear-color-01: #4a40e0;
-  --colors--linear-color-02: #9795ff;
+  --gradient-primary: linear-gradient(135deg, #4f46e5, #6366f1);
+  --colors--linear-color-01: #4f46e5;
+  --colors--linear-color-02: #6366f1;
 
   /* Ghost border */
-  --ghost-border: rgba(165, 173, 198, 0.15);
-  --ghost-border-focus: rgba(74, 64, 224, 0.4);
+  --ghost-border: rgba(148, 163, 184, 0.2);
+  --ghost-border-focus: rgba(79, 70, 229, 0.4);
 }
 
 @layer base {
@@ -112,12 +112,12 @@
 
   /* Glass & Gradient utilities */
   .glass {
-    background: rgba(246, 246, 255, 0.8);
+    background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }
   .glass-nav {
-    background: rgba(238, 240, 255, 0.75);
+    background: rgba(241, 245, 249, 0.75);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }

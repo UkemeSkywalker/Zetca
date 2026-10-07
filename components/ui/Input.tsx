@@ -51,7 +51,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             onFocus={(e) => {
               if (!error) {
                 e.currentTarget.style.border = '2px solid var(--ghost-border-focus)';
-                e.currentTarget.style.borderColor = 'rgba(74, 64, 224, 0.4)';
+                e.currentTarget.style.borderColor = 'rgba(79, 70, 229, 0.4)';
               }
               props.onFocus?.(e);
             }}

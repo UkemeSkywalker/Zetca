@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
 interface FooterLink {
@@ -28,7 +29,12 @@ interface FooterProps {
 }
 
 export default function Footer({ className = '' }: FooterProps) {
+  const pathname = usePathname();
   const currentYear = new Date().getFullYear();
+
+  if (pathname?.startsWith('/dashboard')) {
+    return null;
+  }
 
   return (
     <footer className={`bg-on-surface text-surface-container-high ${className}`}>

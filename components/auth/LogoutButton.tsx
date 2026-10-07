@@ -27,7 +27,7 @@ export default function LogoutButton({ className = '', onLogout }: LogoutButtonP
     <button
       onClick={handleLogout}
       disabled={isLoading}
-      className={`flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] ${className}`}
+      className={`flex items-center gap-2 px-4 py-2 text-sm text-error hover:bg-error/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] ${className}`}
       aria-label="Log out"
     >
       <svg
