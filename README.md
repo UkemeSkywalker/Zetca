@@ -4,6 +4,15 @@ A production-grade web application that provides AI-powered social media automat
 
 ![Zetca Dashboard](public/images/Dashboard.png)
 
+## How It Works
+
+Zetca chains a set of AI agents into a content pipeline. Each stage has its own dashboard page and API routes:
+
+1. **Strategist** — generates a social media strategy from a brand's goals, audience, and platforms.
+2. **Copywriter** — writes post copy for a strategy (with streaming generation, per-post chat refinement, and inline text refinement).
+3. **Scheduler** — turns copy into a posting calendar, either auto-scheduled by the agent or placed manually. Posts can carry image attachments stored in S3.
+4. **Publisher** — a background scanner checks for due posts and publishes them to LinkedIn using the user's connected LinkedIn account, recording every attempt in a publish log. Posts can also be published on demand.
+
 ## Architecture
 
 Zetca is a single Next.js application. The App Router UI and the AI agent API routes
@@ -127,17 +136,36 @@ zetca-platform/
 | `POST` | `/api/scheduler/manual-schedule` | JWT | Manually schedule one copy |
 | `GET`/`PUT`/`DELETE` | `/api/scheduler/posts/{postId}` | JWT | CRUD a scheduled post |
 | `GET` | `/api/scheduler/posts` | JWT | List user's scheduled posts |
+| `GET` | `/api/scheduler/posts/strategy/{strategyId}` | JWT | List scheduled posts for a strategy |
+| `DELETE` | `/api/scheduler/posts/clear-all` | JWT | Delete all of the user's scheduled posts |
 | `POST` | `/api/publisher/publish/{postId}` | JWT | Publish a post to LinkedIn on demand |
 | `GET` | `/api/publisher/logs` | JWT | List publish attempt logs |
+| `GET` | `/api/publisher/logs/{postId}` | JWT | List publish attempts for a post |
+
+**Auth, profile & media**
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `POST` | `/api/auth/signup` | No | Create an account |
+| `POST` | `/api/auth/login` | No | Log in |
+| `POST` | `/api/auth/logout` | No | Log out (clears the auth cookie) |
+| `GET` | `/api/auth/linkedin` | JWT | Start LinkedIn OAuth |
+| `GET` | `/api/auth/linkedin/callback` | JWT | LinkedIn OAuth callback |
+| `POST` | `/api/auth/linkedin/disconnect` | JWT | Disconnect LinkedIn |
+| `GET`/`PUT` | `/api/profile` | JWT | Read / update profile |
+| `POST` | `/api/media/upload-url` | JWT | Get a presigned S3 upload URL |
+| `POST` | `/api/media/{mediaId}/validate` | JWT | Validate an uploaded file |
+| `GET` | `/api/media/{mediaId}/download-url` | JWT | Get a presigned S3 download URL |
+| `DELETE` | `/api/media/{mediaId}` | JWT | Delete a media file |
 
 ## Features
 
 - AI Strategy Generator (Strands Agent + Bedrock)
 - Smart Copywriting
 - Content Scheduler
-- Image Designer
+- Image Designer *(UI only — currently returns mock images)*
 - Content Publisher (LinkedIn, auto + on-demand)
-- Analytics Dashboard
+- Analytics Dashboard *(UI only — currently uses mock data)*
 - Profile Management
 
 ## Troubleshooting

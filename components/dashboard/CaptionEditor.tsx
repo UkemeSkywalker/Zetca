@@ -605,7 +605,7 @@ export const CaptionEditor: React.FC<CaptionEditorProps> = ({ className = '' }) 
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <span className="text-sm text-[var(--outline)]">Strategy:</span>
-            <select value={selectedStrategyId} onChange={handleStrategyChange} className="px-4 py-2 rounded-full text-sm font-semibold border-2 border-[var(--primary)] text-[var(--primary)] bg-white focus:ring-2 focus:ring-[var(--primary)] focus:outline-none cursor-pointer appearance-none pr-8" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%234a40e0' d='m12 15.4l-6-6L7.4 8l4.6 4.6L16.6 8L18 9.4z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }} aria-label="Select strategy">
+            <select value={selectedStrategyId} onChange={handleStrategyChange} className="px-4 py-2 rounded-full text-sm font-semibold border-2 border-[var(--primary)] text-[var(--primary)] bg-white focus:ring-2 focus:ring-[var(--primary)] focus:outline-none cursor-pointer appearance-none pr-8" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%234f46e5' d='m12 15.4l-6-6L7.4 8l4.6 4.6L16.6 8L18 9.4z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }} aria-label="Select strategy">
               <option value="">Choose...</option>
               {strategies.map(s => <option key={s.id} value={s.id}>{s.brandName}</option>)}
             </select>
