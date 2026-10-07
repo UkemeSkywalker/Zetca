@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { WizardShell } from '@/components/strategist/WizardShell';
 import { WelcomeStep } from '@/components/strategist/WelcomeStep';
 import { BrandStep, PlatformId } from '@/components/strategist/BrandStep';
-import { NicheStep, Niche } from '@/components/strategist/NicheStep';
+import { NicheStep, Niche, NicheTopic } from '@/components/strategist/NicheStep';
 import { listStrategies } from '@/lib/api/strategyClient';
 
 const TOTAL_STEPS = 7;
@@ -24,8 +24,8 @@ export default function StrategistPage() {
   const [savedCount, setSavedCount] = useState<number | null>(null);
   const [brandName, setBrandName] = useState('');
   const [platforms, setPlatforms] = useState<PlatformId[]>([]);
-  const [niche, setNiche] = useState<Niche | null>(null);
-  const [topic, setTopic] = useState<string | null>(null);
+  const [niches, setNiches] = useState<Niche[]>([]);
+  const [topics, setTopics] = useState<NicheTopic[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,15 +49,6 @@ export default function StrategistPage() {
   const goToNiche = useCallback(() => setScreen('niche'), []);
   const goToAudience = useCallback(() => setScreen('audience'), []);
 
-  const changeNiche = useCallback(
-    (next: Niche) => {
-      // A new niche has different topics, so clear the old topic
-      if (niche?.label !== next.label) setTopic(null);
-      setNiche(next);
-    },
-    [niche]
-  );
-
   const { step, progress } = SCREEN_PROGRESS[screen];
 
   return (
@@ -78,10 +69,10 @@ export default function StrategistPage() {
         <NicheStep
           brandName={brandName}
           platforms={platforms}
-          niche={niche}
-          topic={topic}
-          onNicheChange={changeNiche}
-          onTopicChange={setTopic}
+          niches={niches}
+          topics={topics}
+          onNichesChange={setNiches}
+          onTopicsChange={setTopics}
           onBack={goToBrand}
           onContinue={goToAudience}
         />
