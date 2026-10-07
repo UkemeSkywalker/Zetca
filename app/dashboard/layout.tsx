@@ -5,7 +5,7 @@ import { AgentProvider } from '@/context/AgentContext';
 import LogoutButton from '@/components/auth/LogoutButton';
 import { useAuth } from '@/context/AuthContext';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
@@ -17,6 +17,7 @@ export default function DashboardLayout({
   const { user, isLoading, isAuthenticated } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -37,6 +38,15 @@ export default function DashboardLayout({
 
   if (!isAuthenticated) {
     return null;
+  }
+
+  // The strategy quiz is a full-screen wizard with its own top bar
+  if (pathname === '/dashboard/strategist') {
+    return (
+      <ErrorBoundary>
+        <AgentProvider>{children}</AgentProvider>
+      </ErrorBoundary>
+    );
   }
 
   return (
