@@ -12,13 +12,14 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Strategist', href: '/dashboard/strategist', icon: 'solar:lightbulb-bolt-bold' },
-  { label: 'Copywriter', href: '/dashboard/copywriter', icon: 'solar:pen-bold' },
-  { label: 'Scheduler', href: '/dashboard/scheduler', icon: 'solar:calendar-bold' },
-  { label: 'Designer', href: '/dashboard/designer', icon: 'solar:palette-bold' },
-  { label: 'Publisher', href: '/dashboard/publisher', icon: 'solar:send-square-bold' },
-  { label: 'Analysis', href: '/dashboard/analysis', icon: 'solar:chart-bold' },
-  { label: 'Profile', href: '/dashboard/profile', icon: 'solar:user-bold' },
+  { label: 'Dashboard', href: '/dashboard', icon: 'lucide:layout-grid' },
+  { label: 'Strategist', href: '/dashboard/strategist', icon: 'lucide:lightbulb' },
+  { label: 'Copywriter', href: '/dashboard/copywriter', icon: 'lucide:pencil' },
+  { label: 'Scheduler', href: '/dashboard/scheduler', icon: 'lucide:calendar' },
+  { label: 'Designer', href: '/dashboard/designer', icon: 'lucide:image' },
+  { label: 'Publisher', href: '/dashboard/publisher', icon: 'lucide:navigation-2' },
+  { label: 'Analysis', href: '/dashboard/analysis', icon: 'lucide:chart-column' },
+  { label: 'Profile', href: '/dashboard/profile', icon: 'lucide:user' },
 ];
 
 interface SidebarProps {
@@ -37,7 +38,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
         className="md:hidden fixed top-4 left-4 z-50 p-3 bg-dash-card text-dash-text rounded-lg shadow-lg min-h-[44px] min-w-[44px] flex items-center justify-center"
         aria-label="Toggle menu"
       >
-        <Icon icon={isMobileMenuOpen ? 'solar:close-square-bold' : 'solar:hamburger-menu-bold'} width={24} height={24} />
+        <Icon icon={isMobileMenuOpen ? 'lucide:x' : 'lucide:menu'} width={22} height={22} />
       </button>
 
       {/* Backdrop for mobile */}
@@ -51,7 +52,8 @@ export default function Sidebar({ className = '' }: SidebarProps) {
 
       <aside
         className={`
-          fixed top-0 left-0 h-screen w-64 bg-dash-sidebar z-40
+          fixed top-0 left-0 h-screen w-[248px] bg-dash-sidebar z-40 font-heading
+          border-r border-white/5
           transition-transform duration-300 ease-in-out
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
           md:translate-x-0
@@ -61,17 +63,17 @@ export default function Sidebar({ className = '' }: SidebarProps) {
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="px-6 py-6">
+          <div className="h-[78px] px-[30px] flex items-center border-b border-white/5">
             <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center gradient-primary shrink-0">
-                <Icon icon="solar:box-minimalistic-bold" width={22} height={22} className="text-white" />
+              <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gradient-to-br from-indigo-500 to-blue-500 shrink-0 shadow-[0_6px_16px_rgba(79,70,229,0.35)]">
+                <Icon icon="lucide:box" width={20} height={20} className="text-white" />
               </div>
               <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <h1 className="text-lg font-bold font-heading text-dash-text leading-none">Zetca</h1>
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" aria-hidden="true" />
+                <div className="flex items-center gap-1">
+                  <span className="text-[19px] font-bold text-white leading-none">Zetca</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0 -mt-1.5" aria-hidden="true" />
                 </div>
-                <p className="text-[10px] font-semibold text-dash-text-muted tracking-[0.15em] mt-1">
+                <p className="text-[9.5px] font-semibold text-slate-400 tracking-[0.12em] mt-1">
                   CONTENT OS
                 </p>
               </div>
@@ -79,32 +81,13 @@ export default function Sidebar({ className = '' }: SidebarProps) {
           </div>
 
           {/* Section label */}
-          <p className="px-6 text-[10px] font-semibold text-dash-text-muted tracking-[0.15em] mb-3">
+          <p className="px-[33px] pt-6 text-[10.5px] font-bold text-slate-400 tracking-[0.08em] mb-3">
             PLATFORM SUITE
           </p>
 
-          {/* Dashboard Button */}
-          <div className="px-5 mb-4">
-            <Link
-              href="/dashboard"
-              className={`
-                flex items-center gap-3 px-4 py-3 rounded-xl
-                transition-all duration-200 min-h-[44px]
-                ${
-                  pathname === '/dashboard'
-                    ? 'text-white shadow-lg gradient-primary'
-                    : 'text-dash-text-secondary hover:bg-dash-card hover:text-dash-text'
-                }
-              `}
-            >
-              <Icon icon="solar:widget-5-bold" width={20} height={20} />
-              <span className="font-semibold text-sm">Dashboard</span>
-            </Link>
-          </div>
-
           {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto px-5" aria-label="Dashboard pages">
-            <ul className="space-y-1" role="list">
+          <nav className="flex-1 overflow-y-auto px-[22px]" aria-label="Dashboard pages">
+            <ul className="space-y-[7px]" role="list">
               {navItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
@@ -113,24 +96,19 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                       href={item.href}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className={`
-                        flex items-center gap-3 px-4 py-3 rounded-xl
-                        transition-all duration-200 group min-h-[44px]
+                        flex items-center gap-3 px-[14px] h-9 rounded-lg
+                        transition-colors duration-200 group
                         ${
                           isActive
-                            ? 'text-white shadow-lg gradient-primary'
-                            : 'text-dash-text-secondary hover:bg-dash-card hover:text-dash-text'
+                            ? 'bg-indigo-600 text-white shadow-[0_8px_20px_rgba(79,70,229,0.35)]'
+                            : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
                         }
                       `}
                       aria-current={isActive ? 'page' : undefined}
                     >
-                      <Icon
-                        icon={isActive ? item.icon : item.icon.replace('-bold', '-linear')}
-                        width={20}
-                        height={20}
-                        className={isActive ? 'text-white' : 'text-dash-text-muted group-hover:text-dash-text-secondary'}
-                        aria-hidden="true"
-                      />
-                      <span className="font-semibold text-sm">{item.label}</span>
+                      <Icon icon={item.icon} width={17} height={17} className="text-inherit" aria-hidden="true" />
+                      {/* text-inherit overrides the global span color from globals.css */}
+                      <span className="text-[13.5px] font-medium text-inherit">{item.label}</span>
                     </Link>
                   </li>
                 );
@@ -139,31 +117,31 @@ export default function Sidebar({ className = '' }: SidebarProps) {
           </nav>
 
           {/* AI Growth Boost CTA */}
-          <div className="px-5 pb-5 pt-4">
-            <div className="rounded-2xl p-4 bg-gradient-to-br from-primary/20 via-dash-card to-dash-card border border-dash-border-strong">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center gradient-primary mb-3">
-                <Icon icon="solar:bolt-bold" width={18} height={18} className="text-white" />
+          <div className="px-[22px] pb-4 pt-4 border-t border-white/5">
+            <div className="rounded-xl p-4 bg-[#121735] border border-[#1f2547]">
+              <div className="w-[30px] h-[30px] rounded-md flex items-center justify-center bg-[#1e2350] border border-[#2c3170] mb-3">
+                <Icon icon="lucide:zap" width={15} height={15} className="text-indigo-300" />
               </div>
-              <h3 className="text-sm font-bold text-dash-text mb-1">AI Growth Boost</h3>
-              <p className="text-xs text-dash-text-secondary leading-relaxed mb-3">
+              <h3 className="text-[12.5px] font-semibold text-white mb-1.5">AI Growth Boost</h3>
+              <p className="text-[11px] text-slate-400 leading-[1.5] mb-3.5">
                 Create, schedule, &amp; scale multichannel content in 1-click.
               </p>
               <Link
                 href="/dashboard/strategist"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-white gradient-primary rounded-lg px-3 py-2 hover:opacity-90 transition-opacity"
+                className="flex w-full items-center justify-center gap-1.5 h-[26px] text-[11.5px] font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-500 transition-colors"
               >
-                Learn More
-                <Icon icon="solar:arrow-right-linear" width={14} height={14} />
+                <span className="text-inherit">Learn More</span>
+                <Icon icon="lucide:arrow-right" width={13} height={13} />
               </Link>
             </div>
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 flex items-center justify-between border-t border-dash-border">
-            <p className="text-[11px] text-dash-text-muted">© 2026 Zetca</p>
+          <div className="px-[26px] pb-4 pt-1 flex items-center justify-between">
+            <p className="text-[10.5px] text-slate-500">© 2026 Zetca OS</p>
             <div className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
-              <span className="text-[11px] text-dash-text-muted">v2.4 Active</span>
+              <span className="text-[10.5px] text-slate-500">v2.4 Active</span>
             </div>
           </div>
         </div>

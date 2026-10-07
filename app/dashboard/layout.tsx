@@ -43,35 +43,34 @@ export default function DashboardLayout({
   return (
     <ErrorBoundary>
       <AgentProvider>
-        <div className="min-h-screen bg-surface">
+        <div className="min-h-screen bg-surface font-heading">
         <Sidebar />
 
         {/* Top Header Bar — light, same surface as the rest of the app */}
-        <div className="md:ml-64 fixed top-0 right-0 left-0 md:left-64 h-16 md:h-20 bg-surface-container-lowest z-20 shadow-ambient-sm">
-          <div className="h-full px-4 md:px-6 flex items-center justify-between gap-4">
+        <div className="fixed top-0 right-0 left-0 md:left-[248px] h-16 md:h-[78px] bg-white z-20 border-b border-slate-200/70">
+          <div className="h-full px-4 md:pl-[30px] md:pr-[30px] flex items-center justify-between gap-4">
             {/* Search Bar */}
-            <div className="hidden sm:flex flex-1 max-w-xl">
+            <div className="hidden sm:flex flex-1 max-w-[541px]">
               <div className="relative w-full">
                 <label htmlFor="dashboard-search" className="sr-only">Search dashboard</label>
                 <input
                   id="dashboard-search"
                   type="text"
                   placeholder="Search campaigns, generated drafts, schedules..."
-                  className="w-full pl-10 pr-16 py-2.5 text-sm bg-surface-container-low text-on-surface placeholder:text-outline rounded-xl min-h-[44px] border-0 focus:outline-none transition-all"
-                  style={{ border: 'none' }}
+                  className="w-full pl-[38px] pr-14 h-10 text-[13px] bg-slate-50 text-on-surface placeholder:text-slate-400 rounded-[10px] border border-slate-200/80 focus:outline-none transition-all"
                   onFocus={(e) => { e.currentTarget.style.boxShadow = '0 0 0 2px rgba(79, 70, 229, 0.4)'; }}
                   onBlur={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
                   aria-label="Search dashboard"
                 />
                 <Icon
                   icon="solar:magnifer-linear"
-                  width={18}
-                  height={18}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-outline"
+                  width={16}
+                  height={16}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
                   aria-hidden="true"
                 />
-                <kbd className="hidden md:inline-block absolute right-3 top-1/2 -translate-y-1/2 px-2 py-0.5 text-[11px] font-semibold text-outline bg-surface-container-lowest rounded" style={{ border: '1px solid var(--ghost-border)' }}>
-                  ⌘ F
+                <kbd className="hidden md:inline-block absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[9px] font-semibold text-slate-400 bg-white rounded border border-slate-200 font-heading">
+                  ⌘F
                 </kbd>
               </div>
             </div>
@@ -82,19 +81,19 @@ export default function DashboardLayout({
             </div>
 
             {/* Right Side Icons */}
-            <div className="flex items-center gap-1.5 md:gap-2">
+            <div className="flex items-center gap-1.5 md:gap-3">
               <button
                 className="relative p-2 md:p-2.5 text-outline hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                 aria-label="Messages"
               >
-                <Icon icon="solar:letter-linear" width={20} height={20} aria-hidden="true" />
+                <Icon icon="lucide:mail" width={18} height={18} className="text-slate-600" aria-hidden="true" />
               </button>
               <button
                 className="relative p-2 md:p-2.5 text-outline hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                 aria-label="Notifications"
               >
-                <Icon icon="solar:bell-linear" width={20} height={20} aria-hidden="true" />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-error rounded-full ring-2 ring-surface-container-lowest" aria-label="New notifications"></span>
+                <Icon icon="lucide:bell" width={18} height={18} className="text-slate-600" aria-hidden="true" />
+                <span className="absolute top-2.5 right-2.5 w-[7px] h-[7px] bg-rose-500 rounded-full" aria-label="New notifications"></span>
               </button>
 
               {/* LinkedIn Connected Badge */}
@@ -125,7 +124,7 @@ export default function DashboardLayout({
               )}
 
               {/* User Menu Dropdown */}
-              <div className="relative sm:ml-1">
+              <div className="relative sm:ml-3 sm:pl-4 sm:border-l sm:border-slate-200/70">
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="flex items-center gap-2.5 py-1 pl-1 pr-2 hover:bg-surface-container-low rounded-xl transition-colors min-h-[44px]"
@@ -133,20 +132,20 @@ export default function DashboardLayout({
                   aria-expanded={isUserMenuOpen}
                   aria-haspopup="true"
                 >
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center gradient-primary shrink-0">
-                    <span className="text-on-primary text-sm font-semibold">
+                  <div className="w-[38px] h-[38px] rounded-full flex items-center justify-center bg-indigo-600 shrink-0">
+                    <span className="text-white text-[13px] font-semibold">
                       {user?.name?.charAt(0).toUpperCase() || 'U'}
                     </span>
                   </div>
                   <div className="hidden sm:block text-left leading-tight">
-                    <p className="text-sm font-semibold text-on-surface">{user?.name || 'User'}</p>
+                    <p className="text-[13px] font-semibold text-slate-900">{user?.name || 'User'}</p>
                     {user?.bio ? (
-                      <p className="text-[11px] text-outline truncate max-w-[120px]">{user.bio}</p>
+                      <p className="text-[10.5px] text-slate-400 truncate max-w-[120px]">{user.bio}</p>
                     ) : (
-                      <p className="text-[11px] text-outline">{user?.email}</p>
+                      <p className="text-[10.5px] text-slate-400">{user?.email}</p>
                     )}
                   </div>
-                  <Icon icon="solar:alt-arrow-down-linear" width={16} height={16} className="hidden sm:block text-outline" aria-hidden="true" />
+                  <Icon icon="lucide:chevron-down" width={15} height={15} className="hidden sm:block ml-2 text-slate-400" aria-hidden="true" />
                 </button>
 
                 {isUserMenuOpen && (
@@ -186,8 +185,8 @@ export default function DashboardLayout({
         </div>
 
         {/* Main content area */}
-        <main className="md:ml-64 pt-16 md:pt-20 min-h-screen">
-          <div className="p-4 sm:p-6 md:p-8">
+        <main className="md:ml-[248px] pt-16 md:pt-[78px] min-h-screen">
+          <div className="p-4 sm:p-6 md:px-[30px] md:pt-[30px] md:pb-[30px]">
             {children}
           </div>
         </main>
