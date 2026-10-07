@@ -16,7 +16,8 @@ export interface NicheTopic {
 }
 
 export const MAX_NICHES = 3;
-export const MAX_TOPICS = 3;
+/** Core topics allowed per selected niche */
+export const MAX_TOPICS_PER_NICHE = 3;
 
 export const NICHES: (Niche & { topics: string[] })[] = [
   { label: 'Fitness', emoji: '💪', topics: ['Home workouts', 'Weight loss', 'Strength', 'Yoga', 'Running', 'Nutrition'] },
@@ -126,7 +127,8 @@ interface NicheStepProps {
 export function NicheStep({ brandName, platforms, niches, topics, onNichesChange, onTopicsChange, onBack, onContinue }: NicheStepProps) {
   const canContinue = niches.length > 0;
   const nichesFull = niches.length >= MAX_NICHES;
-  const topicsFull = topics.length >= MAX_TOPICS;
+  const topicCount = (niche: string) => topics.filter((t) => t.niche === niche).length;
+  const topicsFullFor = (niche: string) => topicCount(niche) >= MAX_TOPICS_PER_NICHE;
 
   // Custom niches and topics the user added with "+ Other"
   const [customNiches, setCustomNiches] = useState<Niche[]>(() =>
@@ -164,7 +166,7 @@ export function NicheStep({ brandName, platforms, niches, topics, onNichesChange
   const toggleTopic = (niche: string, topic: string) => {
     if (isTopicSelected(niche, topic)) {
       onTopicsChange(topics.filter((t) => !(t.niche === niche && t.topic === topic)));
-    } else if (!topicsFull) {
+    } else if (!topicsFullFor(niche)) {
       onTopicsChange([...topics, { niche, topic }]);
     }
   };
@@ -278,22 +280,25 @@ export function NicheStep({ brandName, platforms, niches, topics, onNichesChange
           <div className="mt-8">
             <div className="flex items-baseline justify-between gap-3">
               <h2 className="text-[18px] leading-snug font-semibold text-slate-900">Narrow it down</h2>
-              <span className={`text-[13px] font-semibold shrink-0 ${topicsFull ? 'text-indigo-600' : 'text-slate-400'}`}>
-                {topics.length} of {MAX_TOPICS} topics
-              </span>
+              <span className="text-[13px] font-medium text-slate-400 shrink-0">Up to 3 topics per niche</span>
             </div>
 
             <div className="mt-4 flex flex-col gap-5">
               {niches.map((n) => (
                 <div key={n.label}>
-                  <p className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-500 mb-2.5">
-                    <span>{n.emoji}</span>
-                    <span className="text-inherit">{n.label}</span>
-                  </p>
+                  <div className="flex items-center justify-between gap-3 mb-2.5">
+                    <p className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-500">
+                      <span>{n.emoji}</span>
+                      <span className="text-inherit">{n.label}</span>
+                    </p>
+                    <span className={`text-[12px] font-semibold ${topicsFullFor(n.label) ? 'text-indigo-600' : 'text-slate-400'}`}>
+                      {topicCount(n.label)} of {MAX_TOPICS_PER_NICHE}
+                    </span>
+                  </div>
                   <div className="flex flex-wrap gap-2.5" role="group" aria-label={`${n.label} topics`}>
                     {topicsFor(n.label).map((t) => {
                       const selected = isTopicSelected(n.label, t);
-                      const locked = !selected && topicsFull;
+                      const locked = !selected && topicsFullFor(n.label);
                       return (
                         <button
                           key={t}
@@ -310,7 +315,7 @@ export function NicheStep({ brandName, platforms, niches, topics, onNichesChange
                     })}
                     <InlineAdd
                       size="topic"
-                      disabled={topicsFull}
+                      disabled={topicsFullFor(n.label)}
                       onAdd={(t) => {
                         if (!topicsFor(n.label).includes(t)) {
                           setCustomTopics([...customTopics, { niche: n.label, topic: t }]);
