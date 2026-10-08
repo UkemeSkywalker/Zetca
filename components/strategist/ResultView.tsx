@@ -181,7 +181,7 @@ export function ResultView({ strategy }: { strategy: StrategyRecord }) {
         <div className="flex items-center gap-3">
           {quiz && (
             <Link
-              href={`/dashboard/strategist?edit=${encodeURIComponent(strategy.id)}`}
+              href={`/dashboard/strategist/new?edit=${encodeURIComponent(strategy.id)}`}
               className={`inline-flex items-center gap-1.5 px-4 py-2 bg-white text-[#0b1c30] rounded-xl shadow-sm hover:bg-[#e5eeff] transition-all active:scale-[0.98] ${LABEL_MD}`}
             >
               <Icon icon="material-symbols:tune" width={18} height={18} className="text-[#777587]" />
@@ -190,7 +190,7 @@ export function ResultView({ strategy }: { strategy: StrategyRecord }) {
           )}
           {saved ? (
             <Link
-              href="/dashboard/strategist/saved"
+              href="/dashboard/strategist"
               className={`inline-flex items-center gap-1.5 px-4 py-2 bg-[#e2dfff] text-[#3525cd] rounded-xl shadow-sm hover:opacity-95 transition-all ${LABEL_MD}`}
             >
               <Icon icon="material-symbols:check" width={18} height={18} />
@@ -328,7 +328,7 @@ export function ResultView({ strategy }: { strategy: StrategyRecord }) {
         ) : (
           <p className="text-[14px] leading-[22px] text-[#464555]">
             This strategy was created before channel descriptions were available.{' '}
-            <Link href="/dashboard/strategist" className="font-semibold text-[#3525cd] hover:underline">
+            <Link href="/dashboard/strategist/new" className="font-semibold text-[#3525cd] hover:underline">
               Build a new strategy
             </Link>{' '}
             to get SEO-ready descriptions for each platform.

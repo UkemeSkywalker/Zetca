@@ -24,8 +24,8 @@ export default function StrategyResultPage() {
     return (
       <div className="max-w-[640px] mx-auto bg-white rounded-2xl p-8 shadow-sm text-center font-heading">
         <p className="text-[15px] font-semibold text-[#0b1c30]">{error}</p>
-        <Link href="/dashboard/strategist/saved" className="inline-block mt-4 text-[13px] font-semibold text-[#3525cd] hover:underline">
-          Go to saved strategies
+        <Link href="/dashboard/strategist" className="inline-block mt-4 text-[13px] font-semibold text-[#3525cd] hover:underline">
+          Go to your strategies
         </Link>
       </div>
     );

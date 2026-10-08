@@ -39,7 +39,7 @@ export default function DashboardLayout({
   }
 
   // The strategy quiz is a full-screen wizard without the sidebar
-  if (pathname === '/dashboard/strategist') {
+  if (pathname === '/dashboard/strategist/new') {
     return (
       <ErrorBoundary>
         <AgentProvider>{children}</AgentProvider>

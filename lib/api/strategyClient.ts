@@ -198,7 +198,10 @@ export async function listStrategies(): Promise<StrategyRecord[]> {
         contentThemes: record.strategy_output.content_themes,
         engagementTactics: record.strategy_output.engagement_tactics,
         visualPrompts: record.strategy_output.visual_prompts,
+        channelDescriptions: record.strategy_output.channel_descriptions,
+        schedule: record.strategy_output.schedule,
       },
+      quiz: record.quiz,
       createdAt: record.created_at,
     }));
   } catch (error) {

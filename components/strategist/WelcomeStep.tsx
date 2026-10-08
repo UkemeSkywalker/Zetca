@@ -136,7 +136,7 @@ export function WelcomeStep({ savedCount, onStart }: WelcomeStepProps) {
 
         <div className="relative mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
           <Link
-            href="/dashboard/strategist/saved"
+            href="/dashboard/strategist"
             className="flex items-center gap-1.5 text-[12px] text-slate-600 hover:text-slate-900 transition-colors"
           >
             <Icon icon="material-symbols:history" width={13} height={13} className="text-slate-400" />
