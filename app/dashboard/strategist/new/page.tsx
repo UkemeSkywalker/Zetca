@@ -15,19 +15,21 @@ import { summariseAges } from '@/components/strategist/StrategyRail';
 import { listStrategies, generateStrategyRecord, getStrategy, StrategyAPIError } from '@/lib/api/strategyClient';
 import type { QuizAnswers } from '@/types/strategy';
 
-const TOTAL_STEPS = 7;
+// Question steps: brand, niche, audience, content & keywords, review
+const TOTAL_STEPS = 5;
 
 type Screen = 'welcome' | 'brand' | 'niche' | 'audience' | 'content' | 'review' | 'generating';
 
-// Step number and progress shown in the top bar for each screen
-const SCREEN_PROGRESS: Record<Screen, { step: number; progress: number }> = {
-  welcome: { step: 1, progress: 7 },
-  brand: { step: 1, progress: 14 },
-  niche: { step: 2, progress: 28 },
-  audience: { step: 4, progress: 57 },
-  content: { step: 5, progress: 71 },
-  review: { step: 7, progress: 100 },
-  generating: { step: 7, progress: 100 },
+// Step number and progress shown in the top bar for each screen; the intro
+// and the generating screen sit outside the numbered steps
+const SCREEN_PROGRESS: Record<Screen, { step: number | null; progress: number }> = {
+  welcome: { step: null, progress: 0 },
+  brand: { step: 1, progress: 20 },
+  niche: { step: 2, progress: 40 },
+  audience: { step: 3, progress: 60 },
+  content: { step: 4, progress: 80 },
+  review: { step: 5, progress: 100 },
+  generating: { step: null, progress: 100 },
 };
 
 export default function StrategistPage() {

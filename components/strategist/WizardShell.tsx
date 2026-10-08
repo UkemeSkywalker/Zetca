@@ -5,7 +5,8 @@ import { Icon } from '@iconify/react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 
 interface WizardShellProps {
-  step: number;
+  /** Current question step, or null on screens outside the numbered steps */
+  step: number | null;
   totalSteps: number;
   /** Progress bar fill, 0–100 */
   progress: number;
@@ -47,10 +48,14 @@ export function WizardShell({ step, totalSteps, progress, background = '#EEF2F7'
               <span className="text-[19px] font-bold text-slate-900 tracking-tight">Zetca</span>
             </Link>
             <div className="hidden lg:flex items-center gap-3.5 px-4 py-1.5 rounded-full bg-slate-50 border border-slate-200 shadow-sm">
-              <span className="text-xs font-semibold text-slate-700">
-                Step {step} of {totalSteps}
-              </span>
-              <div className="w-1 h-1 rounded-full bg-slate-300" />
+              {step !== null && (
+                <>
+                  <span className="text-xs font-semibold text-slate-700">
+                    Step {step} of {totalSteps}
+                  </span>
+                  <div className="w-1 h-1 rounded-full bg-slate-300" />
+                </>
+              )}
               <span className="text-xs font-medium text-slate-500">Discovery Flow</span>
               <div className="w-20 h-1.5 bg-slate-200 rounded-full overflow-hidden ml-1">
                 <div className="h-full bg-indigo-600 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />

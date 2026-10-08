@@ -13,7 +13,7 @@ const features = [
   {
     icon: 'material-symbols:format-list-bulleted',
     iconStyle: 'bg-indigo-50 text-indigo-600',
-    title: '7 quick steps',
+    title: '5 quick steps',
     badge: 'GUIDED',
     badgeStyle: 'bg-indigo-50 text-indigo-600',
     desc: 'One focused question at a time, completely keyboard-friendly and frictionless.',
