@@ -9,13 +9,14 @@ import { NicheStep, Niche, NicheTopic } from '@/components/strategist/NicheStep'
 import { AudienceStep, SkillLevel } from '@/components/strategist/AudienceStep';
 import { ContentStep, GoalId, CONTENT_TYPES, GOALS } from '@/components/strategist/ContentStep';
 import { ReviewStep, ReviewSection } from '@/components/strategist/ReviewStep';
+import { GeneratingStep } from '@/components/strategist/GeneratingStep';
 import { PLATFORMS } from '@/components/strategist/BrandStep';
 import { summariseAges } from '@/components/strategist/StrategyRail';
 import { listStrategies, generateStrategyRecord, StrategyAPIError } from '@/lib/api/strategyClient';
 
 const TOTAL_STEPS = 7;
 
-type Screen = 'welcome' | 'brand' | 'niche' | 'audience' | 'content' | 'review';
+type Screen = 'welcome' | 'brand' | 'niche' | 'audience' | 'content' | 'review' | 'generating';
 
 // Step number and progress shown in the top bar for each screen
 const SCREEN_PROGRESS: Record<Screen, { step: number; progress: number }> = {
@@ -25,6 +26,7 @@ const SCREEN_PROGRESS: Record<Screen, { step: number; progress: number }> = {
   audience: { step: 4, progress: 57 },
   content: { step: 5, progress: 71 },
   review: { step: 7, progress: 100 },
+  generating: { step: 7, progress: 100 },
 };
 
 export default function StrategistPage() {
@@ -44,8 +46,9 @@ export default function StrategistPage() {
   const [primaryKeyword, setPrimaryKeyword] = useState<string | null>(null);
   const [secondaryKeywords, setSecondaryKeywords] = useState<string[]>([]);
   const [goal, setGoal] = useState<GoalId | null>(null);
-  const [generating, setGenerating] = useState(false);
+  const [generateStatus, setGenerateStatus] = useState<'running' | 'done' | 'error'>('running');
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const [generateRun, setGenerateRun] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,7 +82,9 @@ export default function StrategistPage() {
   // The current generator takes four text fields, so the quiz answers are
   // summarised into them until the agent accepts the structured answers
   const generate = useCallback(async () => {
-    setGenerating(true);
+    setScreen('generating');
+    setGenerateRun((run) => run + 1);
+    setGenerateStatus('running');
     setGenerateError(null);
     const platformNames = platforms.map((id) => PLATFORMS.find((p) => p.id === id)?.name ?? id);
     const industry = niches
@@ -111,10 +116,12 @@ export default function StrategistPage() {
         targetAudience: audienceParts.join('; '),
         goals,
       });
-      router.push(`/dashboard/strategist/saved?id=${encodeURIComponent(id)}`);
+      // Let the finished checklist show briefly before opening the result
+      setGenerateStatus('done');
+      setTimeout(() => router.push(`/dashboard/strategist/saved?id=${encodeURIComponent(id)}`), 900);
     } catch (err) {
-      setGenerateError(err instanceof StrategyAPIError ? err.message : 'Strategy generation failed. Please try again.');
-      setGenerating(false);
+      setGenerateError(err instanceof StrategyAPIError ? err.message : 'Strategy generation failed.');
+      setGenerateStatus('error');
     }
   }, [platforms, niches, topics, ages, skill, interests, struggles, goalInfo, selectedContentTypes, cadence, primaryKeyword, secondaryKeywords, brandName, router]);
 
@@ -128,6 +135,10 @@ export default function StrategistPage() {
       {...(screen === 'audience' && {
         background: '#f8f9ff',
         mainClassName: 'flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8 items-center',
+      })}
+      {...(screen === 'generating' && {
+        background: '#f8f9ff',
+        mainClassName: 'flex-1 w-full flex items-center justify-center p-4 sm:p-6',
       })}
       {...(screen === 'review' && {
         background: '#f8f9ff',
@@ -219,12 +230,16 @@ export default function StrategistPage() {
           primaryKeyword={primaryKeyword}
           secondaryKeywords={secondaryKeywords}
           goal={goalInfo ? { emoji: goalInfo.emoji, label: goalInfo.label } : null}
-          generating={generating}
-          error={generateError}
+          generating={false}
+          error={null}
           onEdit={editSection}
           onBack={goToContent}
           onGenerate={generate}
         />
+      )}
+
+      {screen === 'generating' && (
+        <GeneratingStep key={generateRun} status={generateStatus} error={generateError} onRetry={generate} onBackToReview={goToReview} />
       )}
     </WizardShell>
   );
