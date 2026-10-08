@@ -13,10 +13,13 @@ async function generateStrategyHandler(req: NextRequest, userId: string): Promis
 
     console.info(`Generating strategy for brand: ${strategyInput.brand_name} (mock=${cfg.useMockAgent})`);
 
+    // If the request times out, cancel so the late result isn't saved
+    const cancel = new AbortController();
     const record = await withTimeout(
-      getStrategyService().generateAndStoreStrategy(strategyInput, userId),
+      getStrategyService().generateAndStoreStrategy(strategyInput, userId, { signal: cancel.signal }),
       cfg.agentTimeoutSeconds,
-      `Strategy generation timed out after ${cfg.agentTimeoutSeconds} seconds. Please try again.`
+      `Strategy generation timed out after ${cfg.agentTimeoutSeconds} seconds. Please try again.`,
+      () => cancel.abort()
     );
 
     console.info(`Successfully generated and stored strategy for: ${strategyInput.brand_name} (ID: ${record.id})`);

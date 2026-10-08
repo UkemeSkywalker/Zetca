@@ -3,7 +3,8 @@
  * Handles communication with the Python FastAPI service
  */
 
-import { StrategyInput, StrategyOutput, StrategyRecord } from '@/types/strategy';
+import { ChannelDescription, StrategyInput, StrategyOutput, StrategyRecord } from '@/types/strategy';
+import type { StrategyRecord as WireStrategyRecord } from '@/lib/models/strategy';
 
 // Use relative URLs — Next.js rewrites proxy /api/strategy/* to the Python backend
 const API_BASE_URL = '';
@@ -181,10 +182,10 @@ export async function listStrategies(): Promise<StrategyRecord[]> {
       );
     }
 
-    const data = await response.json();
+    const data: WireStrategyRecord[] = await response.json();
     
     // Convert snake_case from Python to camelCase for TypeScript
-    return data.map((record: any) => ({
+    return data.map((record) => ({
       id: record.id,
       userId: record.user_id,
       brandName: record.brand_name,
@@ -198,7 +199,10 @@ export async function listStrategies(): Promise<StrategyRecord[]> {
         contentThemes: record.strategy_output.content_themes,
         engagementTactics: record.strategy_output.engagement_tactics,
         visualPrompts: record.strategy_output.visual_prompts,
+        channelDescriptions: record.strategy_output.channel_descriptions,
+        schedule: record.strategy_output.schedule,
       },
+      quiz: record.quiz,
       createdAt: record.created_at,
     }));
   } catch (error) {
@@ -265,7 +269,7 @@ export async function getStrategy(id: string): Promise<StrategyRecord> {
       );
     }
 
-    const record = await response.json();
+    const record: WireStrategyRecord = await response.json();
     
     // Convert snake_case from Python to camelCase for TypeScript
     return {
@@ -282,7 +286,10 @@ export async function getStrategy(id: string): Promise<StrategyRecord> {
         contentThemes: record.strategy_output.content_themes,
         engagementTactics: record.strategy_output.engagement_tactics,
         visualPrompts: record.strategy_output.visual_prompts,
+        channelDescriptions: record.strategy_output.channel_descriptions,
+        schedule: record.strategy_output.schedule,
       },
+      quiz: record.quiz,
       createdAt: record.created_at,
     };
   } catch (error) {
@@ -306,5 +313,123 @@ export async function getStrategy(id: string): Promise<StrategyRecord> {
       undefined,
       error
     );
+  }
+}
+
+/**
+ * Ask the Keyword agent for search keywords that fit the quiz answers so far.
+ *
+ * @returns Promise resolving to keyword phrases, most relevant first
+ * @throws StrategyAPIError if the request fails
+ */
+export async function suggestKeywords(input: {
+  niches: string[];
+  topics: { niche: string; topic: string }[];
+  skillLevel: 'beginner' | 'intermediate' | 'pro' | null;
+  ageRanges: string[];
+  interests: string[];
+  struggles: string[];
+  platforms: string[];
+  contentTypes: string[];
+}, signal?: AbortSignal): Promise<string[]> {
+  const response = await fetch(`${API_BASE_URL}/api/strategy/keywords`, {
+    method: 'POST',
+    headers: createAuthHeaders(),
+    signal,
+    body: JSON.stringify({
+      niches: input.niches,
+      topics: input.topics,
+      skill_level: input.skillLevel,
+      age_ranges: input.ageRanges,
+      interests: input.interests,
+      struggles: input.struggles,
+      platforms: input.platforms,
+      content_types: input.contentTypes,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new StrategyAPIError(errorData.detail || 'Failed to suggest keywords', response.status, errorData);
+  }
+
+  const data = await response.json();
+  return Array.isArray(data.keywords) ? data.keywords : [];
+}
+
+/**
+ * Generate and save a strategy, returning the new strategy's ID
+ * (used by the Strategist quiz to open the result straight away).
+ *
+ * @throws StrategyAPIError if the request fails
+ */
+export async function generateStrategyRecord(input: StrategyInput): Promise<string> {
+  const response = await fetch(`${API_BASE_URL}/api/strategy/generate`, {
+    method: 'POST',
+    headers: createAuthHeaders(),
+    body: JSON.stringify({
+      brand_name: input.brandName,
+      industry: input.industry,
+      target_audience: input.targetAudience,
+      goals: input.goals,
+      ...(input.quiz ? { quiz: input.quiz } : {}),
+    }),
+  });
+
+  if (response.status === 401) {
+    handleAuthError();
+    throw new StrategyAPIError('Authentication required. Please log in again.', 401);
+  }
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new StrategyAPIError(errorData.detail || 'Strategy generation failed. Please try again.', response.status, errorData);
+  }
+
+  const record = await response.json();
+  return record.id as string;
+}
+
+/**
+ * Regenerate one platform's channel description for a quiz strategy.
+ *
+ * @returns The new description (already saved on the strategy)
+ * @throws StrategyAPIError if the request fails
+ */
+export async function regenerateChannelDescription(strategyId: string, platform: ChannelDescription['platform']): Promise<ChannelDescription> {
+  const response = await fetch(`${API_BASE_URL}/api/strategy/${encodeURIComponent(strategyId)}/descriptions`, {
+    method: 'POST',
+    headers: createAuthHeaders(),
+    body: JSON.stringify({ platform }),
+  });
+
+  if (response.status === 401) {
+    handleAuthError();
+    throw new StrategyAPIError('Authentication required. Please log in again.', 401);
+  }
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new StrategyAPIError(errorData.detail || 'Regenerating the description failed. Please try again.', response.status, errorData);
+  }
+  return response.json();
+}
+
+/**
+ * Permanently delete one of the user's strategies.
+ *
+ * @throws StrategyAPIError if the request fails
+ */
+export async function deleteStrategy(id: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/strategy/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: createAuthHeaders(),
+  });
+
+  if (response.status === 401) {
+    handleAuthError();
+    throw new StrategyAPIError('Authentication required. Please log in again.', 401);
+  }
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new StrategyAPIError(errorData.detail || 'Failed to delete strategy. Please try again.', response.status, errorData);
   }
 }
