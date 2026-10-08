@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { StrategyForm } from '@/components/dashboard/StrategyForm';
 import { StrategyList } from '@/components/dashboard/StrategyList';
 import { StrategyDisplay } from '@/components/dashboard/StrategyDisplay';
 import { StrategyRecord, StrategyOutput } from '@/types/strategy';
 import { Icon } from '@iconify/react';
+import { getStrategy } from '@/lib/api/strategyClient';
 
 interface GeneratedResult {
   strategy: StrategyOutput;
@@ -32,6 +33,17 @@ export default function StrategistPage() {
       goals: meta?.goals || '',
     });
   };
+
+  // Open a specific strategy when linked with ?id= (e.g. straight after the quiz generates one)
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('id');
+    if (!id) return;
+    getStrategy(id)
+      .then(setSelectedStrategy)
+      .catch(() => {
+        // Fall back to the list if the strategy can't be loaded
+      });
+  }, []);
 
   const handleStrategyClick = (strategy: StrategyRecord) => {
     setSelectedStrategy(strategy);

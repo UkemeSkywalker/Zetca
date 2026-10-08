@@ -1,13 +1,17 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { WizardShell } from '@/components/strategist/WizardShell';
 import { WelcomeStep } from '@/components/strategist/WelcomeStep';
 import { BrandStep, PlatformId } from '@/components/strategist/BrandStep';
 import { NicheStep, Niche, NicheTopic } from '@/components/strategist/NicheStep';
 import { AudienceStep, SkillLevel } from '@/components/strategist/AudienceStep';
-import { ContentStep, GoalId } from '@/components/strategist/ContentStep';
-import { listStrategies } from '@/lib/api/strategyClient';
+import { ContentStep, GoalId, CONTENT_TYPES, GOALS } from '@/components/strategist/ContentStep';
+import { ReviewStep, ReviewSection } from '@/components/strategist/ReviewStep';
+import { PLATFORMS } from '@/components/strategist/BrandStep';
+import { summariseAges } from '@/components/strategist/StrategyRail';
+import { listStrategies, generateStrategyRecord, StrategyAPIError } from '@/lib/api/strategyClient';
 
 const TOTAL_STEPS = 7;
 
@@ -24,6 +28,7 @@ const SCREEN_PROGRESS: Record<Screen, { step: number; progress: number }> = {
 };
 
 export default function StrategistPage() {
+  const router = useRouter();
   const [screen, setScreen] = useState<Screen>('welcome');
   const [savedCount, setSavedCount] = useState<number | null>(null);
   const [brandName, setBrandName] = useState('');
@@ -39,6 +44,8 @@ export default function StrategistPage() {
   const [primaryKeyword, setPrimaryKeyword] = useState<string | null>(null);
   const [secondaryKeywords, setSecondaryKeywords] = useState<string[]>([]);
   const [goal, setGoal] = useState<GoalId | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,6 +71,53 @@ export default function StrategistPage() {
   const goToContent = useCallback(() => setScreen('content'), []);
   const goToReview = useCallback(() => setScreen('review'), []);
 
+  const selectedContentTypes = useMemo(() => CONTENT_TYPES.filter((c) => contentTypes.includes(c.id)), [contentTypes]);
+  const goalInfo = useMemo(() => GOALS.find((g) => g.id === goal) ?? null, [goal]);
+
+  const editSection = useCallback((section: ReviewSection) => setScreen(section), []);
+
+  // The current generator takes four text fields, so the quiz answers are
+  // summarised into them until the agent accepts the structured answers
+  const generate = useCallback(async () => {
+    setGenerating(true);
+    setGenerateError(null);
+    const platformNames = platforms.map((id) => PLATFORMS.find((p) => p.id === id)?.name ?? id);
+    const industry = niches
+      .map((n) => {
+        const picked = topics.filter((t) => t.niche === n.label).map((t) => t.topic);
+        return picked.length ? `${n.label} (${picked.join(', ')})` : n.label;
+      })
+      .join('; ');
+    const audienceParts = [
+      ages.length ? `Ages ${summariseAges(ages)}` : null,
+      skill ? `${skill} level` : null,
+      interests.length ? `interested in ${interests.join(', ')}` : null,
+      struggles.length ? `struggling with ${struggles.join(', ')}` : null,
+    ].filter(Boolean);
+    const goals = [
+      goalInfo ? `Main goal: ${goalInfo.label}.` : null,
+      `Platforms: ${platformNames.join(', ')}.`,
+      `Content: ${selectedContentTypes.map((c) => c.label).join(', ')}, ${cadence} posts per week.`,
+      primaryKeyword ? `Main keyword: ${primaryKeyword}.` : null,
+      secondaryKeywords.length ? `Other keywords: ${secondaryKeywords.join(', ')}.` : null,
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    try {
+      const id = await generateStrategyRecord({
+        brandName,
+        industry,
+        targetAudience: audienceParts.join('; '),
+        goals,
+      });
+      router.push(`/dashboard/strategist/saved?id=${encodeURIComponent(id)}`);
+    } catch (err) {
+      setGenerateError(err instanceof StrategyAPIError ? err.message : 'Strategy generation failed. Please try again.');
+      setGenerating(false);
+    }
+  }, [platforms, niches, topics, ages, skill, interests, struggles, goalInfo, selectedContentTypes, cadence, primaryKeyword, secondaryKeywords, brandName, router]);
+
   const { step, progress } = SCREEN_PROGRESS[screen];
 
   return (
@@ -74,6 +128,10 @@ export default function StrategistPage() {
       {...(screen === 'audience' && {
         background: '#f8f9ff',
         mainClassName: 'flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8 items-center',
+      })}
+      {...(screen === 'review' && {
+        background: '#f8f9ff',
+        mainClassName: 'flex-1 w-full max-w-[1200px] mx-auto px-4 sm:px-8 py-8 sm:py-10 flex flex-col items-center',
       })}
       {...(screen === 'content' && {
         background: '#f9f8fb',
@@ -146,18 +204,27 @@ export default function StrategistPage() {
         />
       )}
 
-      {/* Placeholder until the Review design is built */}
       {screen === 'review' && (
-        <div className="w-full max-w-[640px] mx-auto bg-white rounded-2xl border border-slate-200/70 p-10 text-center">
-          <p className="text-[15px] font-semibold text-slate-900">Review your answers is coming next.</p>
-          <button
-            type="button"
-            onClick={goToContent}
-            className="mt-5 text-[13px] font-medium text-indigo-600 hover:text-indigo-700"
-          >
-            ← Back to content &amp; keywords
-          </button>
-        </div>
+        <ReviewStep
+          brandName={brandName}
+          platforms={platforms}
+          niches={niches}
+          topics={topics}
+          ages={ages}
+          skill={skill}
+          interests={interests}
+          struggles={struggles}
+          contentTypes={selectedContentTypes}
+          cadence={cadence}
+          primaryKeyword={primaryKeyword}
+          secondaryKeywords={secondaryKeywords}
+          goal={goalInfo ? { emoji: goalInfo.emoji, label: goalInfo.label } : null}
+          generating={generating}
+          error={generateError}
+          onEdit={editSection}
+          onBack={goToContent}
+          onGenerate={generate}
+        />
       )}
     </WizardShell>
   );

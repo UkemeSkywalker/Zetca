@@ -349,3 +349,34 @@ export async function suggestKeywords(input: {
   const data = await response.json();
   return Array.isArray(data.keywords) ? data.keywords : [];
 }
+
+/**
+ * Generate and save a strategy, returning the new strategy's ID
+ * (used by the Strategist quiz to open the result straight away).
+ *
+ * @throws StrategyAPIError if the request fails
+ */
+export async function generateStrategyRecord(input: StrategyInput): Promise<string> {
+  const response = await fetch(`${API_BASE_URL}/api/strategy/generate`, {
+    method: 'POST',
+    headers: createAuthHeaders(),
+    body: JSON.stringify({
+      brand_name: input.brandName,
+      industry: input.industry,
+      target_audience: input.targetAudience,
+      goals: input.goals,
+    }),
+  });
+
+  if (response.status === 401) {
+    handleAuthError();
+    throw new StrategyAPIError('Authentication required. Please log in again.', 401);
+  }
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new StrategyAPIError(errorData.detail || 'Strategy generation failed. Please try again.', response.status, errorData);
+  }
+
+  const record = await response.json();
+  return record.id as string;
+}

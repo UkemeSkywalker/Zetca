@@ -12,7 +12,7 @@ const SKILL_LABELS: Record<SkillLevel, string> = {
 };
 
 /** "25–34" + "35–44" -> "25–44" */
-function summariseAges(ages: string[]): string | null {
+export function summariseAges(ages: string[]): string | null {
   if (ages.length === 0) return null;
   if (ages.length === 1) return ages[0];
   const first = ages[0].split('–')[0];
