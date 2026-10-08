@@ -32,7 +32,7 @@ export const NICHES: (Niche & { topics: string[] })[] = [
 
 const CUSTOM_EMOJI = '✨';
 
-const PLATFORM_BADGES: Record<PlatformId, { icon: string; style: string; label: string }> = {
+export const PLATFORM_BADGES: Record<PlatformId, { icon: string; style: string; label: string }> = {
   youtube: { icon: 'simple-icons:youtube', style: 'bg-red-50 text-red-600', label: 'YouTube' },
   instagram: { icon: 'simple-icons:instagram', style: 'bg-pink-50 text-pink-600', label: 'Instagram' },
   tiktok: { icon: 'simple-icons:tiktok', style: 'bg-slate-100 text-slate-900', label: 'TikTok' },
@@ -43,7 +43,7 @@ const PLATFORM_BADGES: Record<PlatformId, { icon: string; style: string; label: 
 
 const COUNT_WORDS = ['', 'one platform', 'two platforms', 'three platforms', 'four platforms', 'five platforms', 'six platforms'];
 
-function getInitials(name: string): string {
+export function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return '?';
   // First and last word, e.g. "Fit with Ade" -> "FA"

@@ -19,6 +19,8 @@ import { PublisherService } from './publisherService';
 import { LinkedInClient } from './linkedinClient';
 import { StrategistAgent } from '../agents/strategistAgent';
 import { MockStrategistAgent } from '../agents/mockStrategistAgent';
+import { KeywordAgent } from '../agents/keywordAgent';
+import { MockKeywordAgent } from '../agents/mockKeywordAgent';
 import { CopywriterAgent } from '../agents/copywriterAgent';
 import { MockCopywriterAgent } from '../agents/mockCopywriterAgent';
 import { SchedulerAgent } from '../agents/schedulerAgent';
@@ -55,6 +57,21 @@ export const getStrategistAgent = memo(() => {
   }
   console.info(`Using REAL Strands agent with Bedrock (region: ${cfg.awsRegion}, model: ${cfg.bedrockModelId})`);
   return new StrategistAgent({
+    awsRegion: cfg.awsRegion,
+    modelId: cfg.bedrockModelId,
+    awsAccessKeyId: cfg.awsAccessKeyId,
+    awsSecretAccessKey: cfg.awsSecretAccessKey,
+  });
+});
+
+export const getKeywordAgent = memo(() => {
+  const cfg = getConfig();
+  if (cfg.useMockAgent) {
+    console.info('Using MOCK agent for keyword suggestions (no AWS required)');
+    return new MockKeywordAgent();
+  }
+  console.info(`Using REAL Keyword agent with Bedrock (region: ${cfg.awsRegion}, model: ${cfg.bedrockModelId})`);
+  return new KeywordAgent({
     awsRegion: cfg.awsRegion,
     modelId: cfg.bedrockModelId,
     awsAccessKeyId: cfg.awsAccessKeyId,

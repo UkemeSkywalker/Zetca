@@ -123,6 +123,11 @@ export default function StrategistPage() {
 
       {screen === 'content' && (
         <ContentStep
+          brandName={brandName}
+          platforms={platforms}
+          ages={ages}
+          interests={interests}
+          struggles={struggles}
           niches={niches}
           topics={topics}
           skill={skill}

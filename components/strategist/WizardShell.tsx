@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
-import { useAuth } from '@/context/AuthContext';
+import { DashboardHeader } from '@/components/layout/DashboardHeader';
 
 interface WizardShellProps {
   step: number;
@@ -18,62 +18,39 @@ interface WizardShellProps {
 
 const DEFAULT_MAIN = 'flex-1 w-full flex flex-col items-center justify-center px-4 py-8 sm:py-12';
 
-function getInitials(name?: string): string {
-  if (!name) return 'U';
-  const parts = name.trim().split(/\s+/);
-  return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? parts[0]?.[1] ?? '')).toUpperCase();
-}
 
 export function WizardShell({ step, totalSteps, progress, background = '#EEF2F7', mainClassName = DEFAULT_MAIN, children }: WizardShellProps) {
-  const { user } = useAuth();
-
   return (
     <div className="min-h-screen flex flex-col text-slate-900 font-heading antialiased" style={{ backgroundColor: background }}>
-      {/* Slim distraction-free header bar */}
-      <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 flex items-center justify-center shadow-md shadow-indigo-500/20 ring-2 ring-indigo-500/10">
-              <Icon icon="material-symbols:auto-awesome" width={20} height={20} className="text-white" />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-extrabold text-[19px] tracking-tight text-slate-900">Zetca</span>
-              <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200/80 text-[10px] font-bold text-slate-600 uppercase tracking-wider">
-                AI Strategist
-              </span>
-            </div>
-          </div>
-
-          <div className="hidden md:flex items-center gap-3.5 px-4 py-1.5 rounded-full bg-slate-50 border border-slate-200 shadow-sm">
-            <span className="text-xs font-semibold text-slate-700">
-              Step {step} of {totalSteps}
-            </span>
-            <div className="w-1 h-1 rounded-full bg-slate-300" />
-            <span className="text-xs font-medium text-slate-500">Discovery Flow</span>
-            <div className="w-20 h-1.5 bg-slate-200 rounded-full overflow-hidden ml-1">
-              <div className="h-full bg-indigo-600 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-            >
-              <span className="text-inherit">Exit to Dashboard</span>
-              <Icon icon="material-symbols:close" width={15} height={15} className="text-slate-400" />
+      {/* The dashboard's own header, with the logo and quiz progress on the left */}
+      <DashboardHeader
+        className="sticky top-0 z-50"
+        leading={
+          <div className="flex items-center gap-5 shrink-0">
+            <Link href="/dashboard" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity" aria-label="Back to dashboard">
+              <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gradient-to-br from-indigo-500 to-blue-500 shadow-[0_6px_16px_rgba(79,70,229,0.35)]">
+                <Icon icon="lucide:box" width={20} height={20} className="text-white" />
+              </div>
+              <span className="text-[19px] font-bold text-slate-900 tracking-tight">Zetca</span>
             </Link>
-            <div className="h-4 w-px bg-slate-200 hidden sm:block" />
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-800 text-white flex items-center justify-center font-bold text-xs ring-2 ring-white shadow-sm">
-              {getInitials(user?.name)}
+            <div className="hidden lg:flex items-center gap-3.5 px-4 py-1.5 rounded-full bg-slate-50 border border-slate-200 shadow-sm">
+              <span className="text-xs font-semibold text-slate-700">
+                Step {step} of {totalSteps}
+              </span>
+              <div className="w-1 h-1 rounded-full bg-slate-300" />
+              <span className="text-xs font-medium text-slate-500">Discovery Flow</span>
+              <div className="w-20 h-1.5 bg-slate-200 rounded-full overflow-hidden ml-1">
+                <div className="h-full bg-indigo-600 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+              </div>
             </div>
           </div>
-        </div>
-        {/* Mobile slim progress line */}
-        <div className="w-full h-1 bg-slate-100 md:hidden">
+        }
+      >
+        {/* Progress line for screens too narrow for the step pill */}
+        <div className="w-full h-1 bg-slate-100 lg:hidden">
           <div className="h-full bg-indigo-600" style={{ width: `${progress}%` }} />
         </div>
-      </header>
+      </DashboardHeader>
 
       <main className={mainClassName}>{children}</main>
 

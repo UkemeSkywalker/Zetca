@@ -308,3 +308,44 @@ export async function getStrategy(id: string): Promise<StrategyRecord> {
     );
   }
 }
+
+/**
+ * Ask the Keyword agent for search keywords that fit the quiz answers so far.
+ *
+ * @returns Promise resolving to keyword phrases, most relevant first
+ * @throws StrategyAPIError if the request fails
+ */
+export async function suggestKeywords(input: {
+  niches: string[];
+  topics: { niche: string; topic: string }[];
+  skillLevel: 'beginner' | 'intermediate' | 'pro' | null;
+  ageRanges: string[];
+  interests: string[];
+  struggles: string[];
+  platforms: string[];
+  contentTypes: string[];
+}, signal?: AbortSignal): Promise<string[]> {
+  const response = await fetch(`${API_BASE_URL}/api/strategy/keywords`, {
+    method: 'POST',
+    headers: createAuthHeaders(),
+    signal,
+    body: JSON.stringify({
+      niches: input.niches,
+      topics: input.topics,
+      skill_level: input.skillLevel,
+      age_ranges: input.ageRanges,
+      interests: input.interests,
+      struggles: input.struggles,
+      platforms: input.platforms,
+      content_types: input.contentTypes,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new StrategyAPIError(errorData.detail || 'Failed to suggest keywords', response.status, errorData);
+  }
+
+  const data = await response.json();
+  return Array.isArray(data.keywords) ? data.keywords : [];
+}

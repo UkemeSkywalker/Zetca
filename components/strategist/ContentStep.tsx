@@ -1,9 +1,13 @@
 'use client';
 
 import { Icon } from '@iconify/react';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { PlatformId } from './BrandStep';
 import type { Niche, NicheTopic } from './NicheStep';
 import type { SkillLevel } from './AudienceStep';
+import { StrategyRail } from './StrategyRail';
+import { ruleBasedKeywords } from '@/lib/strategist/keywords';
+import { suggestKeywords } from '@/lib/api/strategyClient';
 
 export const CONTENT_TYPES: { id: string; label: string; icon: string; iconSelected: string }[] = [
   { id: 'tutorials', label: 'Tutorials', icon: 'material-symbols:play-lesson-outline', iconSelected: 'material-symbols:play-lesson' },
@@ -18,7 +22,7 @@ export const CONTENT_TYPES: { id: string; label: string; icon: string; iconSelec
 
 export type GoalId = 'grow' | 'authority' | 'sell' | 'community';
 
-const GOALS: { id: GoalId; emoji: string; label: string }[] = [
+export const GOALS: { id: GoalId; emoji: string; label: string }[] = [
   { id: 'grow', emoji: '📈', label: 'Grow audience' },
   { id: 'authority', emoji: '🏆', label: 'Build authority' },
   { id: 'sell', emoji: '🛍️', label: 'Sell products' },
@@ -28,38 +32,11 @@ const GOALS: { id: GoalId; emoji: string; label: string }[] = [
 export const MIN_CADENCE = 1;
 export const MAX_CADENCE = 14;
 export const MAX_SECONDARY_KEYWORDS = 3;
-const MAX_KEYWORD_CHIPS = 8;
-
-// Common search phrases per niche, used to fill out the keyword list
-const NICHE_KEYWORDS: Record<string, string[]> = {
-  Fitness: ['no equipment workout', '15 minute workout', 'beginner fitness', 'full body workout', 'workout at home', 'fat burning workout'],
-  Tech: ['tech tips', 'best budget phone', 'ai tools for productivity', 'unboxing and review', 'tech for beginners'],
-  Finance: ['how to invest', 'money saving tips', 'budgeting for beginners', 'passive income ideas', 'personal finance tips'],
-  Cooking: ['easy recipes', 'quick dinner ideas', 'healthy meal prep', 'cooking for beginners', 'budget meals'],
-  Gaming: ['gameplay walkthrough', 'best games 2026', 'gaming tips', 'pro tips and tricks', 'game review'],
-  Education: ['study tips', 'how to learn faster', 'exam preparation', 'study with me', 'learning hacks'],
-  Travel: ['travel tips', 'budget travel guide', 'things to do in', 'travel vlog', 'packing tips'],
-  Beauty: ['skincare routine', 'makeup tutorial', 'drugstore dupes', 'beauty tips', 'everyday makeup'],
+const BUBBLE_BY_SKILL: Record<SkillLevel, string> = {
+  beginner: 'People search for these in your niche & beginners love step-by-step videos!',
+  intermediate: 'People search for these in your niche & your audience loves practical tips!',
+  pro: 'People search for these in your niche & advanced viewers love deep dives!',
 };
-
-/** Build keyword suggestions from the niches, topics and audience skill picked earlier */
-export function suggestKeywords(niches: Niche[], topics: NicheTopic[], skill: SkillLevel | null): string[] {
-  const forSkill = (phrase: string) =>
-    skill === 'beginner' ? `${phrase} for beginners` : skill === 'pro' ? `advanced ${phrase}` : `${phrase} tips`;
-  const result: string[] = [];
-  const add = (k: string) => {
-    const clean = k.toLowerCase();
-    if (!result.includes(clean)) result.push(clean);
-  };
-  topics.forEach((t) => add(forSkill(t.topic)));
-  niches.forEach((n) => {
-    if (!topics.some((t) => t.niche === n.label)) add(forSkill(n.label));
-  });
-  topics.forEach((t) => add(t.topic));
-  const extras = niches.map((n) => NICHE_KEYWORDS[n.label] ?? []);
-  for (let i = 0; i < 6; i++) extras.forEach((list) => list[i] && add(list[i]));
-  return result.slice(0, MAX_KEYWORD_CHIPS);
-}
 
 const CARD = 'bg-white rounded-2xl shadow-sm border border-[#c7c4d8]/20 p-6 sm:p-7 flex flex-col space-y-6';
 const TILE_ON = 'bg-[#e5eeff] text-[#3525cd] shadow-sm hover:shadow-md';
@@ -67,6 +44,11 @@ const TILE_OFF = 'bg-white border border-[#c7c4d8]/30 text-[#0b1c30] shadow-sm h
 const LABEL = 'text-[13px] leading-[18px] tracking-[0.01em] font-semibold text-[#0b1c30]';
 
 interface ContentStepProps {
+  brandName: string;
+  platforms: PlatformId[];
+  ages: string[];
+  interests: string[];
+  struggles: string[];
   niches: Niche[];
   topics: NicheTopic[];
   skill: SkillLevel | null;
@@ -85,6 +67,11 @@ interface ContentStepProps {
 }
 
 export function ContentStep({
+  brandName,
+  platforms,
+  ages,
+  interests,
+  struggles,
   niches,
   topics,
   skill,
@@ -101,7 +88,49 @@ export function ContentStep({
   onBack,
   onContinue,
 }: ContentStepProps) {
-  const keywords = useMemo(() => suggestKeywords(niches, topics, skill), [niches, topics, skill]);
+  const fallbackKeywords = useMemo(
+    () => ruleBasedKeywords({ niches: niches.map((n) => n.label), topics, skill }),
+    [niches, topics, skill]
+  );
+  const [aiKeywords, setAiKeywords] = useState<string[] | null>(null);
+  const [loadingKeywords, setLoadingKeywords] = useState(true);
+
+  // Ask the Keyword agent once per visit; keep the rule-based list if it fails
+  useEffect(() => {
+    const controller = new AbortController();
+    suggestKeywords(
+      {
+        niches: niches.map((n) => n.label),
+        topics,
+        skillLevel: skill,
+        ageRanges: ages,
+        interests,
+        struggles,
+        platforms,
+        contentTypes: [],
+      },
+      controller.signal
+    )
+      .then((list) => {
+        if (list.length > 0) setAiKeywords(list);
+      })
+      .catch(() => {
+        // Fallback list is already showing
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoadingKeywords(false);
+      });
+    return () => controller.abort();
+    // Only on entering the step; answers can't change while it's open
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Keep any keyword already picked visible, even if the AI list differs
+  const keywords = useMemo(() => {
+    const base = aiKeywords ?? fallbackKeywords;
+    const picked = [primaryKeyword, ...secondaryKeywords].filter((k): k is string => !!k && !base.includes(k));
+    return [...picked, ...base];
+  }, [aiKeywords, fallbackKeywords, primaryKeyword, secondaryKeywords]);
   const canContinue = contentTypes.length > 0 && primaryKeyword !== null && goal !== null;
   const secondaryFull = secondaryKeywords.length >= MAX_SECONDARY_KEYWORDS;
 
@@ -141,8 +170,40 @@ export function ContentStep({
     else if (!secondaryFull) onSecondaryKeywordsChange([...secondaryKeywords, k]);
   };
 
+  const goalInfo = GOALS.find((g) => g.id === goal) ?? null;
+
   return (
-    <section className="flex flex-col space-y-6 w-full">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      {/* Left: live strategy summary */}
+      <div className="lg:col-span-4 lg:sticky lg:top-[102px]">
+        <StrategyRail
+          summary={{
+            brandName,
+            platforms,
+            niches,
+            topics,
+            ages,
+            skill,
+            interests,
+            struggles,
+            contentTypes: CONTENT_TYPES.filter((c) => contentTypes.includes(c.id)),
+            cadence,
+            primaryKeyword,
+            secondaryKeywords,
+            goal: goalInfo ? { emoji: goalInfo.emoji, label: goalInfo.label } : null,
+          }}
+        />
+      </div>
+
+    <section className="lg:col-span-8 flex flex-col space-y-6 w-full">
+      {/* AI insight bubble */}
+      <div className="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl bg-[#eff4ff] border border-[#c7c4d8]/20 shadow-sm">
+        <div className="shrink-0 w-9 h-9 rounded-lg bg-[#4f46e5] text-white flex items-center justify-center shadow-sm">
+          <Icon icon="material-symbols:auto-awesome" width={18} height={18} />
+        </div>
+        <p className="text-[15px] leading-[22px] text-[#0b1c30]">{BUBBLE_BY_SKILL[skill ?? 'beginner']}</p>
+      </div>
+
       {/* Card 1: content types & cadence */}
       <div className={CARD}>
         <div>
@@ -214,7 +275,20 @@ export function ContentStep({
       <div className={CARD}>
         <div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0b1c30] tracking-tight">Pick your keywords</h2>
-          <p className="text-base text-[#464555] mt-1.5 font-normal">Star your main one, then pick up to 3 more.</p>
+          <div className="flex flex-wrap items-center justify-between gap-2 mt-1.5">
+            <p className="text-base text-[#464555] font-normal">Star your main one, then pick up to 3 more.</p>
+            {loadingKeywords ? (
+              <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#3525cd]" role="status">
+                <Icon icon="material-symbols:auto-awesome" width={14} height={14} className="animate-pulse" />
+                <span className="text-inherit">Finding what people search for…</span>
+              </span>
+            ) : aiKeywords ? (
+              <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#464555]">
+                <Icon icon="material-symbols:auto-awesome" width={14} height={14} className="text-[#3525cd]" />
+                <span className="text-inherit">Suggested by AI</span>
+              </span>
+            ) : null}
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-2.5" role="group" aria-label="Keywords">
@@ -308,5 +382,6 @@ export function ContentStep({
         </button>
       </div>
     </section>
+    </div>
   );
 }
