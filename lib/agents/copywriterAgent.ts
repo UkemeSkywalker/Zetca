@@ -92,7 +92,7 @@ Each of the 7 variations per platform should take a different angle:
 }
 
 export class CopywriterAgent {
-  private agent: Agent;
+  private model: BedrockModel;
 
   constructor({
     awsRegion,
@@ -100,7 +100,7 @@ export class CopywriterAgent {
     awsAccessKeyId,
     awsSecretAccessKey,
   }: AgentCredentials) {
-    const model = new BedrockModel({
+    this.model = new BedrockModel({
       modelId,
       region: awsRegion,
       requestTimeout: 300_000,
@@ -111,12 +111,17 @@ export class CopywriterAgent {
           : {}),
       },
     });
+  }
 
-    this.agent = new Agent({ model, systemPrompt: SYSTEM_PROMPT });
+  // A Strands Agent handles one invocation at a time, so each request gets its own;
+  // the Bedrock model (and its client) is shared. Every prompt carries its full
+  // context, so no conversation history is needed across calls.
+  private createAgent(): Agent {
+    return new Agent({ model: this.model, systemPrompt: SYSTEM_PROMPT });
   }
 
   async generateCopies(strategyData: Record<string, any>): Promise<CopyOutput> {
-    const result = await this.agent.invoke(buildCopiesPrompt(strategyData), {
+    const result = await this.createAgent().invoke(buildCopiesPrompt(strategyData), {
       structuredOutputSchema: CopyOutputSchema,
     });
     if (!result.structuredOutput) {
@@ -143,7 +148,7 @@ export class CopywriterAgent {
       yield { event: 'lifecycle', phase: 'Agent loop initialized' };
       yield { event: 'lifecycle', phase: 'Processing strategy data...' };
 
-      for await (const chunk of this.agent.stream(prompt)) {
+      for await (const chunk of this.createAgent().stream(prompt)) {
         const text = (chunk as any)?.event?.delta?.text;
         if (typeof text === 'string' && text.length > 0) {
           yield { event: 'thinking', text };
@@ -186,7 +191,7 @@ My feedback: ${userMessage}
 Please update the copy based on my feedback while maintaining brand consistency.
 Provide the updated text, updated hashtags, and explain what changes you made.`;
 
-    const result = await this.agent.invoke(userPrompt, { structuredOutputSchema: ChatResponseSchema });
+    const result = await this.createAgent().invoke(userPrompt, { structuredOutputSchema: ChatResponseSchema });
     if (!result.structuredOutput) {
       throw new StructuredOutputException('Copywriter agent failed to return structured chat response');
     }

@@ -46,7 +46,7 @@ export interface AgentCredentials {
 }
 
 export class StrategistAgent {
-  private agent: Agent;
+  private model: BedrockModel;
 
   constructor({
     awsRegion,
@@ -54,7 +54,7 @@ export class StrategistAgent {
     awsAccessKeyId,
     awsSecretAccessKey,
   }: AgentCredentials) {
-    const model = new BedrockModel({
+    this.model = new BedrockModel({
       modelId,
       region: awsRegion,
       requestTimeout: 300_000,
@@ -64,12 +64,6 @@ export class StrategistAgent {
           ? { credentials: { accessKeyId: awsAccessKeyId, secretAccessKey: awsSecretAccessKey } }
           : {}),
       },
-    });
-
-    this.agent = new Agent({
-      model,
-      systemPrompt: SYSTEM_PROMPT,
-      structuredOutputSchema: StrategyOutputSchema,
     });
   }
 
@@ -84,7 +78,14 @@ Goals: ${input.goals}
 Provide a detailed strategy that includes content pillars, posting schedule, platform recommendations,
 content themes, engagement tactics, and visual prompts for image generation that align with the strategy.`;
 
-    const result = await this.agent.invoke(userPrompt);
+    // A Strands Agent handles one invocation at a time, so each request gets its own;
+    // the Bedrock model (and its client) is shared
+    const agent = new Agent({
+      model: this.model,
+      systemPrompt: SYSTEM_PROMPT,
+      structuredOutputSchema: StrategyOutputSchema,
+    });
+    const result = await agent.invoke(userPrompt);
     if (!result.structuredOutput) {
       throw new StructuredOutputException('Strategist agent failed to return structured output');
     }

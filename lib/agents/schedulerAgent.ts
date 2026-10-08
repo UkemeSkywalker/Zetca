@@ -48,18 +48,16 @@ For each copy provided, produce exactly one PostAssignment containing:
 Return a structured AutoScheduleOutput with a "posts" list containing all assignments.`;
 
 export class SchedulerAgent {
-  private agent: Agent;
+  private model: BedrockModel;
 
   constructor({ awsRegion, modelId = 'anthropic.claude-3-haiku-20240307-v1:0', awsAccessKeyId, awsSecretAccessKey }: AgentCredentials) {
-    const model = new BedrockModel({
+    this.model = new BedrockModel({
       modelId,
       region: awsRegion,
       ...(awsAccessKeyId && awsSecretAccessKey
         ? { clientConfig: { credentials: { accessKeyId: awsAccessKeyId, secretAccessKey: awsSecretAccessKey } } }
         : {}),
     });
-
-    this.agent = new Agent({ model, systemPrompt: SYSTEM_PROMPT, structuredOutputSchema: AutoScheduleOutputSchema });
   }
 
   async autoSchedule(strategyData: Record<string, any>, copiesData: Record<string, any>[]): Promise<AutoScheduleOutput> {
@@ -106,7 +104,10 @@ Each must reference the exact copy_id from the list above.
 Ensure no two assignments share the same (platform, scheduled_date, scheduled_time).
 All dates must be in the future (after ${today}).`;
 
-    const result = await this.agent.invoke(prompt);
+    // A Strands Agent handles one invocation at a time, so each request gets its own;
+    // the Bedrock model (and its client) is shared
+    const agent = new Agent({ model: this.model, systemPrompt: SYSTEM_PROMPT, structuredOutputSchema: AutoScheduleOutputSchema });
+    const result = await agent.invoke(prompt);
     if (!result.structuredOutput) {
       throw new StructuredOutputException('Scheduler agent failed to return structured output');
     }
