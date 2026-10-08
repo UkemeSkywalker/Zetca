@@ -3,7 +3,7 @@
  * Handles communication with the Python FastAPI service
  */
 
-import { StrategyInput, StrategyOutput, StrategyRecord } from '@/types/strategy';
+import { ChannelDescription, StrategyInput, StrategyOutput, StrategyRecord } from '@/types/strategy';
 
 // Use relative URLs — Next.js rewrites proxy /api/strategy/* to the Python backend
 const API_BASE_URL = '';
@@ -282,7 +282,10 @@ export async function getStrategy(id: string): Promise<StrategyRecord> {
         contentThemes: record.strategy_output.content_themes,
         engagementTactics: record.strategy_output.engagement_tactics,
         visualPrompts: record.strategy_output.visual_prompts,
+        channelDescriptions: record.strategy_output.channel_descriptions,
+        schedule: record.strategy_output.schedule,
       },
+      quiz: record.quiz,
       createdAt: record.created_at,
     };
   } catch (error) {
@@ -365,6 +368,7 @@ export async function generateStrategyRecord(input: StrategyInput): Promise<stri
       industry: input.industry,
       target_audience: input.targetAudience,
       goals: input.goals,
+      ...(input.quiz ? { quiz: input.quiz } : {}),
     }),
   });
 
@@ -379,4 +383,28 @@ export async function generateStrategyRecord(input: StrategyInput): Promise<stri
 
   const record = await response.json();
   return record.id as string;
+}
+
+/**
+ * Regenerate one platform's channel description for a quiz strategy.
+ *
+ * @returns The new description (already saved on the strategy)
+ * @throws StrategyAPIError if the request fails
+ */
+export async function regenerateChannelDescription(strategyId: string, platform: ChannelDescription['platform']): Promise<ChannelDescription> {
+  const response = await fetch(`${API_BASE_URL}/api/strategy/${encodeURIComponent(strategyId)}/descriptions`, {
+    method: 'POST',
+    headers: createAuthHeaders(),
+    body: JSON.stringify({ platform }),
+  });
+
+  if (response.status === 401) {
+    handleAuthError();
+    throw new StrategyAPIError('Authentication required. Please log in again.', 401);
+  }
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new StrategyAPIError(errorData.detail || 'Regenerating the description failed. Please try again.', response.status, errorData);
+  }
+  return response.json();
 }

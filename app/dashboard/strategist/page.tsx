@@ -12,7 +12,8 @@ import { ReviewStep, ReviewSection } from '@/components/strategist/ReviewStep';
 import { GeneratingStep } from '@/components/strategist/GeneratingStep';
 import { PLATFORMS } from '@/components/strategist/BrandStep';
 import { summariseAges } from '@/components/strategist/StrategyRail';
-import { listStrategies, generateStrategyRecord, StrategyAPIError } from '@/lib/api/strategyClient';
+import { listStrategies, generateStrategyRecord, getStrategy, StrategyAPIError } from '@/lib/api/strategyClient';
+import type { QuizAnswers } from '@/types/strategy';
 
 const TOTAL_STEPS = 7;
 
@@ -64,6 +65,34 @@ export default function StrategistPage() {
     };
   }, []);
 
+  // "Edit answers" on a result links here with ?edit=<id>: refill the quiz and open Review
+  useEffect(() => {
+    const editId = new URLSearchParams(window.location.search).get('edit');
+    if (!editId) return;
+    getStrategy(editId)
+      .then((record) => {
+        const quiz = record.quiz;
+        if (!quiz) return;
+        setBrandName(record.brandName);
+        setPlatforms(quiz.platforms);
+        setNiches(quiz.niches);
+        setTopics(quiz.topics);
+        setAges(quiz.age_ranges);
+        setSkill(quiz.skill_level);
+        setInterests(quiz.interests);
+        setStruggles(quiz.struggles);
+        setContentTypes(quiz.content_types);
+        setCadence(quiz.cadence);
+        setPrimaryKeyword(quiz.primary_keyword);
+        setSecondaryKeywords(quiz.secondary_keywords);
+        setGoal(quiz.goal);
+        setScreen('review');
+      })
+      .catch(() => {
+        // Start the quiz fresh if the strategy can't be loaded
+      });
+  }, []);
+
   const togglePlatform = useCallback((id: PlatformId) => {
     setPlatforms((current) => (current.includes(id) ? current.filter((p) => p !== id) : [...current, id]));
   }, []);
@@ -109,21 +138,40 @@ export default function StrategistPage() {
       .filter(Boolean)
       .join(' ');
 
+    const quiz: QuizAnswers | undefined =
+      primaryKeyword && goal
+        ? {
+            platforms,
+            niches,
+            topics,
+            age_ranges: ages,
+            skill_level: skill,
+            interests,
+            struggles,
+            content_types: contentTypes,
+            cadence,
+            primary_keyword: primaryKeyword,
+            secondary_keywords: secondaryKeywords,
+            goal,
+          }
+        : undefined;
+
     try {
       const id = await generateStrategyRecord({
         brandName,
         industry,
         targetAudience: audienceParts.join('; '),
         goals,
+        quiz,
       });
       // Let the finished checklist show briefly before opening the result
       setGenerateStatus('done');
-      setTimeout(() => router.push(`/dashboard/strategist/saved?id=${encodeURIComponent(id)}`), 900);
+      setTimeout(() => router.push(`/dashboard/strategist/result?id=${encodeURIComponent(id)}`), 900);
     } catch (err) {
       setGenerateError(err instanceof StrategyAPIError ? err.message : 'Strategy generation failed.');
       setGenerateStatus('error');
     }
-  }, [platforms, niches, topics, ages, skill, interests, struggles, goalInfo, selectedContentTypes, cadence, primaryKeyword, secondaryKeywords, brandName, router]);
+  }, [platforms, niches, topics, ages, skill, interests, struggles, goal, goalInfo, contentTypes, selectedContentTypes, cadence, primaryKeyword, secondaryKeywords, brandName, router]);
 
   const { step, progress } = SCREEN_PROGRESS[screen];
 

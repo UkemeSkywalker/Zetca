@@ -3,6 +3,10 @@
  * These types match the Pydantic models in the Python service
  */
 
+import type { ChannelDescription, QuizAnswers, Schedule } from '@/lib/models/strategy';
+
+export type { ChannelDescription, QuizAnswers, Schedule };
+
 /**
  * Input data for strategy generation
  */
@@ -11,6 +15,8 @@ export interface StrategyInput {
   industry: string;
   targetAudience: string;
   goals: string;
+  /** Structured quiz answers; when present, channel descriptions are generated too */
+  quiz?: QuizAnswers;
 }
 
 /**
@@ -32,6 +38,10 @@ export interface StrategyOutput {
   contentThemes: string[];
   engagementTactics: string[];
   visualPrompts: string[];
+  /** Only on strategies generated from the quiz */
+  channelDescriptions?: ChannelDescription[];
+  /** Only on strategies generated from the quiz */
+  schedule?: Schedule;
 }
 
 /**
@@ -45,5 +55,7 @@ export interface StrategyRecord {
   targetAudience: string;
   goals: string;
   strategyOutput: StrategyOutput;
+  /** Only on strategies generated from the quiz */
+  quiz?: QuizAnswers;
   createdAt: string;
 }

@@ -5,9 +5,9 @@
  */
 
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand, GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, PutCommand, GetCommand, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { getConfig } from '../config';
-import { StrategyRecord } from '../models/strategy';
+import { ChannelDescription, StrategyRecord } from '../models/strategy';
 
 export class StrategyRepository {
   private docClient: DynamoDBDocumentClient;
@@ -44,6 +44,19 @@ export class StrategyRepository {
     return this.itemToRecord(result.Item);
   }
 
+  /** Replace a strategy's channel descriptions; only succeeds for the strategy's owner. */
+  async updateChannelDescriptions(strategyId: string, userId: string, descriptions: ChannelDescription[]): Promise<void> {
+    await this.docClient.send(
+      new UpdateCommand({
+        TableName: this.tableName,
+        Key: { strategyId },
+        UpdateExpression: 'SET strategyOutput.channel_descriptions = :descriptions',
+        ConditionExpression: 'userId = :userId',
+        ExpressionAttributeValues: { ':descriptions': descriptions, ':userId': userId },
+      })
+    );
+  }
+
   /** Check if a strategy exists regardless of owner. */
   async strategyExists(strategyId: string): Promise<boolean> {
     const result = await this.docClient.send(
@@ -75,6 +88,7 @@ export class StrategyRepository {
       targetAudience: record.target_audience,
       goals: record.goals,
       strategyOutput: record.strategy_output,
+      ...(record.quiz ? { quiz: record.quiz } : {}),
       createdAt: record.created_at,
     };
   }
@@ -88,6 +102,7 @@ export class StrategyRepository {
       target_audience: item.targetAudience,
       goals: item.goals,
       strategy_output: item.strategyOutput,
+      ...(item.quiz ? { quiz: item.quiz } : {}),
       created_at: item.createdAt,
     };
   }
