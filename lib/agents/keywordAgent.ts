@@ -31,10 +31,10 @@ Rules:
 6. Do not repeat near-duplicates (e.g. "home workout" and "home workouts").`;
 
 export class KeywordAgent {
-  private agent: Agent;
+  private model: BedrockModel;
 
   constructor({ awsRegion, modelId = 'anthropic.claude-3-haiku-20240307-v1:0', awsAccessKeyId, awsSecretAccessKey }: AgentCredentials) {
-    const model = new BedrockModel({
+    this.model = new BedrockModel({
       modelId,
       region: awsRegion,
       requestTimeout: 60_000,
@@ -44,12 +44,6 @@ export class KeywordAgent {
           ? { credentials: { accessKeyId: awsAccessKeyId, secretAccessKey: awsSecretAccessKey } }
           : {}),
       },
-    });
-
-    this.agent = new Agent({
-      model,
-      systemPrompt: SYSTEM_PROMPT,
-      structuredOutputSchema: KeywordResponseSchema,
     });
   }
 
@@ -68,7 +62,14 @@ Audience struggles: ${input.struggles.join(', ') || 'not specified'}
 Platforms: ${input.platforms.join(', ') || 'not specified'}
 Content types: ${input.content_types.join(', ') || 'not specified'}`;
 
-    const result = await this.agent.invoke(userPrompt);
+    // A Strands Agent handles one invocation at a time, so each request gets its own;
+    // the Bedrock model (and its client) is shared
+    const agent = new Agent({
+      model: this.model,
+      systemPrompt: SYSTEM_PROMPT,
+      structuredOutputSchema: KeywordResponseSchema,
+    });
+    const result = await agent.invoke(userPrompt);
     if (!result.structuredOutput) {
       throw new StructuredOutputException('Keyword agent failed to return structured output');
     }
