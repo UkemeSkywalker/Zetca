@@ -9,7 +9,7 @@ import { Agent } from '@strands-agents/sdk';
 import { BedrockModel } from '@strands-agents/sdk/models/bedrock';
 import { StrategyInput, StrategyOutput, StrategyOutputSchema } from '../models/strategy';
 import { StructuredOutputException } from './errors';
-import { runAgent } from './runAgent';
+import { runAgent, STRUCTURED_OUTPUT_ONLY } from './runAgent';
 
 const SYSTEM_PROMPT = `You are an expert social media strategist with deep knowledge of digital marketing,
 content strategy, and audience engagement across multiple platforms.
@@ -37,7 +37,10 @@ IMPORTANT: The visual prompts must be directly relevant to the content strategy 
 visually represent the themes and tactics you're recommending, not generic stock imagery.
 
 Generate strategies that are practical, data-informed, and aligned with current social media
-best practices.`;
+best practices. Be concise: keep every list item and rationale short and specific, within the
+lengths the schema gives.
+
+${STRUCTURED_OUTPUT_ONLY}`;
 
 export interface AgentCredentials {
   awsRegion: string;

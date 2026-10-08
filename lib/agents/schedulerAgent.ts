@@ -10,7 +10,7 @@ import { Agent } from '@strands-agents/sdk';
 import { BedrockModel } from '@strands-agents/sdk/models/bedrock';
 import { AutoScheduleOutput, AutoScheduleOutputSchema } from '../models/scheduler';
 import { StructuredOutputException } from './errors';
-import { runAgent } from './runAgent';
+import { runAgent, STRUCTURED_OUTPUT_ONLY } from './runAgent';
 import { AgentCredentials } from './strategistAgent';
 
 const SYSTEM_PROMPT = `You are an expert social media scheduling optimizer. Your job is to analyze
@@ -46,7 +46,9 @@ For each copy provided, produce exactly one PostAssignment containing:
 - scheduled_time: a time string in HH:MM format
 - platform: the target social media platform
 
-Return a structured AutoScheduleOutput with a "posts" list containing all assignments.`;
+Return a structured AutoScheduleOutput with a "posts" list containing all assignments.
+
+${STRUCTURED_OUTPUT_ONLY}`;
 
 export class SchedulerAgent {
   private model: BedrockModel;

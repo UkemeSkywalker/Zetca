@@ -76,36 +76,42 @@ export type Schedule = z.infer<typeof ScheduleSchema>;
 
 export const PlatformRecommendationSchema = z.object({
   platform: z.string().describe('Platform name (e.g., Instagram, LinkedIn, Twitter)'),
-  rationale: z.string().describe('Why this platform is recommended for the brand'),
+  rationale: z.string().describe('Why this platform is recommended for the brand, in one sentence of at most 20 words'),
   priority: z.enum(['high', 'medium', 'low']).describe('Priority level for this platform'),
 });
 export type PlatformRecommendation = z.infer<typeof PlatformRecommendationSchema>;
 
+// Upper limits keep the output short: generation time grows with every token the model writes
 export const StrategyOutputSchema = z.object({
   content_pillars: z
     .array(z.string())
     .min(3)
-    .max(6)
-    .describe('3-6 core content themes that align with brand identity and resonate with the target audience'),
-  posting_schedule: z.string().describe('Recommended posting frequency and optimal timing for maximum engagement'),
+    .max(5)
+    .describe('3-5 core content themes that align with brand identity and resonate with the target audience; each a short label of 2-4 words'),
+  posting_schedule: z
+    .string()
+    .describe('Recommended posting frequency and optimal timing for maximum engagement, in one or two sentences'),
   platform_recommendations: z
     .array(PlatformRecommendationSchema)
     .min(2)
+    .max(6)
     .describe('Recommended social media platforms with rationale and priority'),
   content_themes: z
     .array(z.string())
     .min(5)
-    .describe('Specific content ideas and topics aligned with content pillars'),
+    .max(8)
+    .describe('5-8 specific content ideas and topics aligned with content pillars; each at most 15 words'),
   engagement_tactics: z
     .array(z.string())
     .min(4)
-    .describe('Strategies for audience interaction and community building'),
+    .max(6)
+    .describe('4-6 strategies for audience interaction and community building; each one sentence of at most 25 words'),
   visual_prompts: z
     .array(z.string())
     .min(2)
     .max(3)
     .describe(
-      '2-3 detailed image generation prompts that align with content themes and engagement tactics, designed to be passed to a Designer Agent for creating graphics'
+      '2-3 image generation prompts that align with content themes and engagement tactics, designed to be passed to a Designer Agent for creating graphics; each at most 50 words'
     ),
   /** Only on strategies generated from the quiz */
   channel_descriptions: z.array(ChannelDescriptionSchema).optional(),
