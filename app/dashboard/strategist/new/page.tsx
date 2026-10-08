@@ -12,7 +12,8 @@ import { ReviewStep, ReviewSection } from '@/components/strategist/ReviewStep';
 import { GeneratingStep } from '@/components/strategist/GeneratingStep';
 import { PLATFORMS } from '@/components/strategist/BrandStep';
 import { summariseAges } from '@/components/strategist/StrategyRail';
-import { listStrategies, generateStrategyRecord, getStrategy, StrategyAPIError } from '@/lib/api/strategyClient';
+import { listStrategies, generateStrategyRecordStream, getStrategy, StrategyAPIError } from '@/lib/api/strategyClient';
+import type { GenerationProgress } from '@/lib/models/strategyConstants';
 import type { QuizAnswers } from '@/types/strategy';
 
 // Question steps: brand, niche, audience, content & keywords, review
@@ -51,6 +52,7 @@ export default function StrategistPage() {
   const [goal, setGoal] = useState<GoalId | null>(null);
   const [generateStatus, setGenerateStatus] = useState<'running' | 'done' | 'error'>('running');
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const [generateProgress, setGenerateProgress] = useState<GenerationProgress | null>(null);
   const [generateRun, setGenerateRun] = useState(0);
 
   useEffect(() => {
@@ -117,6 +119,7 @@ export default function StrategistPage() {
     setGenerateRun((run) => run + 1);
     setGenerateStatus('running');
     setGenerateError(null);
+    setGenerateProgress(null);
     const platformNames = platforms.map((id) => PLATFORMS.find((p) => p.id === id)?.name ?? id);
     const industry = niches
       .map((n) => {
@@ -159,13 +162,16 @@ export default function StrategistPage() {
         : undefined;
 
     try {
-      const id = await generateStrategyRecord({
-        brandName,
-        industry,
-        targetAudience: audienceParts.join('; '),
-        goals,
-        quiz,
-      });
+      const id = await generateStrategyRecordStream(
+        {
+          brandName,
+          industry,
+          targetAudience: audienceParts.join('; '),
+          goals,
+          quiz,
+        },
+        setGenerateProgress
+      );
       // Let the finished checklist show briefly before opening the result
       setGenerateStatus('done');
       setTimeout(() => router.push(`/dashboard/strategist/result?id=${encodeURIComponent(id)}`), 900);
@@ -293,7 +299,7 @@ export default function StrategistPage() {
       )}
 
       {screen === 'generating' && (
-        <GeneratingStep key={generateRun} status={generateStatus} error={generateError} onRetry={generate} onBackToReview={goToReview} />
+        <GeneratingStep key={generateRun} status={generateStatus} live={generateProgress} error={generateError} onRetry={generate} onBackToReview={goToReview} />
       )}
     </WizardShell>
   );

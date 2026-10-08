@@ -2,13 +2,14 @@
 
 import { Icon } from '@iconify/react';
 import { useEffect, useState } from 'react';
+import { GENERATION_STAGES, type GenerationProgress } from '@/lib/models/strategyConstants';
 
-const STAGES = ['Reading your niche', 'Picking keywords', 'Writing descriptions', 'Planning your schedule'];
+// One per GENERATION_STAGES entry, in the same order
+const STAGES = ['Reading your niche', 'Shaping your content', 'Writing descriptions', 'Planning your schedule'];
 
-// When each stage becomes active (seconds after starting). Generation is one
-// API call, so the checklist is paced to its typical length; the last stage
-// stays active until the result arrives.
-const STAGE_STARTS = [0, 2, 5, 22];
+// Without live progress (strategies not from the quiz), each stage becomes active
+// this many seconds after starting; the last stays active until the result arrives
+const STAGE_STARTS = [0, 2, 12, 20];
 
 // Progress eases towards 95% while waiting; the last 5% fills on success
 const MAX_WAITING_PROGRESS = 95;
@@ -16,12 +17,14 @@ const PROGRESS_TIME_CONSTANT = 18;
 
 interface GeneratingStepProps {
   status: 'running' | 'done' | 'error';
+  /** Progress streamed from the server while the model writes, when available */
+  live?: GenerationProgress | null;
   error: string | null;
   onRetry: () => void;
   onBackToReview: () => void;
 }
 
-export function GeneratingStep({ status, error, onRetry, onBackToReview }: GeneratingStepProps) {
+export function GeneratingStep({ status, live, error, onRetry, onBackToReview }: GeneratingStepProps) {
   const [elapsed, setElapsed] = useState(0);
 
   // Each run is a fresh mount (the page keys this component by run), so the clock starts at 0
@@ -32,10 +35,14 @@ export function GeneratingStep({ status, error, onRetry, onBackToReview }: Gener
     return () => clearInterval(timer);
   }, [status]);
 
-  const runningStage = STAGE_STARTS.filter((s) => elapsed >= s).length - 1;
+  const runningStage = live
+    ? GENERATION_STAGES.indexOf(live.stage)
+    : STAGE_STARTS.filter((s) => elapsed >= s).length - 1;
   const activeStage = status === 'done' ? STAGES.length : runningStage;
-  const progress =
-    status === 'done' ? 100 : MAX_WAITING_PROGRESS * (1 - Math.exp(-elapsed / PROGRESS_TIME_CONSTANT));
+  const waitingProgress = live
+    ? Math.min(MAX_WAITING_PROGRESS, Math.max(3, live.progress * 100))
+    : MAX_WAITING_PROGRESS * (1 - Math.exp(-elapsed / PROGRESS_TIME_CONSTANT));
+  const progress = status === 'done' ? 100 : waitingProgress;
   const failed = status === 'error';
 
   return (

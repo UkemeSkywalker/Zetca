@@ -262,7 +262,7 @@ export function ReviewStep(props: ReviewStepProps) {
             {error}
           </p>
         ) : (
-          <span className={`${LABEL_SM} text-[#777587] text-center mt-2`}>Takes about 30 seconds</span>
+          <span className={`${LABEL_SM} text-[#777587] text-center mt-2`}>Takes about 20–30 seconds</span>
         )}
         <button
           type="button"

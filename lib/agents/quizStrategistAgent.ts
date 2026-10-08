@@ -12,6 +12,8 @@ import {
   ChannelDescription,
   ChannelDescriptionSchema,
   DESCRIPTION_LIMITS,
+  GenerationProgress,
+  GenerationStage,
   PlatformId,
   QuizAnswers,
   QuizStrategyOutputSchema,
@@ -19,6 +21,8 @@ import {
   StrategyOutput,
 } from '../models/strategy';
 import { StructuredOutputException } from './errors';
+import { runAgent, streamDelta, STRUCTURED_OUTPUT_ONLY } from './runAgent';
+import type { GenerateStrategyOptions } from '../services/strategyService';
 import { descriptionLength, fitToLimit } from '../strategist/descriptions';
 import type { AgentCredentials } from './strategistAgent';
 
@@ -38,6 +42,14 @@ const GOAL_NAMES: Record<QuizAnswers['goal'], string> = {
   community: 'Build community',
 };
 
+/**
+ * A short bio's budget in words, which models keep to far better than character counts:
+ * about 7 characters per word (emoji count double), with room to spare
+ */
+function shortTarget(platform: PlatformId): string {
+  return `${Math.floor(DESCRIPTION_LIMITS[platform] / 9)} words`;
+}
+
 const DESCRIPTION_FORMULA = `Channel description formula. Write each description as five parts, in this order:
 1. HOOK (the most important): place the primary keyword naturally within the first 100 characters.
    This sentence must instantly tell both the platform and viewers exactly what the channel is about.
@@ -52,12 +64,13 @@ const DESCRIPTION_FORMULA = `Channel description formula. Write each description
 Platform limits (the whole description, all five parts joined with spaces, must fit):
 - YouTube: ${DESCRIPTION_LIMITS.youtube} characters; aim for 350-600. Full sentences.
 - LinkedIn (About section): ${DESCRIPTION_LIMITS.linkedin} characters; aim for 400-800, professional tone.
-- Facebook (page intro): ${DESCRIPTION_LIMITS.facebook} characters.
-- X (bio): ${DESCRIPTION_LIMITS.x} characters.
-- Instagram (bio): ${DESCRIPTION_LIMITS.instagram} characters.
-- TikTok (bio): ${DESCRIPTION_LIMITS.tiktok} characters.
-For the short bios (Instagram, TikTok, X, Facebook) keep all five parts but make each one a short
-phrase; emojis and separators like "|" are fine there. Never exceed a platform's limit.`;
+- Facebook (page intro): ${DESCRIPTION_LIMITS.facebook} characters; aim for ${shortTarget('facebook')} or fewer.
+- X (bio): ${DESCRIPTION_LIMITS.x} characters; aim for ${shortTarget('x')} or fewer.
+- Instagram (bio): ${DESCRIPTION_LIMITS.instagram} characters; aim for ${shortTarget('instagram')} or fewer.
+- TikTok (bio): ${DESCRIPTION_LIMITS.tiktok} characters; aim for ${shortTarget('tiktok')} or fewer.
+For the short bios (Instagram, TikTok, X, Facebook) keep all five parts but make each one a very short
+phrase (often 1-3 words); the word count is for all five parts together. Emojis and separators like "|" are fine there.
+Keep to the word counts above: an over-limit description costs an extra rewrite. Never exceed a platform's limit.`;
 
 const SYSTEM_PROMPT = `You are an expert social media strategist and channel SEO specialist.
 
@@ -75,21 +88,64 @@ When generating strategies:
 4. Generate 2-3 detailed image prompts that visually support the themes (not generic stock imagery).
 5. Write one channel description per chosen platform, following the formula below and using the
    creator's primary and secondary keywords.
+6. Be concise: keep every list item and rationale short and specific, within the lengths the schema gives.
 
-${DESCRIPTION_FORMULA}`;
+${DESCRIPTION_FORMULA}
+
+${STRUCTURED_OUTPUT_ONLY}`;
 
 const REGENERATE_PROMPT = `You are a channel SEO copywriter. Rewrite one platform's channel description for a
 creator, following the formula below and using their keywords. Write a fresh variation: different wording
 from the previous version, same facts.
 
-${DESCRIPTION_FORMULA}`;
+${DESCRIPTION_FORMULA}
+
+${STRUCTURED_OUTPUT_ONLY}`;
 
 const SHORTEN_PROMPT = `You are a channel SEO copywriter. Shorten a channel description so it fits a strict
 character limit, keeping the same five parts (hook, audience, content, value, cta) and the primary keyword in the
 hook. Count characters carefully: the five parts are joined with single spaces, and the total must be at or under
-the limit. Cut words, use short phrases, and leave a part as an empty string if there is no room for it.`;
+the limit. Cut words, use short phrases, and leave a part as an empty string if there is no room for it.
 
-const MAX_SHORTEN_ATTEMPTS = 2;
+${STRUCTURED_OUTPUT_ONLY}`;
+
+// One rewrite, then trim: each attempt adds several seconds to the generation
+const MAX_SHORTEN_ATTEMPTS = 1;
+
+// Typical length of each part of the structured output, to estimate progress while it streams
+const BASE_OUTPUT_CHARS = 3000;
+const DESCRIPTION_OUTPUT_CHARS: Record<PlatformId, number> = {
+  youtube: 900,
+  linkedin: 1000,
+  facebook: 350,
+  x: 250,
+  instagram: 250,
+  tiktok: 180,
+};
+
+/**
+ * Turns the streamed tool input (the strategy JSON as the model writes it) into
+ * progress updates: which part it has reached and roughly how much is written.
+ */
+function progressTracker(platforms: PlatformId[], onProgress: (progress: GenerationProgress) => void) {
+  const expected = BASE_OUTPUT_CHARS + platforms.reduce((sum, p) => sum + DESCRIPTION_OUTPUT_CHARS[p], 0);
+  let written = '';
+  let last: GenerationProgress = { stage: 'reading', progress: 0 };
+  onProgress(last);
+  return (chunk: string) => {
+    written += chunk;
+    // Fields can come in any order, so the stage only ever moves forward
+    let stage: GenerationStage = last.stage === 'reading' ? 'content' : last.stage;
+    if (stage === 'content' && written.includes('"channel_descriptions"')) stage = 'descriptions';
+    if (stage !== 'schedule' && written.includes('"schedule"')) stage = 'schedule';
+    const progress = Math.min(0.95, written.length / expected);
+    // Report stage changes and each whole percent, not every token
+    if (stage !== last.stage || Math.floor(progress * 100) > Math.floor(last.progress * 100)) {
+      last = { stage, progress };
+      onProgress(last);
+    }
+  };
+}
 
 function describeQuiz(brandName: string, quiz: QuizAnswers): string {
   const topics = quiz.topics.length ? quiz.topics.map((t) => `${t.niche} › ${t.topic}`).join(', ') : 'none selected';
@@ -125,11 +181,17 @@ export class QuizStrategistAgent {
     });
   }
 
-  async generateStrategy(input: StrategyInput): Promise<StrategyOutput> {
+  async generateStrategy(input: StrategyInput, { onProgress }: GenerateStrategyOptions = {}): Promise<StrategyOutput> {
     if (!input.quiz) throw new Error('QuizStrategistAgent requires quiz answers');
+    const track = onProgress ? progressTracker(input.quiz.platforms, onProgress) : undefined;
     // A Strands Agent handles one invocation at a time, so each request gets its own
     const agent = new Agent({ model: this.model, systemPrompt: SYSTEM_PROMPT, structuredOutputSchema: QuizStrategyOutputSchema });
-    const result = await agent.invoke(`Generate the strategy for this creator:\n\n${describeQuiz(input.brand_name, input.quiz)}`);
+    const result = await runAgent(agent, 'quiz-strategy', `Generate the strategy for this creator:\n\n${describeQuiz(input.brand_name, input.quiz)}`, {
+      onEvent: (event) => {
+        const delta = streamDelta(event);
+        if (delta?.type === 'toolUseInputDelta') track?.(delta.input);
+      },
+    });
     if (!result.structuredOutput) {
       throw new StructuredOutputException('Quiz strategist agent failed to return structured output');
     }
@@ -148,10 +210,15 @@ export class QuizStrategistAgent {
   private async enforceLimit(description: ChannelDescription): Promise<ChannelDescription> {
     const limit = DESCRIPTION_LIMITS[description.platform];
     let current = description;
+    if (descriptionLength(current) > limit) {
+      console.info(`[agent] ${description.platform} description is ${descriptionLength(current)}/${limit} characters; shortening`);
+    }
     for (let attempt = 0; attempt < MAX_SHORTEN_ATTEMPTS && descriptionLength(current) > limit; attempt++) {
       try {
         const agent = new Agent({ model: this.model, systemPrompt: SHORTEN_PROMPT, structuredOutputSchema: ChannelDescriptionSchema });
-        const result = await agent.invoke(
+        const result = await runAgent(
+          agent,
+          `shorten-description:${description.platform}`,
           `Platform: ${PLATFORM_NAMES[description.platform]} (id "${description.platform}"). Limit: ${limit} characters. ` +
             `The current version is ${descriptionLength(current)} characters, so it must lose at least ${descriptionLength(current) - limit}.\n\n` +
             `hook: ${current.hook}\naudience: ${current.audience}\ncontent: ${current.content}\nvalue: ${current.value}\ncta: ${current.cta}`
@@ -177,7 +244,9 @@ export class QuizStrategistAgent {
     const previousText = previous
       ? `\n\nPrevious version (write something different):\n${[previous.hook, previous.audience, previous.content, previous.value, previous.cta].join(' ')}`
       : '';
-    const result = await agent.invoke(
+    const result = await runAgent(
+      agent,
+      `regenerate-description:${platform}`,
       `Write the ${PLATFORM_NAMES[platform]} channel description (platform id "${platform}") for this creator:\n\n${describeQuiz(brandName, quiz)}${previousText}`
     );
     if (!result.structuredOutput) {

@@ -8,6 +8,7 @@
 import {
   ChannelDescription,
   DESCRIPTION_LIMITS,
+  GenerationStage,
   PlatformId,
   QuizAnswers,
   Schedule,
@@ -15,6 +16,14 @@ import {
   StrategyOutput,
   WEEKDAYS,
 } from '../models/strategy';
+import type { GenerateStrategyOptions } from '../services/strategyService';
+
+const MOCK_PROGRESS: Array<[GenerationStage, number]> = [
+  ['reading', 0],
+  ['content', 0.3],
+  ['descriptions', 0.6],
+  ['schedule', 0.9],
+];
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -65,9 +74,13 @@ function describe(brand: string, quiz: QuizAnswers, platform: PlatformId, varian
 }
 
 export class MockQuizStrategistAgent {
-  async generateStrategy(input: StrategyInput): Promise<StrategyOutput> {
+  async generateStrategy(input: StrategyInput, { onProgress }: GenerateStrategyOptions = {}): Promise<StrategyOutput> {
     if (!input.quiz) throw new Error('MockQuizStrategistAgent requires quiz answers');
-    await sleep(1500);
+    // Walk through the stages so the generating screen can be tried without Bedrock
+    for (const [stage, progress] of MOCK_PROGRESS) {
+      onProgress?.({ stage, progress });
+      await sleep(400);
+    }
     const quiz = input.quiz;
     const topics = quiz.topics.map((t) => t.topic);
     return {

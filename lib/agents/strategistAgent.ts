@@ -9,6 +9,7 @@ import { Agent } from '@strands-agents/sdk';
 import { BedrockModel } from '@strands-agents/sdk/models/bedrock';
 import { StrategyInput, StrategyOutput, StrategyOutputSchema } from '../models/strategy';
 import { StructuredOutputException } from './errors';
+import { runAgent, STRUCTURED_OUTPUT_ONLY } from './runAgent';
 
 const SYSTEM_PROMPT = `You are an expert social media strategist with deep knowledge of digital marketing,
 content strategy, and audience engagement across multiple platforms.
@@ -36,7 +37,10 @@ IMPORTANT: The visual prompts must be directly relevant to the content strategy 
 visually represent the themes and tactics you're recommending, not generic stock imagery.
 
 Generate strategies that are practical, data-informed, and aligned with current social media
-best practices.`;
+best practices. Be concise: keep every list item and rationale short and specific, within the
+lengths the schema gives.
+
+${STRUCTURED_OUTPUT_ONLY}`;
 
 export interface AgentCredentials {
   awsRegion: string;
@@ -46,7 +50,7 @@ export interface AgentCredentials {
 }
 
 export class StrategistAgent {
-  private agent: Agent;
+  private model: BedrockModel;
 
   constructor({
     awsRegion,
@@ -54,7 +58,7 @@ export class StrategistAgent {
     awsAccessKeyId,
     awsSecretAccessKey,
   }: AgentCredentials) {
-    const model = new BedrockModel({
+    this.model = new BedrockModel({
       modelId,
       region: awsRegion,
       requestTimeout: 300_000,
@@ -64,12 +68,6 @@ export class StrategistAgent {
           ? { credentials: { accessKeyId: awsAccessKeyId, secretAccessKey: awsSecretAccessKey } }
           : {}),
       },
-    });
-
-    this.agent = new Agent({
-      model,
-      systemPrompt: SYSTEM_PROMPT,
-      structuredOutputSchema: StrategyOutputSchema,
     });
   }
 
@@ -84,7 +82,14 @@ Goals: ${input.goals}
 Provide a detailed strategy that includes content pillars, posting schedule, platform recommendations,
 content themes, engagement tactics, and visual prompts for image generation that align with the strategy.`;
 
-    const result = await this.agent.invoke(userPrompt);
+    // A Strands Agent handles one invocation at a time, so each request gets its own;
+    // the Bedrock model (and its client) is shared
+    const agent = new Agent({
+      model: this.model,
+      systemPrompt: SYSTEM_PROMPT,
+      structuredOutputSchema: StrategyOutputSchema,
+    });
+    const result = await runAgent(agent, 'strategy', userPrompt);
     if (!result.structuredOutput) {
       throw new StructuredOutputException('Strategist agent failed to return structured output');
     }
