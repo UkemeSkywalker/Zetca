@@ -8,6 +8,7 @@
  */
 
 import { z } from 'zod';
+import { MAX_CONTENT_TYPES } from '../strategist/contentTypes';
 import { randomUUID } from 'crypto';
 
 import { PLATFORM_IDS, WEEKDAYS } from './strategyConstants';
@@ -31,7 +32,7 @@ export const QuizAnswersSchema = z.object({
   skill_level: z.enum(['beginner', 'intermediate', 'pro']).nullable().default(null),
   interests: z.array(z.string().trim().max(40)).max(20).default([]),
   struggles: z.array(z.string().trim().max(40)).max(20).default([]),
-  content_types: z.array(z.string().max(30)).max(8).default([]),
+  content_types: z.array(z.string().trim().min(1).max(40)).max(MAX_CONTENT_TYPES).default([]),
   cadence: z.number().int().min(1).max(14),
   primary_keyword: z.string().trim().min(1).max(60),
   secondary_keywords: z.array(z.string().trim().min(1).max(60)).max(3).default([]),

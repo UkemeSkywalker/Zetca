@@ -8,17 +8,15 @@ import type { SkillLevel } from './AudienceStep';
 import { StrategyRail } from './StrategyRail';
 import { ruleBasedKeywords } from '@/lib/strategist/keywords';
 import { suggestKeywords } from '@/lib/api/strategyClient';
+import {
+  CONTENT_TYPE_CATEGORIES,
+  CUSTOM_CONTENT_TYPE_ICON,
+  CUSTOM_CONTENT_TYPE_ICON_SELECTED,
+  MAX_CONTENT_TYPES,
+  contentTypeOptions,
+  findContentType,
+} from '@/lib/strategist/contentTypes';
 
-export const CONTENT_TYPES: { id: string; label: string; icon: string; iconSelected: string }[] = [
-  { id: 'tutorials', label: 'Tutorials', icon: 'material-symbols:play-lesson-outline', iconSelected: 'material-symbols:play-lesson' },
-  { id: 'reviews', label: 'Reviews', icon: 'material-symbols:rate-review-outline', iconSelected: 'material-symbols:rate-review' },
-  { id: 'vlogs', label: 'Vlogs', icon: 'material-symbols:videocam-outline', iconSelected: 'material-symbols:videocam' },
-  { id: 'tips', label: 'Tips', icon: 'material-symbols:lightbulb-outline', iconSelected: 'material-symbols:lightbulb' },
-  { id: 'fun', label: 'Fun & challenges', icon: 'material-symbols:celebration-outline', iconSelected: 'material-symbols:celebration' },
-  { id: 'shorts', label: 'Shorts / Reels', icon: 'material-symbols:smart-display-outline', iconSelected: 'material-symbols:smart-display' },
-  { id: 'live', label: 'Live', icon: 'material-symbols:sensors', iconSelected: 'material-symbols:sensors' },
-  { id: 'podcast', label: 'Podcast', icon: 'material-symbols:podcasts', iconSelected: 'material-symbols:podcasts' },
-];
 
 export type GoalId = 'grow' | 'authority' | 'sell' | 'community';
 
@@ -42,6 +40,9 @@ const CARD = 'bg-white rounded-2xl shadow-sm border border-[#c7c4d8]/20 p-6 sm:p
 const TILE_ON = 'bg-[#e5eeff] text-[#3525cd] shadow-sm hover:shadow-md';
 const TILE_OFF = 'bg-white border border-[#c7c4d8]/30 text-[#0b1c30] shadow-sm hover:bg-[#eff4ff]';
 const LABEL = 'text-[13px] leading-[18px] tracking-[0.01em] font-semibold text-[#0b1c30]';
+const TILE_LOCKED = 'bg-white border border-[#c7c4d8]/30 text-[#0b1c30] opacity-40 cursor-not-allowed';
+const TILE_BASE = 'group relative flex flex-col items-center justify-center p-3 min-h-[84px] rounded-xl transition-all text-center';
+const CATEGORY_LABEL = 'text-[12px] font-bold uppercase tracking-[0.06em] text-slate-400 mb-2.5';
 
 interface ContentStepProps {
   brandName: string;
@@ -146,12 +147,55 @@ export function ContentStep({
     return () => window.removeEventListener('keydown', onKey);
   }, [canContinue, onContinue]);
 
-  const toggleType = (id: string) =>
-    onContentTypesChange(
-      contentTypes.includes(id)
-        ? contentTypes.filter((t) => t !== id)
-        : CONTENT_TYPES.map((c) => c.id).filter((c) => c === id || contentTypes.includes(c))
+  const typesFull = contentTypes.length >= MAX_CONTENT_TYPES;
+  const toggleType = (id: string) => {
+    if (contentTypes.includes(id)) onContentTypesChange(contentTypes.filter((t) => t !== id));
+    else if (!typesFull) onContentTypesChange([...contentTypes, id]);
+  };
+
+  // Types the user typed with "+ Other" stay as tiles after being unticked
+  const [customTypes, setCustomTypes] = useState<string[]>(() => contentTypes.filter((t) => !findContentType(t)));
+  const [addingType, setAddingType] = useState(false);
+  const [newType, setNewType] = useState('');
+  const addCustomType = () => {
+    const typed = newType.trim();
+    setAddingType(false);
+    setNewType('');
+    if (!typed) return;
+    // Typing a preset's name picks the preset
+    const preset = CONTENT_TYPE_CATEGORIES.flatMap((c) => c.types).find((c) => c.label.toLowerCase() === typed.toLowerCase());
+    const id = preset?.id ?? customTypes.find((c) => c.toLowerCase() === typed.toLowerCase()) ?? typed;
+    if (!preset && !customTypes.includes(id)) setCustomTypes([...customTypes, id]);
+    if (!contentTypes.includes(id) && !typesFull) onContentTypesChange([...contentTypes, id]);
+  };
+
+  const renderTypeTile = (id: string, label: string, icon: string, iconSelected: string) => {
+    const selected = contentTypes.includes(id);
+    const locked = !selected && typesFull;
+    return (
+      <button
+        key={id}
+        type="button"
+        aria-pressed={selected}
+        disabled={locked}
+        onClick={() => toggleType(id)}
+        className={`${TILE_BASE} ${selected ? TILE_ON : locked ? TILE_LOCKED : TILE_OFF}`}
+      >
+        {selected && (
+          <span className="absolute top-2 right-2 size-5 rounded-full bg-[#4f46e5] text-white flex items-center justify-center">
+            <Icon icon="material-symbols:check" width={12} height={12} />
+          </span>
+        )}
+        <Icon
+          icon={selected ? iconSelected : icon}
+          width={24}
+          height={24}
+          className={`mb-1.5 transition-colors ${selected ? 'text-[#3525cd]' : 'text-[#777587] group-hover:text-[#3525cd]'}`}
+        />
+        <span className={LABEL}>{label}</span>
+      </button>
     );
+  };
 
   // Starring a chip makes it the main keyword; tapping it again unstars it
   const starKeyword = (k: string) => {
@@ -186,7 +230,7 @@ export function ContentStep({
             skill,
             interests,
             struggles,
-            contentTypes: CONTENT_TYPES.filter((c) => contentTypes.includes(c.id)),
+            contentTypes: contentTypeOptions(contentTypes),
             cadence,
             primaryKeyword,
             secondaryKeywords,
@@ -208,35 +252,62 @@ export function ContentStep({
       <div className={CARD}>
         <div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0b1c30] tracking-tight">What do you create?</h2>
-          <p className="text-base text-[#464555] mt-1.5 font-normal">Pick all that apply.</p>
+          <p className="text-base text-[#464555] mt-1.5 font-normal">
+            Pick all that apply, up to {MAX_CONTENT_TYPES}.
+            {contentTypes.length > 0 && <span className="text-[#777587]"> {contentTypes.length} selected</span>}
+          </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" role="group" aria-label="Content types">
-          {CONTENT_TYPES.map((c) => {
-            const selected = contentTypes.includes(c.id);
-            return (
-              <button
-                key={c.id}
-                type="button"
-                aria-pressed={selected}
-                onClick={() => toggleType(c.id)}
-                className={`group relative flex flex-col items-center justify-center p-4 min-h-[96px] rounded-xl transition-all text-center ${selected ? TILE_ON : TILE_OFF}`}
-              >
-                {selected && (
-                  <span className="absolute top-2 right-2 size-5 rounded-full bg-[#4f46e5] text-white flex items-center justify-center">
-                    <Icon icon="material-symbols:check" width={12} height={12} />
-                  </span>
-                )}
-                <Icon
-                  icon={selected ? c.iconSelected : c.icon}
-                  width={24}
-                  height={24}
-                  className={`mb-1.5 transition-colors ${selected ? 'text-[#3525cd]' : 'text-[#777587] group-hover:text-[#3525cd]'}`}
-                />
-                <span className={LABEL}>{c.label}</span>
-              </button>
-            );
-          })}
+        <div className="flex flex-col gap-5">
+          {CONTENT_TYPE_CATEGORIES.map((c) => (
+            <div key={c.label}>
+              <p className={CATEGORY_LABEL}>{c.label}</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" role="group" aria-label={c.label}>
+                {c.types.map((t) => renderTypeTile(t.id, t.label, t.icon, t.iconSelected))}
+              </div>
+            </div>
+          ))}
+
+          <div>
+            <p className={CATEGORY_LABEL}>Something else?</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" role="group" aria-label="Your own content types">
+              {customTypes.map((t) => renderTypeTile(t, t, CUSTOM_CONTENT_TYPE_ICON, CUSTOM_CONTENT_TYPE_ICON_SELECTED))}
+              {addingType ? (
+                <div className={`${TILE_BASE} bg-white ring-2 ring-[#4f46e5]`}>
+                  <input
+                    autoFocus
+                    value={newType}
+                    maxLength={40}
+                    aria-label="Your content type"
+                    onChange={(e) => setNewType(e.target.value)}
+                    onBlur={addCustomType}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        addCustomType();
+                      } else if (e.key === 'Escape') {
+                        setAddingType(false);
+                        setNewType('');
+                      }
+                    }}
+                    placeholder="e.g. Recipes"
+                    className="w-full bg-transparent border-0 p-0 text-center text-[13px] font-semibold text-[#0b1c30] placeholder:text-[#777587] placeholder:font-normal focus:ring-0 focus:outline-none"
+                  />
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={typesFull}
+                  onClick={() => setAddingType(true)}
+                  className={`${TILE_BASE} border border-dashed border-[#c7c4d8] text-[#777587] hover:text-[#3525cd] hover:border-[#4f46e5] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#777587] disabled:hover:border-[#c7c4d8]`}
+                >
+                  <Icon icon="material-symbols:add" width={24} height={24} className="mb-1.5" />
+                  <span className="text-[13px] leading-[18px] font-semibold text-inherit">Other</span>
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center justify-between gap-4 p-4 bg-[#eff4ff] rounded-xl">

@@ -7,7 +7,8 @@ import { WelcomeStep } from '@/components/strategist/WelcomeStep';
 import { BrandStep, PlatformId } from '@/components/strategist/BrandStep';
 import { NicheStep, Niche, NicheTopic } from '@/components/strategist/NicheStep';
 import { AudienceStep, SkillLevel } from '@/components/strategist/AudienceStep';
-import { ContentStep, GoalId, CONTENT_TYPES, GOALS } from '@/components/strategist/ContentStep';
+import { ContentStep, GoalId, GOALS } from '@/components/strategist/ContentStep';
+import { contentTypeOptions } from '@/lib/strategist/contentTypes';
 import { ReviewStep, ReviewSection } from '@/components/strategist/ReviewStep';
 import { GeneratingStep } from '@/components/strategist/GeneratingStep';
 import { PLATFORMS } from '@/components/strategist/BrandStep';
@@ -107,7 +108,7 @@ export default function StrategistPage() {
   const goToContent = useCallback(() => setScreen('content'), []);
   const goToReview = useCallback(() => setScreen('review'), []);
 
-  const selectedContentTypes = useMemo(() => CONTENT_TYPES.filter((c) => contentTypes.includes(c.id)), [contentTypes]);
+  const selectedContentTypes = useMemo(() => contentTypeOptions(contentTypes), [contentTypes]);
   const goalInfo = useMemo(() => GOALS.find((g) => g.id === goal) ?? null, [goal]);
 
   const editSection = useCallback((section: ReviewSection) => setScreen(section), []);
