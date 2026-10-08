@@ -13,7 +13,8 @@ import { randomUUID } from 'crypto';
 import { PLATFORM_IDS, WEEKDAYS } from './strategyConstants';
 
 export { PLATFORM_IDS, DESCRIPTION_LIMITS, WEEKDAYS } from './strategyConstants';
-export type { PlatformId } from './strategyConstants';
+export { GENERATION_STAGES } from './strategyConstants';
+export type { PlatformId, GenerationStage, GenerationProgress } from './strategyConstants';
 
 /** The structured answers from the Strategist quiz */
 export const QuizAnswersSchema = z.object({

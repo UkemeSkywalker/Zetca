@@ -12,6 +12,8 @@ import {
   ChannelDescription,
   ChannelDescriptionSchema,
   DESCRIPTION_LIMITS,
+  GenerationProgress,
+  GenerationStage,
   PlatformId,
   QuizAnswers,
   QuizStrategyOutputSchema,
@@ -19,7 +21,8 @@ import {
   StrategyOutput,
 } from '../models/strategy';
 import { StructuredOutputException } from './errors';
-import { runAgent, STRUCTURED_OUTPUT_ONLY } from './runAgent';
+import { runAgent, streamDelta, STRUCTURED_OUTPUT_ONLY } from './runAgent';
+import type { GenerateStrategyOptions } from '../services/strategyService';
 import { descriptionLength, fitToLimit } from '../strategist/descriptions';
 import type { AgentCredentials } from './strategistAgent';
 
@@ -109,6 +112,41 @@ ${STRUCTURED_OUTPUT_ONLY}`;
 // One rewrite, then trim: each attempt adds several seconds to the generation
 const MAX_SHORTEN_ATTEMPTS = 1;
 
+// Typical length of each part of the structured output, to estimate progress while it streams
+const BASE_OUTPUT_CHARS = 3000;
+const DESCRIPTION_OUTPUT_CHARS: Record<PlatformId, number> = {
+  youtube: 900,
+  linkedin: 1000,
+  facebook: 350,
+  x: 250,
+  instagram: 250,
+  tiktok: 180,
+};
+
+/**
+ * Turns the streamed tool input (the strategy JSON as the model writes it) into
+ * progress updates: which part it has reached and roughly how much is written.
+ */
+function progressTracker(platforms: PlatformId[], onProgress: (progress: GenerationProgress) => void) {
+  const expected = BASE_OUTPUT_CHARS + platforms.reduce((sum, p) => sum + DESCRIPTION_OUTPUT_CHARS[p], 0);
+  let written = '';
+  let last: GenerationProgress = { stage: 'reading', progress: 0 };
+  onProgress(last);
+  return (chunk: string) => {
+    written += chunk;
+    // Fields can come in any order, so the stage only ever moves forward
+    let stage: GenerationStage = last.stage === 'reading' ? 'content' : last.stage;
+    if (stage === 'content' && written.includes('"channel_descriptions"')) stage = 'descriptions';
+    if (stage !== 'schedule' && written.includes('"schedule"')) stage = 'schedule';
+    const progress = Math.min(0.95, written.length / expected);
+    // Report stage changes and each whole percent, not every token
+    if (stage !== last.stage || Math.floor(progress * 100) > Math.floor(last.progress * 100)) {
+      last = { stage, progress };
+      onProgress(last);
+    }
+  };
+}
+
 function describeQuiz(brandName: string, quiz: QuizAnswers): string {
   const topics = quiz.topics.length ? quiz.topics.map((t) => `${t.niche} › ${t.topic}`).join(', ') : 'none selected';
   return `Brand / channel name: ${brandName}
@@ -143,11 +181,17 @@ export class QuizStrategistAgent {
     });
   }
 
-  async generateStrategy(input: StrategyInput): Promise<StrategyOutput> {
+  async generateStrategy(input: StrategyInput, { onProgress }: GenerateStrategyOptions = {}): Promise<StrategyOutput> {
     if (!input.quiz) throw new Error('QuizStrategistAgent requires quiz answers');
+    const track = onProgress ? progressTracker(input.quiz.platforms, onProgress) : undefined;
     // A Strands Agent handles one invocation at a time, so each request gets its own
     const agent = new Agent({ model: this.model, systemPrompt: SYSTEM_PROMPT, structuredOutputSchema: QuizStrategyOutputSchema });
-    const result = await runAgent(agent, 'quiz-strategy', `Generate the strategy for this creator:\n\n${describeQuiz(input.brand_name, input.quiz)}`);
+    const result = await runAgent(agent, 'quiz-strategy', `Generate the strategy for this creator:\n\n${describeQuiz(input.brand_name, input.quiz)}`, {
+      onEvent: (event) => {
+        const delta = streamDelta(event);
+        if (delta?.type === 'toolUseInputDelta') track?.(delta.input);
+      },
+    });
     if (!result.structuredOutput) {
       throw new StructuredOutputException('Quiz strategist agent failed to return structured output');
     }

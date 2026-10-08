@@ -6,11 +6,24 @@
  * result in an incomplete database record.
  */
 
-import { ChannelDescription, PlatformId, QuizAnswers, StrategyInput, StrategyRecord, newStrategyRecord } from '../models/strategy';
+import {
+  ChannelDescription,
+  GenerationProgress,
+  PlatformId,
+  QuizAnswers,
+  StrategyInput,
+  StrategyRecord,
+  newStrategyRecord,
+} from '../models/strategy';
 import { StrategyRepository } from '../db/strategyRepository';
 
+export interface GenerateStrategyOptions {
+  /** Called as the model writes, for agents that can report progress */
+  onProgress?: (progress: GenerationProgress) => void;
+}
+
 export interface StrategistAgentLike {
-  generateStrategy(input: StrategyInput): Promise<StrategyRecord['strategy_output']>;
+  generateStrategy(input: StrategyInput, options?: GenerateStrategyOptions): Promise<StrategyRecord['strategy_output']>;
 }
 
 /** Generates strategies from quiz answers, including channel descriptions */
@@ -57,11 +70,11 @@ export class StrategyService {
   async generateAndStoreStrategy(
     input: StrategyInput,
     userId: string,
-    options: { signal?: AbortSignal } = {}
+    options: { signal?: AbortSignal } & GenerateStrategyOptions = {}
   ): Promise<StrategyRecord> {
     // Quiz answers go to the quiz strategist, which also writes channel descriptions
     const agent = input.quiz && this.quizAgent ? this.quizAgent : this.agent;
-    const output = await agent.generateStrategy(input);
+    const output = await agent.generateStrategy(input, { onProgress: options.onProgress });
     if (options.signal?.aborted) {
       console.info(`Discarding strategy for brand "${input.brand_name}": the request was cancelled before generation finished`);
       throw new GenerationCancelledError();

@@ -17,3 +17,16 @@ export const DESCRIPTION_LIMITS: Record<PlatformId, number> = {
 };
 
 export const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
+
+/**
+ * Stages of a streamed strategy generation, in order: waiting for the model, the
+ * strategy body, the channel descriptions, then the schedule (and saving)
+ */
+export const GENERATION_STAGES = ['reading', 'content', 'descriptions', 'schedule'] as const;
+export type GenerationStage = (typeof GENERATION_STAGES)[number];
+
+export interface GenerationProgress {
+  stage: GenerationStage;
+  /** Estimated share of the output written so far, 0-1 */
+  progress: number;
+}
