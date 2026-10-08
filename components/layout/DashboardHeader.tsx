@@ -11,6 +11,8 @@ interface DashboardHeaderProps {
   className?: string;
   /** Shown on the left before the search bar (the quiz uses this for the logo and step progress) */
   leading?: React.ReactNode;
+  /** Shown on the right, before the icons (the quiz uses this for its exit button) */
+  trailing?: React.ReactNode;
   /** Title shown instead of the search bar on small screens */
   mobileTitle?: string;
   /** Rendered under the bar, inside the header (the quiz uses this for its progress line) */
@@ -18,7 +20,7 @@ interface DashboardHeaderProps {
 }
 
 /** The dashboard's top header: search, messages, notifications and the user menu */
-export function DashboardHeader({ className = '', leading, mobileTitle = 'Dashboard', children }: DashboardHeaderProps) {
+export function DashboardHeader({ className = '', leading, trailing, mobileTitle = 'Dashboard', children }: DashboardHeaderProps) {
   const { user } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
@@ -62,6 +64,7 @@ export function DashboardHeader({ className = '', leading, mobileTitle = 'Dashbo
 
         {/* Right Side Icons */}
         <div className="flex items-center gap-1.5 md:gap-3">
+          {trailing}
           <button
             className="relative p-2 md:p-2.5 text-outline hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
             aria-label="Messages"

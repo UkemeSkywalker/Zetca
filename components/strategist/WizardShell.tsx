@@ -25,6 +25,19 @@ export function WizardShell({ step, totalSteps, progress, background = '#EEF2F7'
       {/* The dashboard's own header, with the logo and quiz progress on the left */}
       <DashboardHeader
         className="sticky top-0 z-50"
+        trailing={
+          <>
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            >
+              <span className="hidden sm:inline text-inherit">Exit to Dashboard</span>
+              <span className="sm:hidden text-inherit">Exit</span>
+              <Icon icon="material-symbols:close" width={15} height={15} className="text-slate-400" aria-hidden="true" />
+            </Link>
+            <div className="h-4 w-px bg-slate-200" aria-hidden="true" />
+          </>
+        }
         leading={
           <div className="flex items-center gap-5 shrink-0">
             <Link href="/dashboard" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity" aria-label="Back to dashboard">
