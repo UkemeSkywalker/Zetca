@@ -186,6 +186,10 @@ export default function StrategistPage() {
         background: '#f8f9ff',
         mainClassName: 'flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8 items-center',
       })}
+      {...(screen === 'niche' && {
+        // Top-aligned so the card doesn't jump while the niche search filters the list
+        mainClassName: 'flex-1 w-full flex flex-col items-center px-4 py-8 sm:py-12',
+      })}
       {...(screen === 'generating' && {
         background: '#f8f9ff',
         mainClassName: 'flex-1 w-full flex items-center justify-center p-4 sm:p-6',

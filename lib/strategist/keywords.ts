@@ -5,6 +5,8 @@
  * client while (or if) the AI suggestions are unavailable.
  */
 
+import { findNiche } from './niches';
+
 export type SkillLevel = 'beginner' | 'intermediate' | 'pro';
 
 export interface KeywordContext {
@@ -14,18 +16,6 @@ export interface KeywordContext {
 }
 
 export const MAX_KEYWORD_CHIPS = 8;
-
-// Common search phrases per niche, used to fill out the keyword list
-const NICHE_KEYWORDS: Record<string, string[]> = {
-  Fitness: ['no equipment workout', '15 minute workout', 'beginner fitness', 'full body workout', 'workout at home', 'fat burning workout'],
-  Tech: ['tech tips', 'best budget phone', 'ai tools for productivity', 'unboxing and review', 'tech for beginners'],
-  Finance: ['how to invest', 'money saving tips', 'budgeting for beginners', 'passive income ideas', 'personal finance tips'],
-  Cooking: ['easy recipes', 'quick dinner ideas', 'healthy meal prep', 'cooking for beginners', 'budget meals'],
-  Gaming: ['gameplay walkthrough', 'best games 2026', 'gaming tips', 'pro tips and tricks', 'game review'],
-  Education: ['study tips', 'how to learn faster', 'exam preparation', 'study with me', 'learning hacks'],
-  Travel: ['travel tips', 'budget travel guide', 'things to do in', 'travel vlog', 'packing tips'],
-  Beauty: ['skincare routine', 'makeup tutorial', 'drugstore dupes', 'beauty tips', 'everyday makeup'],
-};
 
 export function ruleBasedKeywords({ niches, topics, skill }: KeywordContext): string[] {
   const forSkill = (phrase: string) =>
@@ -40,7 +30,7 @@ export function ruleBasedKeywords({ niches, topics, skill }: KeywordContext): st
     if (!topics.some((t) => t.niche === n)) add(forSkill(n));
   });
   topics.forEach((t) => add(t.topic));
-  const extras = niches.map((n) => NICHE_KEYWORDS[n] ?? []);
+  const extras = niches.map((n) => findNiche(n)?.keywords ?? []);
   for (let i = 0; i < 6; i++) extras.forEach((list) => list[i] && add(list[i]));
   return result.slice(0, MAX_KEYWORD_CHIPS);
 }

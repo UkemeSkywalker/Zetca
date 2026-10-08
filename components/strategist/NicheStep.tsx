@@ -3,6 +3,7 @@
 import { Icon } from '@iconify/react';
 import { useEffect, useState } from 'react';
 import type { PlatformId } from './BrandStep';
+import { NICHE_CATEGORIES, NICHES, findNiche } from '@/lib/strategist/niches';
 
 export interface Niche {
   label: string;
@@ -18,17 +19,6 @@ export interface NicheTopic {
 export const MAX_NICHES = 3;
 /** Core topics allowed per selected niche */
 export const MAX_TOPICS_PER_NICHE = 3;
-
-export const NICHES: (Niche & { topics: string[] })[] = [
-  { label: 'Fitness', emoji: '💪', topics: ['Home workouts', 'Weight loss', 'Strength', 'Yoga', 'Running', 'Nutrition'] },
-  { label: 'Tech', emoji: '💻', topics: ['Gadget reviews', 'Coding', 'AI tools', 'Smartphones', 'PC builds', 'Tech news'] },
-  { label: 'Finance', emoji: '💰', topics: ['Investing', 'Budgeting', 'Crypto', 'Side hustles', 'Real estate', 'Saving money'] },
-  { label: 'Cooking', emoji: '🍳', topics: ['Quick meals', 'Baking', 'Healthy recipes', 'Meal prep', 'Vegan', 'Street food'] },
-  { label: 'Gaming', emoji: '🎮', topics: ["Let's plays", 'Esports', 'Game reviews', 'Speedruns', 'Mobile gaming', 'Streaming'] },
-  { label: 'Education', emoji: '📚', topics: ['Study tips', 'Languages', 'Science', 'Math', 'History', 'Exam prep'] },
-  { label: 'Travel', emoji: '✈️', topics: ['Budget travel', 'Solo travel', 'Van life', 'Luxury travel', 'Travel tips', 'Food tours'] },
-  { label: 'Beauty', emoji: '💄', topics: ['Makeup', 'Skincare', 'Haircare', 'Nails', 'Product reviews', 'Tutorials'] },
-];
 
 const CUSTOM_EMOJI = '✨';
 
@@ -135,8 +125,16 @@ export function NicheStep({ brandName, platforms, niches, topics, onNichesChange
     niches.filter((n) => !NICHES.some((preset) => preset.label === n.label))
   );
   const [customTopics, setCustomTopics] = useState<NicheTopic[]>(() =>
-    topics.filter((t) => !NICHES.find((n) => n.label === t.niche)?.topics.includes(t.topic))
+    topics.filter((t) => !findNiche(t.niche)?.topics.includes(t.topic))
   );
+
+  // Search filters the preset niches by name or by one of their topics
+  const [query, setQuery] = useState('');
+  const q = query.trim().toLowerCase();
+  const matches = (n: { label: string; topics?: string[] }) =>
+    !q || n.label.toLowerCase().includes(q) || (n.topics ?? []).some((t) => t.toLowerCase().includes(q));
+  const visibleCategories = NICHE_CATEGORIES.map((c) => ({ ...c, niches: c.niches.filter(matches) })).filter((c) => c.niches.length > 0);
+  const visibleCustom = customNiches.filter(matches);
 
   // Enter continues, unless the user is typing or a chip has focus
   useEffect(() => {
@@ -163,6 +161,14 @@ export function NicheStep({ brandName, platforms, niches, topics, onNichesChange
     }
   };
 
+  // Typing an existing niche's name selects that niche instead of a duplicate
+  const addNiche = (typed: string) => {
+    const existing = [...NICHES, ...customNiches].find((n) => n.label.toLowerCase() === typed.toLowerCase());
+    const niche = existing ? { label: existing.label, emoji: existing.emoji } : { label: typed, emoji: CUSTOM_EMOJI };
+    if (!existing) setCustomNiches([...customNiches, niche]);
+    if (!isNicheSelected(niche.label)) toggleNiche(niche);
+  };
+
   const toggleTopic = (niche: string, topic: string) => {
     if (isTopicSelected(niche, topic)) {
       onTopicsChange(topics.filter((t) => !(t.niche === niche && t.topic === topic)));
@@ -172,7 +178,7 @@ export function NicheStep({ brandName, platforms, niches, topics, onNichesChange
   };
 
   const topicsFor = (niche: string) => [
-    ...(NICHES.find((n) => n.label === niche)?.topics ?? []),
+    ...(findNiche(niche)?.topics ?? []),
     ...customTopics.filter((t) => t.niche === niche).map((t) => t.topic),
   ];
 
@@ -244,36 +250,101 @@ export function NicheStep({ brandName, platforms, niches, topics, onNichesChange
           </span>
         </div>
 
-        <div className="flex flex-wrap gap-3 mt-7" role="group" aria-label="Niches">
-          {[...NICHES, ...customNiches].map((n) => {
-            const selected = isNicheSelected(n.label);
-            const locked = !selected && nichesFull;
-            return (
-              <button
-                key={n.label}
-                type="button"
-                aria-pressed={selected}
-                disabled={locked}
-                onClick={() => toggleNiche({ label: n.label, emoji: n.emoji })}
-                className={`${CHIP_BASE} ${selected ? CHIP_ON : locked ? CHIP_LOCKED : CHIP_OFF}`}
-              >
-                <span className="text-base">{n.emoji}</span>
-                <span className="text-inherit">{n.label}</span>
-                {selected && <Icon icon="material-symbols:check" width={17} height={17} className="text-indigo-700" />}
-              </button>
-            );
-          })}
-          <InlineAdd
-            size="niche"
-            disabled={nichesFull}
-            onAdd={(typed) => {
-              // Typing an existing niche's name selects that niche instead of a duplicate
-              const existing = [...NICHES, ...customNiches].find((n) => n.label.toLowerCase() === typed.toLowerCase());
-              const niche = existing ? { label: existing.label, emoji: existing.emoji } : { label: typed, emoji: CUSTOM_EMOJI };
-              if (!existing) setCustomNiches([...customNiches, niche]);
-              if (!isNicheSelected(niche.label)) toggleNiche(niche);
+        {/* Search */}
+        <div className="relative mt-6">
+          <label htmlFor="niche-search" className="sr-only">Search niches</label>
+          <Icon icon="material-symbols:search" width={18} height={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+          <input
+            id="niche-search"
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setQuery('');
             }}
+            placeholder={`Search ${NICHES.length} niches, e.g. agency, personal brand, pets…`}
+            className="w-full h-11 pl-10 pr-10 rounded-xl bg-[#EEF2F7] border-0 text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              aria-label="Clear search"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200"
+            >
+              <Icon icon="material-symbols:close" width={16} height={16} />
+            </button>
+          )}
+        </div>
+
+        <div className="mt-6 flex flex-col gap-5">
+          {visibleCategories.map((c) => (
+            <div key={c.label}>
+              <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-slate-400 mb-2.5">{c.label}</p>
+              <div className="flex flex-wrap gap-2.5" role="group" aria-label={c.label}>
+                {c.niches.map((n) => {
+                  const selected = isNicheSelected(n.label);
+                  const locked = !selected && nichesFull;
+                  return (
+                    <button
+                      key={n.label}
+                      type="button"
+                      aria-pressed={selected}
+                      disabled={locked}
+                      onClick={() => toggleNiche({ label: n.label, emoji: n.emoji })}
+                      className={`${CHIP_BASE} ${selected ? CHIP_ON : locked ? CHIP_LOCKED : CHIP_OFF}`}
+                    >
+                      <span className="text-base">{n.emoji}</span>
+                      <span className="text-inherit">{n.label}</span>
+                      {selected && <Icon icon="material-symbols:check" width={17} height={17} className="text-indigo-700" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+
+          <div>
+            <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-slate-400 mb-2.5">
+              {visibleCategories.length === 0 ? `No preset niche matches “${query.trim()}”` : 'Something else?'}
+            </p>
+            <div className="flex flex-wrap gap-2.5" role="group" aria-label="Your own niches">
+              {visibleCustom.map((n) => {
+                const selected = isNicheSelected(n.label);
+                const locked = !selected && nichesFull;
+                return (
+                  <button
+                    key={n.label}
+                    type="button"
+                    aria-pressed={selected}
+                    disabled={locked}
+                    onClick={() => toggleNiche({ label: n.label, emoji: n.emoji })}
+                    className={`${CHIP_BASE} ${selected ? CHIP_ON : locked ? CHIP_LOCKED : CHIP_OFF}`}
+                  >
+                    <span className="text-base">{n.emoji}</span>
+                    <span className="text-inherit">{n.label}</span>
+                    {selected && <Icon icon="material-symbols:check" width={17} height={17} className="text-indigo-700" />}
+                  </button>
+                );
+              })}
+              {visibleCategories.length === 0 && q && !visibleCustom.some((n) => n.label.toLowerCase() === q) ? (
+                <button
+                  type="button"
+                  disabled={nichesFull}
+                  onClick={() => {
+                    addNiche(query.trim());
+                    setQuery('');
+                  }}
+                  className={`${CHIP_BASE} bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed`}
+                >
+                  <Icon icon="material-symbols:add" width={17} height={17} />
+                  <span className="text-inherit">Add “{query.trim()}”</span>
+                </button>
+              ) : (
+                <InlineAdd size="niche" disabled={nichesFull} onAdd={addNiche} />
+              )}
+            </div>
+          </div>
         </div>
 
         {niches.length > 0 && (

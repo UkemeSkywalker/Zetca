@@ -3,6 +3,7 @@
 import { Icon } from '@iconify/react';
 import { useEffect, useState } from 'react';
 import type { Niche } from './NicheStep';
+import { findNiche } from '@/lib/strategist/niches';
 
 export type SkillLevel = 'beginner' | 'intermediate' | 'pro';
 
@@ -14,17 +15,7 @@ const SKILLS: { id: SkillLevel; emoji: string; label: string; desc: string; aria
   { id: 'pro', emoji: '🌳', label: 'Pro', desc: 'Ready for more', aria: 'Tree' },
 ];
 
-// Suggestion chips per niche; custom niches fall back to the general list
-const SUGGESTIONS: Record<string, { interests: string[]; struggles: string[] }> = {
-  Fitness: { interests: ['Meal prep', 'Home gym gear', 'Mental health', 'Healthy eating'], struggles: ['Low motivation', 'Gym anxiety', 'Plateaus', 'No time'] },
-  Tech: { interests: ['New gadgets', 'AI tools', 'Productivity apps', 'Coding projects'], struggles: ['Information overload', 'Choosing what to buy', 'Keeping up', 'Learning to code'] },
-  Finance: { interests: ['Passive income', 'Index funds', 'Budget apps', 'Early retirement'], struggles: ['Living paycheck to paycheck', 'Debt', 'Where to invest', 'Saving consistently'] },
-  Cooking: { interests: ['Easy recipes', 'Meal prep', 'Healthy eating', 'World cuisines'], struggles: ['No time to cook', 'Picky eaters', 'Small budget', 'Limited skills'] },
-  Gaming: { interests: ['New releases', 'Competitive play', 'Game lore', 'Setup upgrades'], struggles: ['Getting better', 'Finding good games', 'Lag and performance', 'Finding a squad'] },
-  Education: { interests: ['Study hacks', 'Online courses', 'Career growth', 'Productivity'], struggles: ['Procrastination', 'Exam stress', 'Staying focused', 'Retaining information'] },
-  Travel: { interests: ['Hidden gems', 'Travel hacks', 'Local food', 'Packing tips'], struggles: ['Tight budget', 'Planning overwhelm', 'Safety worries', 'Limited time off'] },
-  Beauty: { interests: ['Skincare routines', 'Product dupes', 'Makeup looks', 'Clean beauty'], struggles: ['Acne', 'Too many products', 'Sensitive skin', 'Budget'] },
-};
+// Suggestion chips come from each niche's data; custom niches fall back to the general list
 const GENERAL_SUGGESTIONS = {
   interests: ['How-to guides', 'Behind the scenes', 'Product reviews', 'Community stories'],
   struggles: ['Where to start?', 'No time', 'Too much information', 'Staying consistent'],
@@ -33,7 +24,7 @@ const GENERAL_SUGGESTIONS = {
 const MAX_SUGGESTIONS = 4;
 
 function suggestionsFor(niches: Niche[], kind: 'interests' | 'struggles'): string[] {
-  const lists = niches.map((n) => SUGGESTIONS[n.label]?.[kind] ?? GENERAL_SUGGESTIONS[kind]);
+  const lists = niches.map((n) => findNiche(n.label)?.[kind] ?? GENERAL_SUGGESTIONS[kind]);
   const pool = lists.length ? lists : [GENERAL_SUGGESTIONS[kind]];
   // Interleave so each niche contributes, then dedupe
   const merged: string[] = [];
