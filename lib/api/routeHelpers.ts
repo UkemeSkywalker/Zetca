@@ -16,10 +16,22 @@ export function jsonError(message: string, status: number): NextResponse {
   return NextResponse.json({ detail: message }, { status });
 }
 
-/** Reject with an ApiError(504) if `promise` does not settle within `seconds`. */
-export function withTimeout<T>(promise: Promise<T>, seconds: number, timeoutMessage: string): Promise<T> {
+/**
+ * Reject with an ApiError(504) if `promise` does not settle within `seconds`.
+ * `onTimeout` runs when the limit is hit, so callers can stop work that would
+ * otherwise carry on in the background (e.g. saving a result nobody receives).
+ */
+export function withTimeout<T>(
+  promise: Promise<T>,
+  seconds: number,
+  timeoutMessage: string,
+  onTimeout?: () => void
+): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new ApiError(timeoutMessage, 504)), seconds * 1000);
+    const timer = setTimeout(() => {
+      onTimeout?.();
+      reject(new ApiError(timeoutMessage, 504));
+    }, seconds * 1000);
     promise
       .then((value) => {
         clearTimeout(timer);
