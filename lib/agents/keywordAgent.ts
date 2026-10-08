@@ -11,6 +11,7 @@ import { BedrockModel } from '@strands-agents/sdk/models/bedrock';
 import { KeywordRequest, KeywordResponseSchema } from '../models/keywords';
 import { cleanKeywords } from '../strategist/keywords';
 import { StructuredOutputException } from './errors';
+import { runAgent, STRUCTURED_OUTPUT_ONLY } from './runAgent';
 import type { AgentCredentials } from './strategistAgent';
 
 const SYSTEM_PROMPT = `You are a YouTube and social media SEO specialist.
@@ -28,7 +29,9 @@ Rules:
 4. Each phrase is lowercase, 2 to 6 words, with no hashtags, emojis, quotes or brand names.
 5. Cover the creator's selected topics; when there are several niches, include phrases
    that bridge them only if people genuinely search that way.
-6. Do not repeat near-duplicates (e.g. "home workout" and "home workouts").`;
+6. Do not repeat near-duplicates (e.g. "home workout" and "home workouts").
+
+${STRUCTURED_OUTPUT_ONLY}`;
 
 export class KeywordAgent {
   private model: BedrockModel;
@@ -69,7 +72,7 @@ Content types: ${input.content_types.join(', ') || 'not specified'}`;
       systemPrompt: SYSTEM_PROMPT,
       structuredOutputSchema: KeywordResponseSchema,
     });
-    const result = await agent.invoke(userPrompt);
+    const result = await runAgent(agent, 'keywords', userPrompt);
     if (!result.structuredOutput) {
       throw new StructuredOutputException('Keyword agent failed to return structured output');
     }

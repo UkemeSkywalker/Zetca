@@ -5,6 +5,7 @@
 
 import { ChannelDescription, StrategyInput, StrategyOutput, StrategyRecord } from '@/types/strategy';
 import type { StrategyRecord as WireStrategyRecord } from '@/lib/models/strategy';
+import type { GenerationProgress } from '@/lib/models/strategyConstants';
 
 // Use relative URLs — Next.js rewrites proxy /api/strategy/* to the Python backend
 const API_BASE_URL = '';
@@ -357,36 +358,71 @@ export async function suggestKeywords(input: {
   return Array.isArray(data.keywords) ? data.keywords : [];
 }
 
+function strategyRequestBody(input: StrategyInput): string {
+  return JSON.stringify({
+    brand_name: input.brandName,
+    industry: input.industry,
+    target_audience: input.targetAudience,
+    goals: input.goals,
+    ...(input.quiz ? { quiz: input.quiz } : {}),
+  });
+}
+
 /**
- * Generate and save a strategy, returning the new strategy's ID
- * (used by the Strategist quiz to open the result straight away).
+ * Generate and save a strategy, streaming progress while it is written
+ * (used by the Strategist quiz to show progress, then open the result).
  *
- * @throws StrategyAPIError if the request fails
+ * @param onProgress - Called with the stage the model is on and roughly how far it has got
+ * @returns The new strategy's ID
+ * @throws StrategyAPIError if the request or the generation fails
  */
-export async function generateStrategyRecord(input: StrategyInput): Promise<string> {
-  const response = await fetch(`${API_BASE_URL}/api/strategy/generate`, {
+export async function generateStrategyRecordStream(
+  input: StrategyInput,
+  onProgress: (progress: GenerationProgress) => void
+): Promise<string> {
+  const response = await fetch(`${API_BASE_URL}/api/strategy/generate-stream`, {
     method: 'POST',
     headers: createAuthHeaders(),
-    body: JSON.stringify({
-      brand_name: input.brandName,
-      industry: input.industry,
-      target_audience: input.targetAudience,
-      goals: input.goals,
-      ...(input.quiz ? { quiz: input.quiz } : {}),
-    }),
+    body: strategyRequestBody(input),
   });
 
   if (response.status === 401) {
     handleAuthError();
     throw new StrategyAPIError('Authentication required. Please log in again.', 401);
   }
-  if (!response.ok) {
+  if (!response.ok || !response.body) {
     const errorData = await response.json().catch(() => ({}));
     throw new StrategyAPIError(errorData.detail || 'Strategy generation failed. Please try again.', response.status, errorData);
   }
 
-  const record = await response.json();
-  return record.id as string;
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      // Server-sent events are separated by a blank line; keep any partial event for the next read
+      const frames = buffer.split('\n\n');
+      buffer = frames.pop() ?? '';
+      for (const frame of frames) {
+        const eventType = frame.match(/^event: (.*)$/m)?.[1];
+        const data = frame.match(/^data: (.*)$/m)?.[1];
+        if (!eventType || data === undefined) continue;
+        const payload = JSON.parse(data);
+        if (eventType === 'progress') onProgress(payload as GenerationProgress);
+        else if (eventType === 'result') return payload.id as string;
+        else if (eventType === 'error') {
+          throw new StrategyAPIError(payload.detail || 'Strategy generation failed. Please try again.', payload.status, payload);
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  throw new StrategyAPIError('The connection closed before the strategy was ready. Please try again.');
 }
 
 /**
