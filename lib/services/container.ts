@@ -19,6 +19,10 @@ import { PublisherService } from './publisherService';
 import { LinkedInClient } from './linkedinClient';
 import { StrategistAgent } from '../agents/strategistAgent';
 import { MockStrategistAgent } from '../agents/mockStrategistAgent';
+import { KeywordAgent } from '../agents/keywordAgent';
+import { MockKeywordAgent } from '../agents/mockKeywordAgent';
+import { QuizStrategistAgent } from '../agents/quizStrategistAgent';
+import { MockQuizStrategistAgent } from '../agents/mockQuizStrategistAgent';
 import { CopywriterAgent } from '../agents/copywriterAgent';
 import { MockCopywriterAgent } from '../agents/mockCopywriterAgent';
 import { SchedulerAgent } from '../agents/schedulerAgent';
@@ -62,6 +66,36 @@ export const getStrategistAgent = memo(() => {
   });
 });
 
+export const getQuizStrategistAgent = memo(() => {
+  const cfg = getConfig();
+  if (cfg.useMockAgent) {
+    console.info('Using MOCK agent for quiz strategies (no AWS required)');
+    return new MockQuizStrategistAgent();
+  }
+  console.info(`Using REAL Quiz Strategist agent with Bedrock (region: ${cfg.awsRegion}, model: ${cfg.bedrockModelId})`);
+  return new QuizStrategistAgent({
+    awsRegion: cfg.awsRegion,
+    modelId: cfg.bedrockModelId,
+    awsAccessKeyId: cfg.awsAccessKeyId,
+    awsSecretAccessKey: cfg.awsSecretAccessKey,
+  });
+});
+
+export const getKeywordAgent = memo(() => {
+  const cfg = getConfig();
+  if (cfg.useMockAgent) {
+    console.info('Using MOCK agent for keyword suggestions (no AWS required)');
+    return new MockKeywordAgent();
+  }
+  console.info(`Using REAL Keyword agent with Bedrock (region: ${cfg.awsRegion}, model: ${cfg.bedrockModelId})`);
+  return new KeywordAgent({
+    awsRegion: cfg.awsRegion,
+    modelId: cfg.bedrockModelId,
+    awsAccessKeyId: cfg.awsAccessKeyId,
+    awsSecretAccessKey: cfg.awsSecretAccessKey,
+  });
+});
+
 export const getCopywriterAgent = memo(() => {
   const cfg = getConfig();
   if (cfg.useMockAgent) {
@@ -94,7 +128,9 @@ export const getSchedulerAgent = memo(() => {
 
 export const getLinkedInClient = memo(() => new LinkedInClient(getConfig().linkedinApiTimeoutSeconds));
 
-export const getStrategyService = memo(() => new StrategyService(getStrategistAgent(), getStrategyRepository()));
+export const getStrategyService = memo(
+  () => new StrategyService(getStrategistAgent(), getStrategyRepository(), getQuizStrategistAgent())
+);
 
 export const getCopyService = memo(
   () => new CopyService(getCopywriterAgent(), getCopyRepository(), getStrategyRepository())

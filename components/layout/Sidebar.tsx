@@ -89,7 +89,8 @@ export default function Sidebar({ className = '' }: SidebarProps) {
           <nav className="flex-1 overflow-y-auto px-[22px]" aria-label="Dashboard pages">
             <ul className="space-y-[7px]" role="list">
               {navItems.map((item) => {
-                const isActive = pathname === item.href;
+                // Sub-pages (e.g. a strategy result) keep their section highlighted
+                const isActive = item.href === '/dashboard' ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
                 return (
                   <li key={item.href}>
                     <Link

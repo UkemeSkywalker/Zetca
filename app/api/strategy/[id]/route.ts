@@ -24,6 +24,28 @@ async function getStrategyHandler(_req: NextRequest, userId: string, strategyId:
   }
 }
 
+async function deleteStrategyHandler(userId: string, strategyId: string): Promise<Response> {
+  try {
+    const result = await getStrategyService().deleteStrategy(strategyId, userId);
+    if (result === 'forbidden') {
+      console.warn(`User ${userId} attempted to delete strategy ${strategyId} belonging to another user`);
+      return jsonError('Access denied: You do not have permission to delete this strategy', 403);
+    }
+    if (result === 'not_found') return jsonError('Strategy not found', 404);
+
+    console.info(`Deleted strategy ${strategyId} for user: ${userId}`);
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    return handleRouteError(error, 'Failed to delete strategy. Please try again.');
+  }
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const handler = await withAuth(async (_request, userId) => deleteStrategyHandler(userId, id));
+  return handler(req);
+}
+
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const handler = await withAuth(async (request, userId) => getStrategyHandler(request, userId, id));

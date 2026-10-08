@@ -4,10 +4,23 @@
  * Handles storing and retrieving strategy records with user isolation.
  */
 
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand, GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBClient, DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient, PutCommand, GetCommand, QueryCommand, UpdateCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { getConfig } from '../config';
-import { StrategyRecord } from '../models/strategy';
+import { ChannelDescription, QuizAnswers, StrategyOutput, StrategyRecord } from '../models/strategy';
+
+/** A strategy as stored in DynamoDB (camelCase attribute names) */
+interface StrategyItem {
+  strategyId: string;
+  userId: string;
+  brandName: string;
+  industry: string;
+  targetAudience: string;
+  goals: string;
+  strategyOutput: StrategyOutput;
+  quiz?: QuizAnswers;
+  createdAt: string;
+}
 
 export class StrategyRepository {
   private docClient: DynamoDBDocumentClient;
@@ -15,7 +28,7 @@ export class StrategyRepository {
 
   constructor(tableName?: string, region?: string) {
     const cfg = getConfig();
-    const clientConfig: Record<string, any> = { region: region || cfg.awsRegion };
+    const clientConfig: DynamoDBClientConfig = { region: region || cfg.awsRegion };
     if (cfg.awsAccessKeyId && cfg.awsSecretAccessKey) {
       clientConfig.credentials = {
         accessKeyId: cfg.awsAccessKeyId,
@@ -41,7 +54,32 @@ export class StrategyRepository {
     );
     if (!result.Item) return null;
     if (userId !== undefined && result.Item.userId !== userId) return null;
-    return this.itemToRecord(result.Item);
+    return this.itemToRecord(result.Item as StrategyItem);
+  }
+
+  /** Replace a strategy's channel descriptions; only succeeds for the strategy's owner. */
+  async updateChannelDescriptions(strategyId: string, userId: string, descriptions: ChannelDescription[]): Promise<void> {
+    await this.docClient.send(
+      new UpdateCommand({
+        TableName: this.tableName,
+        Key: { strategyId },
+        UpdateExpression: 'SET strategyOutput.channel_descriptions = :descriptions',
+        ConditionExpression: 'userId = :userId',
+        ExpressionAttributeValues: { ':descriptions': descriptions, ':userId': userId },
+      })
+    );
+  }
+
+  /** Delete a strategy; only succeeds for the strategy's owner (throws ConditionalCheckFailedException otherwise). */
+  async deleteStrategy(strategyId: string, userId: string): Promise<void> {
+    await this.docClient.send(
+      new DeleteCommand({
+        TableName: this.tableName,
+        Key: { strategyId },
+        ConditionExpression: 'userId = :userId',
+        ExpressionAttributeValues: { ':userId': userId },
+      })
+    );
   }
 
   /** Check if a strategy exists regardless of owner. */
@@ -63,10 +101,10 @@ export class StrategyRepository {
         ScanIndexForward: false,
       })
     );
-    return (result.Items || []).map((item) => this.itemToRecord(item));
+    return (result.Items || []).map((item) => this.itemToRecord(item as StrategyItem));
   }
 
-  private recordToItem(record: StrategyRecord): Record<string, any> {
+  private recordToItem(record: StrategyRecord): StrategyItem {
     return {
       strategyId: record.id,
       userId: record.user_id,
@@ -75,11 +113,12 @@ export class StrategyRepository {
       targetAudience: record.target_audience,
       goals: record.goals,
       strategyOutput: record.strategy_output,
+      ...(record.quiz ? { quiz: record.quiz } : {}),
       createdAt: record.created_at,
     };
   }
 
-  private itemToRecord(item: Record<string, any>): StrategyRecord {
+  private itemToRecord(item: StrategyItem): StrategyRecord {
     return {
       id: item.strategyId,
       user_id: item.userId,
@@ -88,6 +127,7 @@ export class StrategyRepository {
       target_audience: item.targetAudience,
       goals: item.goals,
       strategy_output: item.strategyOutput,
+      ...(item.quiz ? { quiz: item.quiz } : {}),
       created_at: item.createdAt,
     };
   }
