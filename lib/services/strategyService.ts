@@ -101,6 +101,18 @@ export class StrategyService {
     return fresh;
   }
 
+  /**
+   * Delete a user's strategy.
+   * Returns 'deleted', 'not_found', or 'forbidden' (it belongs to another user).
+   */
+  async deleteStrategy(strategyId: string, userId: string): Promise<'deleted' | 'not_found' | 'forbidden'> {
+    const [strategy, belongsToOtherUser] = await this.getStrategy(strategyId, userId);
+    if (belongsToOtherUser) return 'forbidden';
+    if (strategy === null) return 'not_found';
+    await this.repository.deleteStrategy(strategyId, userId);
+    return 'deleted';
+  }
+
   /** All strategies for a user, sorted by created_at descending. */
   async getUserStrategies(userId: string): Promise<StrategyRecord[]> {
     return this.repository.listStrategiesByUser(userId);

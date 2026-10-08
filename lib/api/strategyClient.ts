@@ -411,3 +411,24 @@ export async function regenerateChannelDescription(strategyId: string, platform:
   }
   return response.json();
 }
+
+/**
+ * Permanently delete one of the user's strategies.
+ *
+ * @throws StrategyAPIError if the request fails
+ */
+export async function deleteStrategy(id: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/strategy/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: createAuthHeaders(),
+  });
+
+  if (response.status === 401) {
+    handleAuthError();
+    throw new StrategyAPIError('Authentication required. Please log in again.', 401);
+  }
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new StrategyAPIError(errorData.detail || 'Failed to delete strategy. Please try again.', response.status, errorData);
+  }
+}

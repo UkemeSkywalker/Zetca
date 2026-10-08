@@ -164,7 +164,17 @@ export function ResultView({ strategy }: { strategy: StrategyRecord }) {
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-col gap-2">
-          <h1 className="text-[28px] leading-[36px] tracking-[-0.025em] font-bold text-[#0b1c30]">{strategy.brandName}</h1>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/dashboard/strategist"
+              aria-label="Back to your strategies"
+              title="Back to your strategies"
+              className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-[#0b1c30] hover:bg-[#e5eeff] transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4f46e5]"
+            >
+              <Icon icon="material-symbols:arrow-back" width={20} height={20} />
+            </Link>
+            <h1 className="text-[28px] leading-[36px] tracking-[-0.025em] font-bold text-[#0b1c30]">{strategy.brandName}</h1>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             {firstNiche && (
               <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#e2dfff] text-[#3525cd] ${LABEL_MD}`}>

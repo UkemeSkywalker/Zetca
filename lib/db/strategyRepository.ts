@@ -5,7 +5,7 @@
  */
 
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand, GetCommand, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, PutCommand, GetCommand, QueryCommand, UpdateCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { getConfig } from '../config';
 import { ChannelDescription, StrategyRecord } from '../models/strategy';
 
@@ -53,6 +53,18 @@ export class StrategyRepository {
         UpdateExpression: 'SET strategyOutput.channel_descriptions = :descriptions',
         ConditionExpression: 'userId = :userId',
         ExpressionAttributeValues: { ':descriptions': descriptions, ':userId': userId },
+      })
+    );
+  }
+
+  /** Delete a strategy; only succeeds for the strategy's owner (throws ConditionalCheckFailedException otherwise). */
+  async deleteStrategy(strategyId: string, userId: string): Promise<void> {
+    await this.docClient.send(
+      new DeleteCommand({
+        TableName: this.tableName,
+        Key: { strategyId },
+        ConditionExpression: 'userId = :userId',
+        ExpressionAttributeValues: { ':userId': userId },
       })
     );
   }
