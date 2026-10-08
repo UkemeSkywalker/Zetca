@@ -4,6 +4,7 @@
  */
 
 import { ChannelDescription, StrategyInput, StrategyOutput, StrategyRecord } from '@/types/strategy';
+import type { StrategyRecord as WireStrategyRecord } from '@/lib/models/strategy';
 
 // Use relative URLs — Next.js rewrites proxy /api/strategy/* to the Python backend
 const API_BASE_URL = '';
@@ -181,10 +182,10 @@ export async function listStrategies(): Promise<StrategyRecord[]> {
       );
     }
 
-    const data = await response.json();
+    const data: WireStrategyRecord[] = await response.json();
     
     // Convert snake_case from Python to camelCase for TypeScript
-    return data.map((record: any) => ({
+    return data.map((record) => ({
       id: record.id,
       userId: record.user_id,
       brandName: record.brand_name,
@@ -268,7 +269,7 @@ export async function getStrategy(id: string): Promise<StrategyRecord> {
       );
     }
 
-    const record = await response.json();
+    const record: WireStrategyRecord = await response.json();
     
     // Convert snake_case from Python to camelCase for TypeScript
     return {
