@@ -10,6 +10,7 @@ import { Agent } from '@strands-agents/sdk';
 import { BedrockModel } from '@strands-agents/sdk/models/bedrock';
 import { AutoScheduleOutput, AutoScheduleOutputSchema } from '../models/scheduler';
 import { StructuredOutputException } from './errors';
+import { runAgent } from './runAgent';
 import { AgentCredentials } from './strategistAgent';
 
 const SYSTEM_PROMPT = `You are an expert social media scheduling optimizer. Your job is to analyze
@@ -107,7 +108,7 @@ All dates must be in the future (after ${today}).`;
     // A Strands Agent handles one invocation at a time, so each request gets its own;
     // the Bedrock model (and its client) is shared
     const agent = new Agent({ model: this.model, systemPrompt: SYSTEM_PROMPT, structuredOutputSchema: AutoScheduleOutputSchema });
-    const result = await agent.invoke(prompt);
+    const result = await runAgent(agent, 'schedule', prompt);
     if (!result.structuredOutput) {
       throw new StructuredOutputException('Scheduler agent failed to return structured output');
     }

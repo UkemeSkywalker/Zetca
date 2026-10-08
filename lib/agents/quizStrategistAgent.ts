@@ -19,6 +19,7 @@ import {
   StrategyOutput,
 } from '../models/strategy';
 import { StructuredOutputException } from './errors';
+import { runAgent } from './runAgent';
 import { descriptionLength, fitToLimit } from '../strategist/descriptions';
 import type { AgentCredentials } from './strategistAgent';
 
@@ -129,7 +130,7 @@ export class QuizStrategistAgent {
     if (!input.quiz) throw new Error('QuizStrategistAgent requires quiz answers');
     // A Strands Agent handles one invocation at a time, so each request gets its own
     const agent = new Agent({ model: this.model, systemPrompt: SYSTEM_PROMPT, structuredOutputSchema: QuizStrategyOutputSchema });
-    const result = await agent.invoke(`Generate the strategy for this creator:\n\n${describeQuiz(input.brand_name, input.quiz)}`);
+    const result = await runAgent(agent, 'quiz-strategy', `Generate the strategy for this creator:\n\n${describeQuiz(input.brand_name, input.quiz)}`);
     if (!result.structuredOutput) {
       throw new StructuredOutputException('Quiz strategist agent failed to return structured output');
     }
@@ -151,7 +152,9 @@ export class QuizStrategistAgent {
     for (let attempt = 0; attempt < MAX_SHORTEN_ATTEMPTS && descriptionLength(current) > limit; attempt++) {
       try {
         const agent = new Agent({ model: this.model, systemPrompt: SHORTEN_PROMPT, structuredOutputSchema: ChannelDescriptionSchema });
-        const result = await agent.invoke(
+        const result = await runAgent(
+          agent,
+          `shorten-description:${description.platform}`,
           `Platform: ${PLATFORM_NAMES[description.platform]} (id "${description.platform}"). Limit: ${limit} characters. ` +
             `The current version is ${descriptionLength(current)} characters, so it must lose at least ${descriptionLength(current) - limit}.\n\n` +
             `hook: ${current.hook}\naudience: ${current.audience}\ncontent: ${current.content}\nvalue: ${current.value}\ncta: ${current.cta}`
@@ -177,7 +180,9 @@ export class QuizStrategistAgent {
     const previousText = previous
       ? `\n\nPrevious version (write something different):\n${[previous.hook, previous.audience, previous.content, previous.value, previous.cta].join(' ')}`
       : '';
-    const result = await agent.invoke(
+    const result = await runAgent(
+      agent,
+      `regenerate-description:${platform}`,
       `Write the ${PLATFORM_NAMES[platform]} channel description (platform id "${platform}") for this creator:\n\n${describeQuiz(brandName, quiz)}${previousText}`
     );
     if (!result.structuredOutput) {

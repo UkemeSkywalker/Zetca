@@ -9,6 +9,7 @@ import { Agent } from '@strands-agents/sdk';
 import { BedrockModel } from '@strands-agents/sdk/models/bedrock';
 import { CopyOutput, CopyOutputSchema, ChatResponse, ChatResponseSchema } from '../models/copy';
 import { StructuredOutputException } from './errors';
+import { runAgent } from './runAgent';
 import { AgentCredentials } from './strategistAgent';
 
 const SYSTEM_PROMPT = `You are an expert social media copywriter with deep expertise in crafting
@@ -121,7 +122,7 @@ export class CopywriterAgent {
   }
 
   async generateCopies(strategyData: Record<string, any>): Promise<CopyOutput> {
-    const result = await this.createAgent().invoke(buildCopiesPrompt(strategyData), {
+    const result = await runAgent(this.createAgent(), 'copies', buildCopiesPrompt(strategyData), {
       structuredOutputSchema: CopyOutputSchema,
     });
     if (!result.structuredOutput) {
@@ -191,7 +192,7 @@ My feedback: ${userMessage}
 Please update the copy based on my feedback while maintaining brand consistency.
 Provide the updated text, updated hashtags, and explain what changes you made.`;
 
-    const result = await this.createAgent().invoke(userPrompt, { structuredOutputSchema: ChatResponseSchema });
+    const result = await runAgent(this.createAgent(), 'copy-chat', userPrompt, { structuredOutputSchema: ChatResponseSchema });
     if (!result.structuredOutput) {
       throw new StructuredOutputException('Copywriter agent failed to return structured chat response');
     }

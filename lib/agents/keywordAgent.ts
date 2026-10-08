@@ -11,6 +11,7 @@ import { BedrockModel } from '@strands-agents/sdk/models/bedrock';
 import { KeywordRequest, KeywordResponseSchema } from '../models/keywords';
 import { cleanKeywords } from '../strategist/keywords';
 import { StructuredOutputException } from './errors';
+import { runAgent } from './runAgent';
 import type { AgentCredentials } from './strategistAgent';
 
 const SYSTEM_PROMPT = `You are a YouTube and social media SEO specialist.
@@ -69,7 +70,7 @@ Content types: ${input.content_types.join(', ') || 'not specified'}`;
       systemPrompt: SYSTEM_PROMPT,
       structuredOutputSchema: KeywordResponseSchema,
     });
-    const result = await agent.invoke(userPrompt);
+    const result = await runAgent(agent, 'keywords', userPrompt);
     if (!result.structuredOutput) {
       throw new StructuredOutputException('Keyword agent failed to return structured output');
     }

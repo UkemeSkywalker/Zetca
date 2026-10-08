@@ -9,6 +9,7 @@ import { Agent } from '@strands-agents/sdk';
 import { BedrockModel } from '@strands-agents/sdk/models/bedrock';
 import { StrategyInput, StrategyOutput, StrategyOutputSchema } from '../models/strategy';
 import { StructuredOutputException } from './errors';
+import { runAgent } from './runAgent';
 
 const SYSTEM_PROMPT = `You are an expert social media strategist with deep knowledge of digital marketing,
 content strategy, and audience engagement across multiple platforms.
@@ -85,7 +86,7 @@ content themes, engagement tactics, and visual prompts for image generation that
       systemPrompt: SYSTEM_PROMPT,
       structuredOutputSchema: StrategyOutputSchema,
     });
-    const result = await agent.invoke(userPrompt);
+    const result = await runAgent(agent, 'strategy', userPrompt);
     if (!result.structuredOutput) {
       throw new StructuredOutputException('Strategist agent failed to return structured output');
     }
