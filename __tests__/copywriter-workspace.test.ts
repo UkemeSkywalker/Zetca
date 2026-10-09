@@ -2,7 +2,8 @@
  * @jest-environment node
  */
 
-import { createCopyExtractor } from '@/lib/agents/copyExtractor';
+import { createCopyStreamParser } from '@/lib/agents/copyStreamParser';
+import { closeFeed, laneCopySaved, laneWriting, openFeed, subscribeFeed, type FeedEvent } from '@/lib/services/copyJobFeed';
 import { CopyService, JOB_STALE_AFTER_MS, type CopywriterAgentLike } from '@/lib/services/copyService';
 import type { CopyRepository } from '@/lib/db/copyRepository';
 import type { StrategyRepository } from '@/lib/db/strategyRepository';
@@ -10,34 +11,93 @@ import type { CopyChatMessage, CopyItem, CopyJob, CopyRecord } from '@/lib/model
 import type { StrategyRecord } from '@/lib/models/strategy';
 import { COPY_PLATFORM_IDS, type CopyPlatformId } from '@/lib/models/copyConstants';
 
-describe('createCopyExtractor', () => {
-  const output = JSON.stringify({
-    copies: [
-      { text: 'First {with braces} and "quotes" \\ backslash', platform: 'Instagram', hashtags: ['#a', '#b'], angle: 'Bold hook' },
-      { text: 'Second', platform: 'Instagram', hashtags: [] },
-    ],
-  });
+describe('createCopyStreamParser', () => {
+  const output = `### COPY
+ANGLE: Bold hook
+HASHTAGS: #OutfitIdeas #Lumier
+TEXT:
+Your closet isn't the problem.
+It's "the formula" — 5 pieces {and} a \\ backslash.
+### END
+### COPY
+ANGLE: Storytelling
+HASHTAGS: PersonalStyle, #FindYourStyle
+TEXT:
+She stood in front of a full closet.
+### END
+`;
 
-  it('returns each copy as soon as its object closes, however the text is split', () => {
+  it('returns each copy when its END arrives, however the text is split', () => {
     for (const size of [1, 3, 7, 50, output.length]) {
-      const extract = createCopyExtractor();
-      const found: CopyItem[] = [];
-      for (let i = 0; i < output.length; i += size) found.push(...extract(output.slice(i, i + size)));
-      expect(found.map((c) => c.text)).toEqual(['First {with braces} and "quotes" \\ backslash', 'Second']);
-      expect(found[0].angle).toBe('Bold hook');
+      const parse = createCopyStreamParser('Instagram');
+      const found = [];
+      for (let i = 0; i < output.length; i += size) found.push(...parse(output.slice(i, i + size)));
+      expect(found).toEqual([
+        {
+          text: 'Your closet isn\'t the problem.\nIt\'s "the formula" — 5 pieces {and} a \\ backslash.',
+          platform: 'Instagram',
+          hashtags: ['#OutfitIdeas', '#Lumier'],
+          angle: 'Bold hook',
+        },
+        {
+          text: 'She stood in front of a full closet.',
+          platform: 'Instagram',
+          hashtags: ['#PersonalStyle', '#FindYourStyle'],
+          angle: 'Storytelling',
+        },
+      ]);
     }
   });
 
   it('reports the first copy before the second has been written', () => {
-    const extract = createCopyExtractor();
-    const cut = output.indexOf('Second');
-    expect(extract(output.slice(0, cut))).toHaveLength(1);
-    expect(extract(output.slice(cut))).toHaveLength(1);
+    const parse = createCopyStreamParser('X');
+    const cut = output.indexOf('Storytelling');
+    expect(parse(output.slice(0, cut))).toHaveLength(1);
+    expect(parse(output.slice(cut))).toHaveLength(1);
   });
 
-  it('skips objects that are not valid copies', () => {
-    const extract = createCopyExtractor();
-    expect(extract('{"copies":[{"platform":"X"},{"text":"ok","platform":"X","hashtags":[]}]}').map((c) => c.text)).toEqual(['ok']);
+  it('reports the copy being written as it grows', () => {
+    const parse = createCopyStreamParser('X');
+    expect(parse.partial()).toBeNull();
+    parse('### COPY\nANGLE: Bold hook\nHASH');
+    expect(parse.partial()).toEqual({ text: '', angle: 'Bold hook' });
+    parse('TAGS: #a\nTEXT:\nSix months ago');
+    expect(parse.partial()).toEqual({ text: 'Six months ago', angle: 'Bold hook' });
+    parse(', a DM came in\n### END\n');
+    expect(parse.partial()).toBeNull();
+  });
+
+  it('skips blocks with no text', () => {
+    const parse = createCopyStreamParser('X');
+    expect(parse('### COPY\nANGLE: Empty\nTEXT:\n\n### END\n### COPY\nTEXT:\nok\n### END')).toEqual([
+      { text: 'ok', platform: 'X', hashtags: [] },
+    ]);
+  });
+});
+
+describe('copy job feed', () => {
+  it('sends the current text to a new listener, batches updates, and ends with done', async () => {
+    openFeed('job-feed', ['x', 'linkedin']);
+    const events: FeedEvent[] = [];
+    const unsubscribe = subscribeFeed('job-feed', (e) => events.push(e));
+    expect(unsubscribe).not.toBeNull();
+    expect(events[0]).toEqual({ type: 'update', lanes: expect.objectContaining({ x: { text: '', written: 0, done: false } }) });
+
+    laneWriting('job-feed', 'x', { text: 'Hel' });
+    laneWriting('job-feed', 'x', { text: 'Hello', angle: 'Bold hook' });
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    const updates = events.filter((e) => e.type === 'update');
+    expect(updates).toHaveLength(2);
+    expect(updates[1]).toMatchObject({ lanes: { x: { text: 'Hello', angle: 'Bold hook' } } });
+
+    laneCopySaved('job-feed', 'x');
+    closeFeed('job-feed');
+    expect(events.some((e) => e.type === 'copy')).toBe(true);
+    expect(events.at(-1)).toEqual({ type: 'done' });
+  });
+
+  it('has no feed for an unknown job', () => {
+    expect(subscribeFeed('nope', () => {})).toBeNull();
   });
 });
 

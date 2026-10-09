@@ -449,3 +449,68 @@ export async function deleteCopy(copyId: string): Promise<void> {
     throw new CopyAPIError('An unexpected error occurred while deleting the copy', undefined, error);
   }
 }
+
+/** What one platform of a running full set is writing right now */
+export interface CopyJobLane {
+  angle?: string;
+  text: string;
+  written: number;
+  done: boolean;
+}
+
+export type CopyJobFeedEvent =
+  | { type: 'update'; lanes: Record<string, CopyJobLane> }
+  | { type: 'copy'; platform: string }
+  | { type: 'done' };
+
+/**
+ * Follow a running job's live text. Calls `onEvent` until the job finishes,
+ * the server has no live feed for it, or `signal` aborts. Resolves when the
+ * stream ends; never throws for a dropped connection (the caller's polling
+ * still picks up saved copies).
+ */
+export async function followCopyJob(
+  strategyId: string,
+  jobId: string,
+  onEvent: (event: CopyJobFeedEvent) => void,
+  signal: AbortSignal
+): Promise<void> {
+  let response: Response;
+  try {
+    response = await fetch(
+      `${API_BASE_URL}/api/copy/jobs/${encodeURIComponent(jobId)}/stream?strategy_id=${encodeURIComponent(strategyId)}`,
+      { headers: createAuthHeaders(), signal }
+    );
+  } catch {
+    return;
+  }
+  if (!response.ok || !response.body) return;
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) return;
+      buffer += decoder.decode(value, { stream: true });
+      let end: number;
+      while ((end = buffer.indexOf('\n\n')) !== -1) {
+        const frame = buffer.slice(0, end);
+        buffer = buffer.slice(end + 2);
+        const type = /^event: (.+)$/m.exec(frame)?.[1];
+        const data = /^data: (.*)$/m.exec(frame)?.[1];
+        if (!type || data === undefined) continue;
+        try {
+          onEvent({ type, ...JSON.parse(data) } as CopyJobFeedEvent);
+        } catch {
+          // Ignore a malformed frame
+        }
+      }
+    }
+  } catch {
+    // Aborted or the connection dropped
+  } finally {
+    reader.releaseLock();
+  }
+}

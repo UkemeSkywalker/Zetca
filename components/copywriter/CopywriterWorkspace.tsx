@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import type { CopyChatMessage, CopyJob, CopyRecord } from '@/types/agent';
 import type { StrategyRecord } from '@/types/strategy';
 import { listStrategies } from '@/lib/api/strategyClient';
-import { deleteCopy, getCopyWorkspace, sendCopyChat, startCopyJob } from '@/lib/api/copyClient';
+import { deleteCopy, followCopyJob, getCopyWorkspace, sendCopyChat, startCopyJob, type CopyJobLane } from '@/lib/api/copyClient';
 import { COPY_PLATFORMS, COPY_PLATFORM_IDS, normalizePlatform } from '@/lib/models/copyConstants';
 import { CopyCard, CopyCardSkeleton } from './CopyCard';
 import { CopyEditor } from './CopyEditor';
@@ -65,6 +65,8 @@ export function CopywriterWorkspace() {
   const [pending, setPending] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  // What each platform of the running set is writing right now
+  const [live, setLive] = useState<{ jobId: string; lanes: Record<string, CopyJobLane> } | null>(null);
   // While a chat message is in flight, polling leaves the chat alone so it doesn't flicker
   const sendingRef = useRef(false);
 
@@ -155,6 +157,23 @@ export function CopywriterWorkspace() {
     return () => clearInterval(timer);
   }, [running, strategyId, refresh]);
 
+  // Follow the running set's live text; each finished copy also refreshes the cards straight away
+  const runningJobId = running ? workspace!.job!.id : null;
+  useEffect(() => {
+    if (!runningJobId || !strategyId) return;
+    const controller = new AbortController();
+    followCopyJob(
+      strategyId,
+      runningJobId,
+      (event) => {
+        if (event.type === 'update') setLive({ jobId: runningJobId, lanes: event.lanes });
+        else refresh(strategyId).catch(() => {});
+      },
+      controller.signal
+    );
+    return () => controller.abort();
+  }, [runningJobId, strategyId, refresh]);
+
   const strategy = strategies?.find((s) => s.id === strategyId) ?? null;
   const ready = !!strategyId && workspace?.strategyId === strategyId;
   const copies = useMemo(() => (ready ? sortCopies(workspace!.copies) : []), [ready, workspace]);
@@ -240,6 +259,8 @@ export function CopywriterWorkspace() {
       messages={chat}
       pending={pending}
       job={job}
+      lanes={live && live.jobId === job?.id ? live.lanes : null}
+      jobCopies={job ? copies.filter((c) => c.jobId === job.id) : []}
       openCopy={openCopy}
       disabled={!ready}
       onSend={send}

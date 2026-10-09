@@ -25,6 +25,7 @@ import { StrategyRecord } from '../models/strategy';
 import { CopyRepository } from '../db/copyRepository';
 import { StrategyRepository } from '../db/strategyRepository';
 import { ApiError } from '../errors';
+import { closeFeed, laneCopySaved, laneDone, laneWriting, openFeed } from './copyJobFeed';
 
 /** A running job that hasn't saved a copy for this long was interrupted (e.g. the server restarted) */
 export const JOB_STALE_AFTER_MS = 3 * 60_000;
@@ -50,7 +51,8 @@ export interface CopywriterAgentLike {
   generatePlatformCopies(
     strategyData: StrategyData,
     platform: CopyPlatformId,
-    onCopy?: (copy: CopyItem) => void
+    onCopy?: (copy: CopyItem) => void,
+    onWriting?: (partial: { text: string; angle?: string }) => void
   ): Promise<CopyItem[]>;
   chat(
     strategyData: StrategyData,
@@ -171,9 +173,12 @@ export class CopyService {
         }),
       ]);
     }
-    void this.runJob(strategy, userId, job).catch((error) => {
-      console.error(`Copy job ${job.id} crashed:`, error);
-    });
+    openFeed(job.id, COPY_PLATFORM_IDS);
+    void this.runJob(strategy, userId, job)
+      .catch((error) => {
+        console.error(`Copy job ${job.id} crashed:`, error);
+      })
+      .finally(() => closeFeed(job.id));
     return job;
   }
 
@@ -203,6 +208,7 @@ export class CopyService {
           })
         );
         completed[platform] = (completed[platform] ?? 0) + 1;
+        laneCopySaved(job.id, platform);
         await this.strategyRepository.updateCopyJob(strategyId, job.id, {
           completed: { ...completed },
           updated_at: new Date().toISOString(),
@@ -211,10 +217,20 @@ export class CopyService {
     };
 
     const platforms = COPY_PLATFORM_IDS.map((platform) =>
-      this.agent.generatePlatformCopies(strategyData, platform, (item) => saveCopy(platform, item)).catch((error) => {
-        console.error(`Copy job ${job.id}: ${platform} failed:`, error);
-        failed.push(platform);
-      })
+      this.agent
+        .generatePlatformCopies(
+          strategyData,
+          platform,
+          (item) => saveCopy(platform, item),
+          (partial) => laneWriting(job.id, platform, partial)
+        )
+        .catch((error) => {
+          console.error(`Copy job ${job.id}: ${platform} failed:`, error);
+          failed.push(platform);
+        })
+        // Wait for its last copies to be saved before marking the lane done
+        .then(() => saving.catch(() => {}))
+        .finally(() => laneDone(job.id, platform))
     );
 
     let timedOut = false;

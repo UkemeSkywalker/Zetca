@@ -13,7 +13,6 @@ import {
   CopyChatMessage,
   CopyItem,
   CopyOutput,
-  CopyOutputSchema,
   StrategyData,
   ChatResponse,
   ChatResponseSchema,
@@ -21,7 +20,7 @@ import {
 } from '../models/copy';
 import { COPY_PLATFORMS, COPY_PLATFORM_IDS, CopyPlatformId } from '../models/copyConstants';
 import { StructuredOutputException } from './errors';
-import { createCopyExtractor } from './copyExtractor';
+import { COPY_FORMAT, createCopyStreamParser } from './copyStreamParser';
 import { runAgent, streamDelta, STRUCTURED_OUTPUT_ONLY } from './runAgent';
 import { AgentCredentials } from './strategistAgent';
 
@@ -91,10 +90,11 @@ function buildPlatformPrompt(strategyData: StrategyData, platform: CopyPlatformI
 ${brandContext(strategyData)}
 
 Write exactly ${COPIES_PER_PLATFORM} copies for ${promptName}, one for each angle below, in this order.
-Set "platform" to "${promptName}" and "angle" to the angle's short name (e.g. "Bold hook").
 Keep each copy's text under ${limit} characters. Each copy needs engaging caption text and relevant hashtags.
 
-${COPY_ANGLES.map((angle, i) => `${i + 1}. ${angle}`).join('\n')}`;
+${COPY_ANGLES.map((angle, i) => `${i + 1}. ${angle}`).join('\n')}
+
+${COPY_FORMAT}`;
 }
 
 function buildChatPrompt(
@@ -158,8 +158,11 @@ export class CopywriterAgent {
   // A Strands Agent handles one invocation at a time, so each request gets its own;
   // the Bedrock model (and its client) is shared. Every prompt carries its full
   // context, so no conversation history is needed across calls.
-  private createAgent(): Agent {
-    return new Agent({ model: this.model, systemPrompt: `${SYSTEM_PROMPT}\n\n${STRUCTURED_OUTPUT_ONLY}` });
+  private createAgent({ structured = true } = {}): Agent {
+    return new Agent({
+      model: this.model,
+      systemPrompt: structured ? `${SYSTEM_PROMPT}\n\n${STRUCTURED_OUTPUT_ONLY}` : SYSTEM_PROMPT,
+    });
   }
 
   /** A full set: every platform written at once, in parallel */
@@ -170,34 +173,35 @@ export class CopywriterAgent {
 
   /**
    * Write one platform's copies. `onCopy` is called with each copy as soon as
-   * the model finishes writing it, before the rest of the output arrives.
+   * the model finishes writing it, before the rest of the output arrives;
+   * `onWriting` with the copy in progress as it grows.
    */
   async generatePlatformCopies(
     strategyData: StrategyData,
     platform: CopyPlatformId,
-    onCopy?: (copy: CopyItem) => void
+    onCopy?: (copy: CopyItem) => void,
+    onWriting?: (partial: { text: string; angle?: string }) => void
   ): Promise<CopyItem[]> {
-    const extract = createCopyExtractor();
-    let reported = 0;
-    const result = await runAgent(this.createAgent(), `copies:${platform}`, buildPlatformPrompt(strategyData, platform), {
-      structuredOutputSchema: CopyOutputSchema,
+    // Full sets are written as plain labelled text, not structured output: Bedrock only
+    // sends structured output once it's complete, so it couldn't be shown as it's written
+    const parse = createCopyStreamParser(COPY_PLATFORMS[platform].promptName);
+    const copies: CopyItem[] = [];
+    await runAgent(this.createAgent({ structured: false }), `copies:${platform}`, buildPlatformPrompt(strategyData, platform), {
       onEvent: (event) => {
         const delta = streamDelta(event);
-        if (delta?.type !== 'toolUseInputDelta' || !onCopy) return;
-        for (const copy of extract(delta.input)) {
-          // A retried model call streams its copies again; report each slot once
-          if (reported >= COPIES_PER_PLATFORM) return;
-          reported++;
-          onCopy(copy);
+        if (delta?.type !== 'textDelta') return;
+        for (const copy of parse(delta.text)) {
+          if (copies.length >= COPIES_PER_PLATFORM) return;
+          copies.push(copy);
+          onCopy?.(copy);
         }
+        const partial = parse.partial();
+        if (partial && copies.length < COPIES_PER_PLATFORM) onWriting?.(partial);
       },
     });
-    if (!result.structuredOutput) {
-      throw new StructuredOutputException(`Copywriter agent failed to return structured output for ${platform}`);
+    if (copies.length === 0) {
+      throw new StructuredOutputException(`Copywriter agent wrote no copies for ${platform}`);
     }
-    const copies = (result.structuredOutput as CopyOutput).copies;
-    // Report any copies the stream didn't (e.g. if the stream events weren't parseable)
-    copies.slice(reported, COPIES_PER_PLATFORM).forEach((copy) => onCopy?.(copy));
     return copies;
   }
 

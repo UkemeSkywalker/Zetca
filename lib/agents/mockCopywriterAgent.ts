@@ -86,12 +86,19 @@ export class MockCopywriterAgent {
   async generatePlatformCopies(
     strategyData: StrategyData,
     platform: CopyPlatformId,
-    onCopy?: (copy: CopyItem) => void
+    onCopy?: (copy: CopyItem) => void,
+    onWriting?: (partial: { text: string; angle?: string }) => void
   ): Promise<CopyItem[]> {
     const copies: CopyItem[] = [];
     for (let i = 0; i < COPIES_PER_PLATFORM; i++) {
-      await sleep(MOCK_COPY_DELAY_MS + Math.random() * MOCK_COPY_DELAY_MS);
       const copy = mockCopy(platform, i, strategyData.brand_name || 'the brand');
+      // "Type" the copy out over the delay, a few words at a time
+      const words = copy.text.split(' ');
+      const steps = 8;
+      for (let step = 1; step <= steps; step++) {
+        await sleep((MOCK_COPY_DELAY_MS + Math.random() * MOCK_COPY_DELAY_MS) / steps);
+        onWriting?.({ text: words.slice(0, Math.ceil((words.length * step) / steps)).join(' '), angle: copy.angle });
+      }
       copies.push(copy);
       onCopy?.(copy);
     }

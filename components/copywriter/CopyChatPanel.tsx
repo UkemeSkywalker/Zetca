@@ -3,6 +3,8 @@
 import { Icon } from '@iconify/react';
 import { useEffect, useRef, useState } from 'react';
 import type { CopyChatMessage, CopyJob, CopyRecord } from '@/types/agent';
+import type { CopyJobLane } from '@/lib/api/copyClient';
+import { COPY_PLATFORM_IDS } from '@/lib/models/copyConstants';
 import { platformInfo } from './platforms';
 
 const LABEL_SM = 'text-[11px] leading-[14px] tracking-[0.05em] font-bold';
@@ -13,6 +15,10 @@ interface CopyChatPanelProps {
   /** The user's message while it's being answered */
   pending: string | null;
   job: CopyJob | null;
+  /** What each platform of the running set is writing right now (null until the live feed connects) */
+  lanes: Record<string, CopyJobLane> | null;
+  /** Copies written by the latest set, for its summary */
+  jobCopies: CopyRecord[];
   /** The copy open in the editor; requests like "make it punchier" apply to it */
   openCopy: CopyRecord | null;
   disabled: boolean;
@@ -34,7 +40,7 @@ function jobProgress(job: CopyJob): number {
   return Object.values(job.completed).reduce((sum, n) => sum + n, 0);
 }
 
-export function CopyChatPanel({ brandName, messages, pending, job, openCopy, disabled, onSend, onShowCopy, onClose }: CopyChatPanelProps) {
+export function CopyChatPanel({ brandName, messages, pending, job, lanes, jobCopies, openCopy, disabled, onSend, onShowCopy, onClose }: CopyChatPanelProps) {
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const running = job?.status === 'running';
@@ -44,7 +50,7 @@ export function CopyChatPanel({ brandName, messages, pending, job, openCopy, dis
   useEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messages.length, pending, running]);
+  }, [messages.length, pending, running, lanes]);
 
   const send = (text: string) => {
     const message = text.trim();
@@ -54,6 +60,11 @@ export function CopyChatPanel({ brandName, messages, pending, job, openCopy, dis
   };
 
   const prompts = openCopy ? OPEN_COPY_PROMPTS : GENERAL_PROMPTS;
+  // The finished set's summary goes just before the message announcing it's done
+  const summaryAfter =
+    job && job.status !== 'running' && job.finishedAt
+      ? [...messages].reverse().find((m) => m.action === 'job_done' || m.action === 'job_failed')?.id
+      : undefined;
   const openInfo = openCopy ? platformInfo(openCopy.platform) : null;
 
   return (
@@ -98,7 +109,10 @@ export function CopyChatPanel({ brandName, messages, pending, job, openCopy, dis
         )}
 
         {messages.map((m) => (
-          <ChatBubble key={m.id} message={m} onShowCopy={onShowCopy} />
+          <div key={m.id} className="space-y-3">
+            {m.id === summaryAfter && job && <SetSummary job={job} copies={jobCopies} onShowCopy={onShowCopy} />}
+            <ChatBubble message={m} onShowCopy={onShowCopy} />
+          </div>
         ))}
 
         {pending !== null && (
@@ -112,19 +126,7 @@ export function CopyChatPanel({ brandName, messages, pending, job, openCopy, dis
           </>
         )}
 
-        {running && (
-          <div className="bg-[#eff4ff] rounded-2xl px-4 py-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className={`${LABEL_SM} text-[#3525cd]`}>Writing your full set</span>
-              <span className={`${LABEL_SM} text-[#464555]`}>
-                {jobProgress(job!)} / {job!.total}
-              </span>
-            </div>
-            <div className="h-1.5 rounded-full bg-white overflow-hidden">
-              <div className="h-full bg-[#4f46e5] rounded-full transition-all duration-500" style={{ width: `${(jobProgress(job!) / job!.total) * 100}%` }} />
-            </div>
-          </div>
-        )}
+        {running && <LiveWriting job={job!} lanes={lanes} />}
       </div>
 
       {/* Composer */}
@@ -221,6 +223,124 @@ function ChatBubble({ message, onShowCopy }: { message: CopyChatMessage; onShowC
           </button>
         )}
       </div>
+    </div>
+  );
+}
+
+function formatDuration(ms: number): string {
+  const seconds = Math.max(0, Math.round(ms / 1000));
+  return seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+}
+
+/** Seconds since `since`, ticking */
+function useElapsed(since: string): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  return now - new Date(since).getTime();
+}
+
+/** The running set, streamed: one line per platform showing the copy being typed */
+function LiveWriting({ job, lanes }: { job: CopyJob; lanes: Record<string, CopyJobLane> | null }) {
+  const elapsed = useElapsed(job.startedAt);
+  const done = jobProgress(job);
+  return (
+    <div className="bg-[#f8f9ff] border border-[#e5eeff] rounded-2xl overflow-hidden">
+      <div className="px-4 pt-3 pb-2.5">
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <span className={`${LABEL_SM} text-[#3525cd] inline-flex items-center gap-1.5`}>
+            <Icon icon="material-symbols:progress-activity" width={13} height={13} className="animate-spin" />
+            Writing your full set
+          </span>
+          <span className={`${LABEL_SM} text-[#464555] tabular-nums`}>
+            {done} / {job.total} · {formatDuration(elapsed)}
+          </span>
+        </div>
+        <div className="h-1.5 rounded-full bg-white overflow-hidden">
+          <div className="h-full bg-[#4f46e5] rounded-full transition-all duration-500" style={{ width: `${(done / job.total) * 100}%` }} />
+        </div>
+      </div>
+      <ul className="divide-y divide-[#e5eeff] border-t border-[#e5eeff]">
+        {COPY_PLATFORM_IDS.map((p) => {
+          const info = platformInfo(p);
+          const lane = lanes?.[p];
+          const written = Math.max(lane?.written ?? 0, job.completed[p] ?? 0);
+          const failed = job.failedPlatforms.includes(p);
+          const finished = failed || lane?.done || written >= 7;
+          return (
+            <li key={p} className="px-4 py-2.5 flex gap-2.5">
+              <span className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 mt-0.5 ${info.badge}`}>
+                <Icon icon={info.icon} width={12} height={12} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="flex items-center gap-1.5 text-[12px] font-bold text-[#0b1c30]">
+                  <span className="text-inherit">{info.label}</span>
+                  {!finished && lane?.angle && <span className="text-[#777587] font-semibold truncate">· {lane.angle}</span>}
+                  <span className={`ml-auto shrink-0 tabular-nums ${failed ? 'text-[#ba1a1a]' : finished ? 'text-emerald-700' : 'text-[#777587]'}`}>
+                    {failed ? 'Failed' : finished ? `✓ ${written} written` : `${written} / 7`}
+                  </span>
+                </p>
+                {!finished && (
+                  <p className="mt-0.5 text-[13px] leading-[19px] text-[#464555] line-clamp-3 break-words">
+                    {lane?.text ? (
+                      <span className="text-inherit">{lane.text}</span>
+                    ) : (
+                      <span className="text-[#777587] italic">{lanes ? 'Starting…' : 'Connecting…'}</span>
+                    )}
+                    <span className="inline-block w-1.5 h-3.5 bg-[#4f46e5] ml-0.5 align-middle animate-pulse" aria-hidden="true" />
+                  </p>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+/** A finished set: "Wrote 28 copies in 1m 17s", expandable to the list of copies */
+function SetSummary({ job, copies, onShowCopy }: { job: CopyJob; copies: CopyRecord[]; onShowCopy: (copyId: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const took = formatDuration(new Date(job.finishedAt!).getTime() - new Date(job.startedAt).getTime());
+  const written = jobProgress(job);
+  return (
+    <div className="rounded-2xl border border-[#e5eeff] bg-white">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        className="w-full px-4 py-2.5 flex items-center gap-2 text-left text-[13px] font-semibold text-[#464555] hover:bg-[#f8f9ff] rounded-2xl"
+      >
+        <Icon icon="material-symbols:edit-note" width={17} height={17} className="text-[#4f46e5]" />
+        <span className="text-inherit flex-1">
+          Wrote {written} {written === 1 ? 'copy' : 'copies'} in {took}
+        </span>
+        <Icon icon={open ? 'material-symbols:expand-less' : 'material-symbols:expand-more'} width={18} height={18} />
+      </button>
+      {open && (
+        <ul className="px-2 pb-2 max-h-72 overflow-y-auto">
+          {copies.length === 0 && <li className="px-2 py-1.5 text-[12px] text-[#777587]">These copies have been deleted.</li>}
+          {copies.map((c) => {
+            const info = platformInfo(c.platform);
+            return (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  onClick={() => onShowCopy(c.id)}
+                  className="w-full px-2 py-1.5 rounded-lg flex items-center gap-2 text-left hover:bg-[#eff4ff]"
+                >
+                  <Icon icon={info.icon} width={12} height={12} className="shrink-0 text-[#464555]" />
+                  {c.angle && <span className="text-[11px] font-bold text-[#3525cd] shrink-0">{c.angle}</span>}
+                  <span className="text-[12px] text-[#464555] truncate">{c.text}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }
