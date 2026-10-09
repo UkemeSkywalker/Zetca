@@ -12,7 +12,7 @@ import { handleRouteError } from '@/lib/api/routeHelpers';
 async function startJobHandler(req: NextRequest, userId: string): Promise<Response> {
   try {
     const input = CopyJobStartSchema.parse(await req.json());
-    const job = await getCopyService().startGeneration(input.strategy_id, userId);
+    const job = await getCopyService().startGeneration(input.strategy_id, userId, { platforms: input.platforms });
     console.info(`Copy job ${job.id} for strategy ${input.strategy_id}: ${job.status}`);
     return NextResponse.json(job, { status: 202 });
   } catch (error) {

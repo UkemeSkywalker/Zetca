@@ -138,11 +138,11 @@ export async function getCopyWorkspace(strategyId: string): Promise<CopyWorkspac
   };
 }
 
-/** Start writing a full set in the background; returns the job straight away */
-export async function startCopyJob(strategyId: string): Promise<CopyJob> {
+/** Start writing a full set in the background for the given platforms; returns the job straight away */
+export async function startCopyJob(strategyId: string, platforms?: string[]): Promise<CopyJob> {
   const data = await copyRequest<WireCopyJob>(
     '/api/copy/jobs',
-    { method: 'POST', body: JSON.stringify({ strategy_id: strategyId }) },
+    { method: 'POST', body: JSON.stringify({ strategy_id: strategyId, ...(platforms?.length ? { platforms } : {}) }) },
     'Could not start generating copies. Please try again.'
   );
   return convertJob(data);

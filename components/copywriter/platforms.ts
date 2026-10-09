@@ -3,8 +3,10 @@ import { COPY_PLATFORMS, CopyPlatformId, normalizePlatform } from '@/lib/models/
 export const PLATFORM_STYLE: Record<CopyPlatformId, { icon: string; badge: string }> = {
   x: { icon: 'simple-icons:x', badge: 'bg-slate-100 text-black' },
   instagram: { icon: 'simple-icons:instagram', badge: 'bg-pink-50 text-pink-600' },
+  tiktok: { icon: 'simple-icons:tiktok', badge: 'bg-slate-100 text-slate-900' },
   linkedin: { icon: 'simple-icons:linkedin', badge: 'bg-blue-50 text-[#0A66C2]' },
   facebook: { icon: 'simple-icons:facebook', badge: 'bg-blue-50 text-[#1877F2]' },
+  youtube: { icon: 'simple-icons:youtube', badge: 'bg-red-50 text-red-600' },
 };
 
 const OTHER = { label: 'Other', limit: 2200, icon: 'material-symbols:public', badge: 'bg-slate-100 text-slate-600' };

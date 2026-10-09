@@ -8,10 +8,19 @@ import type { CopyChatMessage, CopyJob, CopyRecord } from '@/types/agent';
 import type { StrategyRecord } from '@/types/strategy';
 import { listStrategies } from '@/lib/api/strategyClient';
 import { deleteCopy, deleteCopySet, followCopyJob, getCopyWorkspace, sendCopyChat, startCopyJob, type CopyJobLane } from '@/lib/api/copyClient';
-import { COPY_PLATFORMS, COPY_PLATFORM_IDS, OTHER_COPIES_SET, normalizePlatform } from '@/lib/models/copyConstants';
+import {
+  COPY_PLATFORMS,
+  COPY_PLATFORM_IDS,
+  OTHER_COPIES_SET,
+  defaultCopyPlatforms,
+  jobPlatforms,
+  normalizePlatform,
+  type CopyPlatformId,
+} from '@/lib/models/copyConstants';
 import { CopyCard, CopyCardSkeleton } from './CopyCard';
 import { CopyEditor } from './CopyEditor';
 import { CopyChatPanel } from './CopyChatPanel';
+import { GeneratePicker } from './GeneratePicker';
 import { PLATFORM_STYLE, platformInfo } from './platforms';
 
 const LABEL_MD = 'text-[13px] leading-[18px] tracking-[0.01em] font-semibold';
@@ -24,6 +33,8 @@ const FRESH_MS = 8000;
 /** Copies per platform in a full set (matches COPIES_PER_PLATFORM on the server) */
 const COPIES_PER_PLATFORM = 7;
 const LAST_STRATEGY_KEY = 'copywriter:lastStrategy';
+/** The platforms last generated for, per strategy */
+const platformsKey = (strategyId: string) => `copywriter:platforms:${strategyId}`;
 
 interface Workspace {
   strategyId: string;
@@ -93,6 +104,7 @@ export function CopywriterWorkspace() {
   const [pending, setPending] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   // What each platform of the running set is writing right now
   const [live, setLive] = useState<{ jobId: string; lanes: Record<string, CopyJobLane> } | null>(null);
   // While a chat message is in flight, polling leaves the chat alone so it doesn't flicker
@@ -209,11 +221,25 @@ export function CopywriterWorkspace() {
   const chat = ready ? workspace!.chat : [];
   const openCopy = copies.find((c) => c.id === openCopyId) ?? null;
 
+  // The picker starts with the platforms last used for this strategy, else the strategy's own
+  const initialPlatforms = (): CopyPlatformId[] => {
+    if (!strategyId) return [];
+    try {
+      const saved = JSON.parse(localStorage.getItem(platformsKey(strategyId)) ?? 'null');
+      if (Array.isArray(saved)) {
+        const valid = COPY_PLATFORM_IDS.filter((p) => saved.includes(p));
+        if (valid.length) return valid;
+      }
+    } catch {}
+    return defaultCopyPlatforms(strategy?.quiz?.platforms);
+  };
+
   const countFor = (p: string) => copies.filter((c) => normalizePlatform(c.platform) === p).length;
   const otherCount = copies.filter((c) => !(normalizePlatform(c.platform) in COPY_PLATFORMS)).length;
   const inTab = (c: CopyRecord) => platform === 'all' || platformInfo(c.platform).id === platform;
   const skeletons = running
-    ? COPY_PLATFORM_IDS.filter((p) => platform === 'all' || platform === p)
+    ? jobPlatforms(job!.completed)
+        .filter((p) => platform === 'all' || platform === p)
         .filter((p) => !job!.failedPlatforms.includes(p))
         .flatMap((p) => Array.from({ length: Math.max(0, COPIES_PER_PLATFORM - (job!.completed[p] ?? 0)) }, (_, i) => `${p}-${i}`))
     : [];
@@ -222,12 +248,15 @@ export function CopywriterWorkspace() {
     .map((g) => ({ ...g, shown: g.copies.filter(inTab), writing: running && g.id === job!.id }))
     .filter((g) => g.shown.length > 0 || (g.writing && skeletons.length > 0));
 
-  const generate = async () => {
+  const generate = async (platforms: CopyPlatformId[]) => {
     if (!strategyId) return;
     setStarting(true);
     setActionError(null);
     try {
-      const started = await startCopyJob(strategyId);
+      localStorage.setItem(platformsKey(strategyId), JSON.stringify(platforms));
+    } catch {}
+    try {
+      const started = await startCopyJob(strategyId, platforms);
       setWorkspace((prev) => (prev?.strategyId === strategyId ? { ...prev, job: started } : prev));
       setOpenCopyId(null);
       await refresh(strategyId);
@@ -340,20 +369,14 @@ export function CopywriterWorkspace() {
                 ))}
               </select>
               {ready && (
-                <button
-                  type="button"
-                  onClick={generate}
-                  disabled={running || starting}
-                  className={`inline-flex items-center gap-1.5 h-10 px-4 rounded-xl bg-[#4f46e5] text-white shadow-sm hover:opacity-95 disabled:opacity-50 whitespace-nowrap ${LABEL_MD}`}
-                >
-                  <Icon
-                    icon={running || starting ? 'material-symbols:progress-activity' : 'material-symbols:auto-awesome'}
-                    width={17}
-                    height={17}
-                    className={running || starting ? 'animate-spin' : ''}
-                  />
-                  <span className="text-inherit">{running ? 'Writing…' : 'Generate full set'}</span>
-                </button>
+                <GeneratePicker
+                  open={pickerOpen}
+                  onOpenChange={setPickerOpen}
+                  getInitial={initialPlatforms}
+                  running={running}
+                  starting={starting}
+                  onGenerate={generate}
+                />
               )}
             </div>
           )}
@@ -401,7 +424,7 @@ export function CopywriterWorkspace() {
             {/* Platform tabs */}
             <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4" role="tablist" aria-label="Platforms">
               <PlatformTab active={platform === 'all'} onClick={() => setPlatform('all')} label="All" count={copies.length} />
-              {COPY_PLATFORM_IDS.map((p) => (
+              {COPY_PLATFORM_IDS.filter((p) => countFor(p) > 0 || (running && p in job!.completed) || platform === p).map((p) => (
                 <PlatformTab
                   key={p}
                   active={platform === p}
@@ -409,7 +432,7 @@ export function CopywriterWorkspace() {
                   label={COPY_PLATFORMS[p].label}
                   icon={PLATFORM_STYLE[p].icon}
                   count={countFor(p)}
-                  writing={running && !job!.failedPlatforms.includes(p) && (job!.completed[p] ?? 0) < COPIES_PER_PLATFORM}
+                  writing={running && p in job!.completed && !job!.failedPlatforms.includes(p) && job!.completed[p] < COPIES_PER_PLATFORM}
                 />
               ))}
               {otherCount > 0 && (
@@ -418,7 +441,7 @@ export function CopywriterWorkspace() {
             </div>
 
             {shownGroups.length === 0 ? (
-              <EmptyCopies hasAny={copies.length > 0} onGenerate={generate} starting={starting} />
+              <EmptyCopies hasAny={copies.length > 0} onGenerate={() => setPickerOpen(true)} starting={starting} />
             ) : (
               <div className="space-y-7 pb-6">
                 {shownGroups.map((g) => (
@@ -583,7 +606,7 @@ function EmptyCopies({ hasAny, onGenerate, starting }: { hasAny: boolean; onGene
       </span>
       <p className="text-[16px] font-bold text-[#0b1c30]">{hasAny ? 'No copies for this platform yet' : 'No copies yet'}</p>
       <p className="text-[14px] text-[#464555] max-w-md">
-        Generate a full set — 7 copies each for X, Instagram, LinkedIn and Facebook — or ask the copywriter for a single post.
+        Generate a set — 7 copies for each platform you pick — or ask the copywriter for a single post.
         You can leave while it writes; your copies will be here when you come back.
       </p>
       <button
@@ -593,7 +616,7 @@ function EmptyCopies({ hasAny, onGenerate, starting }: { hasAny: boolean; onGene
         className={`inline-flex items-center gap-1.5 px-5 py-2.5 mt-1 bg-[#4f46e5] text-white rounded-xl shadow-sm hover:opacity-95 disabled:opacity-50 ${LABEL_MD}`}
       >
         <Icon icon="material-symbols:auto-awesome" width={17} height={17} />
-        <span className="text-inherit">Generate full set</span>
+        <span className="text-inherit">Generate copies</span>
       </button>
     </div>
   );

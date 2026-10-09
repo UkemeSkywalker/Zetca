@@ -7,7 +7,7 @@
  */
 
 import { CopyOutput, CopyItem, ChatResponse, StrategyData, CopyChatDecision, CopyChatMessage, COPIES_PER_PLATFORM } from '../models/copy';
-import { COPY_PLATFORMS, COPY_PLATFORM_IDS, CopyPlatformId } from '../models/copyConstants';
+import { CLASSIC_COPY_PLATFORMS, COPY_PLATFORMS, COPY_PLATFORM_IDS, CopyPlatformId } from '../models/copyConstants';
 import { COPY_ANGLES } from './copywriterAgent';
 
 function sleep(ms: number): Promise<void> {
@@ -78,8 +78,8 @@ function mockCopy(platform: CopyPlatformId, index: number, brand: string): CopyI
 }
 
 export class MockCopywriterAgent {
-  async generateCopies(strategyData: StrategyData): Promise<CopyOutput> {
-    const perPlatform = await Promise.all(COPY_PLATFORM_IDS.map((p) => this.generatePlatformCopies(strategyData, p)));
+  async generateCopies(strategyData: StrategyData, platforms: CopyPlatformId[] = CLASSIC_COPY_PLATFORMS): Promise<CopyOutput> {
+    const perPlatform = await Promise.all(platforms.map((p) => this.generatePlatformCopies(strategyData, p)));
     return { copies: perPlatform.flat() };
   }
 
@@ -114,7 +114,8 @@ export class MockCopywriterAgent {
     await sleep(1000);
     const lower = message.toLowerCase();
     if (/full set|all platforms|every platform|batch/.test(lower)) {
-      return { reply: 'On it — writing a full set for every platform.', action: 'generate_all' };
+      const named = COPY_PLATFORM_IDS.filter((p) => lower.includes(COPY_PLATFORMS[p].label.toLowerCase()));
+      return { reply: 'On it — writing a full set.', action: 'generate_all', ...(named.length ? { platforms: named } : {}) };
     }
     if (openCopy && /punch|short|rewrite|improve|change|tone|add/.test(lower)) {
       return {

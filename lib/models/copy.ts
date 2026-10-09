@@ -8,6 +8,7 @@
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
 import type { StrategyOutput } from './strategy';
+import { COPY_PLATFORM_IDS, type CopyPlatformId } from './copyConstants';
 
 export const CopyGenerateInputSchema = z.object({
   strategy_id: z.string().trim().min(1, 'strategy_id cannot be empty or whitespace only'),
@@ -103,8 +104,12 @@ export interface CopyJob {
   finished_at?: string;
 }
 
+const CopyPlatformSchema = z.enum(COPY_PLATFORM_IDS as [CopyPlatformId, ...CopyPlatformId[]]);
+
 export const CopyJobStartSchema = z.object({
   strategy_id: z.string().trim().min(1, 'strategy_id cannot be empty or whitespace only'),
+  /** Platforms to write for; defaults to the strategy's own platforms */
+  platforms: z.array(CopyPlatformSchema).min(1, 'Pick at least one platform').optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -144,6 +149,10 @@ export const CopyChatDecisionSchema = z.object({
         'generate_all: the user wants a full set of copies for every platform.'
     ),
   copy: CopyItemSchema.optional().describe('The new or rewritten copy; required for create and update'),
+  platforms: z
+    .array(CopyPlatformSchema)
+    .optional()
+    .describe('For generate_all: the platforms the user named, if any; leave out to use the strategy\'s platforms'),
 });
 export type CopyChatDecision = z.infer<typeof CopyChatDecisionSchema>;
 

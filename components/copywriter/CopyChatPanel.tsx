@@ -4,7 +4,7 @@ import { Icon } from '@iconify/react';
 import { useEffect, useRef, useState } from 'react';
 import type { CopyChatMessage, CopyJob, CopyRecord } from '@/types/agent';
 import type { CopyJobLane } from '@/lib/api/copyClient';
-import { COPY_PLATFORM_IDS } from '@/lib/models/copyConstants';
+import { jobPlatforms } from '@/lib/models/copyConstants';
 import { platformInfo } from './platforms';
 
 const LABEL_SM = 'text-[11px] leading-[14px] tracking-[0.05em] font-bold';
@@ -31,7 +31,7 @@ const GENERAL_PROMPTS = [
   'Write a LinkedIn post about our biggest customer win',
   'Write an Instagram caption for a behind-the-scenes photo',
   'Write a short X post announcing something new',
-  'Generate a full set for every platform',
+  'Generate a full set for TikTok and LinkedIn',
 ];
 
 const OPEN_COPY_PROMPTS = ['Make it punchier', 'Shorten it', 'Add a stronger call to action', 'Try a more playful tone'];
@@ -263,7 +263,7 @@ function LiveWriting({ job, lanes }: { job: CopyJob; lanes: Record<string, CopyJ
         </div>
       </div>
       <ul className="divide-y divide-[#e5eeff] border-t border-[#e5eeff]">
-        {COPY_PLATFORM_IDS.map((p) => {
+        {jobPlatforms(job.completed).map((p) => {
           const info = platformInfo(p);
           const lane = lanes?.[p];
           const written = Math.max(lane?.written ?? 0, job.completed[p] ?? 0);

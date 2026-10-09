@@ -18,7 +18,7 @@ import {
   ChatResponseSchema,
   COPIES_PER_PLATFORM,
 } from '../models/copy';
-import { COPY_PLATFORMS, COPY_PLATFORM_IDS, CopyPlatformId } from '../models/copyConstants';
+import { CLASSIC_COPY_PLATFORMS, COPY_PLATFORMS, COPY_PLATFORM_IDS, CopyPlatformId } from '../models/copyConstants';
 import { StructuredOutputException } from './errors';
 import { COPY_FORMAT, createCopyStreamParser } from './copyStreamParser';
 import { runAgent, streamDelta, STRUCTURED_OUTPUT_ONLY } from './runAgent';
@@ -42,6 +42,8 @@ Platform-specific guidelines:
   can be longer form with storytelling elements
 - TikTok: Trendy, casual, Gen-Z friendly language, 3-5 trending hashtags, hook in first line,
   reference trends when appropriate
+- YouTube video description: put the main keyword and the hook in the first 150 characters (shown
+  in search), then what the video covers and why to watch, a subscribe call-to-action, 3-5 hashtags
 
 When generating copies:
 1. Use the brand's content pillars and themes as the foundation
@@ -129,7 +131,7 @@ User: ${message}
 Decide what to do:
 - If they ask you to change, shorten, rewrite or improve the open copy, use "update" and return the full rewritten copy on the same platform.
 - If they ask for a new post or caption, use "create" and return one copy. Pick the platform they name; if they name none, use the open copy's platform, or Instagram.
-- If they ask for a full set, a batch, or copies for every platform, use "generate_all".
+- If they ask for a full set, a batch, or copies for several platforms at once, use "generate_all". If they name platforms, list them in "platforms" (ids: ${COPY_PLATFORM_IDS.join(', ')}); otherwise leave it out.
 - Otherwise use "reply" and answer briefly.`;
 }
 
@@ -166,8 +168,8 @@ export class CopywriterAgent {
   }
 
   /** A full set: every platform written at once, in parallel */
-  async generateCopies(strategyData: StrategyData): Promise<CopyOutput> {
-    const perPlatform = await Promise.all(COPY_PLATFORM_IDS.map((p) => this.generatePlatformCopies(strategyData, p)));
+  async generateCopies(strategyData: StrategyData, platforms: CopyPlatformId[] = CLASSIC_COPY_PLATFORMS): Promise<CopyOutput> {
+    const perPlatform = await Promise.all(platforms.map((p) => this.generatePlatformCopies(strategyData, p)));
     return { copies: perPlatform.flat() };
   }
 

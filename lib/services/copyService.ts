@@ -20,7 +20,14 @@ import {
   newChatMessage,
   newCopyRecord,
 } from '../models/copy';
-import { COPY_PLATFORMS, COPY_PLATFORM_IDS, CopyPlatformId, OTHER_COPIES_SET, normalizePlatform } from '../models/copyConstants';
+import {
+  COPY_PLATFORMS,
+  CopyPlatformId,
+  OTHER_COPIES_SET,
+  defaultCopyPlatforms,
+  jobPlatforms,
+  normalizePlatform,
+} from '../models/copyConstants';
 import { StrategyRecord } from '../models/strategy';
 import { CopyRepository } from '../db/copyRepository';
 import { StrategyRepository } from '../db/strategyRepository';
@@ -47,7 +54,7 @@ export interface CopyChatResult {
 }
 
 export interface CopywriterAgentLike {
-  generateCopies(strategyData: StrategyData): Promise<CopyOutput>;
+  generateCopies(strategyData: StrategyData, platforms?: CopyPlatformId[]): Promise<CopyOutput>;
   generatePlatformCopies(
     strategyData: StrategyData,
     platform: CopyPlatformId,
@@ -141,14 +148,20 @@ export class CopyService {
    * each copy is saved as soon as it's written. If a job is already running,
    * that one is returned instead.
    */
-  async startGeneration(strategyId: string, userId: string, { announce = true } = {}): Promise<CopyJob> {
+  async startGeneration(
+    strategyId: string,
+    userId: string,
+    { announce = true, platforms }: { announce?: boolean; platforms?: CopyPlatformId[] } = {}
+  ): Promise<CopyJob> {
     const strategy = await this.getStrategyWithOwnership(strategyId, userId);
+    const chosen = platforms?.length ? [...new Set(platforms)] : defaultCopyPlatforms(strategy.quiz?.platforms);
     const now = new Date();
     const job: CopyJob = {
       id: randomUUID(),
       status: 'running',
-      total: COPY_PLATFORM_IDS.length * COPIES_PER_PLATFORM,
-      completed: Object.fromEntries(COPY_PLATFORM_IDS.map((p) => [p, 0])),
+      total: chosen.length * COPIES_PER_PLATFORM,
+      // One count per chosen platform; the job's platforms are read back from these keys
+      completed: Object.fromEntries(chosen.map((p) => [p, 0])),
       failed_platforms: [],
       started_at: now.toISOString(),
       updated_at: now.toISOString(),
@@ -162,18 +175,19 @@ export class CopyService {
     }
 
     if (announce) {
-      const platforms = COPY_PLATFORM_IDS.map((p) => COPY_PLATFORMS[p].label);
+      const labels = chosen.map((p) => COPY_PLATFORMS[p].label);
+      const named = labels.length === 1 ? labels[0] : `${labels.slice(0, -1).join(', ')} and ${labels.at(-1)}`;
       await this.strategyRepository.appendCopyChat(strategyId, [
         newChatMessage({
           role: 'assistant',
           action: 'generate_all',
           text:
-            `Writing ${job.total} copies — ${COPIES_PER_PLATFORM} each for ${platforms.slice(0, -1).join(', ')} and ${platforms.at(-1)}. ` +
+            `Writing ${job.total} copies — ${COPIES_PER_PLATFORM}${labels.length > 1 ? ' each' : ''} for ${named}. ` +
             "They'll appear on the left as each one is done. You can leave this page; they'll be here when you come back.",
         }),
       ]);
     }
-    openFeed(job.id, COPY_PLATFORM_IDS);
+    openFeed(job.id, chosen);
     void this.runJob(strategy, userId, job)
       .catch((error) => {
         console.error(`Copy job ${job.id} crashed:`, error);
@@ -216,7 +230,7 @@ export class CopyService {
       });
     };
 
-    const platforms = COPY_PLATFORM_IDS.map((platform) =>
+    const platforms = jobPlatforms(job.completed).map((platform) =>
       this.agent
         .generatePlatformCopies(
           strategyData,
@@ -329,7 +343,7 @@ export class CopyService {
         })
       );
     } else if (action === 'generate_all') {
-      job = await this.startGeneration(strategyId, userId, { announce: false });
+      job = await this.startGeneration(strategyId, userId, { announce: false, platforms: decision.platforms });
     } else {
       action = 'reply';
     }

@@ -9,7 +9,7 @@ import type { CopyRepository } from '@/lib/db/copyRepository';
 import type { StrategyRepository } from '@/lib/db/strategyRepository';
 import type { CopyChatMessage, CopyItem, CopyJob, CopyRecord } from '@/lib/models/copy';
 import type { StrategyRecord } from '@/lib/models/strategy';
-import { COPY_PLATFORM_IDS, type CopyPlatformId } from '@/lib/models/copyConstants';
+import { CLASSIC_COPY_PLATFORMS, type CopyPlatformId } from '@/lib/models/copyConstants';
 
 describe('createCopyStreamParser', () => {
   const output = `### COPY
@@ -197,7 +197,7 @@ describe('CopyService background generation', () => {
 
     const job = await service.startGeneration(strategy.id, 'user-1');
     expect(job.status).toBe('running');
-    expect(job.total).toBe(COPY_PLATFORM_IDS.length * 7);
+    expect(job.total).toBe(CLASSIC_COPY_PLATFORMS.length * 7);
 
     writers.get('x')!.write();
     writers.get('linkedin')!.write();
@@ -216,7 +216,7 @@ describe('CopyService background generation', () => {
     const service = new CopyService(agent, store.copyRepository, store.strategyRepository);
 
     await service.startGeneration(strategy.id, 'user-1');
-    for (const p of COPY_PLATFORM_IDS) {
+    for (const p of CLASSIC_COPY_PLATFORMS) {
       writers.get(p)!.write();
       writers.get(p)!.finish();
     }
@@ -229,6 +229,32 @@ describe('CopyService background generation', () => {
     expect(job.error).toMatch(/Facebook/);
     // An announcement when it started, and a summary at the end
     expect(store.chat.map((m) => m.action)).toEqual(['generate_all', 'job_done']);
+  });
+
+  it('writes only the platforms picked', async () => {
+    const store = makeStore();
+    const { agent, writers } = makeAgent();
+    const service = new CopyService(agent, store.copyRepository, store.strategyRepository);
+
+    const job = await service.startGeneration(strategy.id, 'user-1', { platforms: ['tiktok', 'linkedin'] });
+    expect(job.total).toBe(14);
+    expect(Object.keys(job.completed)).toEqual(['tiktok', 'linkedin']);
+    expect([...writers.keys()].sort()).toEqual(['linkedin', 'tiktok']);
+    expect(store.chat[0].text).toMatch(/14 copies — 7 each for TikTok and LinkedIn/);
+  });
+
+  it("defaults to the platforms chosen in the strategy's quiz", async () => {
+    const store = makeStore();
+    const { agent } = makeAgent();
+    const service = new CopyService(agent, store.copyRepository, store.strategyRepository);
+    const original = strategy.quiz;
+    strategy.quiz = { platforms: ['youtube', 'tiktok'] } as StrategyRecord['quiz'];
+    try {
+      const job = await service.startGeneration(strategy.id, 'user-1');
+      expect(Object.keys(job.completed)).toEqual(['tiktok', 'youtube']);
+    } finally {
+      strategy.quiz = original;
+    }
   });
 
   it('returns the running job instead of starting a second one', async () => {
@@ -314,10 +340,11 @@ describe('CopyService chat', () => {
     expect(store.copies.size).toBe(1);
   });
 
-  it('starts a full set when asked', async () => {
-    const { store, service } = serviceWith({ reply: 'Writing them now', action: 'generate_all' });
-    const result = await service.chat(strategy.id, 'user-1', 'Generate a full set');
+  it('starts a full set when asked, for the platforms named', async () => {
+    const { store, service } = serviceWith({ reply: 'Writing them now', action: 'generate_all', platforms: ['tiktok', 'linkedin'] });
+    const result = await service.chat(strategy.id, 'user-1', 'Generate a full set for TikTok and LinkedIn');
     expect(result.job?.status).toBe('running');
+    expect(Object.keys(result.job!.completed)).toEqual(['tiktok', 'linkedin']);
     // The chat reply announces it, so there's no second announcement
     expect(store.chat.map((m) => m.action ?? m.role)).toEqual(['user', 'generate_all']);
   });
