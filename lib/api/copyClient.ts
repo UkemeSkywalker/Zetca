@@ -514,3 +514,13 @@ export async function followCopyJob(
     reader.releaseLock();
   }
 }
+
+/** Delete every copy in a set (a full set's job id, or OTHER_COPIES_SET); returns how many were deleted */
+export async function deleteCopySet(strategyId: string, setId: string): Promise<number> {
+  const data = await copyRequest<{ deleted: number }>(
+    `/api/copy/sets/${encodeURIComponent(setId)}?strategy_id=${encodeURIComponent(strategyId)}`,
+    { method: 'DELETE' },
+    'Failed to delete the copies. Please try again.'
+  );
+  return data.deleted;
+}

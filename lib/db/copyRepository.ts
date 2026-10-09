@@ -14,9 +14,13 @@ import {
   UpdateCommand,
   DeleteCommand,
   BatchWriteCommand,
+  type BatchWriteCommandInput,
+  type BatchWriteCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
 import { getConfig } from '../config';
 import { CopyRecord } from '../models/copy';
+
+type WriteRequests = NonNullable<BatchWriteCommandInput['RequestItems']>[string];
 
 /** A copy as stored in DynamoDB (camelCase attribute names) */
 interface CopyItemRow {
@@ -122,6 +126,19 @@ export class CopyRepository {
       })
     );
     return this.itemToRecord(result.Attributes as CopyItemRow);
+  }
+
+  /** Delete many copies, 25 per request, retrying any DynamoDB leaves unprocessed */
+  async deleteCopies(copyIds: string[]): Promise<void> {
+    for (let i = 0; i < copyIds.length; i += 25) {
+      let requests: WriteRequests | undefined = copyIds.slice(i, i + 25).map((copyId) => ({ DeleteRequest: { Key: { copyId } } }));
+      for (let attempt = 0; requests?.length && attempt < 5; attempt++) {
+        if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, 100 * 2 ** attempt));
+        const result: BatchWriteCommandOutput = await this.docClient.send(new BatchWriteCommand({ RequestItems: { [this.tableName]: requests } }));
+        requests = result.UnprocessedItems?.[this.tableName];
+      }
+      if (requests?.length) throw new Error(`Could not delete ${requests.length} copies`);
+    }
   }
 
   /** Returns true if deleted. */

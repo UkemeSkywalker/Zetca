@@ -133,6 +133,9 @@ function makeStore() {
       const c = copies.get(id);
       return c && (!userId || c.user_id === userId) ? c : null;
     },
+    deleteCopies: async (ids: string[]) => {
+      ids.forEach((id) => copies.delete(id));
+    },
     updateCopy: async (id: string, text: string, hashtags: string[]) => {
       const updated = { ...copies.get(id)!, text, hashtags, updated_at: new Date().toISOString() };
       copies.set(id, updated);
@@ -317,5 +320,49 @@ describe('CopyService chat', () => {
     expect(result.job?.status).toBe('running');
     // The chat reply announces it, so there's no second announcement
     expect(store.chat.map((m) => m.action ?? m.role)).toEqual(['user', 'generate_all']);
+  });
+});
+
+describe('CopyService.deleteSet', () => {
+  const copy = (id: string, jobId?: string): CopyRecord => ({
+    id,
+    strategy_id: strategy.id,
+    user_id: 'user-1',
+    text: id,
+    platform: 'x',
+    hashtags: [],
+    ...(jobId ? { job_id: jobId } : {}),
+    created_at: '',
+    updated_at: '',
+  });
+
+  async function seeded() {
+    const store = makeStore();
+    const { agent } = makeAgent();
+    const service = new CopyService(agent, store.copyRepository, store.strategyRepository);
+    for (const c of [copy('a1', 'set-a'), copy('a2', 'set-a'), copy('b1', 'set-b'), copy('chat1')]) {
+      await store.copyRepository.createCopy(c);
+    }
+    return { store, service };
+  }
+
+  it('deletes only the copies in that set', async () => {
+    const { store, service } = await seeded();
+    expect(await service.deleteSet(strategy.id, 'user-1', 'set-a')).toBe(2);
+    expect([...store.copies.keys()].sort()).toEqual(['b1', 'chat1']);
+  });
+
+  it('deletes the copies that are not in any set', async () => {
+    const { store, service } = await seeded();
+    expect(await service.deleteSet(strategy.id, 'user-1', 'other')).toBe(1);
+    expect([...store.copies.keys()].sort()).toEqual(['a1', 'a2', 'b1']);
+  });
+
+  it('refuses a set that is still being written, an unknown set, or another user', async () => {
+    const { service } = await seeded();
+    const job = await service.startGeneration(strategy.id, 'user-1');
+    await expect(service.deleteSet(strategy.id, 'user-1', job.id)).rejects.toMatchObject({ statusCode: 409 });
+    await expect(service.deleteSet(strategy.id, 'user-1', 'nope')).rejects.toMatchObject({ statusCode: 404 });
+    await expect(service.deleteSet(strategy.id, 'someone-else', 'set-a')).rejects.toMatchObject({ statusCode: 403 });
   });
 });

@@ -20,3 +20,6 @@ export function normalizePlatform(p: string): string {
   if (['twitter', 'twitter/x', 'x (twitter)', 'x/twitter', 'tiktok'].includes(lower)) return 'x';
   return lower;
 }
+
+/** Set id for copies that aren't part of a full set (written in the chat, or before sets existed) */
+export const OTHER_COPIES_SET = 'other';

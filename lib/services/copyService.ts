@@ -20,7 +20,7 @@ import {
   newChatMessage,
   newCopyRecord,
 } from '../models/copy';
-import { COPY_PLATFORMS, COPY_PLATFORM_IDS, CopyPlatformId, normalizePlatform } from '../models/copyConstants';
+import { COPY_PLATFORMS, COPY_PLATFORM_IDS, CopyPlatformId, OTHER_COPIES_SET, normalizePlatform } from '../models/copyConstants';
 import { StrategyRecord } from '../models/strategy';
 import { CopyRepository } from '../db/copyRepository';
 import { StrategyRepository } from '../db/strategyRepository';
@@ -342,6 +342,26 @@ export class CopyService {
     });
     await this.strategyRepository.appendCopyChat(strategyId, [assistantMessage]);
     return { messages: [userMessage, assistantMessage], ...(copy ? { copy } : {}), ...(job ? { job } : {}) };
+  }
+
+  /**
+   * Delete every copy in a set: a full set's job id, or OTHER_COPIES_SET for
+   * copies that aren't part of one. A set still being written can't be deleted.
+   * Returns how many copies were deleted.
+   */
+  async deleteSet(strategyId: string, userId: string, setId: string): Promise<number> {
+    await this.getStrategyWithOwnership(strategyId, userId);
+    const { job } = await this.strategyRepository.getCopyWorkspace(strategyId);
+    if (job?.id === setId && withStaleCheck(job).status === 'running') {
+      throw new ApiError('This set is still being written. Delete it once it has finished.', 409);
+    }
+    const copies = await this.copyRepository.listCopiesByStrategy(strategyId);
+    const ids = copies
+      .filter((c) => (setId === OTHER_COPIES_SET ? !c.job_id : c.job_id === setId))
+      .map((c) => c.id);
+    if (ids.length === 0) throw new ApiError('Copy set not found', 404);
+    await this.copyRepository.deleteCopies(ids);
+    return ids.length;
   }
 
   /** Save the user's own edits to a copy */

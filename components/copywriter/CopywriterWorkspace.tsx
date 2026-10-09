@@ -7,8 +7,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import type { CopyChatMessage, CopyJob, CopyRecord } from '@/types/agent';
 import type { StrategyRecord } from '@/types/strategy';
 import { listStrategies } from '@/lib/api/strategyClient';
-import { deleteCopy, followCopyJob, getCopyWorkspace, sendCopyChat, startCopyJob, type CopyJobLane } from '@/lib/api/copyClient';
-import { COPY_PLATFORMS, COPY_PLATFORM_IDS, normalizePlatform } from '@/lib/models/copyConstants';
+import { deleteCopy, deleteCopySet, followCopyJob, getCopyWorkspace, sendCopyChat, startCopyJob, type CopyJobLane } from '@/lib/api/copyClient';
+import { COPY_PLATFORMS, COPY_PLATFORM_IDS, OTHER_COPIES_SET, normalizePlatform } from '@/lib/models/copyConstants';
 import { CopyCard, CopyCardSkeleton } from './CopyCard';
 import { CopyEditor } from './CopyEditor';
 import { CopyChatPanel } from './CopyChatPanel';
@@ -37,17 +37,45 @@ function strategyLabel(s: StrategyRecord): string {
   return niche ? `${niche.emoji} ${niche.label}` : s.industry;
 }
 
+/** A full set's copies, or the "other" copies that aren't part of one */
+interface CopyGroup {
+  id: string;
+  isSet: boolean;
+  copies: CopyRecord[];
+  /** When the group was started (a set) or last added to (other copies), for ordering */
+  time: string;
+}
+
 /**
- * Newest first, but a full set stays together in the order it was written,
- * so a running set fills in like a grid instead of shuffling.
+ * Group copies by set, newest group first. A set keeps the order it was
+ * written in, so a running set fills in like a grid; other copies are newest first.
  */
-function sortCopies(copies: CopyRecord[]): CopyRecord[] {
-  const setStart = new Map<string, string>();
+function groupCopies(copies: CopyRecord[], runningJob: CopyJob | null): CopyGroup[] {
+  const sets = new Map<string, CopyRecord[]>();
+  const other: CopyRecord[] = [];
   for (const c of copies) {
-    if (c.jobId && (!setStart.has(c.jobId) || c.createdAt < setStart.get(c.jobId)!)) setStart.set(c.jobId, c.createdAt);
+    if (c.jobId) sets.set(c.jobId, [...(sets.get(c.jobId) ?? []), c]);
+    else other.push(c);
   }
-  const groupTime = (c: CopyRecord) => (c.jobId ? setStart.get(c.jobId)! : c.createdAt);
-  return [...copies].sort((a, b) => groupTime(b).localeCompare(groupTime(a)) || a.createdAt.localeCompare(b.createdAt));
+  if (runningJob && !sets.has(runningJob.id)) sets.set(runningJob.id, []);
+
+  const groups: CopyGroup[] = [...sets].map(([id, list]) => {
+    const sorted = [...list].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    return { id, isSet: true, copies: sorted, time: sorted[0]?.createdAt ?? runningJob?.startedAt ?? '' };
+  });
+  if (other.length) {
+    const sorted = [...other].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    groups.push({ id: OTHER_COPIES_SET, isSet: false, copies: sorted, time: sorted[0].createdAt });
+  }
+  // The running set always leads; then newest first
+  return groups.sort((a, b) => Number(b.id === runningJob?.id) - Number(a.id === runningJob?.id) || b.time.localeCompare(a.time));
+}
+
+function formatSetTime(iso: string): string {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime())
+    ? ''
+    : date.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
 export function CopywriterWorkspace() {
@@ -176,22 +204,23 @@ export function CopywriterWorkspace() {
 
   const strategy = strategies?.find((s) => s.id === strategyId) ?? null;
   const ready = !!strategyId && workspace?.strategyId === strategyId;
-  const copies = useMemo(() => (ready ? sortCopies(workspace!.copies) : []), [ready, workspace]);
+  const copies = useMemo(() => (ready ? workspace!.copies : []), [ready, workspace]);
   const job = ready ? workspace!.job : null;
   const chat = ready ? workspace!.chat : [];
   const openCopy = copies.find((c) => c.id === openCopyId) ?? null;
 
   const countFor = (p: string) => copies.filter((c) => normalizePlatform(c.platform) === p).length;
   const otherCount = copies.filter((c) => !(normalizePlatform(c.platform) in COPY_PLATFORMS)).length;
-  const visible = platform === 'all' ? copies : copies.filter((c) => platformInfo(c.platform).id === platform);
+  const inTab = (c: CopyRecord) => platform === 'all' || platformInfo(c.platform).id === platform;
   const skeletons = running
     ? COPY_PLATFORM_IDS.filter((p) => platform === 'all' || platform === p)
         .filter((p) => !job!.failedPlatforms.includes(p))
         .flatMap((p) => Array.from({ length: Math.max(0, COPIES_PER_PLATFORM - (job!.completed[p] ?? 0)) }, (_, i) => `${p}-${i}`))
     : [];
-
-  const currentSet = running ? visible.filter((c) => c.jobId === job!.id) : [];
-  const older = running ? visible.filter((c) => c.jobId !== job!.id) : visible;
+  const groups = useMemo(() => groupCopies(copies, running ? job : null), [copies, running, job]);
+  const shownGroups = groups
+    .map((g) => ({ ...g, shown: g.copies.filter(inTab), writing: running && g.id === job!.id }))
+    .filter((g) => g.shown.length > 0 || (g.writing && skeletons.length > 0));
 
   const generate = async () => {
     if (!strategyId) return;
@@ -239,6 +268,20 @@ export function CopywriterWorkspace() {
       sendingRef.current = false;
       setPending(null);
     }
+  };
+
+  const removeSet = async (setId: string) => {
+    if (!strategyId) return;
+    setActionError(null);
+    try {
+      await deleteCopySet(strategyId, setId);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Couldn’t delete the copies.');
+      throw err;
+    }
+    const inSet = (c: CopyRecord) => (setId === OTHER_COPIES_SET ? !c.jobId : c.jobId === setId);
+    if (openCopy && inSet(openCopy)) setOpenCopyId(null);
+    setWorkspace((prev) => (prev ? { ...prev, copies: prev.copies.filter((c) => !inSet(c)) } : prev));
   };
 
   const removeCopy = async (id: string) => {
@@ -374,24 +417,31 @@ export function CopywriterWorkspace() {
               )}
             </div>
 
-            {visible.length === 0 && skeletons.length === 0 ? (
+            {shownGroups.length === 0 ? (
               <EmptyCopies hasAny={copies.length > 0} onGenerate={generate} starting={starting} />
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4 pb-6">
-                {/* The running set's copies, then what's still being written, then everything older */}
-                {[...currentSet, ...skeletons, ...older].map((item) =>
-                  typeof item === 'string' ? (
-                    <CopyCardSkeleton key={item} platform={item.split('-')[0]} />
-                  ) : (
-                    <CopyCard
-                      key={item.id}
-                      copy={item}
-                      fresh={fresh.has(item.id)}
-                      onOpen={() => setOpenCopyId(item.id)}
-                      onDelete={() => removeCopy(item.id)}
-                    />
-                  )
-                )}
+              <div className="space-y-7 pb-6">
+                {shownGroups.map((g) => (
+                  <section key={g.id} aria-label={g.isSet ? `Full set from ${formatSetTime(g.time)}` : 'Other copies'}>
+                    <SetHeader group={g} writing={g.writing} onDelete={() => removeSet(g.id)} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
+                      {/* A running set: its copies in the order written, then what's still being written */}
+                      {[...g.shown, ...(g.writing ? skeletons : [])].map((item) =>
+                        typeof item === 'string' ? (
+                          <CopyCardSkeleton key={item} platform={item.split('-')[0]} />
+                        ) : (
+                          <CopyCard
+                            key={item.id}
+                            copy={item}
+                            fresh={fresh.has(item.id)}
+                            onOpen={() => setOpenCopyId(item.id)}
+                            onDelete={() => removeCopy(item.id)}
+                          />
+                        )
+                      )}
+                    </div>
+                  </section>
+                ))}
               </div>
             )}
           </>
@@ -414,6 +464,77 @@ export function CopywriterWorkspace() {
           <div className="flex-1 max-w-lg ml-auto">{chatPanel(() => setChatOpen(false))}</div>
         </div>
       )}
+    </div>
+  );
+}
+
+/** A set's title, with a button to delete the whole set (confirmed inline) */
+function SetHeader({ group, writing, onDelete }: { group: CopyGroup; writing: boolean; onDelete: () => Promise<void> }) {
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const total = group.copies.length;
+
+  const remove = async () => {
+    setDeleting(true);
+    try {
+      await onDelete();
+    } catch {
+      setDeleting(false);
+      setConfirming(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-3 min-h-9">
+      <div className="min-w-0">
+        <h2 className="text-[15px] font-bold text-[#0b1c30] leading-tight">
+          {group.isSet ? 'Full set' : 'Other copies'}
+          <span className="ml-2 text-[13px] font-semibold text-[#777587]">
+            {group.isSet ? formatSetTime(group.time) : 'from the chat or earlier'} · {total} {total === 1 ? 'copy' : 'copies'}
+          </span>
+        </h2>
+      </div>
+      <div className="ml-auto flex items-center gap-2">
+        {writing ? (
+          <span className={`inline-flex items-center gap-1.5 text-[#3525cd] ${LABEL_SM}`}>
+            <Icon icon="material-symbols:progress-activity" width={13} height={13} className="animate-spin" />
+            Writing…
+          </span>
+        ) : confirming ? (
+          <div role="alertdialog" aria-label="Delete this set?" className="flex items-center gap-2">
+            <span className="text-[13px] font-semibold text-[#0b1c30]">
+              Delete {total === 1 ? 'this copy' : `all ${total} copies`}?
+            </span>
+            <button
+              type="button"
+              autoFocus
+              disabled={deleting}
+              onClick={() => setConfirming(false)}
+              className={`px-3 py-1.5 rounded-lg bg-white border border-[#c7c4d8]/60 text-[#0b1c30] hover:bg-[#eff4ff] disabled:opacity-50 ${LABEL_MD}`}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={remove}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#ba1a1a] text-white hover:bg-[#93000a] disabled:opacity-70 ${LABEL_MD}`}
+            >
+              {deleting && <Icon icon="material-symbols:progress-activity" width={14} height={14} className="animate-spin" />}
+              <span className="text-inherit">{deleting ? 'Deleting…' : 'Delete'}</span>
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setConfirming(true)}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[#ba1a1a] hover:bg-[#ffdad6]/60 ${LABEL_MD}`}
+          >
+            <Icon icon="material-symbols:delete-outline" width={16} height={16} />
+            <span className="text-inherit">{group.isSet ? 'Delete set' : 'Delete all'}</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }
