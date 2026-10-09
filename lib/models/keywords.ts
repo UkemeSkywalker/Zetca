@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod';
+import { MAX_CONTENT_TYPES } from '../strategist/contentTypes';
 
 export const SKILL_LEVELS = ['beginner', 'intermediate', 'pro'] as const;
 
@@ -20,7 +21,7 @@ export const KeywordRequestSchema = z.object({
   interests: z.array(z.string().trim().max(40)).max(20).default([]),
   struggles: z.array(z.string().trim().max(40)).max(20).default([]),
   platforms: z.array(z.string().max(20)).max(6).default([]),
-  content_types: z.array(z.string().max(30)).max(8).default([]),
+  content_types: z.array(z.string().trim().min(1).max(40)).max(MAX_CONTENT_TYPES).default([]),
 });
 export type KeywordRequest = z.infer<typeof KeywordRequestSchema>;
 

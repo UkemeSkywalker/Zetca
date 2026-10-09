@@ -21,6 +21,7 @@ import {
   StrategyOutput,
 } from '../models/strategy';
 import { StructuredOutputException } from './errors';
+import { contentTypeLabel } from '../strategist/contentTypes';
 import { runAgent, streamDelta, STRUCTURED_OUTPUT_ONLY } from './runAgent';
 import type { GenerateStrategyOptions } from '../services/strategyService';
 import { descriptionLength, fitToLimit } from '../strategist/descriptions';
@@ -157,7 +158,7 @@ Audience age ranges: ${quiz.age_ranges.join(', ') || 'not specified'}
 Audience skill level: ${quiz.skill_level ?? 'not specified'}
 Audience interests: ${quiz.interests.join(', ') || 'not specified'}
 Audience struggles: ${quiz.struggles.join(', ') || 'not specified'}
-Content types: ${quiz.content_types.join(', ') || 'not specified'}
+Content types: ${quiz.content_types.map(contentTypeLabel).join(', ') || 'not specified'}
 Posting cadence: ${quiz.cadence} posts per week
 Primary keyword: ${quiz.primary_keyword}
 Secondary keywords: ${quiz.secondary_keywords.join(', ') || 'none'}

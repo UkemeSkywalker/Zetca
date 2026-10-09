@@ -11,6 +11,7 @@ import { BedrockModel } from '@strands-agents/sdk/models/bedrock';
 import { KeywordRequest, KeywordResponseSchema } from '../models/keywords';
 import { cleanKeywords } from '../strategist/keywords';
 import { StructuredOutputException } from './errors';
+import { contentTypeLabel } from '../strategist/contentTypes';
 import { runAgent, STRUCTURED_OUTPUT_ONLY } from './runAgent';
 import type { AgentCredentials } from './strategistAgent';
 
@@ -63,7 +64,7 @@ Audience age ranges: ${input.age_ranges.join(', ') || 'not specified'}
 Audience interests: ${input.interests.join(', ') || 'not specified'}
 Audience struggles: ${input.struggles.join(', ') || 'not specified'}
 Platforms: ${input.platforms.join(', ') || 'not specified'}
-Content types: ${input.content_types.join(', ') || 'not specified'}`;
+Content types: ${input.content_types.map(contentTypeLabel).join(', ') || 'not specified'}`;
 
     // A Strands Agent handles one invocation at a time, so each request gets its own;
     // the Bedrock model (and its client) is shared

@@ -7,7 +7,8 @@ import { WelcomeStep } from '@/components/strategist/WelcomeStep';
 import { BrandStep, PlatformId } from '@/components/strategist/BrandStep';
 import { NicheStep, Niche, NicheTopic } from '@/components/strategist/NicheStep';
 import { AudienceStep, SkillLevel } from '@/components/strategist/AudienceStep';
-import { ContentStep, GoalId, CONTENT_TYPES, GOALS } from '@/components/strategist/ContentStep';
+import { ContentStep, GoalId, GOALS } from '@/components/strategist/ContentStep';
+import { contentTypeOptions } from '@/lib/strategist/contentTypes';
 import { ReviewStep, ReviewSection } from '@/components/strategist/ReviewStep';
 import { GeneratingStep } from '@/components/strategist/GeneratingStep';
 import { PLATFORMS } from '@/components/strategist/BrandStep';
@@ -107,7 +108,7 @@ export default function StrategistPage() {
   const goToContent = useCallback(() => setScreen('content'), []);
   const goToReview = useCallback(() => setScreen('review'), []);
 
-  const selectedContentTypes = useMemo(() => CONTENT_TYPES.filter((c) => contentTypes.includes(c.id)), [contentTypes]);
+  const selectedContentTypes = useMemo(() => contentTypeOptions(contentTypes), [contentTypes]);
   const goalInfo = useMemo(() => GOALS.find((g) => g.id === goal) ?? null, [goal]);
 
   const editSection = useCallback((section: ReviewSection) => setScreen(section), []);
@@ -191,6 +192,10 @@ export default function StrategistPage() {
       {...(screen === 'audience' && {
         background: '#f8f9ff',
         mainClassName: 'flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8 items-center',
+      })}
+      {...(screen === 'niche' && {
+        // Top-aligned so the card doesn't jump while the niche search filters the list
+        mainClassName: 'flex-1 w-full flex flex-col items-center px-4 py-8 sm:py-12',
       })}
       {...(screen === 'generating' && {
         background: '#f8f9ff',
