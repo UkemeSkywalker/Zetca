@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/middleware/withAuth';
 import { getCopyService } from '@/lib/services/container';
 import { jsonError, handleRouteError } from '@/lib/api/routeHelpers';
+import { CopyUpdateSchema } from '@/lib/models/copy';
 
 async function getCopyHandler(_req: NextRequest, userId: string, copyId: string): Promise<Response> {
   try {
@@ -17,6 +18,17 @@ async function getCopyHandler(_req: NextRequest, userId: string, copyId: string)
     return NextResponse.json(record, { status: 200 });
   } catch (error) {
     return handleRouteError(error, 'Failed to retrieve copy. Please try again.');
+  }
+}
+
+/** Save the user's edits to a copy's text and hashtags */
+async function updateCopyHandler(req: NextRequest, userId: string, copyId: string): Promise<Response> {
+  try {
+    const input = CopyUpdateSchema.parse(await req.json());
+    const record = await getCopyService().updateCopy(copyId, userId, input.text, input.hashtags);
+    return NextResponse.json(record, { status: 200 });
+  } catch (error) {
+    return handleRouteError(error, 'Failed to save the copy. Please try again.');
   }
 }
 
@@ -46,5 +58,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ copy
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ copyId: string }> }) {
   const { copyId } = await params;
   const handler = await withAuth(async (request, userId) => deleteCopyHandler(request, userId, copyId));
+  return handler(req);
+}
+
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ copyId: string }> }) {
+  const { copyId } = await params;
+  const handler = await withAuth(async (request, userId) => updateCopyHandler(request, userId, copyId));
   return handler(req);
 }

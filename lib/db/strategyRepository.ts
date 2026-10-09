@@ -8,6 +8,10 @@ import { DynamoDBClient, DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand, GetCommand, QueryCommand, UpdateCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { getConfig } from '../config';
 import { ChannelDescription, QuizAnswers, StrategyOutput, StrategyRecord } from '../models/strategy';
+import type { CopyChatMessage, CopyJob } from '../models/copy';
+
+/** Chat messages kept per strategy; older ones are dropped */
+export const MAX_COPY_CHAT_MESSAGES = 100;
 
 /** A strategy as stored in DynamoDB (camelCase attribute names) */
 interface StrategyItem {
@@ -68,6 +72,93 @@ export class StrategyRepository {
         ExpressionAttributeValues: { ':descriptions': descriptions, ':userId': userId },
       })
     );
+  }
+
+  /** The Copywriter workspace state stored on a strategy: its latest generation job and chat */
+  async getCopyWorkspace(strategyId: string): Promise<{ job: CopyJob | null; chat: CopyChatMessage[] }> {
+    const result = await this.docClient.send(
+      new GetCommand({
+        TableName: this.tableName,
+        Key: { strategyId },
+        ProjectionExpression: 'copyJob, copyChat',
+      })
+    );
+    return { job: (result.Item?.copyJob as CopyJob) ?? null, chat: (result.Item?.copyChat as CopyChatMessage[]) ?? [] };
+  }
+
+  /**
+   * Start a generation job unless one is already running and still alive.
+   * Returns false if another job got there first.
+   */
+  async startCopyJob(strategyId: string, job: CopyJob, staleBefore: string): Promise<boolean> {
+    try {
+      await this.docClient.send(
+        new UpdateCommand({
+          TableName: this.tableName,
+          Key: { strategyId },
+          UpdateExpression: 'SET copyJob = :job',
+          ConditionExpression:
+            'attribute_exists(strategyId) AND (attribute_not_exists(copyJob) OR copyJob.#status <> :running OR copyJob.updated_at < :staleBefore)',
+          ExpressionAttributeNames: { '#status': 'status' },
+          ExpressionAttributeValues: { ':job': job, ':running': 'running', ':staleBefore': staleBefore },
+        })
+      );
+      return true;
+    } catch (error) {
+      if ((error as { name?: string }).name === 'ConditionalCheckFailedException') return false;
+      throw error;
+    }
+  }
+
+  /** Update fields of the current job; ignored if a newer job has replaced it */
+  async updateCopyJob(strategyId: string, jobId: string, fields: Partial<CopyJob>): Promise<void> {
+    const names: Record<string, string> = { '#id': 'id' };
+    const values: Record<string, unknown> = { ':jobId': jobId };
+    const sets = Object.entries(fields).map(([key, value], i) => {
+      names[`#f${i}`] = key;
+      values[`:v${i}`] = value;
+      return `copyJob.#f${i} = :v${i}`;
+    });
+    if (sets.length === 0) return;
+    try {
+      await this.docClient.send(
+        new UpdateCommand({
+          TableName: this.tableName,
+          Key: { strategyId },
+          UpdateExpression: `SET ${sets.join(', ')}`,
+          ConditionExpression: 'copyJob.#id = :jobId',
+          ExpressionAttributeNames: names,
+          ExpressionAttributeValues: values,
+        })
+      );
+    } catch (error) {
+      if ((error as { name?: string }).name !== 'ConditionalCheckFailedException') throw error;
+    }
+  }
+
+  /** Append messages to a strategy's Copywriter chat, keeping the newest MAX_COPY_CHAT_MESSAGES */
+  async appendCopyChat(strategyId: string, messages: CopyChatMessage[]): Promise<void> {
+    const result = await this.docClient.send(
+      new UpdateCommand({
+        TableName: this.tableName,
+        Key: { strategyId },
+        UpdateExpression: 'SET copyChat = list_append(if_not_exists(copyChat, :empty), :messages)',
+        ConditionExpression: 'attribute_exists(strategyId)',
+        ExpressionAttributeValues: { ':empty': [], ':messages': messages },
+        ReturnValues: 'UPDATED_NEW',
+      })
+    );
+    const chat = (result.Attributes?.copyChat as CopyChatMessage[]) ?? [];
+    if (chat.length > MAX_COPY_CHAT_MESSAGES) {
+      // Trim in a separate write; a message appended in between is kept by the next trim
+      await this.docClient.send(
+        new UpdateCommand({
+          TableName: this.tableName,
+          Key: { strategyId },
+          UpdateExpression: `REMOVE ${Array.from({ length: chat.length - MAX_COPY_CHAT_MESSAGES }, (_, i) => `copyChat[${i}]`).join(', ')}`,
+        })
+      );
+    }
   }
 
   /** Delete a strategy; only succeeds for the strategy's owner (throws ConditionalCheckFailedException otherwise). */
