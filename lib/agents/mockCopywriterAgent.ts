@@ -6,8 +6,9 @@
  * via the useMockAgent config flag.
  */
 
-import { CopyOutput, CopyItem, ChatResponse } from '../models/copy';
-import { CopyStreamEvent } from './copywriterAgent';
+import { CopyOutput, CopyItem, ChatResponse, StrategyData, CopyChatDecision, CopyChatMessage, COPIES_PER_PLATFORM } from '../models/copy';
+import { COPY_PLATFORMS, COPY_PLATFORM_IDS, CopyPlatformId } from '../models/copyConstants';
+import { COPY_ANGLES } from './copywriterAgent';
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -62,62 +63,75 @@ const DEFAULT_COPY = {
   hashtags: ['#ContentMarketing', '#DigitalStrategy', '#BrandGrowth'],
 };
 
+/** Delay between mock copies, so the UI shows them arriving one by one */
+const MOCK_COPY_DELAY_MS = 700;
+
+function mockCopy(platform: CopyPlatformId, index: number, brand: string): CopyItem {
+  const template = PLATFORM_COPIES[platform === 'x' ? 'twitter' : platform] || DEFAULT_COPY;
+  const angle = COPY_ANGLES[index % COPY_ANGLES.length].split(' — ')[0];
+  return {
+    text: `${angle}: ${template.text.replace('our', `${brand}'s`)}`.slice(0, COPY_PLATFORMS[platform].limit),
+    platform: COPY_PLATFORMS[platform].promptName,
+    hashtags: [...template.hashtags],
+    angle,
+  };
+}
+
 export class MockCopywriterAgent {
-  async generateCopies(strategyData: Record<string, any>): Promise<CopyOutput> {
-    await sleep(1000);
-
-    const platformRecs: Record<string, any>[] = strategyData.platform_recommendations || [];
-    const copies: CopyItem[] = platformRecs.map((rec) => {
-      const platformName: string = rec.platform || 'General';
-      const template = PLATFORM_COPIES[platformName.toLowerCase()] || DEFAULT_COPY;
-      return { text: template.text, platform: platformName, hashtags: [...template.hashtags] };
-    });
-
-    if (copies.length === 0) {
-      copies.push({ text: DEFAULT_COPY.text, platform: 'General', hashtags: [...DEFAULT_COPY.hashtags] });
-    }
-
-    return { copies };
+  async generateCopies(strategyData: StrategyData): Promise<CopyOutput> {
+    const perPlatform = await Promise.all(COPY_PLATFORM_IDS.map((p) => this.generatePlatformCopies(strategyData, p)));
+    return { copies: perPlatform.flat() };
   }
 
-  async *generateCopiesStream(strategyData: Record<string, any>): AsyncIterator<CopyStreamEvent> {
-    yield { event: 'lifecycle', phase: 'Connecting to mock model...' };
-    await sleep(300);
-
-    yield { event: 'lifecycle', phase: 'Agent loop initialized' };
-    await sleep(200);
-
-    yield { event: 'lifecycle', phase: 'Processing strategy data...' };
-    await sleep(300);
-
-    const thinkingChunks = [
-      'Analyzing brand strategy for ',
-      strategyData.brand_name || 'your brand',
-      '... ',
-      'Identifying key content pillars... ',
-      'Crafting platform-specific copies for Twitter/X... ',
-      'Generating Instagram variations... ',
-      'Building LinkedIn thought leadership angles... ',
-      'Creating Facebook community-focused content... ',
-      'Finalizing 28 copy variations with hashtags...',
-    ];
-    for (const chunk of thinkingChunks) {
-      yield { event: 'thinking', text: chunk };
-      await sleep(400);
+  async generatePlatformCopies(
+    strategyData: StrategyData,
+    platform: CopyPlatformId,
+    onCopy?: (copy: CopyItem) => void
+  ): Promise<CopyItem[]> {
+    const copies: CopyItem[] = [];
+    for (let i = 0; i < COPIES_PER_PLATFORM; i++) {
+      await sleep(MOCK_COPY_DELAY_MS + Math.random() * MOCK_COPY_DELAY_MS);
+      const copy = mockCopy(platform, i, strategyData.brand_name || 'the brand');
+      copies.push(copy);
+      onCopy?.(copy);
     }
+    return copies;
+  }
 
-    const output = await this.generateCopies(strategyData);
-    yield {
-      event: 'result',
-      copies: output.copies.map((c) => ({ text: c.text, platform: c.platform, hashtags: c.hashtags })),
-    };
+  async chat(
+    strategyData: StrategyData,
+    _history: CopyChatMessage[],
+    message: string,
+    openCopy?: { text: string; platform: string; hashtags: string[] }
+  ): Promise<CopyChatDecision> {
+    await sleep(1000);
+    const lower = message.toLowerCase();
+    if (/full set|all platforms|every platform|batch/.test(lower)) {
+      return { reply: 'On it — writing a full set for every platform.', action: 'generate_all' };
+    }
+    if (openCopy && /punch|short|rewrite|improve|change|tone|add/.test(lower)) {
+      return {
+        reply: 'Done — I tightened it up and kept the hashtags.',
+        action: 'update',
+        copy: { ...openCopy, text: `${openCopy.text.split('.')[0]}. [Refined: "${message}"]` },
+      };
+    }
+    if (/write|post|caption|copy|create/.test(lower)) {
+      const platform = COPY_PLATFORM_IDS.find((p) => lower.includes(p) || lower.includes(COPY_PLATFORMS[p].label.toLowerCase())) ?? 'instagram';
+      return {
+        reply: `Here's a new ${COPY_PLATFORMS[platform].label} post — it's on the left.`,
+        action: 'create',
+        copy: { ...mockCopy(platform, 0, strategyData.brand_name || 'the brand'), angle: 'From chat' },
+      };
+    }
+    return { reply: 'Ask me to write a post, rewrite the open copy, or generate a full set.', action: 'reply' };
   }
 
   async chatRefine(
     copyText: string,
     platform: string,
     hashtags: string[],
-    _strategyData: Record<string, any>,
+    _strategyData: StrategyData,
     userMessage: string
   ): Promise<ChatResponse> {
     await sleep(1000);

@@ -7,9 +7,22 @@
 
 import { Agent } from '@strands-agents/sdk';
 import { BedrockModel } from '@strands-agents/sdk/models/bedrock';
-import { CopyOutput, CopyOutputSchema, ChatResponse, ChatResponseSchema } from '../models/copy';
+import {
+  CopyChatDecision,
+  CopyChatDecisionSchema,
+  CopyChatMessage,
+  CopyItem,
+  CopyOutput,
+  CopyOutputSchema,
+  StrategyData,
+  ChatResponse,
+  ChatResponseSchema,
+  COPIES_PER_PLATFORM,
+} from '../models/copy';
+import { COPY_PLATFORMS, COPY_PLATFORM_IDS, CopyPlatformId } from '../models/copyConstants';
 import { StructuredOutputException } from './errors';
-import { runAgent } from './runAgent';
+import { createCopyExtractor } from './copyExtractor';
+import { runAgent, streamDelta, STRUCTURED_OUTPUT_ONLY } from './runAgent';
 import { AgentCredentials } from './strategistAgent';
 
 const SYSTEM_PROMPT = `You are an expert social media copywriter with deep expertise in crafting
@@ -46,50 +59,78 @@ When refining copies via chat:
 3. Explain what changes were made and why
 4. Preserve the core message while adapting to feedback`;
 
-export interface CopyStreamEvent {
-  event: 'thinking' | 'lifecycle' | 'result' | 'error';
-  text?: string;
-  phase?: string;
-  copies?: Array<{ text: string; platform: string; hashtags: string[] }>;
-  message?: string;
-}
+/** The seven angles of a full set, one copy each */
+export const COPY_ANGLES = [
+  'Bold hook — attention-grabbing opening',
+  'Storytelling — emotional narrative',
+  'Question-driven — sparks conversation',
+  'Educational — thought leadership',
+  'Social proof — credibility and trust',
+  'Short and punchy — scroll-stopping brevity',
+  'CTA-focused — drives action (clicks, saves, shares)',
+];
 
-function buildCopiesPrompt(strategyData: Record<string, any>): string {
-  const platforms = strategyData.platform_recommendations || [];
-  const platformNames =
-    platforms.length && typeof platforms[0] === 'object' ? platforms.map((p: any) => p.platform || '') : platforms;
-  const contentPillars = strategyData.content_pillars || [];
-  const contentThemes = strategyData.content_themes || [];
-  const engagementTactics = strategyData.engagement_tactics || [];
-
-  const pillarsStr = Array.isArray(contentPillars) ? contentPillars.join(', ') : String(contentPillars);
-  const themesStr = Array.isArray(contentThemes) ? contentThemes.join(', ') : String(contentThemes);
-  const tacticsStr = Array.isArray(engagementTactics) ? engagementTactics.join(', ') : String(engagementTactics);
-
-  return `Generate social media copies for the following brand strategy:
-
-Brand Name: ${strategyData.brand_name ?? 'N/A'}
+/** The brand context every prompt carries */
+function brandContext(strategyData: StrategyData): string {
+  const list = (value: unknown) => (Array.isArray(value) ? value.join(', ') : String(value ?? 'N/A'));
+  return `Brand Name: ${strategyData.brand_name ?? 'N/A'}
 Industry: ${strategyData.industry ?? 'N/A'}
 Target Audience: ${strategyData.target_audience ?? 'N/A'}
 Goals: ${strategyData.goals ?? 'N/A'}
 
-Content Pillars: ${pillarsStr}
-Content Themes: ${themesStr}
-Engagement Tactics: ${tacticsStr}
-Posting Schedule: ${strategyData.posting_schedule ?? 'N/A'}
+Content Pillars: ${list(strategyData.content_pillars)}
+Content Themes: ${list(strategyData.content_themes)}
+Engagement Tactics: ${list(strategyData.engagement_tactics)}
+Posting Schedule: ${strategyData.posting_schedule ?? 'N/A'}`;
+}
 
-IMPORTANT: Generate exactly 7 unique copy variations for EACH of these 4 platforms: Twitter/X, Instagram, LinkedIn, Facebook.
-That means 28 total CopyItems in the output (7 for Twitter, 7 for Instagram, 7 for LinkedIn, 7 for Facebook).
+function buildPlatformPrompt(strategyData: StrategyData, platform: CopyPlatformId): string {
+  const { promptName, limit } = COPY_PLATFORMS[platform];
+  return `Write social media copies for this brand strategy:
 
-Each copy must include engaging caption text and relevant hashtags tailored to the platform.
-Each of the 7 variations per platform should take a different angle:
-1. Bold hook — attention-grabbing opening
-2. Storytelling — emotional narrative
-3. Question-driven — sparks conversation
-4. Educational — thought leadership
-5. Social proof — credibility and trust
-6. Short and punchy — scroll-stopping brevity
-7. CTA-focused — drives action (clicks, saves, shares)`;
+${brandContext(strategyData)}
+
+Write exactly ${COPIES_PER_PLATFORM} copies for ${promptName}, one for each angle below, in this order.
+Set "platform" to "${promptName}" and "angle" to the angle's short name (e.g. "Bold hook").
+Keep each copy's text under ${limit} characters. Each copy needs engaging caption text and relevant hashtags.
+
+${COPY_ANGLES.map((angle, i) => `${i + 1}. ${angle}`).join('\n')}`;
+}
+
+function buildChatPrompt(
+  strategyData: StrategyData,
+  history: CopyChatMessage[],
+  message: string,
+  openCopy?: { text: string; platform: string; hashtags: string[] }
+): string {
+  const conversation = history.length
+    ? history.map((m) => `${m.role === 'user' ? 'User' : 'You'}: ${m.text}`).join('\n')
+    : '(none yet)';
+  const platforms = COPY_PLATFORM_IDS.map((id) => `${COPY_PLATFORMS[id].promptName} (under ${COPY_PLATFORMS[id].limit} characters)`).join(', ');
+  const open = openCopy
+    ? `The user has this ${openCopy.platform} copy open:
+Text: ${openCopy.text}
+Hashtags: ${openCopy.hashtags.join(' ') || 'None'}`
+    : 'The user has no copy open.';
+
+  return `You are chatting with the user in their Copywriter workspace for this brand:
+
+${brandContext(strategyData)}
+
+Platforms: ${platforms}
+
+${open}
+
+Conversation so far:
+${conversation}
+
+User: ${message}
+
+Decide what to do:
+- If they ask you to change, shorten, rewrite or improve the open copy, use "update" and return the full rewritten copy on the same platform.
+- If they ask for a new post or caption, use "create" and return one copy. Pick the platform they name; if they name none, use the open copy's platform, or Instagram.
+- If they ask for a full set, a batch, or copies for every platform, use "generate_all".
+- Otherwise use "reply" and answer briefly.`;
 }
 
 export class CopywriterAgent {
@@ -118,59 +159,69 @@ export class CopywriterAgent {
   // the Bedrock model (and its client) is shared. Every prompt carries its full
   // context, so no conversation history is needed across calls.
   private createAgent(): Agent {
-    return new Agent({ model: this.model, systemPrompt: SYSTEM_PROMPT });
+    return new Agent({ model: this.model, systemPrompt: `${SYSTEM_PROMPT}\n\n${STRUCTURED_OUTPUT_ONLY}` });
   }
 
-  async generateCopies(strategyData: Record<string, any>): Promise<CopyOutput> {
-    const result = await runAgent(this.createAgent(), 'copies', buildCopiesPrompt(strategyData), {
-      structuredOutputSchema: CopyOutputSchema,
-    });
-    if (!result.structuredOutput) {
-      throw new StructuredOutputException('Copywriter agent failed to return structured output');
-    }
-    return result.structuredOutput as CopyOutput;
+  /** A full set: every platform written at once, in parallel */
+  async generateCopies(strategyData: StrategyData): Promise<CopyOutput> {
+    const perPlatform = await Promise.all(COPY_PLATFORM_IDS.map((p) => this.generatePlatformCopies(strategyData, p)));
+    return { copies: perPlatform.flat() };
   }
 
   /**
-   * Stream copy generation progress for the SSE endpoint.
-   *
-   * Note: the Strands TS SDK's raw stream event shape for structured output
-   * is not yet consulted here reliably, so this streams best-effort
-   * "thinking" progress via text deltas, then makes a single deterministic
-   * `invoke()` call (same as generateCopies) to guarantee a correctly
-   * validated final result. This costs one extra model round-trip but
-   * keeps the persisted data provably correct.
+   * Write one platform's copies. `onCopy` is called with each copy as soon as
+   * the model finishes writing it, before the rest of the output arrives.
    */
-  async *generateCopiesStream(strategyData: Record<string, any>): AsyncIterator<CopyStreamEvent> {
-    const prompt = buildCopiesPrompt(strategyData);
-    yield { event: 'lifecycle', phase: 'Connecting to Bedrock model...' };
-
-    try {
-      yield { event: 'lifecycle', phase: 'Agent loop initialized' };
-      yield { event: 'lifecycle', phase: 'Processing strategy data...' };
-
-      for await (const chunk of this.createAgent().stream(prompt)) {
-        const text = (chunk as any)?.event?.delta?.text;
-        if (typeof text === 'string' && text.length > 0) {
-          yield { event: 'thinking', text };
+  async generatePlatformCopies(
+    strategyData: StrategyData,
+    platform: CopyPlatformId,
+    onCopy?: (copy: CopyItem) => void
+  ): Promise<CopyItem[]> {
+    const extract = createCopyExtractor();
+    let reported = 0;
+    const result = await runAgent(this.createAgent(), `copies:${platform}`, buildPlatformPrompt(strategyData, platform), {
+      structuredOutputSchema: CopyOutputSchema,
+      onEvent: (event) => {
+        const delta = streamDelta(event);
+        if (delta?.type !== 'toolUseInputDelta' || !onCopy) return;
+        for (const copy of extract(delta.input)) {
+          // A retried model call streams its copies again; report each slot once
+          if (reported >= COPIES_PER_PLATFORM) return;
+          reported++;
+          onCopy(copy);
         }
-      }
-
-      const output = await this.generateCopies(strategyData);
-      yield {
-        event: 'result',
-        copies: output.copies.map((c) => ({ text: c.text, platform: c.platform, hashtags: c.hashtags })),
-      };
-    } catch (e: any) {
-      yield { event: 'error', message: e?.message ?? String(e) };
+      },
+    });
+    if (!result.structuredOutput) {
+      throw new StructuredOutputException(`Copywriter agent failed to return structured output for ${platform}`);
     }
+    const copies = (result.structuredOutput as CopyOutput).copies;
+    // Report any copies the stream didn't (e.g. if the stream events weren't parseable)
+    copies.slice(reported, COPIES_PER_PLATFORM).forEach((copy) => onCopy?.(copy));
+    return copies;
+  }
+
+  /** Decide how to answer a chat message: reply, write one copy, rewrite the open one, or start a full set */
+  async chat(
+    strategyData: StrategyData,
+    history: CopyChatMessage[],
+    message: string,
+    openCopy?: { text: string; platform: string; hashtags: string[] }
+  ): Promise<CopyChatDecision> {
+    const result = await runAgent(this.createAgent(), 'copy-chat', buildChatPrompt(strategyData, history, message, openCopy), {
+      structuredOutputSchema: CopyChatDecisionSchema,
+    });
+    if (!result.structuredOutput) {
+      throw new StructuredOutputException('Copywriter agent failed to return a chat decision');
+    }
+    return result.structuredOutput as CopyChatDecision;
   }
 
   async chatRefine(
     copyText: string,
     platform: string,
     hashtags: string[],
-    strategyData: Record<string, any>,
+    strategyData: StrategyData,
     userMessage: string
   ): Promise<ChatResponse> {
     const hashtagsStr = hashtags.length ? hashtags.join(', ') : 'None';

@@ -3,7 +3,13 @@
  * Handles communication with the Python FastAPI service for copy operations
  */
 
-import { CopyRecord, ChatResponse } from '@/types/agent';
+import { CopyRecord, ChatResponse, CopyJob, CopyChatMessage, CopyWorkspace, CopyChatResult } from '@/types/agent';
+import type {
+  CopyRecord as WireCopyRecord,
+  ChatResponse as WireChatResponse,
+  CopyJob as WireCopyJob,
+  CopyChatMessage as WireChatMessage,
+} from '@/lib/models/copy';
 
 // Use relative URLs — Next.js rewrites proxy /api/copy/* to the Python backend
 const API_BASE_URL = '';
@@ -59,7 +65,7 @@ function handleAuthError(): void {
 /**
  * Convert snake_case copy record from Python to camelCase for TypeScript
  */
-function convertCopyRecord(record: any): CopyRecord {
+function convertCopyRecord(record: WireCopyRecord): CopyRecord {
   return {
     id: record.id,
     strategyId: record.strategy_id,
@@ -67,136 +73,114 @@ function convertCopyRecord(record: any): CopyRecord {
     text: record.text,
     platform: record.platform,
     hashtags: record.hashtags || [],
+    ...(record.angle ? { angle: record.angle } : {}),
+    ...(record.job_id ? { jobId: record.job_id } : {}),
     createdAt: record.created_at,
     updatedAt: record.updated_at,
   };
 }
 
+function convertJob(job: WireCopyJob): CopyJob {
+  return {
+    id: job.id,
+    status: job.status,
+    total: job.total,
+    completed: job.completed || {},
+    failedPlatforms: job.failed_platforms || [],
+    ...(job.error ? { error: job.error } : {}),
+    startedAt: job.started_at,
+    updatedAt: job.updated_at,
+    ...(job.finished_at ? { finishedAt: job.finished_at } : {}),
+  };
+}
+
+function convertChatMessage(message: WireChatMessage): CopyChatMessage {
+  return {
+    id: message.id,
+    role: message.role,
+    text: message.text,
+    ...(message.copy_id ? { copyId: message.copy_id } : {}),
+    ...(message.action ? { action: message.action } : {}),
+    createdAt: message.created_at,
+  };
+}
+
+/** Send an authenticated JSON request and map errors to CopyAPIError */
+async function copyRequest<T>(path: string, init: RequestInit, failure: string): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, { ...init, headers: createAuthHeaders() });
+  } catch (error) {
+    throw new CopyAPIError('Network error: Unable to connect to the copy service.', undefined, error);
+  }
+  if (response.status === 401) {
+    handleAuthError();
+    throw new CopyAPIError('Authentication required. Please log in again.', 401);
+  }
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new CopyAPIError(errorData.detail || failure, response.status, errorData);
+  }
+  return (response.status === 204 ? null : await response.json()) as T;
+}
+
+/** A strategy's copies, latest generation job and saved chat */
+export async function getCopyWorkspace(strategyId: string): Promise<CopyWorkspace> {
+  const data = await copyRequest<{ copies?: WireCopyRecord[]; job: WireCopyJob | null; chat?: WireChatMessage[] }>(
+    `/api/copy/workspace/${encodeURIComponent(strategyId)}`,
+    { method: 'GET' },
+    'Failed to load your copies. Please try again.'
+  );
+  return {
+    copies: (data.copies || []).map(convertCopyRecord),
+    job: data.job ? convertJob(data.job) : null,
+    chat: (data.chat || []).map(convertChatMessage),
+  };
+}
+
+/** Start writing a full set in the background; returns the job straight away */
+export async function startCopyJob(strategyId: string): Promise<CopyJob> {
+  const data = await copyRequest<WireCopyJob>(
+    '/api/copy/jobs',
+    { method: 'POST', body: JSON.stringify({ strategy_id: strategyId }) },
+    'Could not start generating copies. Please try again.'
+  );
+  return convertJob(data);
+}
+
+/** Send a chat message; copyId is the copy the user has open, if any */
+export async function sendCopyChat(strategyId: string, message: string, copyId?: string): Promise<CopyChatResult> {
+  const data = await copyRequest<{ messages?: WireChatMessage[]; copy?: WireCopyRecord; job?: WireCopyJob }>(
+    '/api/copy/chat',
+    { method: 'POST', body: JSON.stringify({ strategy_id: strategyId, message, ...(copyId ? { copy_id: copyId } : {}) }) },
+    'The copywriter could not answer. Please try again.'
+  );
+  return {
+    messages: (data.messages || []).map(convertChatMessage),
+    ...(data.copy ? { copy: convertCopyRecord(data.copy) } : {}),
+    ...(data.job ? { job: convertJob(data.job) } : {}),
+  };
+}
+
+/** Save the user's edits to a copy */
+export async function updateCopy(copyId: string, text: string, hashtags: string[]): Promise<CopyRecord> {
+  const data = await copyRequest<WireCopyRecord>(
+    `/api/copy/${encodeURIComponent(copyId)}`,
+    { method: 'PATCH', body: JSON.stringify({ text, hashtags }) },
+    'Failed to save the copy. Please try again.'
+  );
+  return convertCopyRecord(data);
+}
+
 /**
  * Convert snake_case chat response from Python to camelCase for TypeScript
  */
-function convertChatResponse(response: any): ChatResponse {
+function convertChatResponse(response: WireChatResponse): ChatResponse {
   return {
     updatedText: response.updated_text,
     updatedHashtags: response.updated_hashtags || [],
     aiMessage: response.ai_message,
   };
-}
-
-/**
- * Streaming event types from the copy generation SSE endpoint
- */
-export interface CopyStreamEvent {
-  event: 'thinking' | 'lifecycle' | 'result' | 'saved' | 'error' | 'done';
-  text?: string;
-  phase?: string;
-  copies?: Array<{ text: string; platform: string; hashtags: string[] }>;
-  message?: string;
-}
-
-/**
- * Generate copies with real-time streaming of agent thinking events.
- *
- * Connects to the SSE endpoint and yields events as they arrive.
- * The final 'saved' event contains the persisted CopyRecords.
- *
- * @param strategyId - ID of the strategy to generate copies from
- * @param onEvent - Callback invoked for each streamed event
- * @returns Promise resolving to the saved CopyRecord array
- */
-export async function generateCopiesStream(
-  strategyId: string,
-  onEvent: (event: CopyStreamEvent) => void
-): Promise<CopyRecord[]> {
-  const token = getAuthToken();
-  if (!token) {
-    throw new CopyAPIError('Authentication required. Please log in again.', 401);
-  }
-
-  const response = await fetch(`${API_BASE_URL}/api/copy/generate-stream`, {
-    method: 'POST',
-    headers: createAuthHeaders(),
-    body: JSON.stringify({ strategy_id: strategyId }),
-  });
-
-  if (response.status === 401) {
-    handleAuthError();
-    throw new CopyAPIError('Authentication required. Please log in again.', 401);
-  }
-  if (response.status === 403) {
-    throw new CopyAPIError('Access denied.', 403);
-  }
-  if (response.status === 404) {
-    throw new CopyAPIError('Strategy not found.', 404);
-  }
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new CopyAPIError(
-      errorData.detail || `Failed to generate copies: ${response.statusText}`,
-      response.status,
-      errorData
-    );
-  }
-
-  const reader = response.body?.getReader();
-  if (!reader) {
-    throw new CopyAPIError('Streaming not supported by browser.');
-  }
-
-  const decoder = new TextDecoder();
-  let savedRecords: CopyRecord[] = [];
-  let buffer = '';
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-
-      // Parse SSE frames from the buffer
-      const lines = buffer.split('\n');
-      buffer = '';
-
-      let currentEventType = '';
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-
-        if (line.startsWith('event: ')) {
-          currentEventType = line.slice(7).trim();
-        } else if (line.startsWith('data: ')) {
-          const dataStr = line.slice(6);
-          try {
-            const data = JSON.parse(dataStr);
-
-            if (currentEventType === 'saved' && Array.isArray(data)) {
-              savedRecords = data.map(convertCopyRecord);
-            }
-
-            onEvent({
-              event: currentEventType as CopyStreamEvent['event'],
-              ...data,
-            });
-          } catch {
-            // Incomplete JSON, put back in buffer
-            buffer = lines.slice(i).join('\n');
-            break;
-          }
-          currentEventType = '';
-        } else if (line === '' && currentEventType === '') {
-          // Empty line between events, skip
-        } else if (line !== '') {
-          // Incomplete line, put back in buffer
-          buffer = lines.slice(i).join('\n');
-          break;
-        }
-      }
-    }
-  } finally {
-    reader.releaseLock();
-  }
-
-  return savedRecords;
 }
 
 /**

@@ -5,7 +5,7 @@
  * strategy-based querying.
  */
 
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient,
   PutCommand,
@@ -18,13 +18,27 @@ import {
 import { getConfig } from '../config';
 import { CopyRecord } from '../models/copy';
 
+/** A copy as stored in DynamoDB (camelCase attribute names) */
+interface CopyItemRow {
+  copyId: string;
+  strategyId: string;
+  userId: string;
+  text: string;
+  platform: string;
+  hashtags?: string[];
+  angle?: string;
+  jobId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export class CopyRepository {
   private docClient: DynamoDBDocumentClient;
   private tableName: string;
 
   constructor(tableName?: string, region?: string) {
     const cfg = getConfig();
-    const clientConfig: Record<string, any> = { region: region || cfg.awsRegion };
+    const clientConfig: DynamoDBClientConfig = { region: region || cfg.awsRegion };
     if (cfg.awsAccessKeyId && cfg.awsSecretAccessKey) {
       clientConfig.credentials = {
         accessKeyId: cfg.awsAccessKeyId,
@@ -61,7 +75,7 @@ export class CopyRepository {
     const result = await this.docClient.send(new GetCommand({ TableName: this.tableName, Key: { copyId } }));
     if (!result.Item) return null;
     if (userId !== undefined && result.Item.userId !== userId) return null;
-    return this.itemToRecord(result.Item);
+    return this.itemToRecord(result.Item as CopyItemRow);
   }
 
   async copyExists(copyId: string): Promise<boolean> {
@@ -79,7 +93,7 @@ export class CopyRepository {
         ScanIndexForward: false,
       })
     );
-    return (result.Items || []).map((item) => this.itemToRecord(item));
+    return (result.Items || []).map((item) => this.itemToRecord(item as CopyItemRow));
   }
 
   async listCopiesByUser(userId: string): Promise<CopyRecord[]> {
@@ -92,7 +106,7 @@ export class CopyRepository {
         ScanIndexForward: false,
       })
     );
-    return (result.Items || []).map((item) => this.itemToRecord(item));
+    return (result.Items || []).map((item) => this.itemToRecord(item as CopyItemRow));
   }
 
   async updateCopy(copyId: string, text: string, hashtags: string[]): Promise<CopyRecord> {
@@ -107,7 +121,7 @@ export class CopyRepository {
         ReturnValues: 'ALL_NEW',
       })
     );
-    return this.itemToRecord(result.Attributes!);
+    return this.itemToRecord(result.Attributes as CopyItemRow);
   }
 
   /** Returns true if deleted. */
@@ -118,7 +132,7 @@ export class CopyRepository {
     return !!result.Attributes;
   }
 
-  private recordToItem(record: CopyRecord): Record<string, any> {
+  private recordToItem(record: CopyRecord): CopyItemRow {
     return {
       copyId: record.id,
       strategyId: record.strategy_id,
@@ -126,12 +140,14 @@ export class CopyRepository {
       text: record.text,
       platform: record.platform,
       hashtags: record.hashtags,
+      ...(record.angle ? { angle: record.angle } : {}),
+      ...(record.job_id ? { jobId: record.job_id } : {}),
       createdAt: record.created_at,
       updatedAt: record.updated_at,
     };
   }
 
-  private itemToRecord(item: Record<string, any>): CopyRecord {
+  private itemToRecord(item: CopyItemRow): CopyRecord {
     return {
       id: item.copyId,
       strategy_id: item.strategyId,
@@ -139,6 +155,8 @@ export class CopyRepository {
       text: item.text,
       platform: item.platform,
       hashtags: item.hashtags || [],
+      ...(item.angle ? { angle: item.angle } : {}),
+      ...(item.jobId ? { job_id: item.jobId } : {}),
       created_at: item.createdAt,
       updated_at: item.updatedAt,
     };

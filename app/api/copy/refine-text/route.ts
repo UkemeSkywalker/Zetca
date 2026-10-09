@@ -14,7 +14,7 @@ async function refineTextHandler(req: NextRequest, _userId: string): Promise<Res
     console.info(`Refining text for platform: ${request.platform}`);
 
     const chatResponse = await withTimeout(
-      (getCopywriterAgent() as any).chatRefine(request.text, request.platform, request.hashtags, {}, request.message),
+      getCopywriterAgent().chatRefine(request.text, request.platform, request.hashtags, {}, request.message),
       cfg.agentTimeoutSeconds,
       'Text refinement timed out. Please try again.'
     );
