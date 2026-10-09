@@ -151,15 +151,33 @@ export function CopyEditor({ copy, onBack, onSaved, onDelete }: CopyEditorProps)
       )}
 
       <div className="bg-white rounded-2xl shadow-sm border border-[#c7c4d8]/25 overflow-hidden">
-        <label htmlFor="copy-text" className="sr-only">Copy text</label>
-        <textarea
-          id="copy-text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          rows={9}
-          className="w-full p-5 text-[16px] leading-[26px] text-[#0b1c30] bg-transparent resize-y focus:outline-none min-h-[200px]"
-          placeholder="Write your copy…"
-        />
+        <div className="px-5 pt-4 pb-3">
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <label htmlFor="copy-text" className={`inline-flex items-center gap-1.5 text-[#777587] uppercase ${LABEL_SM}`}>
+              <Icon icon="material-symbols:edit-outline" width={14} height={14} />
+              <span className="text-inherit">Edit text</span>
+            </label>
+            {dirty && (
+              <span className={`text-amber-700 ${LABEL_SM}`} role="status">
+                Unsaved changes · ⌘S to save
+              </span>
+            )}
+          </div>
+          <textarea
+            id="copy-text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+                e.preventDefault();
+                if (dirty && !saving) save();
+              }
+            }}
+            rows={9}
+            className="w-full px-4 py-3 rounded-xl border border-[#c7c4d8]/60 bg-[#fbfcff] text-[16px] leading-[26px] text-[#0b1c30] resize-none min-h-[180px] max-h-[60vh] [field-sizing:content] transition-colors hover:border-[#4f46e5]/50 focus:outline-none focus:border-[#4f46e5] focus:bg-white focus:ring-2 focus:ring-[#4f46e5]/20"
+            placeholder="Write your copy…"
+          />
+        </div>
 
         <div className="px-5 pb-4 flex flex-wrap items-center gap-1.5">
           {hashtags.map((tag) => (

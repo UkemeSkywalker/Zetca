@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { Icon } from '@iconify/react';
+import { ZetcaLogo } from './ZetcaLogo';
 
 interface NavLink {
   label: string;
@@ -37,11 +38,8 @@ export default function Navbar() {
         <div className="px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center gradient-primary">
-                <Icon icon="simple-icons:speedypage" className="w-4 h-4 text-on-primary" />
-              </div>
-              <span className="text-xl font-bold font-heading text-on-surface">Zetca.</span>
+            <Link href="/" className="flex-shrink-0 hover:opacity-80 transition-opacity" aria-label="Zetca home">
+              <ZetcaLogo />
             </Link>
 
             {/* Desktop Navigation */}
