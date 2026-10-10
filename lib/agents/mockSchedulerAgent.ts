@@ -34,8 +34,9 @@ export class MockSchedulerAgent {
    * weeks with no duplicate (platform, date, time) combinations.
    */
   async autoSchedule(
-    _strategyData: Record<string, any>,
-    copiesData: Record<string, any>[]
+    _strategyData: Record<string, unknown>,
+    copiesData: Record<string, unknown>[],
+    _timeZone = 'UTC'
   ): Promise<AutoScheduleOutput> {
     await sleep(2000);
 
@@ -44,8 +45,8 @@ export class MockSchedulerAgent {
     const baseDate = addDays(new Date(), 1);
 
     copiesData.forEach((copy, i) => {
-      const copyId = copy.id ?? copy.copy_id ?? `copy-${i}`;
-      const platform = copy.platform ?? 'instagram';
+      const copyId = String(copy.id ?? copy.copy_id ?? `copy-${i}`);
+      const platform = String(copy.platform ?? 'instagram');
 
       const dayOffset = ((i * 2) % 28) + 1;
       const scheduledDate = toDateString(addDays(baseDate, dayOffset));

@@ -6,6 +6,7 @@ import { Icon } from '@iconify/react';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ScheduledPost } from '@/types/scheduler';
 import { getDownloadUrl } from '@/lib/api/mediaClient';
+import { PublishStatusNote } from './PublishStatusNote';
 
 interface PostPreviewModalProps {
   isOpen: boolean;
@@ -28,12 +29,15 @@ const platformColors: Record<string, string> = {
 };
 
 export function PostPreviewModal({ isOpen, onClose, post, onEdit, onDelete, onScheduleNew }: PostPreviewModalProps) {
-  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  // The fetched URL is kept with its media id, so a stale one is never shown for another post
+  const [fetchedMedia, setFetchedMedia] = useState<{ id: string; url: string } | null>(null);
+  const mediaUrl = isOpen && post?.mediaId && fetchedMedia?.id === post.mediaId ? fetchedMedia.url : null;
 
   useEffect(() => {
-    if (!isOpen || !post?.mediaId) { setMediaUrl(null); return; }
+    if (!isOpen || !post?.mediaId) return;
+    const mediaId = post.mediaId;
     let cancelled = false;
-    getDownloadUrl(post.mediaId).then(res => { if (!cancelled) setMediaUrl(res.downloadUrl); }).catch(() => {});
+    getDownloadUrl(mediaId).then(res => { if (!cancelled) setFetchedMedia({ id: mediaId, url: res.downloadUrl }); }).catch(() => {});
     return () => { cancelled = true; };
   }, [isOpen, post?.mediaId]);
 
@@ -138,6 +142,7 @@ export function PostPreviewModal({ isOpen, onClose, post, onEdit, onDelete, onSc
             <div className="px-8 pb-6">
               <h2 className="text-2xl font-bold text-on-surface">Scheduled for {dayName}</h2>
               <p className="text-base text-outline mt-1">{fullDate} at {formatTime(post.scheduledDate, post.scheduledTime)}</p>
+              <PublishStatusNote post={post} className="mt-3" />
             </div>
 
             {/* Stats */}

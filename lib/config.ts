@@ -52,7 +52,11 @@ export function getConfig(): Config {
     bedrockModelId: process.env.BEDROCK_MODEL_ID || 'us.anthropic.claude-sonnet-4-6',
     useMockAgent: process.env.USE_MOCK_AGENT === 'true',
     agentTimeoutSeconds: Number(process.env.AGENT_TIMEOUT_SECONDS || 60),
-    publisherEnabled: process.env.PUBLISHER_ENABLED !== 'false',
+    // Off by default outside production, so dev servers sharing the AWS tables don't publish real posts
+    publisherEnabled:
+      process.env.PUBLISHER_ENABLED !== undefined
+        ? process.env.PUBLISHER_ENABLED === 'true'
+        : process.env.NODE_ENV === 'production',
     publisherScanIntervalSeconds: Number(process.env.PUBLISHER_SCAN_INTERVAL_SECONDS || 60),
     linkedinApiTimeoutSeconds: Number(process.env.LINKEDIN_API_TIMEOUT_SECONDS || 30),
   };

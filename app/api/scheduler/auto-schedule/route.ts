@@ -13,10 +13,17 @@ async function autoScheduleHandler(req: NextRequest, userId: string): Promise<Re
 
     console.info(`Auto-scheduling copies for strategy: ${input.strategy_id} (mock=${cfg.useMockAgent})`);
 
+    // On timeout, cancel so a late result isn't saved after the user was told it failed
+    const cancel = new AbortController();
     const records = await withTimeout(
-      getSchedulerService().autoSchedule(input.strategy_id, userId),
+      getSchedulerService().autoSchedule(input.strategy_id, userId, {
+        setId: input.set_id,
+        timezone: input.timezone,
+        signal: cancel.signal,
+      }),
       cfg.agentTimeoutSeconds,
-      'Auto-scheduling timed out. Please try again.'
+      'Auto-scheduling timed out. Please try again.',
+      () => cancel.abort()
     );
 
     console.info(`Auto-scheduled ${records.length} posts for strategy: ${input.strategy_id}`);
