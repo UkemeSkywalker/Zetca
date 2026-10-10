@@ -6,6 +6,7 @@ import { Icon } from '@iconify/react';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ScheduledPost } from '@/types/scheduler';
 import { getDownloadUrl } from '@/lib/api/mediaClient';
+import { PublishStatusNote } from './PublishStatusNote';
 
 interface DateDetailsModalProps {
   isOpen: boolean;
@@ -217,6 +218,7 @@ export function DateDetailsModal({
                             <p className="text-lg font-medium text-on-surface line-clamp-2 leading-snug mb-2">
                               {post.content.length > 140 ? post.content.substring(0, 140) + '…' : post.content}
                             </p>
+                            <PublishStatusNote post={post} className="mb-3" />
 
                             {post.strategyLabel && (
                               <div className="flex items-center gap-2 mb-3">

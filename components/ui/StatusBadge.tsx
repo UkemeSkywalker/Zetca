@@ -1,6 +1,6 @@
 import React from 'react';
 
-type BadgeStatus = 'scheduled' | 'published' | 'draft' | 'complete' | 'in-progress' | 'not-started';
+type BadgeStatus = 'scheduled' | 'published' | 'draft' | 'publishing' | 'failed' | 'complete' | 'in-progress' | 'not-started';
 
 interface StatusBadgeProps {
   status: BadgeStatus;
@@ -13,6 +13,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = ''
     'scheduled': 'bg-primary/10 text-primary',
     'published': 'bg-emerald-500/10 text-emerald-700',
     'draft': 'bg-surface-container-high text-outline',
+    'publishing': 'bg-amber-500/10 text-amber-700',
+    'failed': 'bg-red-500/10 text-red-700',
     'complete': 'bg-emerald-500/10 text-emerald-700',
     'in-progress': 'bg-secondary/10 text-secondary',
     'not-started': 'bg-surface-container-high text-outline',
@@ -22,6 +24,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = ''
     'scheduled': 'Scheduled',
     'published': 'Published',
     'draft': 'Draft',
+    'publishing': 'Publishing…',
+    'failed': 'Failed',
     'complete': 'Complete',
     'in-progress': 'In Progress',
     'not-started': 'Not Started',

@@ -63,20 +63,23 @@ export class SchedulerAgent {
     });
   }
 
-  async autoSchedule(strategyData: Record<string, any>, copiesData: Record<string, any>[]): Promise<AutoScheduleOutput> {
+  /** Dates and times come back as the user's local wall-clock time in `timeZone` */
+  async autoSchedule(
+    strategyData: Record<string, unknown>,
+    copiesData: Record<string, unknown>[],
+    timeZone = 'UTC'
+  ): Promise<AutoScheduleOutput> {
     const postingSchedule = strategyData.posting_schedule ?? 'N/A';
     const contentThemes = strategyData.content_themes ?? [];
     const platformRecs = strategyData.platform_recommendations ?? [];
 
     const themesStr = Array.isArray(contentThemes) ? contentThemes.join(', ') : String(contentThemes);
-    let platformStr: string;
-    if (platformRecs.length && typeof platformRecs[0] === 'object') {
-      platformStr = platformRecs.map((p: any) => p.platform ?? '').join(', ');
-    } else if (Array.isArray(platformRecs)) {
-      platformStr = platformRecs.map((p: any) => String(p)).join(', ');
-    } else {
-      platformStr = String(platformRecs);
-    }
+    // Recommendations are objects ({ platform, ... }) on current strategies, plain names on old ones
+    const platformStr = Array.isArray(platformRecs)
+      ? platformRecs
+          .map((p: unknown) => (p && typeof p === 'object' ? String((p as { platform?: unknown }).platform ?? '') : String(p)))
+          .join(', ')
+      : String(platformRecs);
 
     const copiesBlock = copiesData
       .map(
@@ -87,11 +90,13 @@ export class SchedulerAgent {
       )
       .join('\n');
 
-    const today = new Date().toISOString().slice(0, 10);
+    // Today's date where the user is (en-CA formats as YYYY-MM-DD)
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone }).format(new Date());
     const prompt = `Schedule the following copies based on the brand strategy below.
 
-IMPORTANT: Today's date is ${today}. All scheduled_date values
+IMPORTANT: Today's date is ${today} in the user's time zone (${timeZone}). All scheduled_date values
 MUST be strictly after today. Do NOT use today's date or any past date.
+Give every scheduled_time as a local time in ${timeZone} — the engagement slots above are local times.
 
 Strategy:
 - Brand: ${strategyData.brand_name ?? 'N/A'}

@@ -16,7 +16,7 @@ export interface ScheduledPost {
   hashtags: string[];
   scheduledDate: string;
   scheduledTime: string;
-  status: 'draft' | 'scheduled' | 'published';
+  status: PostStatus;
   strategyColor: string;
   strategyLabel: string;
   createdAt: string;
@@ -24,7 +24,23 @@ export interface ScheduledPost {
   mediaId?: string;
   mediaUrl?: string;
   mediaType?: 'image' | 'video';
+  /** Automatic publish attempts so far */
+  publishAttempts?: number;
+  /** Why the last publish attempt failed, in words the user can act on */
+  lastError?: string;
+  lastErrorCode?: string;
+  /** When the publisher will try again, after a failed attempt */
+  nextAttemptAt?: string;
 }
+
+/**
+ * draft: not queued. scheduled: waiting to publish. publishing: being posted now.
+ * published: done. failed: gave up (see lastError).
+ */
+export type PostStatus = 'draft' | 'scheduled' | 'publishing' | 'published' | 'failed';
+
+/** Platforms the publisher posts to automatically; others must be posted by hand */
+export const AUTO_PUBLISH_PLATFORMS = ['linkedin'];
 
 /**
  * Input for manually scheduling a single post

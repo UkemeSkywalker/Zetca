@@ -4,6 +4,7 @@
  */
 
 import { ScheduledPost, ManualScheduleInput, ScheduledPostUpdate } from '@/types/scheduler';
+import type { ScheduledPostRecord as WireScheduledPost } from '@/lib/models/scheduler';
 
 // Use relative URLs — Next.js rewrites proxy /api/scheduler/* to the Python backend
 const API_BASE_URL = '';
@@ -60,7 +61,7 @@ function handleAuthError(): void {
 /**
  * Convert snake_case scheduled post record from Python to camelCase for TypeScript
  */
-function convertScheduledPost(record: any): ScheduledPost {
+function convertScheduledPost(record: WireScheduledPost): ScheduledPost {
   return {
     id: record.id,
     strategyId: record.strategy_id,
@@ -77,7 +78,11 @@ function convertScheduledPost(record: any): ScheduledPost {
     createdAt: record.created_at,
     updatedAt: record.updated_at,
     ...(record.media_id ? { mediaId: record.media_id } : {}),
-    ...(record.media_type ? { mediaType: record.media_type } : {}),
+    ...(record.media_type ? { mediaType: record.media_type as 'image' | 'video' } : {}),
+    ...(record.publish_attempts ? { publishAttempts: record.publish_attempts } : {}),
+    ...(record.last_error ? { lastError: record.last_error } : {}),
+    ...(record.last_error_code ? { lastErrorCode: record.last_error_code } : {}),
+    ...(record.next_attempt_at ? { nextAttemptAt: record.next_attempt_at } : {}),
   };
 }
 
@@ -88,12 +93,14 @@ function convertScheduledPost(record: any): ScheduledPost {
  * @returns Promise resolving to an array of scheduled post records
  * @throws SchedulerAPIError if the request fails
  */
-export async function autoSchedule(strategyId: string): Promise<ScheduledPost[]> {
+export async function autoSchedule(strategyId: string, setId?: string): Promise<ScheduledPost[]> {
   try {
+    // The agent picks times in the user's own timezone; the server stores them in UTC
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const response = await fetch(`${API_BASE_URL}/api/scheduler/auto-schedule`, {
       method: 'POST',
       headers: createAuthHeaders(),
-      body: JSON.stringify({ strategy_id: strategyId }),
+      body: JSON.stringify({ strategy_id: strategyId, ...(setId ? { set_id: setId } : {}), timezone }),
     });
 
     if (response.status === 401) {

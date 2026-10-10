@@ -165,7 +165,8 @@ export function Scheduler({ className = '' }: SchedulerProps) {
           platform: postData.platform,
           scheduledDate: dateStr,
           scheduledTime: postData.scheduledTime,
-          status: postData.status,
+          // Saving a failed post from the modal reschedules it; only the publisher sets publishing/failed
+          status: postData.status === 'publishing' || postData.status === 'failed' ? 'scheduled' : postData.status,
           mediaId: postData.mediaId ?? null,
           mediaType: postData.mediaType ?? null,
         };
@@ -236,7 +237,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
         platform: post.platform as 'instagram' | 'twitter' | 'linkedin' | 'facebook',
         scheduledDate: new Date(localDt.getFullYear(), localDt.getMonth(), localDt.getDate()),
         scheduledTime: localTime,
-        status: post.status as 'scheduled' | 'published' | 'draft',
+        status: post.status,
         createdAt: new Date(post.createdAt),
         ...(post.mediaId ? { mediaId: post.mediaId, mediaType: post.mediaType } : {}),
       };

@@ -5,7 +5,7 @@ export interface Post {
   platform: 'instagram' | 'twitter' | 'linkedin' | 'facebook';
   scheduledDate: Date;
   scheduledTime: string;
-  status: 'scheduled' | 'published' | 'draft';
+  status: 'scheduled' | 'published' | 'draft' | 'publishing' | 'failed';
   imageUrl?: string;
   mediaId?: string;
   mediaType?: 'image' | 'video';
