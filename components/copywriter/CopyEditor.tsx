@@ -5,6 +5,7 @@ import { useState } from 'react';
 import type { CopyRecord } from '@/types/agent';
 import { updateCopy } from '@/lib/api/copyClient';
 import { manualSchedule } from '@/lib/api/schedulerClient';
+import { localToUtcSlot } from '@/lib/scheduling/time';
 import { Modal } from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
@@ -99,8 +100,9 @@ export function CopyEditor({ copy, onBack, onSaved, onDelete }: CopyEditorProps)
       if (dirty && !(await save())) return;
       await manualSchedule({
         copyId: copy.id,
-        scheduledDate: scheduleDate,
-        scheduledTime: scheduleTime,
+        // The picker is in the user's own time; posts are stored in UTC
+        scheduledDate: localToUtcSlot(scheduleDate, scheduleTime).date,
+        scheduledTime: localToUtcSlot(scheduleDate, scheduleTime).time,
         platform: platform.id,
         ...(media ? { mediaId: media.id, mediaType: media.type } : {}),
       });
