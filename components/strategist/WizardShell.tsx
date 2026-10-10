@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
+import { ZetcaLogo } from '@/components/layout/ZetcaLogo';
 
 interface WizardShellProps {
   /** Current question step, or null on screens outside the numbered steps */
@@ -41,11 +42,8 @@ export function WizardShell({ step, totalSteps, progress, background = '#EEF2F7'
         }
         leading={
           <div className="flex items-center gap-5 shrink-0">
-            <Link href="/dashboard" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity" aria-label="Back to dashboard">
-              <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gradient-to-br from-indigo-500 to-blue-500 shadow-[0_6px_16px_rgba(79,70,229,0.35)]">
-                <Icon icon="lucide:box" width={20} height={20} className="text-white" />
-              </div>
-              <span className="text-[19px] font-bold text-slate-900 tracking-tight">Zetca</span>
+            <Link href="/dashboard" className="hover:opacity-80 transition-opacity" aria-label="Back to dashboard">
+              <ZetcaLogo tagline={false} />
             </Link>
             <div className="hidden lg:flex items-center gap-3.5 px-4 py-1.5 rounded-full bg-slate-50 border border-slate-200 shadow-sm">
               {step !== null && (

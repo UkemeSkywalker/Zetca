@@ -1,13 +1,11 @@
-import React from 'react';
-import { PageWrapper } from '@/components/layout/PageWrapper';
-import { CaptionEditor } from '@/components/dashboard/CaptionEditor';
+import { Suspense } from 'react';
+import { CopywriterWorkspace } from '@/components/copywriter/CopywriterWorkspace';
 
 export default function CopywriterPage() {
+  // The workspace reads ?strategy= from the URL, which needs a Suspense boundary
   return (
-    <PageWrapper showWorkflow={false}>
-      <div className="w-full">
-        <CaptionEditor />
-      </div>
-    </PageWrapper>
+    <Suspense>
+      <CopywriterWorkspace />
+    </Suspense>
   );
 }
