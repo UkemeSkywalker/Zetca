@@ -1,5 +1,5 @@
 resource "aws_dynamodb_table" "scheduled_posts" {
-  name         = "scheduled-posts-${var.environment}"
+  name         = "scheduled-posts-${local.environment}"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "postId"
 
@@ -77,7 +77,7 @@ resource "aws_dynamodb_table" "scheduled_posts" {
 
   tags = {
     Name        = "Scheduled Posts Table"
-    Environment = var.environment
+    Environment = local.environment
     ManagedBy   = "Terraform"
     Application = "SchedulerAgent"
   }

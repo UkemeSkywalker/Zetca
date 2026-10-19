@@ -1,7 +1,7 @@
 resource "aws_dynamodb_table" "publish_log" {
-  name           = "publish-log-${var.environment}"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "logId"
+  name         = "publish-log-${local.environment}"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "logId"
 
   attribute {
     name = "logId"
@@ -46,7 +46,7 @@ resource "aws_dynamodb_table" "publish_log" {
 
   tags = {
     Name        = "Publish Log Table"
-    Environment = var.environment
+    Environment = local.environment
     ManagedBy   = "Terraform"
     Application = "PublisherAgent"
   }

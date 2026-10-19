@@ -1,7 +1,7 @@
 resource "aws_dynamodb_table" "copies" {
-  name           = "copies-${var.environment}"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "copyId"
+  name         = "copies-${local.environment}"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "copyId"
 
   attribute {
     name = "copyId"
@@ -47,7 +47,7 @@ resource "aws_dynamodb_table" "copies" {
 
   tags = {
     Name        = "Copies Table"
-    Environment = var.environment
+    Environment = local.environment
     ManagedBy   = "Terraform"
     Application = "CopywriterAgent"
   }

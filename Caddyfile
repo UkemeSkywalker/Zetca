@@ -1,12 +1,16 @@
 # With a custom domain (automatic HTTPS):
-#   Set DOMAIN=yourdomain.com in your .env.local
+#   Set DOMAIN=yourdomain.com (and WWW_DOMAIN=www.yourdomain.com to redirect it)
 #   Caddy will auto-provision a Let's Encrypt cert
 #
 # Without a domain (IP-only access, HTTP only):
 #   Leave DOMAIN unset or set DOMAIN=:80
 #   Access via http://<your-lightsail-ip>
 
-{$DOMAIN::80} {
+{$DOMAIN::80} {$WWW_DOMAIN} {
+    # www.zetca.com -> zetca.com (only when WWW_DOMAIN is set)
+    @www host {$WWW_DOMAIN:www.invalid}
+    redir @www https://{$DOMAIN}{uri} permanent
+
     # Everything (including /api/*) is served by the Next.js frontend —
     # the agent/strategy/copy/scheduler/publisher routes were migrated
     # from the separate Python service into Next.js API routes.

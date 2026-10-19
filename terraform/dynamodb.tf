@@ -1,7 +1,7 @@
 resource "aws_dynamodb_table" "users" {
-  name           = "users-${var.environment}"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "userId"
+  name         = "users-${local.environment}"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "userId"
 
   attribute {
     name = "userId"
@@ -29,7 +29,7 @@ resource "aws_dynamodb_table" "users" {
 
   tags = {
     Name        = "Users Table"
-    Environment = var.environment
+    Environment = local.environment
     ManagedBy   = "Terraform"
     Application = "UserAuthentication"
   }
