@@ -3,6 +3,8 @@
  * Handles communication with the Python FastAPI service for publishing operations
  */
 
+import type { PublishLogRecord as WirePublishLog } from '@/lib/models/publisher';
+
 // Use relative URLs — Next.js rewrites proxy /api/publisher/* to the Python backend
 const API_BASE_URL = '';
 
@@ -72,7 +74,7 @@ function handleAuthError(): void {
 /**
  * Convert snake_case publish log record from Python to camelCase for TypeScript
  */
-function convertPublishLogRecord(record: any): PublishLogRecord {
+function convertPublishLogRecord(record: WirePublishLog): PublishLogRecord {
   return {
     logId: record.log_id,
     postId: record.post_id,

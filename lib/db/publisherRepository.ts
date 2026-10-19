@@ -5,10 +5,23 @@
  * an access-control helper for verifying post ownership.
  */
 
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, type DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand, QueryCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
 import { getConfig } from '../config';
 import { PublishLogRecord } from '../models/publisher';
+
+/** A publish log entry as stored in DynamoDB (camelCase attribute names) */
+interface LogItem {
+  logId: string;
+  postId: string;
+  userId: string;
+  platform?: string;
+  status: PublishLogRecord['status'];
+  attemptedAt: string;
+  linkedinPostId?: string | null;
+  errorCode?: string | null;
+  errorMessage?: string | null;
+}
 
 export class PublisherRepository {
   private docClient: DynamoDBDocumentClient;
@@ -17,7 +30,7 @@ export class PublisherRepository {
 
   constructor(tableName?: string, region?: string) {
     const cfg = getConfig();
-    const clientConfig: Record<string, any> = { region: region || cfg.awsRegion };
+    const clientConfig: DynamoDBClientConfig = { region: region || cfg.awsRegion };
     if (cfg.awsAccessKeyId && cfg.awsSecretAccessKey) {
       clientConfig.credentials = {
         accessKeyId: cfg.awsAccessKeyId,
@@ -46,7 +59,7 @@ export class PublisherRepository {
         ScanIndexForward: false,
       })
     );
-    return (result.Items || []).map((item) => this.itemToRecord(item));
+    return (result.Items || []).map((item) => this.itemToRecord(item as LogItem));
   }
 
   /** Query PostIdIndex for all publish attempts on a specific post. */
@@ -59,7 +72,7 @@ export class PublisherRepository {
         ExpressionAttributeValues: { ':postId': postId },
       })
     );
-    return (result.Items || []).map((item) => this.itemToRecord(item));
+    return (result.Items || []).map((item) => this.itemToRecord(item as LogItem));
   }
 
   /** Retrieve the userId for a post from the scheduled-posts table (for access control). */
@@ -71,8 +84,8 @@ export class PublisherRepository {
     return result.Item.userId ?? null;
   }
 
-  private recordToItem(record: PublishLogRecord): Record<string, any> {
-    const item: Record<string, any> = {
+  private recordToItem(record: PublishLogRecord): LogItem {
+    const item: LogItem = {
       logId: record.log_id,
       postId: record.post_id,
       userId: record.user_id,
@@ -86,7 +99,7 @@ export class PublisherRepository {
     return item;
   }
 
-  private itemToRecord(item: Record<string, any>): PublishLogRecord {
+  private itemToRecord(item: LogItem): PublishLogRecord {
     return {
       log_id: item.logId,
       post_id: item.postId,

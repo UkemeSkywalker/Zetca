@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, type S3ClientConfig, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { withAuth } from '@/lib/middleware/withAuth';
 import { MediaRepository } from '@/lib/db/mediaRepository';
@@ -31,7 +31,7 @@ async function downloadUrlHandler(
     }
 
     const cfg = getConfig();
-    const s3ClientConfig: Record<string, any> = { region: cfg.awsRegion };
+    const s3ClientConfig: S3ClientConfig = { region: cfg.awsRegion };
     if (cfg.awsAccessKeyId && cfg.awsSecretAccessKey) {
       s3ClientConfig.credentials = {
         accessKeyId: cfg.awsAccessKeyId,

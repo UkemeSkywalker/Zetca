@@ -1,0 +1,76 @@
+name: Deploy
+
+# On every push to master: run CI, build the app image, push it to ECR tagged
+# with the commit, then switch the Lightsail server to it and check the site.
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: https://zetca.pro
+    permissions:
+      contents: read
+      id-token: write # to sign in to AWS with GitHub's OIDC token (no AWS keys stored here)
+    env:
+      IMAGE: ${{ vars.ECR_REPOSITORY_URL }}:${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sign in to AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build and push the image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.IMAGE }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Set up SSH to the server
+        run: |
+          install -m 700 -d ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+      - name: Release on the server
+        env:
+          HOST: ubuntu@${{ vars.DEPLOY_HOST }}
+        run: |
+          SSH="ssh -i $HOME/.ssh/deploy_key -o StrictHostKeyChecking=yes $HOST"
+          # Ship this commit's compose file, Caddyfile and release script
+          tar cz docker-compose.yml Caddyfile scripts/remote-release.sh \
+            | $SSH "rm -rf /opt/zetca/release && mkdir -p /opt/zetca/release && tar xz -C /opt/zetca/release"
+          $SSH "IMAGE='$IMAGE' bash /opt/zetca/release/scripts/remote-release.sh"
+
+      - name: Check the live site
+        run: |
+          for i in $(seq 1 10); do
+            if curl -fsS -o /dev/null https://zetca.pro/login; then echo "https://zetca.pro is up"; exit 0; fi
+            sleep 3
+          done
+          echo "https://zetca.pro/login isn't answering"; exit 1

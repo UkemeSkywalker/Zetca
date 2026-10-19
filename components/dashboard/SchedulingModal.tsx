@@ -170,9 +170,9 @@ export function SchedulingModal({
       }));
       setAiMessage(response.aiMessage);
       setAiPrompt('');
-    } catch (err: any) {
+    } catch (err) {
       console.error('AI refinement failed:', err);
-      setAiMessage(`Error: ${err.message || 'Failed to refine text. Please try again.'}`);
+      setAiMessage(`Error: ${(err as Error).message || 'Failed to refine text. Please try again.'}`);
     } finally {
       setIsRefining(false);
     }

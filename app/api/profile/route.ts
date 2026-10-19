@@ -155,7 +155,7 @@ export async function PUT(req: NextRequest) {
           lastModified: updatedUser.lastModified,
         },
       });
-    } catch (error: any) {
+    } catch (error) {
       logError(error as Error, {
         endpoint: '/api/profile',
         method: 'PUT',
@@ -170,7 +170,7 @@ export async function PUT(req: NextRequest) {
       }
 
       // Handle user not found error
-      if (error.name === 'ConditionalCheckFailedException') {
+      if ((error as { name?: string }).name === 'ConditionalCheckFailedException') {
         return NextResponse.json(
           { success: false, error: 'User not found' },
           { status: 404 }

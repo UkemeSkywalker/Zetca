@@ -40,6 +40,8 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
   const [fileName, setFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const lastFileRef = useRef<File | null>(null);
+  // Mirrors lastFileRef for rendering (refs shouldn't be read during render)
+  const [canRetry, setCanRetry] = useState(false);
 
   // Clean up object URLs on unmount
   useEffect(() => {
@@ -61,6 +63,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
     setMediaId(null);
     setFileName(null);
     lastFileRef.current = null;
+    setCanRetry(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, [previewUrl, initialMediaUrl]);
 
@@ -72,6 +75,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
   const uploadFile = useCallback(async (file: File) => {
     setError(null);
     lastFileRef.current = file;
+    setCanRetry(true);
 
     // Client-side type validation
     if (!isAllowedContentType(file.type)) {
@@ -235,7 +239,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
       {error && (
         <div className="mt-2 flex items-start gap-2 p-3 rounded-lg text-sm" style={{ background: 'var(--on-error)', color: 'var(--error)' }}>
           <span className="flex-1">{error}</span>
-          {uploadState === 'error' && lastFileRef.current && (
+          {uploadState === 'error' && canRetry && (
             <button
               onClick={handleRetry}
               className="shrink-0 underline font-medium"

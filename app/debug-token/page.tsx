@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable -- developer-only page; proxy.ts returns 404 for it in production */
+
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
