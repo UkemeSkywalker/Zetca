@@ -34,7 +34,10 @@ export APP_ENV_FILE=/opt/zetca/.env.production
 COMPOSE=(docker compose -p zetca --env-file /opt/zetca/.env.production -f release/docker-compose.yml)
 
 # Check the new Caddy config, then build while the current version keeps serving
-"${COMPOSE[@]}" run --rm --no-deps caddy caddy validate --config /etc/caddy/Caddyfile >/dev/null
+# -T and </dev/null: this script arrives on stdin, and `run` would otherwise read (and swallow) the rest of it
+if ! out=$("${COMPOSE[@]}" run -T --rm --no-deps caddy caddy validate --config /etc/caddy/Caddyfile </dev/null 2>&1); then
+  echo "$out"; echo "The new Caddyfile is invalid; nothing was changed."; exit 1
+fi
 "${COMPOSE[@]}" build --pull frontend
 
 # Swap the release in and restart on the new image
