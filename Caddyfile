@@ -7,29 +7,29 @@
 #   Access via http://<your-lightsail-ip>
 
 {$DOMAIN::80} {$WWW_DOMAIN} {
-    # www.zetca.com -> zetca.com (only when WWW_DOMAIN is set)
-    @www host {$WWW_DOMAIN:www.invalid}
-    redir @www https://{$DOMAIN}{uri} permanent
+	# www.zetca.com -> zetca.com (only when WWW_DOMAIN is set)
+	@www host {$WWW_DOMAIN:www.invalid}
+	redir @www https://{$DOMAIN}{uri} permanent
 
-    # Everything (including /api/*) is served by the Next.js frontend —
-    # the agent/strategy/copy/scheduler/publisher routes were migrated
-    # from the separate Python service into Next.js API routes.
-    reverse_proxy frontend:3000
+	# Everything (including /api/*) is served by the Next.js frontend —
+	# the agent/strategy/copy/scheduler/publisher routes were migrated
+	# from the separate Python service into Next.js API routes.
+	reverse_proxy frontend:3000
 
-    # Compression
-    encode gzip zstd
+	# Compression
+	encode gzip zstd
 
-    # Security headers
-    header {
-        X-Content-Type-Options nosniff
-        X-Frame-Options DENY
-        Referrer-Policy strict-origin-when-cross-origin
-        -Server
-    }
+	# Security headers
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
 
-    # Logging
-    log {
-        output stdout
-        format console
-    }
+	# Logging
+	log {
+		output stdout
+		format console
+	}
 }
