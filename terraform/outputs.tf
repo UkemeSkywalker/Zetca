@@ -66,3 +66,24 @@ output "dynamodb_publish_log_table_arn" {
   value       = aws_dynamodb_table.publish_log.arn
   description = "ARN of the DynamoDB publish log table"
 }
+
+output "app_server_ip" {
+  description = "Static IP of the app server; point the domain's A records here"
+  value       = var.create_app_server ? aws_lightsail_static_ip.app[0].ip_address : null
+}
+
+output "app_server_ssh" {
+  description = "SSH command for the app server"
+  value       = var.create_app_server ? "ssh -i ~/.ssh/zetca-lightsail ubuntu@${aws_lightsail_static_ip.app[0].ip_address}" : null
+}
+
+output "app_aws_access_key_id" {
+  description = "Access key id the app runs with"
+  value       = var.create_app_server ? aws_iam_access_key.app[0].id : null
+}
+
+output "app_aws_secret_access_key" {
+  description = "Secret for app_aws_access_key_id (terraform output -raw app_aws_secret_access_key)"
+  value       = var.create_app_server ? aws_iam_access_key.app[0].secret : null
+  sensitive   = true
+}

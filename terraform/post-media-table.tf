@@ -1,7 +1,7 @@
 resource "aws_dynamodb_table" "post_media" {
-  name           = "post-media-${var.environment}"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "mediaId"
+  name         = "post-media-${local.environment}"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "mediaId"
 
   attribute {
     name = "mediaId"
@@ -35,7 +35,7 @@ resource "aws_dynamodb_table" "post_media" {
 
   tags = {
     Name        = "Post Media Table"
-    Environment = var.environment
+    Environment = local.environment
     ManagedBy   = "Terraform"
     Application = "PostMediaAttachments"
   }

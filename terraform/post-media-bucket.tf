@@ -4,11 +4,11 @@ resource "aws_s3_bucket" "post_media" {
   # Account ID suffix keeps the name globally unique across all AWS
   # accounts (S3 bucket names are global) — "zetca-post-media-dev" was
   # already claimed by an unrelated, inaccessible account.
-  bucket = "zetca-post-media-${var.environment}-${data.aws_caller_identity.current.account_id}"
+  bucket = "zetca-post-media-${local.environment}-${data.aws_caller_identity.current.account_id}"
 
   tags = {
     Name        = "Post Media Bucket"
-    Environment = var.environment
+    Environment = local.environment
     ManagedBy   = "Terraform"
     Application = "PostMediaAttachments"
   }
@@ -55,7 +55,8 @@ resource "aws_s3_bucket_cors_configuration" "post_media" {
   cors_rule {
     allowed_headers = ["*"]
     allowed_methods = ["PUT"]
-    allowed_origins = ["*"]
+    # Browsers upload straight to S3 with presigned URLs; in prod only from the app's own domain
+    allowed_origins = var.app_domain == "" ? ["*"] : ["https://${var.app_domain}", "https://www.${var.app_domain}"]
     expose_headers  = ["ETag"]
     max_age_seconds = 3600
   }

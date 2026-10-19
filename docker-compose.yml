@@ -9,6 +9,10 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
+    environment:
+      # The site's domain (Caddy gets its HTTPS certificate for it); unset serves plain HTTP on :80
+      - DOMAIN=${DOMAIN:-}
+      - WWW_DOMAIN=${WWW_DOMAIN:-}
     depends_on:
       - frontend
     networks:
@@ -23,12 +27,14 @@ services:
     expose:
       - "3000"
     env_file:
-      - .env.local
+      # Locally .env.local; on the server, scripts/deploy.sh points this at /opt/zetca/.env.production
+      - ${APP_ENV_FILE:-.env.local}
     environment:
       - NODE_ENV=production
     networks:
       - zetca-network
-    mem_limit: 320m
+    # Next.js plus the AI agents; leaves room for Caddy and the OS on a 2 GB server
+    mem_limit: 1400m
 
 networks:
   zetca-network:

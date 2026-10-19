@@ -1,7 +1,7 @@
 resource "aws_dynamodb_table" "strategies" {
-  name           = "strategies-${var.environment}"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "strategyId"
+  name         = "strategies-${local.environment}"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "strategyId"
 
   attribute {
     name = "strategyId"
@@ -35,7 +35,7 @@ resource "aws_dynamodb_table" "strategies" {
 
   tags = {
     Name        = "Strategies Table"
-    Environment = var.environment
+    Environment = local.environment
     ManagedBy   = "Terraform"
     Application = "StrategistAgent"
   }
