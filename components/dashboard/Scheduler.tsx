@@ -453,7 +453,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
                 Retry
               </button>
             )}
-            <button onClick={() => { setOperationError(null); setLastAutoScheduleStrategyId(null); }} className="text-red-400 hover:text-red-600">
+            <button onClick={() => { setOperationError(null); setLastAutoScheduleStrategyId(null); }} className="text-red-400 hover:text-red-600" aria-label="Dismiss error">
               <Icon icon="solar:close-circle-bold" className="w-5 h-5" />
             </button>
           </div>

@@ -187,13 +187,13 @@ export function SchedulingModal({
         <div
           className="relative rounded-2xl shadow-ambient-lg w-full max-w-7xl min-h-[700px] max-h-[95vh] flex pointer-events-auto overflow-hidden"
           style={{ background: 'rgba(246, 246, 255, 0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
-          role="dialog" aria-modal="true"
+          role="dialog" aria-modal="true" aria-labelledby="scheduling-modal-title"
         >
           {/* LEFT — Editor workspace */}
           <div className="flex-1 flex flex-col min-w-0 border-r border-gray-200/60">
             <div className="px-10 pt-10 pb-3">
               <p className="text-sm font-semibold uppercase tracking-wider text-primary mb-1">Editor Workspace</p>
-              <h2 className="text-3xl font-bold text-on-surface">
+              <h2 id="scheduling-modal-title" className="text-3xl font-bold text-on-surface">
                 {isEditing ? 'Refine Your Narrative' : 'Craft Your Post'}
               </h2>
             </div>
@@ -311,6 +311,7 @@ export function SchedulingModal({
                         key={p.value}
                         type="button"
                         onClick={() => handleInputChange('platform', p.value)}
+                        aria-pressed={selected}
                         className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
                           selected
                             ? 'border-primary bg-primary/5 shadow-sm'

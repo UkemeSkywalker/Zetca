@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { ScheduledPost } from '@/types/scheduler';
+import { ScheduledPost, PostStatus } from '@/types/scheduler';
 import { Icon } from '@iconify/react';
 import { listPosts } from '@/lib/api/schedulerClient';
 import { publishPost } from '@/lib/api/publisherClient';
 
-type StatusFilter = 'all' | 'scheduled' | 'published' | 'draft';
+type StatusFilter = 'all' | PostStatus;
 type PlatformFilter = 'all' | 'linkedin' | 'instagram' | 'twitter' | 'facebook';
 type ViewMode = 'list' | 'grid';
 
@@ -61,32 +61,21 @@ const thumbnailIcons = [
   'solar:heart-bold',
 ];
 
-const StatusDot: React.FC<{ status: string }> = ({ status }) => {
-  const dotColor =
-    status === 'published'
-      ? 'bg-emerald-500'
-      : status === 'scheduled'
-      ? 'bg-primary'
-      : 'bg-gray-400';
+const statusDotStyles: Record<PostStatus, { dot: string; label: string; text: string }> = {
+  draft: { dot: 'bg-gray-400', label: 'text-gray-500', text: 'Draft' },
+  scheduled: { dot: 'bg-primary', label: 'text-primary', text: 'Scheduled' },
+  publishing: { dot: 'bg-amber-500', label: 'text-amber-700', text: 'Publishing' },
+  published: { dot: 'bg-emerald-500', label: 'text-emerald-700', text: 'Published' },
+  failed: { dot: 'bg-red-500', label: 'text-red-700', text: 'Failed' },
+};
 
-  const labelColor =
-    status === 'published'
-      ? 'text-emerald-700'
-      : status === 'scheduled'
-      ? 'text-primary'
-      : 'text-gray-500';
-
-  const label =
-    status === 'published'
-      ? 'Published'
-      : status === 'scheduled'
-      ? 'Scheduled'
-      : 'Draft';
+const StatusDot: React.FC<{ status: PostStatus }> = ({ status }) => {
+  const { dot, label, text } = statusDotStyles[status] ?? statusDotStyles.draft;
 
   return (
-    <span className={`inline-flex items-center gap-2 text-sm font-medium ${labelColor}`}>
-      <span className={`w-2.5 h-2.5 rounded-full ${dotColor}`} />
-      {label}
+    <span className={`inline-flex items-center gap-2 text-sm font-medium ${label}`}>
+      <span className={`w-2.5 h-2.5 rounded-full ${dot}`} />
+      {text}
     </span>
   );
 };
@@ -263,7 +252,7 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
                 <p className="text-[11px] font-semibold text-outline uppercase tracking-wider mb-1.5 px-1">
                   Status
                 </p>
-                {(['all', 'scheduled', 'published', 'draft'] as StatusFilter[]).map(
+                {(['all', 'scheduled', 'publishing', 'published', 'failed', 'draft'] as StatusFilter[]).map(
                   (filter) => (
                     <button
                       key={filter}

@@ -38,7 +38,11 @@ export const AnalyticsCards: React.FC<AnalyticsCardsProps> = ({
                   className={`w-4 h-4 mr-1 ${
                     metric.change >= 0 ? 'text-emerald-600' : 'text-error'
                   }`}
+                  aria-hidden="true"
                 />
+                <span className="sr-only">
+                  {metric.change >= 0 ? 'Increase of ' : 'Decrease of '}
+                </span>
                 <span
                   className={`text-sm font-medium ${
                     metric.change >= 0 ? 'text-emerald-600' : 'text-error'
