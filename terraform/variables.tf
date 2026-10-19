@@ -11,7 +11,7 @@ variable "aws_region" {
 }
 
 variable "app_domain" {
-  description = "Public domain of the app (e.g. zetca.com); empty for dev. Used for media upload CORS."
+  description = "Public domain of the app (e.g. zetca.pro); empty for dev. Used for media upload CORS."
   type        = string
   default     = ""
 }

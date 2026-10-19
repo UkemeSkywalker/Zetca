@@ -7,7 +7,7 @@
 #   Access via http://<your-lightsail-ip>
 
 {$DOMAIN::80} {$WWW_DOMAIN} {
-	# www.zetca.com -> zetca.com (only when WWW_DOMAIN is set)
+	# www.zetca.pro -> zetca.pro (only when WWW_DOMAIN is set)
 	@www host {$WWW_DOMAIN:www.invalid}
 	redir @www https://{$DOMAIN}{uri} permanent
 
