@@ -1,6 +1,6 @@
 # Deploying Zetca (Lightsail)
 
-Production runs on a single Lightsail server: the app's Docker image plus Caddy, which serves `zetca.com` over HTTPS. The app needs a server that stays running, for the LinkedIn publisher loop and the Copywriter's background jobs, which is why it isn't on Amplify or Vercel.
+Production runs on a single Lightsail server: the app's Docker image plus Caddy, which serves `zetca.pro` over HTTPS. The app needs a server that stays running, for the LinkedIn publisher loop and the Copywriter's background jobs, which is why it isn't on Amplify or Vercel.
 
 ## One-time setup
 
@@ -20,10 +20,10 @@ Production runs on a single Lightsail server: the app's Docker image plus Caddy,
    Each workspace has its own state, and the default workspace is dev, so this never touches the dev tables.
 
 2. **DNS at Porkbun.** Point the domain at `terraform output app_server_ip` with two records:
-   - `A` record for `zetca.com`
-   - `A` record (or a `CNAME` to `zetca.com`) for `www`
+   - `A` record for `zetca.pro`
+   - `A` record (or a `CNAME` to `zetca.pro`) for `www`
 
-3. **LinkedIn app.** Add `https://zetca.com/api/auth/linkedin/callback` as an authorised redirect URL.
+3. **LinkedIn app.** Add `https://zetca.pro/api/auth/linkedin/callback` as an authorised redirect URL.
 
 4. **Server settings.** Wait about two minutes after the apply, so the server can finish installing Docker. Then run:
 

@@ -15,7 +15,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 FORCE="${1:-}"
-DOMAIN="${APP_DOMAIN:-zetca.com}"
+DOMAIN="${APP_DOMAIN:-zetca.pro}"
 KEY="${DEPLOY_KEY:-$HOME/.ssh/zetca-lightsail}"
 
 tf() { terraform -chdir=terraform output -raw "$1"; }
