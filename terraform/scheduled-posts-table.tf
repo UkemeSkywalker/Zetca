@@ -1,7 +1,7 @@
 resource "aws_dynamodb_table" "scheduled_posts" {
-  name           = "scheduled-posts-${var.environment}"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "postId"
+  name         = "scheduled-posts-${var.environment}"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "postId"
 
   attribute {
     name = "postId"
@@ -28,6 +28,16 @@ resource "aws_dynamodb_table" "scheduled_posts" {
     type = "S"
   }
 
+  attribute {
+    name = "status"
+    type = "S"
+  }
+
+  attribute {
+    name = "dueAt"
+    type = "S"
+  }
+
   global_secondary_index {
     name            = "UserIdIndex"
     hash_key        = "userId"
@@ -39,6 +49,15 @@ resource "aws_dynamodb_table" "scheduled_posts" {
     name            = "StrategyIdIndex"
     hash_key        = "strategyId"
     range_key       = "scheduledDate"
+    projection_type = "ALL"
+  }
+
+  # The publisher queries (status = "scheduled", dueAt <= now) here instead of
+  # scanning the whole table every minute; it also finds stuck "publishing" posts
+  global_secondary_index {
+    name            = "StatusDueIndex"
+    hash_key        = "status"
+    range_key       = "dueAt"
     projection_type = "ALL"
   }
 

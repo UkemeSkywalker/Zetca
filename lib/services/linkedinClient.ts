@@ -20,11 +20,12 @@ const ERROR_CODE_MAP: Record<number, string> = {
   503: 'linkedin_server_error',
 };
 
-async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+/** fetch that gives up after `ms` (aborting the request), so one hung call can't stall the publisher */
+async function fetchWithTimeout(url: string, init: RequestInit, ms: number): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
   try {
-    return await promise;
+    return await fetch(url, { ...init, signal: controller.signal });
   } finally {
     clearTimeout(timer);
   }
@@ -57,8 +58,8 @@ export class LinkedInClient {
     };
   }
 
-  private buildPostBody(personUrn: string, commentary: string, imageUrn?: string): Record<string, any> {
-    const body: Record<string, any> = {
+  private buildPostBody(personUrn: string, commentary: string, imageUrn?: string): Record<string, unknown> {
+    const body: Record<string, unknown> = {
       author: personUrn,
       commentary,
       visibility: 'PUBLIC',
@@ -80,8 +81,7 @@ export class LinkedInClient {
     const body = this.buildPostBody(personUrn, commentary);
 
     try {
-      const response = await withTimeout(
-        fetch(url, { method: 'POST', headers: this.headers(accessToken), body: JSON.stringify(body) }),
+      const response = await fetchWithTimeout(url, { method: 'POST', headers: this.headers(accessToken), body: JSON.stringify(body) },
         this.fetchTimeoutMs()
       );
 
@@ -89,8 +89,8 @@ export class LinkedInClient {
         return { status_code: 201, post_id: response.headers.get('x-restli-id') };
       }
       return this.mapError(response.status, await response.text());
-    } catch (e: any) {
-      return { status_code: 0, error_code: 'network_error', error_message: `Network error: ${e?.message ?? e}` };
+    } catch (e) {
+      return { status_code: 0, error_code: 'network_error', error_message: `Network error: ${(e as Error)?.message ?? e}` };
     }
   }
 
@@ -101,12 +101,11 @@ export class LinkedInClient {
 
     let response: Response;
     try {
-      response = await withTimeout(
-        fetch(url, { method: 'POST', headers: this.headers(accessToken), body: JSON.stringify(body) }),
+      response = await fetchWithTimeout(url, { method: 'POST', headers: this.headers(accessToken), body: JSON.stringify(body) },
         this.fetchTimeoutMs()
       );
-    } catch (e: any) {
-      throw new Error(`Network error initializing image upload: ${e?.message ?? e}`);
+    } catch (e) {
+      throw new Error(`Network error initializing image upload: ${(e as Error)?.message ?? e}`);
     }
 
     if (response.status === 200 || response.status === 201) {
@@ -123,18 +122,17 @@ export class LinkedInClient {
   async uploadImageBinary(uploadUrl: string, imageData: Uint8Array | Buffer, contentType: string): Promise<number> {
     let response: Response;
     try {
-      response = await withTimeout(
-        fetch(uploadUrl, {
+      response = await fetchWithTimeout(uploadUrl, {
           method: 'PUT',
           headers: { 'Content-Type': contentType },
           // Buffer is structurally a Uint8Array at runtime; cast past the DOM lib's
           // stricter BodyInit typing (a known TS/Node fetch-typing mismatch).
           body: imageData as unknown as BodyInit,
-        }),
+        },
         this.fetchTimeoutMs()
       );
-    } catch (e: any) {
-      throw new Error(`Network error uploading image binary: ${e?.message ?? e}`);
+    } catch (e) {
+      throw new Error(`Network error uploading image binary: ${(e as Error)?.message ?? e}`);
     }
 
     if (response.status !== 200 && response.status !== 201) {
@@ -155,8 +153,7 @@ export class LinkedInClient {
     const body = this.buildPostBody(personUrn, commentary, imageUrn);
 
     try {
-      const response = await withTimeout(
-        fetch(url, { method: 'POST', headers: this.headers(accessToken), body: JSON.stringify(body) }),
+      const response = await fetchWithTimeout(url, { method: 'POST', headers: this.headers(accessToken), body: JSON.stringify(body) },
         this.fetchTimeoutMs()
       );
 
@@ -164,8 +161,8 @@ export class LinkedInClient {
         return { status_code: 201, post_id: response.headers.get('x-restli-id') };
       }
       return this.mapError(response.status, await response.text());
-    } catch (e: any) {
-      return { status_code: 0, error_code: 'network_error', error_message: `Network error: ${e?.message ?? e}` };
+    } catch (e) {
+      return { status_code: 0, error_code: 'network_error', error_message: `Network error: ${(e as Error)?.message ?? e}` };
     }
   }
 }

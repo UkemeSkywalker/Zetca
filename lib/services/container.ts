@@ -137,7 +137,14 @@ export const getCopyService = memo(
 );
 
 export const getSchedulerService = memo(
-  () => new SchedulerService(getSchedulerAgent(), getSchedulerRepository(), getCopyRepository(), getStrategyRepository())
+  () =>
+    new SchedulerService(
+      getSchedulerAgent(),
+      getSchedulerRepository(),
+      getCopyRepository(),
+      getStrategyRepository(),
+      getMediaRepository()
+    )
 );
 
 export const getPublisherService = memo(
