@@ -206,8 +206,17 @@ export function Calendar({ posts, onDateClick, onMovePosts, className = '' }: Ca
                 onDrop={(e) => handleDrop(e, dateKey)}
                 onDragEnd={handleDragEnd}
                 onClick={() => onDateClick(calendarDay.date)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onDateClick(calendarDay.date);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                aria-label={`${calendarDay.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}${hasPosts ? `, ${calendarDay.posts.length} ${calendarDay.posts.length === 1 ? 'post' : 'posts'}` : ''}`}
                 className={`
-                  relative p-2 sm:p-3 h-20 sm:h-32 text-left transition-all overflow-hidden cursor-pointer select-none border-b border-r border-gray-200
+                  relative p-2 sm:p-3 h-20 sm:h-32 text-left transition-all overflow-hidden cursor-pointer select-none border-b border-r border-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary
                   ${index % 7 === 0 ? 'border-l border-gray-200' : ''}
                   ${calendarDay.isCurrentMonth ? 'text-gray-900' : 'text-gray-300'}
                   ${isDragSource ? 'opacity-40 scale-95 bg-gray-100' : ''}

@@ -146,6 +146,26 @@ describe('Scheduler Page', () => {
     expect(within(dialog).getByText(post.content)).toBeInTheDocument();
   });
 
+  it('opens a calendar day from the keyboard', async () => {
+    const post = makePost();
+    api.listPosts.mockResolvedValue([post]);
+    await renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Calendar' }));
+    const when = futureAt10();
+    if (when.getMonth() !== new Date().getMonth()) {
+      fireEvent.click(screen.getByRole('button', { name: 'Next month' }));
+    }
+    const dayName = when.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    const day = screen.getByRole('button', { name: `${dayName}, 1 post` });
+    expect(day).toHaveAttribute('tabIndex', '0');
+
+    fireEvent.keyDown(day, { key: 'Enter' });
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText(post.content)).toBeInTheDocument();
+  });
+
   it('offers a retry when the posts cannot be loaded', async () => {
     api.listPosts.mockRejectedValueOnce(new schedulerClient.SchedulerAPIError('Scheduler is down', 503));
     await renderPage();
@@ -163,6 +183,7 @@ describe('Scheduler Page', () => {
       await renderPage();
 
       let dialog = openScheduleDialog();
+      expect(dialog).toHaveAccessibleName('Craft Your Post');
       expect(within(dialog).getByRole('heading', { name: 'Craft Your Post' })).toBeInTheDocument();
       expect(within(dialog).getByLabelText('Post Copy')).toBeInTheDocument();
       expect(within(dialog).getByLabelText('Date')).toHaveValue(localDate(new Date()));
@@ -209,8 +230,13 @@ describe('Scheduler Page', () => {
       fireEvent.change(within(dialog).getByLabelText('Post Copy'), { target: { value: 'Hello' } });
       expect(within(dialog).getByText('5 / 3,000 characters')).toBeInTheDocument();
 
+      expect(within(dialog).getByRole('button', { name: 'LinkedIn' })).toHaveAttribute('aria-pressed', 'true');
+      expect(within(dialog).getByRole('button', { name: 'X' })).toHaveAttribute('aria-pressed', 'false');
+
       fireEvent.click(within(dialog).getByRole('button', { name: 'X' }));
       expect(within(dialog).getByText('5 / 280 characters')).toBeInTheDocument();
+      expect(within(dialog).getByRole('button', { name: 'X' })).toHaveAttribute('aria-pressed', 'true');
+      expect(within(dialog).getByRole('button', { name: 'LinkedIn' })).toHaveAttribute('aria-pressed', 'false');
     });
 
     it('schedules a post in UTC for the chosen platform and shows it', async () => {
@@ -358,5 +384,22 @@ describe('Scheduler Page', () => {
 
     await waitFor(() => expect(screen.queryByText('No copies to schedule')).not.toBeInTheDocument());
     expect(api.autoSchedule).toHaveBeenCalledTimes(2);
+  });
+
+  it('dismisses the auto-schedule error from its labelled close button', async () => {
+    mockListStrategies.mockResolvedValue([
+      { id: 'strategy-1', brandName: 'Acme Coffee' } as StrategyRecord,
+    ]);
+    api.autoSchedule.mockRejectedValue(new schedulerClient.SchedulerAPIError('No copies to schedule', 400));
+    await renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Auto Schedule' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Acme Coffee' }));
+    expect(await screen.findByText('No copies to schedule')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss error' }));
+
+    expect(screen.queryByText('No copies to schedule')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
   });
 });

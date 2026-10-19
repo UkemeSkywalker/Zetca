@@ -88,6 +88,18 @@ describe('Publisher Page', () => {
     expect(isShown('Draft')).toBe(true);
   });
 
+  it('labels failed and publishing posts with their own status, not Draft', async () => {
+    mockListPosts.mockResolvedValue([
+      makePost({ content: 'Rejected by LinkedIn', status: 'failed' }),
+      makePost({ content: 'Going out now', status: 'publishing' }),
+    ]);
+    await renderPage();
+
+    expect(isShown('Failed')).toBe(true);
+    expect(isShown('Publishing')).toBe(true);
+    expect(isShown('Draft')).toBe(false);
+  });
+
   it('shortens long content to a four-word title in the list', async () => {
     mockListPosts.mockResolvedValue([
       makePost({ content: 'Check out our brand new spring collection' }),
@@ -140,7 +152,7 @@ describe('Publisher Page', () => {
       await renderPage();
       fireEvent.click(screen.getByRole('button', { name: 'Filters' }));
 
-      for (const name of ['Scheduled', 'Published', 'Draft', 'LinkedIn', 'Instagram', 'Twitter / X', 'Facebook']) {
+      for (const name of ['Scheduled', 'Publishing', 'Published', 'Failed', 'Draft', 'LinkedIn', 'Instagram', 'Twitter / X', 'Facebook']) {
         expect(screen.getByRole('button', { name })).toBeInTheDocument();
       }
       expect(screen.getAllByRole('button', { name: 'All' })).toHaveLength(2);
@@ -154,6 +166,19 @@ describe('Publisher Page', () => {
       expect(isShown('Draft for Facebook')).toBe(true);
       expect(isShown('Scheduled on LinkedIn')).toBe(false);
       expect(isShown('Published on Instagram')).toBe(false);
+    });
+
+    it('filters to failed posts', async () => {
+      mockListPosts.mockResolvedValue([
+        makePost({ content: 'Scheduled on LinkedIn', status: 'scheduled' }),
+        makePost({ content: 'Rejected by LinkedIn', status: 'failed' }),
+      ]);
+      await renderPage();
+      fireEvent.click(screen.getByRole('button', { name: 'Filters' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Failed' }));
+
+      expect(isShown('Rejected by LinkedIn')).toBe(true);
+      expect(isShown('Scheduled on LinkedIn')).toBe(false);
     });
 
     it('filters by platform', async () => {

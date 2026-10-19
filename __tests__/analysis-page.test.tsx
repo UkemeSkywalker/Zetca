@@ -33,6 +33,14 @@ describe('Analysis Page', () => {
     });
   });
 
+  it('says in text whether each metric went up or down', () => {
+    mockAnalytics.metrics.forEach((metric) => {
+      const change = screen.getByText(`${Math.abs(metric.change)}%`).parentElement!;
+      const direction = metric.change >= 0 ? 'Increase of' : 'Decrease of';
+      expect(change).toHaveTextContent(`${direction} ${Math.abs(metric.change)}%`);
+    });
+  });
+
   it('shows the engagement trends chart', () => {
     expect(screen.getByRole('heading', { name: 'Engagement Trends' })).toBeInTheDocument();
     expect(screen.queryByText('No data available')).not.toBeInTheDocument();
