@@ -2,66 +2,62 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 
+type Status = React.ComponentProps<typeof StatusBadge>['status'];
+
 describe('StatusBadge Component', () => {
-  it('should render scheduled status with yellow styling', () => {
-    const { container } = render(<StatusBadge status="scheduled" />);
-    const badge = container.firstChild as HTMLElement;
-    
+  const labels: Array<[Status, string]> = [
+    ['scheduled', 'Scheduled'],
+    ['published', 'Published'],
+    ['draft', 'Draft'],
+    ['publishing', 'Publishing…'],
+    ['failed', 'Failed'],
+    ['complete', 'Complete'],
+    ['in-progress', 'In Progress'],
+    ['not-started', 'Not Started'],
+  ];
+
+  it.each(labels)('labels the %s status as "%s"', (status, label) => {
+    render(<StatusBadge status={status} />);
+
+    expect(screen.getByText(label)).toBeInTheDocument();
+  });
+
+  it('shows only the label for its own status', () => {
+    render(<StatusBadge status="failed" />);
+
+    expect(screen.getByText('Failed')).toBeInTheDocument();
+    expect(screen.queryByText('Scheduled')).not.toBeInTheDocument();
+    expect(screen.queryByText('Published')).not.toBeInTheDocument();
+  });
+
+  it('updates its label when the status changes', () => {
+    const { rerender } = render(<StatusBadge status="scheduled" />);
     expect(screen.getByText('Scheduled')).toBeInTheDocument();
-    expect(badge).toHaveClass('bg-yellow-100', 'text-yellow-800');
-  });
 
-  it('should render published status with green styling', () => {
-    const { container } = render(<StatusBadge status="published" />);
-    const badge = container.firstChild as HTMLElement;
-    
+    rerender(<StatusBadge status="publishing" />);
+    expect(screen.getByText('Publishing…')).toBeInTheDocument();
+
+    rerender(<StatusBadge status="published" />);
     expect(screen.getByText('Published')).toBeInTheDocument();
-    expect(badge).toHaveClass('bg-green-100', 'text-green-800');
+    expect(screen.queryByText('Publishing…')).not.toBeInTheDocument();
   });
 
-  it('should render draft status with gray styling', () => {
-    const { container } = render(<StatusBadge status="draft" />);
-    const badge = container.firstChild as HTMLElement;
-    
-    expect(screen.getByText('Draft')).toBeInTheDocument();
-    expect(badge).toHaveClass('bg-gray-100', 'text-gray-800');
+  it('gives each outcome a distinct style from a post still waiting', () => {
+    const { rerender } = render(<StatusBadge status="scheduled" />);
+    const scheduled = screen.getByText('Scheduled').className;
+
+    rerender(<StatusBadge status="failed" />);
+    const failed = screen.getByText('Failed').className;
+
+    rerender(<StatusBadge status="published" />);
+    const published = screen.getByText('Published').className;
+
+    expect(new Set([scheduled, failed, published]).size).toBe(3);
   });
 
-  it('should render complete status with green styling', () => {
-    const { container } = render(<StatusBadge status="complete" />);
-    const badge = container.firstChild as HTMLElement;
-    
-    expect(screen.getByText('Complete')).toBeInTheDocument();
-    expect(badge).toHaveClass('bg-green-100', 'text-green-800');
-  });
+  it('passes through a custom className', () => {
+    render(<StatusBadge status="scheduled" className="custom-class" />);
 
-  it('should render in-progress status with blue styling', () => {
-    const { container } = render(<StatusBadge status="in-progress" />);
-    const badge = container.firstChild as HTMLElement;
-    
-    expect(screen.getByText('In Progress')).toBeInTheDocument();
-    expect(badge).toHaveClass('bg-blue-100', 'text-blue-800');
-  });
-
-  it('should render not-started status with gray styling', () => {
-    const { container } = render(<StatusBadge status="not-started" />);
-    const badge = container.firstChild as HTMLElement;
-    
-    expect(screen.getByText('Not Started')).toBeInTheDocument();
-    expect(badge).toHaveClass('bg-gray-100', 'text-gray-800');
-  });
-
-  it('should apply rounded-full styling', () => {
-    const { container } = render(<StatusBadge status="scheduled" />);
-    const badge = container.firstChild as HTMLElement;
-    
-    expect(badge).toHaveClass('rounded-full');
-  });
-
-  it('should apply custom className', () => {
-    const { container } = render(<StatusBadge status="scheduled" className="custom-class" />);
-    const badge = container.firstChild as HTMLElement;
-    
-    expect(badge).toHaveClass('custom-class');
+    expect(screen.getByText('Scheduled')).toHaveClass('custom-class');
   });
 });

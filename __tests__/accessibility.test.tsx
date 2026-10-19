@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -7,132 +7,176 @@ import { Modal } from '@/components/ui/Modal';
 
 describe('Accessibility Tests', () => {
   describe('Button Component', () => {
-    it('should have focus indicators', () => {
+    it('is a focusable native button named by its text', () => {
       render(<Button>Click me</Button>);
-      const button = screen.getByRole('button', { name: /click me/i });
-      expect(button).toHaveClass('focus:outline-none', 'focus:ring-2');
-    });
+      const button = screen.getByRole('button', { name: 'Click me' });
 
-    it('should be keyboard accessible', () => {
-      render(<Button>Click me</Button>);
-      const button = screen.getByRole('button', { name: /click me/i });
-      expect(button).toBeInTheDocument();
       button.focus();
       expect(button).toHaveFocus();
     });
 
-    it('should have proper ARIA label when icon-only', () => {
-      render(<Button leftIcon="solar:close-circle-bold" aria-label="Close">Close</Button>);
-      const button = screen.getByRole('button', { name: /close/i });
-      expect(button).toBeInTheDocument();
+    it('can be named with aria-label', () => {
+      render(
+        <Button leftIcon="solar:close-circle-bold" aria-label="Dismiss notice">
+          ×
+        </Button>
+      );
+
+      expect(screen.getByRole('button', { name: 'Dismiss notice' })).toBeInTheDocument();
+    });
+
+    it('is disabled and inert while loading', () => {
+      const onClick = jest.fn();
+      render(
+        <Button isLoading onClick={onClick}>
+          Save
+        </Button>
+      );
+      const button = screen.getByRole('button');
+
+      expect(button).toBeDisabled();
+      fireEvent.click(button);
+      expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('is disabled when the disabled prop is set', () => {
+      render(<Button disabled>Save</Button>);
+
+      expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     });
   });
 
   describe('Input Component', () => {
-    it('should associate label with input', () => {
+    it('associates its label with the input', () => {
       render(<Input label="Email" type="email" />);
-      const input = screen.getByLabelText(/email/i);
-      expect(input).toBeInTheDocument();
+
+      expect(screen.getByRole('textbox', { name: 'Email' })).toHaveAttribute('type', 'email');
     });
 
-    it('should have focus indicators', () => {
-      render(<Input label="Email" type="email" />);
-      const input = screen.getByLabelText(/email/i);
-      expect(input).toHaveClass('focus:ring-2');
+    it('generates distinct ids so two inputs keep their own labels', () => {
+      render(
+        <>
+          <Input label="First name" />
+          <Input label="Last name" />
+        </>
+      );
+
+      const first = screen.getByRole('textbox', { name: 'First name' });
+      const last = screen.getByRole('textbox', { name: 'Last name' });
+      expect(first).not.toBe(last);
+      expect(first.id).not.toEqual(last.id);
     });
 
-    it('should be keyboard accessible', () => {
-      render(<Input label="Email" type="email" />);
-      const input = screen.getByLabelText(/email/i);
+    it('is keyboard focusable and still calls the caller’s focus handlers', () => {
+      const onFocus = jest.fn();
+      const onBlur = jest.fn();
+      render(<Input label="Email" type="email" onFocus={onFocus} onBlur={onBlur} />);
+      const input = screen.getByLabelText('Email');
+
       input.focus();
       expect(input).toHaveFocus();
+      expect(onFocus).toHaveBeenCalledTimes(1);
+
+      input.blur();
+      expect(onBlur).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows the error message instead of the helper text', () => {
+      const { rerender } = render(<Input label="Email" helperText="We never share it" />);
+      expect(screen.getByText('We never share it')).toBeInTheDocument();
+
+      rerender(<Input label="Email" helperText="We never share it" error="Enter a valid email" />);
+      expect(screen.getByText('Enter a valid email')).toBeInTheDocument();
+      expect(screen.queryByText('We never share it')).not.toBeInTheDocument();
+    });
+
+    it('lets the user reveal and hide a password with a labelled toggle', () => {
+      render(<Input label="Password" type="password" />);
+      const input = screen.getByLabelText('Password');
+      expect(input).toHaveAttribute('type', 'password');
+
+      const show = screen.getByRole('button', { name: 'Show password' });
+      expect(show).toHaveAttribute('aria-pressed', 'false');
+      fireEvent.click(show);
+
+      expect(input).toHaveAttribute('type', 'text');
+      const hide = screen.getByRole('button', { name: 'Hide password' });
+      expect(hide).toHaveAttribute('aria-pressed', 'true');
+
+      fireEvent.click(hide);
+      expect(input).toHaveAttribute('type', 'password');
     });
   });
 
   describe('Modal Component', () => {
-    it('should close on ESC key', () => {
-      const onClose = jest.fn();
+    const renderModal = (onClose = jest.fn(), isOpen = true) =>
       render(
-        <Modal isOpen={true} onClose={onClose} title="Test Modal">
+        <Modal isOpen={isOpen} onClose={onClose} title="Test Modal">
           <p>Modal content</p>
         </Modal>
       );
-      
-      const modal = screen.getByRole('dialog');
-      expect(modal).toBeInTheDocument();
+
+    it('is a modal dialog named by its title', () => {
+      renderModal();
+      const dialog = screen.getByRole('dialog', { name: 'Test Modal' });
+
+      expect(dialog).toHaveAttribute('aria-modal', 'true');
+      expect(dialog).toHaveTextContent('Modal content');
     });
 
-    it('should have proper ARIA attributes', () => {
+    it('renders nothing while closed', () => {
+      renderModal(jest.fn(), false);
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('closes on Escape', () => {
       const onClose = jest.fn();
-      render(
-        <Modal isOpen={true} onClose={onClose} title="Test Modal">
+      renderModal(onClose);
+
+      fireEvent.keyDown(document, { key: 'Escape' });
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it('ignores other keys', () => {
+      const onClose = jest.fn();
+      renderModal(onClose);
+
+      fireEvent.keyDown(document, { key: 'Enter' });
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it('closes from its labelled close button', () => {
+      const onClose = jest.fn();
+      renderModal(onClose);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Close modal' }));
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it('locks page scroll while open and restores it when closed', () => {
+      const { rerender } = renderModal();
+      expect(document.body.style.overflow).toBe('hidden');
+
+      rerender(
+        <Modal isOpen={false} onClose={jest.fn()} title="Test Modal">
           <p>Modal content</p>
         </Modal>
       );
-      
-      const modal = screen.getByRole('dialog');
-      expect(modal).toHaveAttribute('aria-modal', 'true');
-      expect(modal).toHaveAttribute('aria-labelledby', 'modal-title');
+      expect(document.body.style.overflow).toBe('unset');
     });
 
-    it('should have close button with ARIA label', () => {
+    it('stops listening for Escape once closed', () => {
       const onClose = jest.fn();
-      render(
-        <Modal isOpen={true} onClose={onClose} title="Test Modal">
+      const { rerender } = renderModal(onClose);
+      rerender(
+        <Modal isOpen={false} onClose={onClose} title="Test Modal">
           <p>Modal content</p>
         </Modal>
       );
-      
-      const closeButton = screen.getByLabelText(/close modal/i);
-      expect(closeButton).toBeInTheDocument();
-    });
-  });
 
-  describe('Skip Navigation', () => {
-    it('should have skip to main content link', () => {
-      // This would need to be tested in the actual layout
-      // For now, we'll just verify the concept
-      const { container } = render(
-        <div>
-          <a href="#main-content" className="sr-only focus:not-sr-only">
-            Skip to main content
-          </a>
-          <main id="main-content">Content</main>
-        </div>
-      );
-      
-      const skipLink = screen.getByText(/skip to main content/i);
-      expect(skipLink).toBeInTheDocument();
-      expect(skipLink).toHaveAttribute('href', '#main-content');
-    });
-  });
-
-  describe('Keyboard Navigation', () => {
-    it('should allow Tab navigation through interactive elements', () => {
-      render(
-        <div>
-          <Button>First</Button>
-          <Button>Second</Button>
-          <Input label="Test" />
-        </div>
-      );
-      
-      const firstButton = screen.getByRole('button', { name: /first/i });
-      const secondButton = screen.getByRole('button', { name: /second/i });
-      const input = screen.getByLabelText(/test/i);
-      
-      // All elements should be in the document and focusable
-      expect(firstButton).toBeInTheDocument();
-      expect(secondButton).toBeInTheDocument();
-      expect(input).toBeInTheDocument();
-    });
-  });
-
-  describe('Touch-Friendly Sizes', () => {
-    it('should have minimum 44x44px touch targets', () => {
-      render(<Button size="sm">Small Button</Button>);
-      const button = screen.getByRole('button', { name: /small button/i });
-      expect(button).toHaveClass('min-h-[44px]');
+      fireEvent.keyDown(document, { key: 'Escape' });
+      expect(onClose).not.toHaveBeenCalled();
     });
   });
 });

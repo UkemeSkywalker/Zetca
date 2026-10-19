@@ -1,171 +1,220 @@
 /**
- * Integration tests for session persistence and token refresh
+ * Session persistence: the auth token is an httpOnly cookie the browser sends
+ * on its own, so AuthProvider learns who is signed in by asking /api/profile.
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
 
-// Mock next/navigation
+const mockPush = jest.fn();
 jest.mock('next/navigation', () => ({
-  useRouter: jest.fn(),
+  useRouter: () => ({ push: mockPush }),
 }));
 
-// Mock fetch
-global.fetch = jest.fn();
+const fetchMock = jest.fn();
+global.fetch = fetchMock;
 
-// Test component that uses auth
+const profile = {
+  success: true,
+  user: {
+    id: 'test-123',
+    email: 'test@example.com',
+    name: 'Test User',
+    linkedin: { isConnected: true, name: 'Test L', pictureUrl: 'https://example.com/p.png' },
+  },
+};
+
+const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body });
+const unauthorized = () => ({ ok: false, status: 401, json: async () => ({}) });
+
 function TestComponent() {
-  const { user, isLoading, isAuthenticated } = useAuth();
-  
+  const { user, isLoading, isAuthenticated, logout } = useAuth();
+
   return (
     <div>
-      <div data-testid="loading">{isLoading ? 'Loading' : 'Not Loading'}</div>
-      <div data-testid="authenticated">{isAuthenticated ? 'Authenticated' : 'Not Authenticated'}</div>
-      <div data-testid="user">{user ? user.email : 'No User'}</div>
+      <p>{isLoading ? 'Loading' : 'Ready'}</p>
+      <p>{isAuthenticated ? 'Signed in' : 'Signed out'}</p>
+      <p>{user ? user.email : 'No user'}</p>
+      {user?.linkedin?.isConnected && <p>LinkedIn connected</p>}
+      <button onClick={logout}>Log out</button>
     </div>
   );
 }
 
+const renderWithAuth = () =>
+  render(
+    <AuthProvider>
+      <TestComponent />
+    </AuthProvider>
+  );
+
+const setPath = (path: string) => window.history.pushState({}, '', path);
+
 describe('Session Persistence', () => {
-  let mockPush: jest.Mock;
-  
   beforeEach(() => {
-    mockPush = jest.fn();
-    (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
-    (global.fetch as jest.Mock).mockClear();
-    
-    // Clear cookies
-    Object.defineProperty(document, 'cookie', {
-      writable: true,
-      value: '',
-    });
+    fetchMock.mockReset();
+    mockPush.mockReset();
+    setPath('/');
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    jest.restoreAllMocks();
+    jest.useRealTimers();
   });
 
-  it('should validate session on app load with valid token', async () => {
-    // Set up a valid token cookie
-    const validToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ0ZXN0LTEyMyIsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsImlhdCI6MTcwOTQ4MTYwMCwiZXhwIjo5OTk5OTk5OTk5fQ.test';
-    Object.defineProperty(document, 'cookie', {
-      writable: true,
-      value: `auth_token=${validToken}`,
-    });
+  it('restores the session from the profile API on load', async () => {
+    fetchMock.mockResolvedValueOnce(ok(profile));
+    renderWithAuth();
 
-    // Mock successful profile fetch
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        success: true,
-        user: {
-          id: 'test-123',
-          email: 'test@example.com',
-          name: 'Test User',
-        },
-      }),
-    });
+    expect(screen.getByText('Loading')).toBeInTheDocument();
+    expect(await screen.findByText('Ready')).toBeInTheDocument();
 
-    render(
-      <AuthProvider>
-        <TestComponent />
-      </AuthProvider>
+    expect(screen.getByText('Signed in')).toBeInTheDocument();
+    expect(screen.getByText('test@example.com')).toBeInTheDocument();
+    expect(screen.getByText('LinkedIn connected')).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/profile',
+      expect.objectContaining({ method: 'GET', credentials: 'include' })
     );
-
-    // Initially loading
-    expect(screen.getByTestId('loading')).toHaveTextContent('Loading');
-
-    // Wait for session validation
-    await waitFor(() => {
-      expect(screen.getByTestId('loading')).toHaveTextContent('Not Loading');
-    });
-
-    // Should be authenticated
-    expect(screen.getByTestId('authenticated')).toHaveTextContent('Authenticated');
-    expect(screen.getByTestId('user')).toHaveTextContent('test@example.com');
   });
 
-  it('should handle expired token on app load', async () => {
-    // Set up an expired token (exp in the past)
-    const expiredToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ0ZXN0LTEyMyIsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsImlhdCI6MTcwOTQ4MTYwMCwiZXhwIjoxfQ.test';
-    Object.defineProperty(document, 'cookie', {
-      writable: true,
-      value: `auth_token=${expiredToken}`,
-    });
+  it('stays signed out when the profile API rejects the session', async () => {
+    fetchMock.mockResolvedValueOnce(unauthorized());
+    renderWithAuth();
 
-    render(
-      <AuthProvider>
-        <TestComponent />
-      </AuthProvider>
-    );
-
-    // Wait for session validation
-    await waitFor(() => {
-      expect(screen.getByTestId('loading')).toHaveTextContent('Not Loading');
-    });
-
-    // Should not be authenticated
-    expect(screen.getByTestId('authenticated')).toHaveTextContent('Not Authenticated');
-    expect(screen.getByTestId('user')).toHaveTextContent('No User');
-
-    // Should not call API for expired token
-    expect(global.fetch).not.toHaveBeenCalled();
+    expect(await screen.findByText('Ready')).toBeInTheDocument();
+    expect(screen.getByText('Signed out')).toBeInTheDocument();
+    expect(screen.getByText('No user')).toBeInTheDocument();
   });
 
-  it('should handle missing token on app load', async () => {
-    // No token in cookie
-    Object.defineProperty(document, 'cookie', {
-      writable: true,
-      value: '',
-    });
+  it('stays signed out when the profile API cannot be reached', async () => {
+    fetchMock.mockRejectedValueOnce(new Error('network down'));
+    renderWithAuth();
 
-    render(
-      <AuthProvider>
-        <TestComponent />
-      </AuthProvider>
-    );
-
-    // Wait for session validation
-    await waitFor(() => {
-      expect(screen.getByTestId('loading')).toHaveTextContent('Not Loading');
-    });
-
-    // Should not be authenticated
-    expect(screen.getByTestId('authenticated')).toHaveTextContent('Not Authenticated');
-    expect(screen.getByTestId('user')).toHaveTextContent('No User');
-
-    // Should not call API when no token
-    expect(global.fetch).not.toHaveBeenCalled();
+    expect(await screen.findByText('Ready')).toBeInTheDocument();
+    expect(screen.getByText('Signed out')).toBeInTheDocument();
   });
 
-  it('should handle invalid token response from API', async () => {
-    // Set up a token
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ0ZXN0LTEyMyIsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsImlhdCI6MTcwOTQ4MTYwMCwiZXhwIjo5OTk5OTk5OTk5fQ.test';
-    Object.defineProperty(document, 'cookie', {
-      writable: true,
-      value: `auth_token=${token}`,
+  it('stays signed out when the profile response has no user', async () => {
+    fetchMock.mockResolvedValueOnce(ok({ success: false }));
+    renderWithAuth();
+
+    expect(await screen.findByText('Ready')).toBeInTheDocument();
+    expect(screen.getByText('Signed out')).toBeInTheDocument();
+  });
+
+  it('sends a signed-out visitor on a dashboard page to the login page', async () => {
+    setPath('/dashboard/scheduler');
+    fetchMock.mockResolvedValueOnce(unauthorized());
+    renderWithAuth();
+
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login'));
+  });
+
+  it('leaves a signed-out visitor on a public page where they are', async () => {
+    setPath('/pricing');
+    fetchMock.mockResolvedValueOnce(unauthorized());
+    renderWithAuth();
+
+    expect(await screen.findByText('Ready')).toBeInTheDocument();
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('does not redirect a signed-in user on a dashboard page', async () => {
+    setPath('/dashboard');
+    fetchMock.mockResolvedValueOnce(ok(profile));
+    renderWithAuth();
+
+    expect(await screen.findByText('Signed in')).toBeInTheDocument();
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('signs out when the periodic check finds the session has expired', async () => {
+    jest.useFakeTimers();
+    fetchMock.mockResolvedValueOnce(ok(profile));
+    renderWithAuth();
+    expect(await screen.findByText('Signed in')).toBeInTheDocument();
+
+    fetchMock.mockResolvedValueOnce(unauthorized());
+    await act(async () => {
+      jest.advanceTimersByTime(5 * 60 * 1000);
     });
 
-    // Mock 401 response (invalid token)
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: false,
-      status: 401,
+    expect(screen.getByText('Signed out')).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the session when the periodic check cannot reach the server', async () => {
+    jest.useFakeTimers();
+    fetchMock.mockResolvedValueOnce(ok(profile));
+    renderWithAuth();
+    expect(await screen.findByText('Signed in')).toBeInTheDocument();
+
+    fetchMock.mockRejectedValueOnce(new Error('offline'));
+    await act(async () => {
+      jest.advanceTimersByTime(5 * 60 * 1000);
     });
 
-    render(
-      <AuthProvider>
-        <TestComponent />
-      </AuthProvider>
+    expect(screen.getByText('Signed in')).toBeInTheDocument();
+  });
+
+  it('signs out when another tab logs out', async () => {
+    setPath('/dashboard');
+    fetchMock.mockResolvedValueOnce(ok(profile));
+    renderWithAuth();
+    expect(await screen.findByText('Signed in')).toBeInTheDocument();
+
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', { key: 'auth_logout', newValue: '1' }));
+    });
+
+    expect(screen.getByText('Signed out')).toBeInTheDocument();
+    expect(mockPush).toHaveBeenCalledWith('/login');
+  });
+
+  it('picks up the session when another tab logs in', async () => {
+    fetchMock.mockResolvedValueOnce(unauthorized());
+    renderWithAuth();
+    expect(await screen.findByText('Signed out')).toBeInTheDocument();
+
+    fetchMock.mockResolvedValueOnce(ok(profile));
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', { key: 'auth_login', newValue: '1' }));
+    });
+
+    expect(await screen.findByText('Signed in')).toBeInTheDocument();
+    expect(screen.getByText('test@example.com')).toBeInTheDocument();
+  });
+
+  it('logs out through the API, tells other tabs and goes to the login page', async () => {
+    fetchMock.mockResolvedValueOnce(ok(profile));
+    renderWithAuth();
+    expect(await screen.findByText('Signed in')).toBeInTheDocument();
+
+    const setItem = jest.spyOn(Storage.prototype, 'setItem');
+    fetchMock.mockResolvedValueOnce(ok({ success: true }));
+    fireEvent.click(screen.getByRole('button', { name: 'Log out' }));
+
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login'));
+    expect(screen.getByText('Signed out')).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      '/api/auth/logout',
+      expect.objectContaining({ method: 'POST', credentials: 'include' })
     );
+    expect(setItem).toHaveBeenCalledWith('auth_logout', expect.any(String));
+  });
 
-    // Wait for session validation
-    await waitFor(() => {
-      expect(screen.getByTestId('loading')).toHaveTextContent('Not Loading');
-    });
+  it('still signs out locally when the logout API fails', async () => {
+    fetchMock.mockResolvedValueOnce(ok(profile));
+    renderWithAuth();
+    expect(await screen.findByText('Signed in')).toBeInTheDocument();
 
-    // Should not be authenticated
-    expect(screen.getByTestId('authenticated')).toHaveTextContent('Not Authenticated');
-    expect(screen.getByTestId('user')).toHaveTextContent('No User');
+    fetchMock.mockRejectedValueOnce(new Error('network down'));
+    fireEvent.click(screen.getByRole('button', { name: 'Log out' }));
+
+    await waitFor(() => expect(screen.getByText('Signed out')).toBeInTheDocument());
+    expect(mockPush).toHaveBeenCalledWith('/login');
   });
 });
