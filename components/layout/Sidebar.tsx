@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
+import { ZetcaLogo } from './ZetcaLogo';
 import { useState } from 'react';
 
 interface NavItem {
@@ -64,19 +65,8 @@ export default function Sidebar({ className = '' }: SidebarProps) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="h-[78px] px-[30px] flex items-center border-b border-white/5">
-            <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gradient-to-br from-indigo-500 to-blue-500 shrink-0 shadow-[0_6px_16px_rgba(79,70,229,0.35)]">
-                <Icon icon="lucide:box" width={20} height={20} className="text-white" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1">
-                  <span className="text-[19px] font-bold text-white leading-none">Zetca</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0 -mt-1.5" aria-hidden="true" />
-                </div>
-                <p className="text-[9.5px] font-semibold text-slate-400 tracking-[0.12em] mt-1">
-                  CONTENT OS
-                </p>
-              </div>
+            <Link href="/" className="hover:opacity-80 transition-opacity" aria-label="Zetca home">
+              <ZetcaLogo tone="light" />
             </Link>
           </div>
 

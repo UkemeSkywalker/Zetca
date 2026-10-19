@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Icon } from '@iconify/react';
+import { ZetcaLogo } from './ZetcaLogo';
 
 interface FooterLink {
   label: string;
@@ -40,8 +41,8 @@ export default function Footer({ className = '' }: FooterProps) {
     <footer className={`bg-on-surface text-surface-container-high ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col md:flex-row justify-between items-center space-y-6 md:space-y-0 mb-8">
-          <Link href="/" className="text-2xl font-bold font-heading text-surface-container-lowest">
-            Zetca
+          <Link href="/" className="hover:opacity-80 transition-opacity" aria-label="Zetca home">
+            <ZetcaLogo tone="light" />
           </Link>
 
           <nav className="flex flex-wrap justify-center gap-6">

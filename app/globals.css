@@ -79,6 +79,12 @@
   to { transform: rotate(360deg); }
 }
 
+/* A copy card arriving while the copywriter writes */
+@keyframes copyIn {
+  from { transform: translateY(8px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
