@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable -- developer-only page; proxy.ts returns 404 for it in production */
+
 /**
  * Debug page to diagnose authentication issues
  */

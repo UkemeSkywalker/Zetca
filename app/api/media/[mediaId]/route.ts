@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { S3Client, type S3ClientConfig, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { DynamoDBClient, type DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, ScanCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { withAuth } from '@/lib/middleware/withAuth';
 import { MediaRepository } from '@/lib/db/mediaRepository';
@@ -14,7 +14,7 @@ async function clearPostMediaReferences(
   mediaId: string,
   cfg: ReturnType<typeof getConfig>
 ): Promise<void> {
-  const clientConfig: Record<string, any> = { region: cfg.awsRegion };
+  const clientConfig: DynamoDBClientConfig = { region: cfg.awsRegion };
   if (cfg.awsAccessKeyId && cfg.awsSecretAccessKey) {
     clientConfig.credentials = {
       accessKeyId: cfg.awsAccessKeyId,
@@ -77,7 +77,7 @@ async function deleteMediaHandler(
     await clearPostMediaReferences(mediaId, cfg);
 
     // Delete S3 object
-    const s3ClientConfig: Record<string, any> = { region: cfg.awsRegion };
+    const s3ClientConfig: S3ClientConfig = { region: cfg.awsRegion };
     if (cfg.awsAccessKeyId && cfg.awsSecretAccessKey) {
       s3ClientConfig.credentials = {
         accessKeyId: cfg.awsAccessKeyId,

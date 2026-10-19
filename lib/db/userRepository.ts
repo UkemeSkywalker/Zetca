@@ -3,7 +3,7 @@
  * Handles all database operations for user data
  */
 
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, type DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient,
   PutCommand,
@@ -46,7 +46,7 @@ export class UserRepository {
 
   constructor() {
     const cfg = getConfig();
-    const clientConfig: Record<string, any> = {
+    const clientConfig: DynamoDBClientConfig = {
       region: cfg.awsRegion,
     };
 
@@ -170,7 +170,7 @@ export class UserRepository {
     // Build update expression dynamically
     const updateExpressions: string[] = [];
     const expressionAttributeNames: Record<string, string> = {};
-    const expressionAttributeValues: Record<string, any> = {};
+    const expressionAttributeValues: Record<string, unknown> = {};
 
     // Always update lastModified
     updateExpressions.push('#lastModified = :lastModified');
@@ -226,7 +226,7 @@ export class UserRepository {
       '#linkedinConnectedAt': 'linkedinConnectedAt',
       '#lastModified': 'lastModified',
     };
-    const expressionAttributeValues: Record<string, any> = {
+    const expressionAttributeValues: Record<string, unknown> = {
       ':linkedinSub': linkedinData.linkedinSub,
       ':linkedinAccessToken': linkedinData.linkedinAccessToken,
       ':linkedinName': linkedinData.linkedinName,

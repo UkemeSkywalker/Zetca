@@ -92,7 +92,7 @@ async function loginUser(email: string, password: string): Promise<string> {
   return data.token;
 }
 
-async function generateStrategy(input: StrategyInput, token: string): Promise<any> {
+async function generateStrategy(input: StrategyInput, token: string): Promise<Record<string, unknown>> {
   console.log(`\n🤖 Generating strategy for ${input.brandName}...`);
   
   const response = await fetch(`${NEXTJS_API_URL}/api/strategy/generate`, {
@@ -119,7 +119,7 @@ async function generateStrategy(input: StrategyInput, token: string): Promise<an
   return data;
 }
 
-async function listStrategies(token: string): Promise<any[]> {
+async function listStrategies(token: string): Promise<Record<string, unknown>[]> {
   console.log(`\n📋 Fetching strategy list...`);
   
   const response = await fetch(`${NEXTJS_API_URL}/api/strategy/list`, {
@@ -139,7 +139,7 @@ async function listStrategies(token: string): Promise<any[]> {
   return data;
 }
 
-async function getStrategy(strategyId: string, token: string): Promise<any> {
+async function getStrategy(strategyId: string, token: string): Promise<Record<string, unknown>> {
   console.log(`\n🔍 Fetching strategy ${strategyId}...`);
   
   const response = await fetch(`${NEXTJS_API_URL}/api/strategy/${strategyId}`, {
@@ -195,7 +195,7 @@ async function runVerification() {
 
     // Step 6: Verify User B cannot access User A's strategy by ID (403)
     console.log('\n📍 STEP 6: Verify User B cannot access User A\'s strategy by ID');
-    const crossUserAccess = await getStrategy(strategyARecord.id, tokenB);
+    const crossUserAccess = await getStrategy(String(strategyARecord.id), tokenB);
     
     if (crossUserAccess.status !== 403 && crossUserAccess.status !== 404) {
       throw new Error(`Expected 403 or 404 for cross-user access, got ${crossUserAccess.status}`);

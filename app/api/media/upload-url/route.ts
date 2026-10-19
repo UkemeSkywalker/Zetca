@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, type S3ClientConfig, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
 import { withAuth } from '@/lib/middleware/withAuth';
@@ -75,7 +75,7 @@ async function uploadUrlHandler(req: NextRequest, userId: string): Promise<Respo
     });
 
     // Generate presigned PUT URL
-    const s3ClientConfig: Record<string, any> = { region: cfg.awsRegion };
+    const s3ClientConfig: S3ClientConfig = { region: cfg.awsRegion };
     if (cfg.awsAccessKeyId && cfg.awsSecretAccessKey) {
       s3ClientConfig.credentials = {
         accessKeyId: cfg.awsAccessKeyId,

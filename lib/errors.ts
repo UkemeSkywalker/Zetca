@@ -84,7 +84,7 @@ export const AuthErrors = {
 /**
  * Logs error details server-side for debugging
  */
-export function logError(error: Error | AuthError, context?: Record<string, any>) {
+export function logError(error: Error | AuthError, context?: Record<string, unknown>) {
   const timestamp = new Date().toISOString();
   const errorDetails = {
     timestamp,

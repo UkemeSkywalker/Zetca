@@ -20,6 +20,8 @@ services:
     mem_limit: 64m
 
   frontend:
+    # CI deploys pull a prebuilt image from ECR (APP_IMAGE); otherwise it's built from this folder
+    image: ${APP_IMAGE:-zetca-frontend:local}
     build:
       context: .
       dockerfile: Dockerfile

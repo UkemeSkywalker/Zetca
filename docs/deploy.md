@@ -35,13 +35,31 @@ Production runs on a single Lightsail server: the app's Docker image plus Caddy,
 
 ## Deploying
 
+**Automatic (normal path).** Every push to `master` runs `.github/workflows/deploy.yml`:
+
+1. CI: lint, type-check, tests and build (`ci.yml`, which also runs on every pull request).
+2. Build the Docker image and push it to ECR as `zetca:<commit sha>`. ECR keeps the last 10 images.
+3. Copy that commit's `docker-compose.yml`, `Caddyfile` and `scripts/remote-release.sh` to the server, which pulls the image and swaps it in.
+4. Check that https://zetca.pro/login answers.
+
+GitHub signs in to AWS through OIDC (the `zetca-prod-github-deploy` role, which can only push to the `zetca` ECR repo), so no AWS keys are stored in GitHub. The repository holds:
+
+- **Variables:** `AWS_DEPLOY_ROLE_ARN`, `ECR_REPOSITORY_URL` and `DEPLOY_HOST`.
+- **Secrets, in the `production` environment:** `DEPLOY_SSH_KEY` (a key used only by CI) and `DEPLOY_KNOWN_HOSTS` (the server's pinned fingerprint).
+
+**Roll back** by re-running the Deploy workflow for an earlier commit, or on the server:
+
+```bash
+IMAGE=<ecr url>:<older sha> bash /opt/zetca/app/scripts/remote-release.sh
+```
+
+That form needs a release directory first. The simplest route is re-running the workflow from GitHub's Actions tab.
+
+**Manual fallback** (builds on the server, no ECR):
+
 ```bash
 DEPLOY_HOST=$(terraform -chdir=terraform output -raw app_server_ip) scripts/deploy.sh
 ```
-
-This deploys `origin/master`. Set `DEPLOY_REF=<commit>` to deploy something else.
-
-The image is built on the server while the current version keeps serving, then swapped in. The previous release is kept at `/opt/zetca/app.previous`.
 
 ## On the server
 

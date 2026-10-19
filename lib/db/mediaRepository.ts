@@ -3,7 +3,7 @@
  * Handles all database operations for media metadata
  */
 
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, type DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient,
   PutCommand,
@@ -23,7 +23,7 @@ export class MediaRepository {
 
   constructor() {
     const cfg = getConfig();
-    const clientConfig: Record<string, any> = {
+    const clientConfig: DynamoDBClientConfig = {
       region: cfg.awsRegion,
     };
 

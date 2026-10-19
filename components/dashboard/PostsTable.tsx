@@ -108,8 +108,8 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
       setError(null);
       const data = await listPosts();
       setPosts(data);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load posts');
+    } catch (err) {
+      setError((err as Error).message || 'Failed to load posts');
     } finally {
       setLoading(false);
     }
@@ -146,8 +146,8 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
       setError(null);
       await publishPost(postId);
       await fetchPosts();
-    } catch (err: any) {
-      setError(err.message || 'Failed to publish post');
+    } catch (err) {
+      setError((err as Error).message || 'Failed to publish post');
     } finally {
       setPublishingPostId(null);
     }
