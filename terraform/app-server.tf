@@ -25,10 +25,10 @@ resource "aws_lightsail_instance" "app" {
   bundle_id         = var.lightsail_bundle_id
   key_pair_name     = aws_lightsail_key_pair.app[0].name
 
-  # Runs once, as root, on first boot
+  # Runs once, as root, on first boot. Lightsail appends this to its own
+  # setup script and runs it with sh, so it must be plain POSIX sh (no bash-isms).
   user_data = <<-EOT
-    #!/bin/bash
-    set -euxo pipefail
+    set -eux
     # 2 GB of swap, so building the app on a 2 GB server has headroom
     if [ ! -f /swapfile ]; then
       fallocate -l 2G /swapfile
@@ -50,6 +50,11 @@ resource "aws_lightsail_instance" "app" {
     Name        = local.app_name
     Environment = local.environment
     ManagedBy   = "Terraform"
+  }
+
+  lifecycle {
+    # Changing user_data would replace the server (and its disk); it only matters on first boot
+    ignore_changes = [user_data]
   }
 }
 
@@ -73,18 +78,27 @@ resource "aws_lightsail_instance_public_ports" "app" {
     protocol  = "tcp"
     from_port = 22
     to_port   = 22
+    # Written out so Terraform doesn\'t see a change on every plan
+    cidrs      = ["0.0.0.0/0"]
+    ipv6_cidrs = ["::/0"]
   }
 
   port_info {
     protocol  = "tcp"
     from_port = 80
     to_port   = 80
+    # Written out so Terraform doesn\'t see a change on every plan
+    cidrs      = ["0.0.0.0/0"]
+    ipv6_cidrs = ["::/0"]
   }
 
   port_info {
     protocol  = "tcp"
     from_port = 443
     to_port   = 443
+    # Written out so Terraform doesn\'t see a change on every plan
+    cidrs      = ["0.0.0.0/0"]
+    ipv6_cidrs = ["::/0"]
   }
 }
 
