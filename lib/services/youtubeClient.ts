@@ -6,6 +6,10 @@
 import { getConfig } from '../config';
 
 /** Upload videos, and manage playlists, thumbnails, captions and video settings */
+/** Pages the connect flow may return to (anything else goes to the profile) */
+export const YOUTUBE_RETURN_PATHS = ['/dashboard/profile', '/dashboard/scheduler/youtube/new'] as const;
+export const YOUTUBE_RETURN_COOKIE = 'youtube_oauth_return';
+
 export const YOUTUBE_SCOPES = [
   'https://www.googleapis.com/auth/youtube.upload',
   'https://www.googleapis.com/auth/youtube.force-ssl',

@@ -13,6 +13,7 @@ import { withRateLimit } from '@/lib/middleware/withRateLimit';
 import { getConfig } from '@/lib/config';
 import { buildAuthUrl } from '@/lib/services/youtubeClient';
 import { logError } from '@/lib/errors';
+import { YOUTUBE_RETURN_COOKIE, YOUTUBE_RETURN_PATHS } from '@/lib/services/youtubeClient';
 
 async function youtubeOAuthHandler(req: NextRequest, userId: string): Promise<Response> {
   try {
@@ -29,6 +30,17 @@ async function youtubeOAuthHandler(req: NextRequest, userId: string): Promise<Re
       maxAge: 10 * 60,
       path: '/',
     });
+    // Where to land after connecting; only known pages, so it can't be an open redirect
+    const returnTo = req.nextUrl.searchParams.get('return');
+    if (returnTo && (YOUTUBE_RETURN_PATHS as readonly string[]).includes(returnTo)) {
+      response.cookies.set(YOUTUBE_RETURN_COOKIE, returnTo, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 10 * 60,
+        path: '/',
+      });
+    }
     return response;
   } catch (error) {
     logError(error as Error, { endpoint: '/api/auth/youtube', method: 'GET', userId });

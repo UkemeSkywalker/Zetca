@@ -10,6 +10,7 @@ import {
   GetCommand,
   QueryCommand,
   DeleteCommand,
+  UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { getConfig } from '../config';
 import { MediaRecord } from '../../types/media';
@@ -84,6 +85,39 @@ export class MediaRepository {
     );
 
     return (result.Items as MediaRecord[]) || [];
+  }
+
+  /**
+   * Mark a multipart video upload as finished. Only an 'uploading' record
+   * changes, so a repeated or late complete call can't overwrite it.
+   */
+  async markVideoUploaded(
+    mediaId: string,
+    details: { fileSize: number; durationSeconds?: number; width?: number; height?: number }
+  ): Promise<void> {
+    const names: Record<string, string> = { '#status': 'status' };
+    const values: Record<string, unknown> = {
+      ':ready': 'ready',
+      ':uploading': 'uploading',
+      ':fileSize': details.fileSize,
+    };
+    const sets = ['#status = :ready', 'fileSize = :fileSize'];
+    for (const key of ['durationSeconds', 'width', 'height'] as const) {
+      if (details[key] !== undefined) {
+        sets.push(`${key} = :${key}`);
+        values[`:${key}`] = details[key];
+      }
+    }
+    await this.docClient.send(
+      new UpdateCommand({
+        TableName: this.tableName,
+        Key: { mediaId },
+        UpdateExpression: `SET ${sets.join(', ')} REMOVE uploadId`,
+        ConditionExpression: '#status = :uploading',
+        ExpressionAttributeNames: names,
+        ExpressionAttributeValues: values,
+      })
+    );
   }
 
   /**
