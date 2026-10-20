@@ -15,7 +15,7 @@ const customJestConfig = {
   testPathIgnorePatterns: [
     '/node_modules/',
     '/.next/',
-    '/.claude/',
+    '<rootDir>/.claude/',
     // These suites were written for the pages before the dashboard redesign and
     // fail against the current UI (they failed before any recent change too).
     // They're skipped so CI is meaningful; bring each back once it's rewritten.

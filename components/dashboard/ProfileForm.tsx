@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { UserProfile, ConnectedAccount, LinkedInProfile } from '@/types';
+import type { YouTubeConnection } from '@/types/user';
 import { Icon } from '@iconify/react';
 import { useAuth } from '@/context/AuthContext';
 import { useSearchParams } from 'next/navigation';
@@ -39,6 +40,8 @@ const ProfileFormInner: React.FC<ProfileFormProps> = ({ className = '' }) => {
 
   // LinkedIn connection data from API
   const [linkedinData, setLinkedinData] = useState<LinkedInProfile>({ isConnected: false });
+  const [youtubeData, setYoutubeData] = useState<YouTubeConnection>({ isConnected: false });
+  const [youtubeBusy, setYoutubeBusy] = useState(false);
 
   // Editing state for each field
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -71,6 +74,9 @@ const ProfileFormInner: React.FC<ProfileFormProps> = ({ className = '' }) => {
             if (data.user.linkedin) {
               setLinkedinData(data.user.linkedin);
             }
+            if (data.user.youtube) {
+              setYoutubeData(data.user.youtube);
+            }
           }
         } else if (response.status === 401) {
           // Unauthorized - will be handled by AuthContext
@@ -90,10 +96,34 @@ const ProfileFormInner: React.FC<ProfileFormProps> = ({ className = '' }) => {
     fetchProfile();
   }, []);
 
-  // Handle LinkedIn OAuth query params on mount
+  // Handle LinkedIn and YouTube OAuth query params on mount
   useEffect(() => {
     const linkedinStatus = searchParams.get('linkedin');
     const linkedinError = searchParams.get('linkedin_error');
+    const youtubeStatus = searchParams.get('youtube');
+    const youtubeError = searchParams.get('youtube_error');
+
+    if (youtubeStatus === 'connected') {
+      setConnectionMessage('YouTube channel connected!');
+      setTimeout(() => setConnectionMessage(''), 5000);
+      return;
+    }
+    if (youtubeError) {
+      const youtubeMessages: Record<string, string> = {
+        denied: 'YouTube access was not granted.',
+        state_mismatch: 'Connecting YouTube failed. Please try again.',
+        missing_scope: 'Please allow all the YouTube permissions Zetca asks for, so it can upload and schedule videos.',
+        no_channel: 'That Google account has no YouTube channel. Create a channel on YouTube, or pick another account.',
+        not_configured: 'YouTube connection isn\'t set up on this server yet.',
+      };
+      setConnectionMessage('');
+      setErrors(prev => ({ ...prev, general: youtubeMessages[youtubeError] || 'Failed to connect YouTube. Please try again.' }));
+      setTimeout(() => setErrors(prev => {
+        const { general, ...rest } = prev;
+        return rest;
+      }), 8000);
+      return;
+    }
 
     if (linkedinStatus === 'connected') {
       setConnectionMessage('LinkedIn connected successfully!');
@@ -278,6 +308,29 @@ const ProfileFormInner: React.FC<ProfileFormProps> = ({ className = '' }) => {
     setTimeout(() => {
       setConnectionMessage('');
     }, 3000);
+  };
+
+  // Connect (redirect to Google) or disconnect the YouTube channel
+  const handleYouTubeToggle = async () => {
+    if (!youtubeData.isConnected) {
+      window.location.href = '/api/auth/youtube';
+      return;
+    }
+    setYoutubeBusy(true);
+    try {
+      const response = await fetch('/api/auth/youtube/disconnect', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('disconnect failed');
+      setYoutubeData({ isConnected: false });
+      setConnectionMessage('YouTube disconnected.');
+      setTimeout(() => setConnectionMessage(''), 5000);
+    } catch {
+      setErrors(prev => ({ ...prev, general: 'Failed to disconnect YouTube. Please try again.' }));
+    } finally {
+      setYoutubeBusy(false);
+    }
   };
 
   // Platform icons
@@ -469,6 +522,47 @@ const ProfileFormInner: React.FC<ProfileFormProps> = ({ className = '' }) => {
                   onClick={() => handleAccountToggle('linkedin')}
                 >
                   {linkedinData.isConnected ? 'Disconnect' : 'Connect'}
+                </Button>
+              </div>
+            </div>
+
+            {/* YouTube - uses real data from API */}
+            <div className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-3 flex-1 min-w-0">
+                  {youtubeData.isConnected && youtubeData.thumbnailUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={youtubeData.thumbnailUrl}
+                      alt={`${youtubeData.channelTitle || 'YouTube'} channel picture`}
+                      className="w-10 h-10 rounded-full object-cover mt-1"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <Icon icon="mdi:youtube" className="text-3xl text-[#FF0000] mt-1" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-medium text-gray-900">YouTube</p>
+                      <StatusBadge status={youtubeData.isConnected ? 'complete' : 'not-started'} />
+                    </div>
+                    {youtubeData.isConnected ? (
+                      <p className="text-sm text-gray-600 truncate">
+                        {youtubeData.channelTitle}
+                        {youtubeData.customUrl ? ` · ${youtubeData.customUrl}` : ''}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-gray-500">Upload and schedule videos to your channel</p>
+                    )}
+                  </div>
+                </div>
+                <Button
+                  variant={youtubeData.isConnected ? 'outline' : 'primary'}
+                  size="sm"
+                  onClick={handleYouTubeToggle}
+                  disabled={youtubeBusy}
+                >
+                  {youtubeData.isConnected ? (youtubeBusy ? 'Disconnecting…' : 'Disconnect') : 'Connect'}
                 </Button>
               </div>
             </div>

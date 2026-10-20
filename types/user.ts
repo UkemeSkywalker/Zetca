@@ -24,6 +24,16 @@ export interface LinkedInProfile {
   connectedAt?: string;
 }
 
+/** A connected YouTube channel, as the profile API returns it (no tokens) */
+export interface YouTubeConnection {
+  isConnected: boolean;
+  channelId?: string;
+  channelTitle?: string;
+  customUrl?: string;
+  thumbnailUrl?: string;
+  connectedAt?: string;
+}
+
 export interface GeneratedImage {
   id: string;
   prompt: string;

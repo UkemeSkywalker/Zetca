@@ -35,7 +35,28 @@ export interface UserRecord {
   linkedinPictureUrl?: string;
   linkedinEmail?: string;
   linkedinConnectedAt?: string;
+
+  // YouTube OAuth fields (optional, set when user connects a channel)
+  youtubeChannelId?: string;
+  youtubeChannelTitle?: string;
+  youtubeChannelCustomUrl?: string;
+  youtubeChannelThumbnailUrl?: string;
+  /** Refresh token, encrypted with lib/crypto/tokenCipher (never returned to the browser) */
+  youtubeRefreshTokenEnc?: string;
+  youtubeScopes?: string[];
+  youtubeConnectedAt?: string;
 }
+
+/** Every YouTube attribute on the user item, for connect/disconnect */
+const YOUTUBE_FIELDS = [
+  'youtubeChannelId',
+  'youtubeChannelTitle',
+  'youtubeChannelCustomUrl',
+  'youtubeChannelThumbnailUrl',
+  'youtubeRefreshTokenEnc',
+  'youtubeScopes',
+  'youtubeConnectedAt',
+] as const;
 
 /**
  * UserRepository class for managing user data in DynamoDB
@@ -267,6 +288,68 @@ export class UserRepository {
     );
 
     return result.Attributes as UserRecord;
+  }
+
+  /** Store a connected YouTube channel (replacing any previous one) */
+  async connectYouTube(
+    userId: string,
+    data: {
+      channelId: string;
+      channelTitle: string;
+      channelCustomUrl?: string;
+      channelThumbnailUrl?: string;
+      refreshTokenEnc: string;
+      scopes: string[];
+    }
+  ): Promise<void> {
+    const now = new Date().toISOString();
+    const values: Record<string, unknown> = {
+      youtubeChannelId: data.channelId,
+      youtubeChannelTitle: data.channelTitle,
+      youtubeRefreshTokenEnc: data.refreshTokenEnc,
+      youtubeScopes: data.scopes,
+      youtubeConnectedAt: now,
+    };
+    if (data.channelCustomUrl) values.youtubeChannelCustomUrl = data.channelCustomUrl;
+    if (data.channelThumbnailUrl) values.youtubeChannelThumbnailUrl = data.channelThumbnailUrl;
+    const removed = YOUTUBE_FIELDS.filter((f) => !(f in values));
+
+    const names: Record<string, string> = { '#lastModified': 'lastModified' };
+    const attrValues: Record<string, unknown> = { ':lastModified': now };
+    const sets = ['#lastModified = :lastModified'];
+    for (const [field, value] of Object.entries(values)) {
+      names[`#${field}`] = field;
+      attrValues[`:${field}`] = value;
+      sets.push(`#${field} = :${field}`);
+    }
+    removed.forEach((f) => (names[`#${f}`] = f));
+
+    await this.docClient.send(
+      new UpdateCommand({
+        TableName: this.tableName,
+        Key: { userId },
+        UpdateExpression: `SET ${sets.join(', ')}${removed.length ? ` REMOVE ${removed.map((f) => `#${f}`).join(', ')}` : ''}`,
+        ExpressionAttributeNames: names,
+        ExpressionAttributeValues: attrValues,
+        ConditionExpression: 'attribute_exists(userId)',
+      })
+    );
+  }
+
+  /** Remove the user's YouTube connection */
+  async disconnectYouTube(userId: string): Promise<void> {
+    const names: Record<string, string> = { '#lastModified': 'lastModified' };
+    YOUTUBE_FIELDS.forEach((f) => (names[`#${f}`] = f));
+    await this.docClient.send(
+      new UpdateCommand({
+        TableName: this.tableName,
+        Key: { userId },
+        UpdateExpression: `REMOVE ${YOUTUBE_FIELDS.map((f) => `#${f}`).join(', ')} SET #lastModified = :lastModified`,
+        ExpressionAttributeNames: names,
+        ExpressionAttributeValues: { ':lastModified': new Date().toISOString() },
+        ConditionExpression: 'attribute_exists(userId)',
+      })
+    );
   }
 
   /**
