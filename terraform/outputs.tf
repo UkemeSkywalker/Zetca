@@ -87,3 +87,8 @@ output "app_aws_secret_access_key" {
   value       = var.create_app_server ? aws_iam_access_key.app[0].secret : null
   sensitive   = true
 }
+
+output "dynamodb_youtube_videos_table_name" {
+  value       = aws_dynamodb_table.youtube_videos.name
+  description = "Name of the DynamoDB YouTube videos table"
+}

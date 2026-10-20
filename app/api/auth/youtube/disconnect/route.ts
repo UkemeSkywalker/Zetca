@@ -12,6 +12,7 @@ import { UserRepository } from '@/lib/db/userRepository';
 import { decryptToken } from '@/lib/crypto/tokenCipher';
 import { revokeToken } from '@/lib/services/youtubeClient';
 import { logError } from '@/lib/errors';
+import { forgetYouTubeAccess } from '@/lib/services/youtubeAccess';
 
 async function disconnectHandler(_req: NextRequest, userId: string): Promise<Response> {
   try {
@@ -26,6 +27,7 @@ async function disconnectHandler(_req: NextRequest, userId: string): Promise<Res
       }
     }
     await users.disconnectYouTube(userId);
+    forgetYouTubeAccess(userId);
     return NextResponse.json({ success: true });
   } catch (error) {
     logError(error as Error, { endpoint: '/api/auth/youtube/disconnect', method: 'POST', userId });

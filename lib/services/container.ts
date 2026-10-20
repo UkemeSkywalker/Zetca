@@ -21,6 +21,8 @@ import { StrategistAgent } from '../agents/strategistAgent';
 import { MockStrategistAgent } from '../agents/mockStrategistAgent';
 import { KeywordAgent } from '../agents/keywordAgent';
 import { MockKeywordAgent } from '../agents/mockKeywordAgent';
+import { VideoWriterAgent } from '../agents/videoWriterAgent';
+import { MockVideoWriterAgent } from '../agents/mockVideoWriterAgent';
 import { QuizStrategistAgent } from '../agents/quizStrategistAgent';
 import { MockQuizStrategistAgent } from '../agents/mockQuizStrategistAgent';
 import { CopywriterAgent } from '../agents/copywriterAgent';
@@ -89,6 +91,20 @@ export const getKeywordAgent = memo(() => {
   }
   console.info(`Using REAL Keyword agent with Bedrock (region: ${cfg.awsRegion}, model: ${cfg.bedrockModelId})`);
   return new KeywordAgent({
+    awsRegion: cfg.awsRegion,
+    modelId: cfg.bedrockModelId,
+    awsAccessKeyId: cfg.awsAccessKeyId,
+    awsSecretAccessKey: cfg.awsSecretAccessKey,
+  });
+});
+
+export const getVideoWriterAgent = memo(() => {
+  const cfg = getConfig();
+  if (cfg.useMockAgent) {
+    console.info('Using MOCK agent for YouTube video copy (no AWS required)');
+    return new MockVideoWriterAgent();
+  }
+  return new VideoWriterAgent({
     awsRegion: cfg.awsRegion,
     modelId: cfg.bedrockModelId,
     awsAccessKeyId: cfg.awsAccessKeyId,
