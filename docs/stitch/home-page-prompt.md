@@ -9,7 +9,9 @@ Prompts for redesigning Zetca's public home page (https://zetca.pro) in [Google 
 - Coming soon: automatic publishing to YouTube, Instagram, Facebook, X and TikTok; **Graphic Designer**; **Video Editor**; **Analytics**.
 - The Copywriter already *writes* copy for X, Instagram, TikTok, LinkedIn, Facebook and YouTube. Only *auto-publishing* is limited to LinkedIn so far.
 
-**Before going live, confirm:** pricing (the prompt uses "Free during early access", replace it if you have real plans), the contact email (the prompt uses hello@zetca.pro, which needs email forwarding set up at Porkbun), and the FAQ answers.
+**Pricing:** Free ($0), Pro ($49/month), Enterprise (custom). Plan features that aren't built yet carry a "Coming soon" pill. Before launch, Zetca also needs a payment and free-trial system behind "Start free trial", and enforcement of the Free plan's 10-posts-per-month limit.
+
+**Contact:** hello@zetca.pro (set up email forwarding at Porkbun before launch).
 
 **How to use**
 1. Start a new Stitch project in **Web** mode.
@@ -66,7 +68,7 @@ Part 1 of the home page:
    - Headline (64px bold, two lines): "Your AI content team" with "content team" in indigo.
    - One paragraph (18px, max 2 lines): "Zetca plans your strategy, writes posts for every platform, schedules them and publishes for you. Design and video tools are coming soon."
    - Two buttons: solid indigo "Get started free" and secondary "See how it works".
-   - A muted line under the buttons: "Free during early access. No card needed."
+   - A muted line under the buttons: "Free plan available. No card needed."
    - Below, a large app screenshot in a rounded browser frame: the Copywriter workspace, with a grid of post cards on the left (X, Instagram and LinkedIn icons on the cards) and a chat panel on the right.
 
 3. "How it works": section title "From idea to published in four steps", then four cards in a row, each with a number circle, an outline icon, a title and one line:
@@ -111,8 +113,10 @@ Part 2 of the home page, continuing below "How it works":
 ```
 Part 3 of the home page, continuing below the feature highlights:
 
-7. "Pricing": section title "Free while we're in early access", one line: "Use every live feature at no cost. Paid plans will come later."
-   One centred white card (max-width 480px) with an indigo top border: plan name "Early access", price "$0" with "/month" in muted text, a list of 5 check items ("Strategist", "Copywriter", "Scheduler", "LinkedIn auto-publishing", "New tools as they launch"), and a full-width solid indigo button "Get started free".
+7. "Pricing": section title "Simple pricing", one line: "Start free. Upgrade when you're ready." Three white plan cards side by side; the middle one is raised slightly with an indigo border and a small solid indigo "Popular" pill on its top edge. Each card: plan name (28px bold), a one-line grey description, the price large with "/month" in muted text, a list of features with green check icons, and a button at the bottom. Features not built yet show a small amber "Coming soon" pill after the text.
+   - "Free": "Perfect for getting started". "$0" /month. Features: "Up to 10 posts per month", "Basic AI strategy", "2 social media accounts", "Email support", "Basic analytics" (Coming soon). Secondary button "Get started".
+   - "Pro" (Popular): "Best for growing businesses". "$49" /month. Features: "Unlimited posts", "Advanced AI strategy", "Unlimited social accounts", "Priority support", "Advanced analytics" (Coming soon), "AI image generation" (Coming soon), "Team collaboration" (Coming soon), "Custom branding" (Coming soon). Solid indigo button "Start free trial".
+   - "Enterprise": "For large organizations". "Custom" price. Features: "Everything in Pro", "Dedicated account manager", "Custom integrations", "SLA guarantee", "Advanced security", "White-label options" (Coming soon). Secondary button "Contact sales".
 
 8. "FAQ": section title "Questions, answered". An accordion of 5 rows, the first one open:
    - "Which platforms can Zetca publish to?": "LinkedIn today. YouTube, Instagram, Facebook, X and TikTok are coming soon, and Zetca already writes posts for all of them."
@@ -121,7 +125,7 @@ Part 3 of the home page, continuing below the feature highlights:
    - "Is my data safe?"
    - "What are the Graphic Designer and Video Editor?"
 
-9. Final call to action: a wide indigo rounded panel (solid #4F46E5) with white text: headline "Start creating with Zetca", one line "Free during early access.", and a white button with indigo text "Get started free".
+9. Final call to action: a wide indigo rounded panel (solid #4F46E5) with white text: headline "Start creating with Zetca", one line "Start free, no card needed.", and a white button with indigo text "Get started free".
 
 10. Footer on white: the Zetca logo and one muted line "Your AI content team." on the left; link columns "Product" (Features, Pricing, FAQ), "Company" (Contact: hello@zetca.pro), "Legal" (Privacy Policy, Terms of Service). A bottom line: "© 2026 Zetca. All rights reserved."
 ```
