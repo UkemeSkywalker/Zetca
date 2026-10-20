@@ -38,6 +38,18 @@ export async function GET(req: NextRequest) {
           }
         : { isConnected: false };
 
+      // YouTube channel (never expose the refresh token)
+      const youtube = user.youtubeChannelId
+        ? {
+            isConnected: true,
+            channelId: user.youtubeChannelId,
+            channelTitle: user.youtubeChannelTitle,
+            customUrl: user.youtubeChannelCustomUrl,
+            thumbnailUrl: user.youtubeChannelThumbnailUrl,
+            connectedAt: user.youtubeConnectedAt,
+          }
+        : { isConnected: false };
+
       // Return user data without password hash
       return NextResponse.json({
         success: true,
@@ -48,6 +60,7 @@ export async function GET(req: NextRequest) {
           company: user.company,
           bio: user.bio,
           linkedin,
+          youtube,
         },
       });
     } catch (error) {
