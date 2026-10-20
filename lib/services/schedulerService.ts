@@ -90,6 +90,7 @@ export class SchedulerService {
     if (media.userId !== userId) {
       throw new ApiError('Access denied: You do not have permission to use this media', 403);
     }
+    if (media.status === 'uploading') throw new ApiError('This video is still uploading', 400);
   }
 
   /** Fetch a strategy and verify ownership. Throws 404/403 on failure. */

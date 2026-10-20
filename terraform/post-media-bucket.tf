@@ -47,6 +47,19 @@ resource "aws_s3_bucket_lifecycle_configuration" "post_media" {
       storage_class = "STANDARD_IA"
     }
   }
+
+  # Large videos upload in parts; parts of an upload that never finished
+  # (tab closed, network gone) are billed until they're cleaned up
+  rule {
+    id     = "abort-incomplete-multipart-uploads"
+    status = "Enabled"
+
+    filter {}
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 2
+    }
+  }
 }
 
 resource "aws_s3_bucket_cors_configuration" "post_media" {

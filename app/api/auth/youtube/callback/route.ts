@@ -11,19 +11,27 @@ import { withAuth } from '@/lib/middleware/withAuth';
 import { withRateLimit } from '@/lib/middleware/withRateLimit';
 import { UserRepository } from '@/lib/db/userRepository';
 import { encryptToken } from '@/lib/crypto/tokenCipher';
-import { exchangeCode, getMyChannel, YouTubeAuthError } from '@/lib/services/youtubeClient';
+import {
+  exchangeCode,
+  getMyChannel,
+  YouTubeAuthError,
+  YOUTUBE_RETURN_COOKIE,
+  YOUTUBE_RETURN_PATHS,
+} from '@/lib/services/youtubeClient';
 import { logError } from '@/lib/errors';
 
-function profileRedirect(req: NextRequest, query: string): Response {
-  const response = NextResponse.redirect(new URL(`/dashboard/profile?${query}`, req.url));
-  // The state is single-use
-  response.cookies.set('youtube_oauth_state', '', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 0,
-    path: '/',
-  });
+function profileRedirect(req: NextRequest, query: string, path = '/dashboard/profile'): Response {
+  const response = NextResponse.redirect(new URL(`${path}?${query}`, req.url));
+  // The state and return page are single-use
+  for (const name of ['youtube_oauth_state', YOUTUBE_RETURN_COOKIE]) {
+    response.cookies.set(name, '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 0,
+      path: '/',
+    });
+  }
   return response;
 }
 
@@ -49,7 +57,10 @@ async function youtubeCallbackHandler(req: NextRequest, userId: string): Promise
       refreshTokenEnc: encryptToken(tokens.refreshToken),
       scopes: tokens.scopes,
     });
-    return profileRedirect(req, 'youtube=connected');
+    // Errors always show on the profile page; success goes back where the user started
+    const returnTo = req.cookies.get(YOUTUBE_RETURN_COOKIE)?.value;
+    const path = returnTo && (YOUTUBE_RETURN_PATHS as readonly string[]).includes(returnTo) ? returnTo : undefined;
+    return profileRedirect(req, 'youtube=connected', path);
   } catch (error) {
     const code = error instanceof YouTubeAuthError ? error.code : 'exchange_failed';
     logError(error as Error, { endpoint: '/api/auth/youtube/callback', userId, code });

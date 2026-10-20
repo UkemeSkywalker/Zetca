@@ -148,7 +148,7 @@ data "aws_iam_policy_document" "app" {
 
   statement {
     sid       = "MediaObjects"
-    actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
+    actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:AbortMultipartUpload"]
     resources = ["${aws_s3_bucket.post_media.arn}/*"]
   }
 

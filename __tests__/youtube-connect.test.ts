@@ -137,6 +137,24 @@ describe('GET /api/auth/youtube/callback', () => {
     expect(decrypt(saved.refreshTokenEnc)).toBe('refresh-xyz');
   });
 
+  it('returns to the page the user started from, but only a known one', async () => {
+    const { NextRequest } = await import('next/server');
+    const { GET } = await import('@/app/api/auth/youtube/callback/route');
+    const run = async (returnTo: string) => {
+      mockFetch(
+        { body: { access_token: 'a', refresh_token: 'r', scope: YOUTUBE_SCOPES.join(' ') } },
+        { body: { items: [{ id: 'UC1', snippet: { title: 'Studio' } }] } }
+      );
+      const req = new NextRequest('http://localhost:3000/api/auth/youtube/callback?code=c&state=s1', {
+        headers: { cookie: `youtube_oauth_state=s1; youtube_oauth_return=${encodeURIComponent(returnTo)}` },
+      });
+      const location = new URL((await GET(req)).headers.get('location')!);
+      return location.pathname + location.search;
+    };
+    expect(await run('/dashboard/scheduler/youtube/new')).toBe('/dashboard/scheduler/youtube/new?youtube=connected');
+    expect(await run('https://evil.example')).toBe('/dashboard/profile?youtube=connected');
+  });
+
   it('passes "denied" through when the user cancels on Google', async () => {
     expect(await callback('error=access_denied&state=s1', 's1')).toBe('?youtube_error=denied');
   });

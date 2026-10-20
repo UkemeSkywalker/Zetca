@@ -19,6 +19,13 @@ async function validateMediaHandler(
       );
     }
 
+    if (record.status === 'uploading') {
+      return NextResponse.json(
+        { error: 'This video is still uploading', code: 'MEDIA_NOT_READY' },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json({
       valid: true,
       mediaId: record.mediaId,
