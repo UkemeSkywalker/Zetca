@@ -147,6 +147,10 @@ export class YouTubeVideoService {
     return this.get(userId, videoId);
   }
 
+  async list(userId: string): Promise<YouTubeVideoRecord[]> {
+    return this.videos.listByUser(userId);
+  }
+
   async get(userId: string, videoId: string): Promise<YouTubeVideoRecord> {
     const record = await this.videos.getById(videoId);
     if (!record || record.userId !== userId) throw new YouTubeVideoError('Video not found', 'NOT_FOUND', 404);

@@ -31,6 +31,12 @@ export interface ScheduledPost {
   lastErrorCode?: string;
   /** When the publisher will try again, after a failed attempt */
   nextAttemptAt?: string;
+  /** Set when this item is a YouTube video (shown alongside posts; managed on its own page) */
+  youtube?: {
+    videoId: string;
+    status: 'queued' | 'uploading' | 'waiting_quota' | 'scheduled' | 'published' | 'failed';
+    youtubeVideoId?: string;
+  };
 }
 
 /**

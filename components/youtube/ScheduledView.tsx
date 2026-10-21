@@ -8,7 +8,7 @@ import { getVideo, retryVideo } from '@/lib/api/youtubeApi';
 
 /** Statuses that still change by themselves, so the page keeps checking */
 const ACTIVE = new Set(['queued', 'uploading', 'waiting_quota']);
-const POLL_MS = 5000;
+const POLL_MS = 3000;
 
 function formatInstant(iso: string): string {
   return new Date(iso).toLocaleString(undefined, {
@@ -25,14 +25,14 @@ function formatInstant(iso: string): string {
 export function ScheduledView({
   video: initial,
   channelTitle,
-  thumbnailUrl,
+  preview,
   publishLabel,
   onAnother,
 }: {
   video: PublicYouTubeVideo;
   channelTitle?: string;
-  /** The local video, used as a preview */
-  thumbnailUrl: string;
+  /** A picture of the video: the file itself, or YouTube's thumbnail once it's up */
+  preview: { type: 'video' | 'image'; url: string } | null;
   publishLabel: string | null;
   onAnother: () => void;
 }) {
@@ -119,13 +119,13 @@ export function ScheduledView({
         };
       default:
         return {
-          icon: 'solar:check-read-linear',
-          circle: 'bg-emerald-500',
-          title: goesPublic ? 'Your video is scheduled' : 'Your video is on its way',
-          line: goesPublic
-            ? `It goes public on ${goesPublic}. Zetca uploads it to YouTube first.`
-            : 'Zetca uploads it to YouTube next, with the visibility you picked.',
-          pill: { text: 'Waiting to upload to YouTube', cls: 'bg-primary-50 text-primary', icon: 'solar:clock-circle-linear' },
+          icon: 'solar:upload-minimalistic-bold',
+          circle: 'bg-primary',
+          title: 'Sending your video to YouTube',
+          line: video.error?.code === 'retrying'
+            ? 'YouTube had a temporary problem, so Zetca will try again in a few minutes. You can leave this page.'
+            : 'The upload is starting now. This page updates by itself, and you can leave it: Zetca keeps uploading in the background.',
+          pill: { text: 'Starting upload…', cls: 'bg-primary-50 text-primary', icon: 'svg-spinners:ring-resize' },
         };
     }
   })();
@@ -141,7 +141,14 @@ export function ScheduledView({
       <p className="mt-2 text-outline">{view.line}</p>
 
       <div className="mt-8 flex flex-col sm:flex-row items-center gap-4 text-left rounded-xl bg-surface-container-low p-4">
-        <video src={thumbnailUrl} muted preload="metadata" className="w-40 aspect-video rounded-lg object-cover bg-black shrink-0" />
+        {preview?.type === 'image' ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={preview.url} alt="" className="w-40 aspect-video rounded-lg object-cover bg-black shrink-0" />
+        ) : preview ? (
+          <video src={preview.url} muted preload="metadata" className="w-40 aspect-video rounded-lg object-cover bg-black shrink-0" />
+        ) : (
+          <div className="w-40 aspect-video rounded-lg bg-slate-200 shrink-0" />
+        )}
         <div className="min-w-0">
           <p className="font-semibold text-on-surface line-clamp-2">{video.details.title}</p>
           {channelTitle && <p className="text-sm text-outline mt-0.5">{channelTitle}</p>}

@@ -6,6 +6,7 @@ import { requestUploadUrl, uploadFileToS3 } from '@/lib/api/mediaClient';
 import type { YouTubeCategory, YouTubePlaylist } from '@/lib/services/youtubeClient';
 import type { VideoDetailsInput, PublicYouTubeVideo } from '@/lib/models/youtubeVideo';
 import type { VideoWriterRequest, VideoWriterResponse } from '@/lib/models/videoWriter';
+import type { ScheduledPost } from '@/types/scheduler';
 
 export type { YouTubeCategory, YouTubePlaylist };
 
@@ -95,4 +96,69 @@ export async function retryVideo(videoId: string): Promise<PublicYouTubeVideo> {
     method: 'POST',
   });
   return video;
+}
+
+export async function listVideos(): Promise<PublicYouTubeVideo[]> {
+  const { videos } = await call<{ videos: PublicYouTubeVideo[] }>('/api/youtube/videos');
+  return videos;
+}
+
+/** Item id prefix that marks a Scheduler item as a YouTube video */
+export const YOUTUBE_ITEM_PREFIX = 'youtube:';
+
+export function isYouTubeItem(id: string): boolean {
+  return id.startsWith(YOUTUBE_ITEM_PREFIX);
+}
+
+/** Where a video's status page lives */
+export function videoPagePath(videoId: string): string {
+  return `/dashboard/scheduler/youtube/${encodeURIComponent(videoId)}`;
+}
+
+const STATUS_FOR_POST: Record<PublicYouTubeVideo['status'], ScheduledPost['status']> = {
+  queued: 'scheduled',
+  waiting_quota: 'scheduled',
+  uploading: 'publishing',
+  scheduled: 'scheduled',
+  published: 'published',
+  failed: 'failed',
+};
+
+/**
+ * A YouTube video as a Scheduler item, so it shows on the calendar, grid and
+ * Publisher alongside posts. It sits on its publish time, or when it went up.
+ */
+export function videoToPost(video: PublicYouTubeVideo): ScheduledPost {
+  const when = new Date(video.publishAt ?? video.uploadedAt ?? video.createdAt);
+  const iso = when.toISOString();
+  return {
+    id: `${YOUTUBE_ITEM_PREFIX}${video.videoId}`,
+    strategyId: '',
+    copyId: '',
+    userId: video.userId,
+    content: video.details.title,
+    platform: 'youtube',
+    hashtags: [],
+    scheduledDate: iso.slice(0, 10),
+    scheduledTime: iso.slice(11, 16),
+    status: STATUS_FOR_POST[video.status],
+    strategyColor: '#FF0000',
+    strategyLabel: 'YouTube video',
+    createdAt: video.createdAt,
+    updatedAt: video.updatedAt,
+    mediaId: video.mediaId,
+    mediaType: 'video',
+    ...(video.status === 'failed' && video.error ? { lastError: video.error.message, lastErrorCode: video.error.code } : {}),
+    ...(video.nextAttemptAt ? { nextAttemptAt: video.nextAttemptAt } : {}),
+    youtube: { videoId: video.videoId, status: video.status, youtubeVideoId: video.youtubeVideoId },
+  };
+}
+
+/** The user's YouTube videos as Scheduler items; empty if they can't be loaded */
+export async function listVideoPosts(): Promise<ScheduledPost[]> {
+  try {
+    return (await listVideos()).map(videoToPost);
+  } catch {
+    return [];
+  }
 }

@@ -8,10 +8,12 @@ interface CalendarProps {
   posts: ScheduledPost[];
   onDateClick: (date: Date) => void;
   onMovePosts?: (postIds: string[], targetDate: string) => void;
+  /** Opens an item directly (used for YouTube videos, which have their own page) */
+  onOpenItem?: (post: ScheduledPost) => void;
   className?: string;
 }
 
-export function Calendar({ posts, onDateClick, onMovePosts, className = '' }: CalendarProps) {
+export function Calendar({ posts, onDateClick, onMovePosts, onOpenItem, className = '' }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [dragSourceDate, setDragSourceDate] = useState<string | null>(null);
   const [dragOverDate, setDragOverDate] = useState<string | null>(null);
@@ -44,7 +46,9 @@ export function Calendar({ posts, onDateClick, onMovePosts, className = '' }: Ca
       const localDt = new Date(`${post.scheduledDate}T${post.scheduledTime}:00Z`);
       const localKey = `${localDt.getFullYear()}-${String(localDt.getMonth() + 1).padStart(2, '0')}-${String(localDt.getDate()).padStart(2, '0')}`;
       return localKey === key;
-    });
+    })
+      // YouTube videos first, so they're never hidden behind "+N more"
+      .sort((a, b) => Number(!!b.youtube) - Number(!!a.youtube));
   };
 
   const generateCalendarDays = () => {
@@ -79,6 +83,8 @@ export function Calendar({ posts, onDateClick, onMovePosts, className = '' }: Ca
     x: 'ri:twitter-x-fill',
     linkedin: 'simple-icons:linkedin',
     facebook: 'simple-icons:facebook',
+    youtube: 'simple-icons:youtube',
+    tiktok: 'simple-icons:tiktok',
   };
 
   const platformColors: Record<string, string> = {
@@ -87,6 +93,8 @@ export function Calendar({ posts, onDateClick, onMovePosts, className = '' }: Ca
     x: '#000000',
     linkedin: '#0A66C2',
     facebook: '#1877F2',
+    youtube: '#FF0000',
+    tiktok: '#000000',
   };
 
   const formatTime = (dateStr: string, timeStr: string) => {
@@ -240,9 +248,19 @@ export function Calendar({ posts, onDateClick, onMovePosts, className = '' }: Ca
                       {calendarDay.posts.slice(0, 2).map((post, postIndex) => (
                         <div
                           key={postIndex}
-                          className="flex items-center gap-1.5 text-sm font-semibold leading-tight bg-secondary-container/30 rounded px-1.5 py-0.5"
-                          style={{ borderLeft: '2px solid var(--secondary)' }}
+                          className={`flex items-center gap-1.5 text-sm font-semibold leading-tight rounded px-1.5 py-0.5 ${
+                            post.youtube ? 'bg-red-50 hover:bg-red-100' : 'bg-secondary-container/30'
+                          }`}
+                          style={{ borderLeft: `2px solid ${post.youtube ? '#FF0000' : 'var(--secondary)'}` }}
                           title={`${post.strategyLabel || post.platform}: ${post.content}`}
+                          onClick={
+                            post.youtube && onOpenItem
+                              ? (e) => {
+                                  e.stopPropagation();
+                                  onOpenItem(post);
+                                }
+                              : undefined
+                          }
                         >
                           <Icon
                             icon={platformIcons[post.platform.toLowerCase()] || 'solar:chat-round-bold'}
