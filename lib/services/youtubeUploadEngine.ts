@@ -167,6 +167,16 @@ export class YouTubeUploadEngine {
     return handled;
   }
 
+  /**
+   * Starts one video straight away (right after it's scheduled), instead of
+   * waiting for the next cycle. Does nothing if another worker claimed it.
+   */
+  async processNow(videoId: string): Promise<void> {
+    const at = this.deps.now();
+    const claimed = await this.deps.videos.claim(videoId, at, new Date(at.getTime() - STALE_AFTER_MS));
+    if (claimed) await this.process(claimed);
+  }
+
   /** Uploads one claimed video and records how it went */
   async process(video: YouTubeVideoRecord): Promise<void> {
     let outcome: Outcome;

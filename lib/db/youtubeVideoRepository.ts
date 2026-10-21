@@ -157,4 +157,25 @@ export class YouTubeVideoRepository {
       throw error;
     }
   }
+
+  /** A user's videos, newest first (up to `max`) */
+  async listByUser(userId: string, max = 200): Promise<YouTubeVideoRecord[]> {
+    const items: YouTubeVideoRecord[] = [];
+    let lastKey: Record<string, unknown> | undefined;
+    do {
+      const result = await this.docClient.send(
+        new QueryCommand({
+          TableName: this.tableName,
+          IndexName: 'UserIdIndex',
+          KeyConditionExpression: 'userId = :userId',
+          ExpressionAttributeValues: { ':userId': userId },
+          ScanIndexForward: false,
+          ExclusiveStartKey: lastKey,
+        })
+      );
+      items.push(...((result.Items as YouTubeVideoRecord[]) ?? []));
+      lastKey = result.LastEvaluatedKey;
+    } while (lastKey && items.length < max);
+    return items.slice(0, max);
+  }
 }

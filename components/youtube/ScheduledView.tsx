@@ -8,7 +8,7 @@ import { getVideo, retryVideo } from '@/lib/api/youtubeApi';
 
 /** Statuses that still change by themselves, so the page keeps checking */
 const ACTIVE = new Set(['queued', 'uploading', 'waiting_quota']);
-const POLL_MS = 5000;
+const POLL_MS = 3000;
 
 function formatInstant(iso: string): string {
   return new Date(iso).toLocaleString(undefined, {
@@ -119,13 +119,13 @@ export function ScheduledView({
         };
       default:
         return {
-          icon: 'solar:check-read-linear',
-          circle: 'bg-emerald-500',
-          title: goesPublic ? 'Your video is scheduled' : 'Your video is on its way',
-          line: goesPublic
-            ? `It goes public on ${goesPublic}. Zetca uploads it to YouTube first.`
-            : 'Zetca uploads it to YouTube next, with the visibility you picked.',
-          pill: { text: 'Waiting to upload to YouTube', cls: 'bg-primary-50 text-primary', icon: 'solar:clock-circle-linear' },
+          icon: 'solar:upload-minimalistic-bold',
+          circle: 'bg-primary',
+          title: 'Sending your video to YouTube',
+          line: video.error?.code === 'retrying'
+            ? 'YouTube had a temporary problem, so Zetca will try again in a few minutes. You can leave this page.'
+            : 'The upload is starting now. This page updates by itself, and you can leave it: Zetca keeps uploading in the background.',
+          pill: { text: 'Starting upload…', cls: 'bg-primary-50 text-primary', icon: 'svg-spinners:ring-resize' },
         };
     }
   })();
