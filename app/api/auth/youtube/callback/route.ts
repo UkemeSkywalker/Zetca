@@ -20,9 +20,10 @@ import {
 } from '@/lib/services/youtubeClient';
 import { logError } from '@/lib/errors';
 import { forgetYouTubeAccess } from '@/lib/services/youtubeAccess';
+import { siteUrl } from '@/lib/http/siteUrl';
 
 function profileRedirect(req: NextRequest, query: string, path = '/dashboard/profile'): Response {
-  const response = NextResponse.redirect(new URL(`${path}?${query}`, req.url));
+  const response = NextResponse.redirect(siteUrl(`${path}?${query}`));
   // The state and return page are single-use
   for (const name of ['youtube_oauth_state', YOUTUBE_RETURN_COOKIE]) {
     response.cookies.set(name, '', {

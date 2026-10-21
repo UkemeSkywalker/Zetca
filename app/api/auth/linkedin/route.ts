@@ -12,6 +12,7 @@ import { withAuth } from '@/lib/middleware/withAuth';
 import { withRateLimit } from '@/lib/middleware/withRateLimit';
 import { getConfig } from '@/lib/config';
 import { logError } from '@/lib/errors';
+import { siteUrl } from '@/lib/http/siteUrl';
 
 async function linkedinOAuthHandler(req: NextRequest, userId: string): Promise<Response> {
   try {
@@ -49,7 +50,7 @@ async function linkedinOAuthHandler(req: NextRequest, userId: string): Promise<R
     });
 
     // On any unexpected error, redirect to profile with error
-    return NextResponse.redirect(new URL('/dashboard/profile?linkedin_error=initiation_failed', req.url));
+    return NextResponse.redirect(siteUrl('/dashboard/profile?linkedin_error=initiation_failed'));
   }
 }
 

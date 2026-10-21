@@ -14,11 +14,12 @@ import { getConfig } from '@/lib/config';
 import { buildAuthUrl } from '@/lib/services/youtubeClient';
 import { logError } from '@/lib/errors';
 import { YOUTUBE_RETURN_COOKIE, YOUTUBE_RETURN_PATHS } from '@/lib/services/youtubeClient';
+import { siteUrl } from '@/lib/http/siteUrl';
 
 async function youtubeOAuthHandler(req: NextRequest, userId: string): Promise<Response> {
   try {
     if (!getConfig().youtubeClientId) {
-      return NextResponse.redirect(new URL('/dashboard/profile?youtube_error=not_configured', req.url));
+      return NextResponse.redirect(siteUrl('/dashboard/profile?youtube_error=not_configured'));
     }
     // Random state, checked against this cookie in the callback to prevent CSRF
     const state = crypto.randomBytes(32).toString('hex');
@@ -44,7 +45,7 @@ async function youtubeOAuthHandler(req: NextRequest, userId: string): Promise<Re
     return response;
   } catch (error) {
     logError(error as Error, { endpoint: '/api/auth/youtube', method: 'GET', userId });
-    return NextResponse.redirect(new URL('/dashboard/profile?youtube_error=initiation_failed', req.url));
+    return NextResponse.redirect(siteUrl('/dashboard/profile?youtube_error=initiation_failed'));
   }
 }
 
