@@ -3,15 +3,12 @@
 import React, { useMemo, useState } from 'react';
 import { Icon } from '@iconify/react';
 import type { DetailsDraft } from '@/lib/youtube/draft';
-import { TITLE_MAX, DESCRIPTION_MAX_BYTES, TAGS_MAX_CHARS, MAX_TRANSLATIONS, tagsLength } from '@/lib/models/youtubeVideo';
-import { addChapterLine, chapterProblem, parseChapters, withChapters } from '@/lib/youtube/chapters';
-import { VIDEO_LANGUAGES, languageName } from '@/lib/youtube/languages';
-import { createPlaylist, uploadCaptions, type YouTubeCategory, type YouTubePlaylist } from '@/lib/api/youtubeApi';
-import type { VideoWriterResponse } from '@/lib/models/videoWriter';
-import { SectionCard, FieldError, Counter, Toggle, RadioRow, Select, TagInput, INPUT } from './formKit';
+import { VIDEO_LANGUAGES } from '@/lib/youtube/languages';
+import { createPlaylist, uploadCaptions } from '@/lib/api/youtubeApi';
+import { SectionCard, FieldError, Toggle, RadioRow, Select, INPUT } from './formKit';
 import { ThumbnailPicker } from './ThumbnailPicker';
-import { WriteWithCopywriter } from './WriteWithCopywriter';
-import { TranscriptChapters } from './TranscriptChapters';
+import { DetailsSection } from './DetailsSection';
+import type { DetailsFormProps } from './formTypes';
 
 export const SECTIONS = [
   { id: 'details', label: 'Details' },
@@ -24,28 +21,9 @@ export const SECTIONS = [
 ] as const;
 
 const LANGUAGE_OPTIONS = VIDEO_LANGUAGES.map((l) => ({ value: l.code, label: l.name }));
-const utf8Length = (s: string) => new TextEncoder().encode(s).length;
 
-export interface FormOptions {
-  playlists: YouTubePlaylist[];
-  categories: YouTubeCategory[];
-  loading: boolean;
-  error: string | null;
-}
-
-interface Props {
-  draft: DetailsDraft;
-  update: (patch: Partial<DetailsDraft>) => void;
-  errors: Record<string, string>;
-  file: File;
-  isShort: boolean;
-  durationSeconds?: number;
-  options: FormOptions;
-  onPlaylistCreated: (playlist: YouTubePlaylist) => void;
-  timeZones: string[];
-  /** Set once the video has finished uploading (for transcript suggestions) */
-  mediaId?: string;
-}
+export type { FormOptions } from './formTypes';
+type Props = DetailsFormProps;
 
 export function VideoDetailsForm(props: Props) {
   return (
@@ -66,232 +44,6 @@ export function VideoDetailsForm(props: Props) {
       <MoreOptionsSection {...props} />
       <VisibilitySection {...props} />
       <StudioOnlyCard />
-    </div>
-  );
-}
-
-function DetailsSection({ draft, update, errors, file, isShort, durationSeconds, options, mediaId }: Props) {
-  const [undo, setUndo] = useState<Pick<DetailsDraft, 'title' | 'description' | 'tags'> | null>(null);
-  const [showTranslations, setShowTranslations] = useState(draft.translations.length > 0);
-  const chapters = useMemo(() => parseChapters(draft.description), [draft.description]);
-  const chapterIssue = chapterProblem(chapters, durationSeconds);
-
-  const applyCopy = (copy: VideoWriterResponse) => {
-    setUndo({ title: draft.title, description: draft.description, tags: draft.tags });
-    update(copy);
-  };
-
-  const categoryOptions = options.categories.length
-    ? options.categories.map((c) => ({ value: c.id, label: c.title }))
-    : [{ value: '22', label: 'People & Blogs' }];
-
-  return (
-    <SectionCard id="details" title="Details" subtitle="Title, description and tags viewers see">
-      {undo && (
-        <div className="flex items-center justify-between gap-3 rounded-xl bg-emerald-50 px-4 py-2.5 text-sm text-emerald-800">
-          <span className="flex items-center gap-2">
-            <Icon icon="solar:magic-stick-3-linear" className="w-4 h-4" />
-            The Copywriter filled in the title, description and tags.
-          </span>
-          <button
-            type="button"
-            onClick={() => {
-              update(undo);
-              setUndo(null);
-            }}
-            className="font-semibold hover:underline"
-          >
-            Undo
-          </button>
-        </div>
-      )}
-
-      <div>
-        <div className="flex items-center justify-between mb-1.5">
-          <label htmlFor="video-title" className="text-sm font-medium text-on-surface">
-            Title <span className="text-red-500">*</span>
-          </label>
-          <Counter value={draft.title.length} max={TITLE_MAX} />
-        </div>
-        <input
-          id="video-title"
-          value={draft.title}
-          onChange={(e) => update({ title: e.target.value })}
-          maxLength={TITLE_MAX + 20}
-          placeholder="Add a title that describes your video"
-          className={`${INPUT} ${errors.title ? 'border-red-300' : ''}`}
-          aria-invalid={!!errors.title}
-        />
-        <FieldError message={errors.title} />
-      </div>
-
-      <div>
-        <div className="flex items-center justify-between mb-1.5 gap-3">
-          <label htmlFor="video-description" className="text-sm font-medium text-on-surface">
-            Description
-          </label>
-          <WriteWithCopywriter
-            filename={file.name}
-            durationSeconds={durationSeconds}
-            isShort={isShort}
-            language={draft.language}
-            onWritten={applyCopy}
-          />
-        </div>
-        <textarea
-          id="video-description"
-          value={draft.description}
-          onChange={(e) => update({ description: e.target.value })}
-          rows={8}
-          placeholder="Tell viewers about your video"
-          className={`${INPUT} resize-y min-h-[160px] ${errors.description ? 'border-red-300' : ''}`}
-          aria-invalid={!!errors.description}
-        />
-        <div className="mt-1 flex justify-between">
-          <FieldError message={errors.description} />
-          <span className="ml-auto">
-            <Counter value={utf8Length(draft.description)} max={DESCRIPTION_MAX_BYTES} />
-          </span>
-        </div>
-
-        <div className="mt-3 rounded-xl bg-primary-50/70 px-4 py-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-sm font-medium text-on-surface">Chapters</p>
-              <p className="text-xs text-outline">Add timestamps to the description to split your video into chapters.</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => update({ description: addChapterLine(draft.description, durationSeconds) })}
-              className="shrink-0 text-xs font-semibold text-primary hover:text-primary-700"
-            >
-              + Add chapter
-            </button>
-          </div>
-          {chapters.length > 0 && (
-            <div className="mt-2.5 flex flex-wrap gap-2">
-              {chapters.map((c, i) => (
-                <span key={`${c.seconds}-${i}`} className="rounded-full bg-white px-3 py-1 text-xs text-on-surface border border-primary-100">
-                  <span className="font-semibold tabular-nums">{c.label}</span> {c.title}
-                </span>
-              ))}
-            </div>
-          )}
-          {chapterIssue && <p className="mt-2 text-xs text-amber-700">{chapterIssue} YouTube won’t show chapters until this is fixed.</p>}
-          <TranscriptChapters mediaId={mediaId} onApply={(list) => update({ description: withChapters(draft.description, list) })} />
-        </div>
-      </div>
-
-      <TagInput
-        tags={draft.tags}
-        onChange={(tags) => update({ tags })}
-        counter={<Counter value={tagsLength(draft.tags)} max={TAGS_MAX_CHARS} />}
-        error={errors.tags}
-      />
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Select
-          label="Category"
-          value={draft.categoryId}
-          onChange={(categoryId) => update({ categoryId })}
-          options={categoryOptions}
-          error={errors.categoryId}
-        />
-        <Select
-          label="Video language"
-          value={draft.language}
-          onChange={(language) => update({ language })}
-          options={LANGUAGE_OPTIONS}
-          error={errors.language}
-        />
-      </div>
-
-      <div className="border-t border-[#c7c4d8]/30 pt-4">
-        <button
-          type="button"
-          onClick={() => setShowTranslations((s) => !s)}
-          aria-expanded={showTranslations}
-          className="w-full flex items-center justify-between text-sm text-on-surface"
-        >
-          <span>
-            <span className="font-medium">Translations</span>
-            <span className="text-outline">: add the title and description in other languages</span>
-            {draft.translations.length > 0 && <span className="text-primary font-semibold"> ({draft.translations.length})</span>}
-          </span>
-          <Icon icon="solar:alt-arrow-down-linear" className={`w-4 h-4 text-outline transition-transform ${showTranslations ? 'rotate-180' : ''}`} />
-        </button>
-        {showTranslations && <Translations draft={draft} update={update} errors={errors} />}
-      </div>
-    </SectionCard>
-  );
-}
-
-function Translations({ draft, update, errors }: Pick<Props, 'draft' | 'update' | 'errors'>) {
-  const used = new Set([draft.language, ...draft.translations.map((t) => t.language)]);
-  const available = VIDEO_LANGUAGES.filter((l) => !used.has(l.code));
-  const [adding, setAdding] = useState('');
-
-  const set = (i: number, patch: Partial<DetailsDraft['translations'][number]>) =>
-    update({ translations: draft.translations.map((t, j) => (j === i ? { ...t, ...patch } : t)) });
-
-  return (
-    <div className="mt-4 space-y-4">
-      {draft.translations.map((t, i) => (
-        <div key={t.language} className="rounded-xl border border-[#c7c4d8]/40 p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-on-surface">{languageName(t.language)}</span>
-            <button
-              type="button"
-              onClick={() => update({ translations: draft.translations.filter((_, j) => j !== i) })}
-              className="text-xs font-semibold text-outline hover:text-red-600"
-            >
-              Remove
-            </button>
-          </div>
-          <input
-            value={t.title}
-            onChange={(e) => set(i, { title: e.target.value })}
-            placeholder={`Title in ${languageName(t.language)}`}
-            aria-label={`Title in ${languageName(t.language)}`}
-            className={INPUT}
-          />
-          <FieldError message={errors[`translations.${i}.title`]} />
-          <textarea
-            value={t.description}
-            onChange={(e) => set(i, { description: e.target.value })}
-            rows={3}
-            placeholder={`Description in ${languageName(t.language)}`}
-            aria-label={`Description in ${languageName(t.language)}`}
-            className={`${INPUT} resize-y`}
-          />
-          <FieldError message={errors[`translations.${i}.description`]} />
-        </div>
-      ))}
-      {draft.translations.length < MAX_TRANSLATIONS && (
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="flex-1 min-w-[200px]">
-            <Select
-              label="Add a language"
-              value={adding}
-              onChange={setAdding}
-              placeholder="Choose a language"
-              options={available.map((l) => ({ value: l.code, label: l.name }))}
-            />
-          </div>
-          <button
-            type="button"
-            disabled={!adding}
-            onClick={() => {
-              update({ translations: [...draft.translations, { language: adding, title: draft.title, description: '' }] });
-              setAdding('');
-            }}
-            className="rounded-xl bg-white border border-[#c7c4d8]/50 px-4 py-3 text-sm font-semibold text-on-surface hover:border-primary/40 hover:text-primary disabled:opacity-50"
-          >
-            Add
-          </button>
-        </div>
-      )}
-      <FieldError message={errors.translations} />
     </div>
   );
 }

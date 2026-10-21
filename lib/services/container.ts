@@ -24,6 +24,7 @@ import { MockKeywordAgent } from '../agents/mockKeywordAgent';
 import { VideoWriterAgent } from '../agents/videoWriterAgent';
 import { MockVideoWriterAgent } from '../agents/mockVideoWriterAgent';
 import { ChapterAgent, MockChapterAgent } from '../agents/chapterAgent';
+import { VideoInsightsAgent, MockVideoInsightsAgent } from '../agents/videoInsightsAgent';
 import { QuizStrategistAgent } from '../agents/quizStrategistAgent';
 import { MockQuizStrategistAgent } from '../agents/mockQuizStrategistAgent';
 import { CopywriterAgent } from '../agents/copywriterAgent';
@@ -106,6 +107,17 @@ export const getVideoWriterAgent = memo(() => {
     return new MockVideoWriterAgent();
   }
   return new VideoWriterAgent({
+    awsRegion: cfg.awsRegion,
+    modelId: cfg.bedrockModelId,
+    awsAccessKeyId: cfg.awsAccessKeyId,
+    awsSecretAccessKey: cfg.awsSecretAccessKey,
+  });
+});
+
+export const getVideoInsightsAgent = memo(() => {
+  const cfg = getConfig();
+  if (cfg.useMockAgent) return new MockVideoInsightsAgent();
+  return new VideoInsightsAgent({
     awsRegion: cfg.awsRegion,
     modelId: cfg.bedrockModelId,
     awsAccessKeyId: cfg.awsAccessKeyId,

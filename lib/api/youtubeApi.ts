@@ -176,3 +176,28 @@ export async function suggestChapters(mediaId: string): Promise<{ seconds: numbe
   );
   return chapters;
 }
+
+export type { KeywordInsight, TagInsight, Check } from '@/lib/youtube/research';
+import type { KeywordInsight, TagInsight, Check } from '@/lib/youtube/research';
+
+export interface ResearchInput {
+  title: string;
+  mediaId?: string;
+  region: string;
+  language: string;
+  isShort: boolean;
+}
+
+export function researchVideo(input: ResearchInput) {
+  return call<{ keywords: KeywordInsight[]; tags: TagInsight[]; basedOn: 'transcript' | 'title' | 'both' }>('/api/youtube/research', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function writeSuggestions(input: ResearchInput & { keywords: KeywordInsight[]; chaptersOk: boolean | null }) {
+  return call<{
+    titles: { text: string; score: number; checks: Check[] }[];
+    description: { text: string; score: number; checks: Check[] } | null;
+  }>('/api/youtube/suggestions', { method: 'POST', body: JSON.stringify(input) });
+}

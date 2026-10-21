@@ -233,3 +233,37 @@ export async function listVideoCategories(accessToken: string, regionCode: strin
     .map((c) => ({ id: c.id, title: c.snippet?.title ?? c.id }))
     .sort((a, b) => a.title.localeCompare(b.title));
 }
+
+/** The top videos YouTube returns for a search, with their views and tags */
+export async function searchTopVideos(
+  accessToken: string,
+  query: string,
+  opts: { regionCode: string; language: string; max?: number }
+): Promise<import('@/lib/youtube/research').TopVideo[]> {
+  const params = new URLSearchParams({
+    part: 'snippet',
+    type: 'video',
+    maxResults: String(opts.max ?? 20),
+    q: query,
+    regionCode: opts.regionCode,
+    relevanceLanguage: opts.language.split('-')[0],
+  });
+  const search = await youtubeApi<{ items?: { id?: { videoId?: string } }[] }>(accessToken, `/search?${params}`);
+  const ids = (search.items ?? []).map((i) => i.id?.videoId).filter((id): id is string => !!id);
+  if (!ids.length) return [];
+  const details = await youtubeApi<{
+    items?: {
+      id: string;
+      snippet?: { title?: string; publishedAt?: string; tags?: string[]; channelTitle?: string };
+      statistics?: { viewCount?: string };
+    }[];
+  }>(accessToken, `/videos?part=snippet,statistics&id=${ids.join(',')}`);
+  return (details.items ?? []).map((v) => ({
+    id: v.id,
+    title: v.snippet?.title ?? '',
+    views: Number(v.statistics?.viewCount ?? 0),
+    publishedAt: v.snippet?.publishedAt ?? new Date(0).toISOString(),
+    tags: v.snippet?.tags ?? [],
+    channelTitle: v.snippet?.channelTitle ?? '',
+  }));
+}
