@@ -4,13 +4,14 @@ import React, { useMemo, useState } from 'react';
 import { Icon } from '@iconify/react';
 import type { DetailsDraft } from '@/lib/youtube/draft';
 import { TITLE_MAX, DESCRIPTION_MAX_BYTES, TAGS_MAX_CHARS, MAX_TRANSLATIONS, tagsLength } from '@/lib/models/youtubeVideo';
-import { addChapterLine, chapterProblem, parseChapters } from '@/lib/youtube/chapters';
+import { addChapterLine, chapterProblem, parseChapters, withChapters } from '@/lib/youtube/chapters';
 import { VIDEO_LANGUAGES, languageName } from '@/lib/youtube/languages';
 import { createPlaylist, uploadCaptions, type YouTubeCategory, type YouTubePlaylist } from '@/lib/api/youtubeApi';
 import type { VideoWriterResponse } from '@/lib/models/videoWriter';
 import { SectionCard, FieldError, Counter, Toggle, RadioRow, Select, TagInput, INPUT } from './formKit';
 import { ThumbnailPicker } from './ThumbnailPicker';
 import { WriteWithCopywriter } from './WriteWithCopywriter';
+import { TranscriptChapters } from './TranscriptChapters';
 
 export const SECTIONS = [
   { id: 'details', label: 'Details' },
@@ -42,6 +43,8 @@ interface Props {
   options: FormOptions;
   onPlaylistCreated: (playlist: YouTubePlaylist) => void;
   timeZones: string[];
+  /** Set once the video has finished uploading (for transcript suggestions) */
+  mediaId?: string;
 }
 
 export function VideoDetailsForm(props: Props) {
@@ -67,7 +70,7 @@ export function VideoDetailsForm(props: Props) {
   );
 }
 
-function DetailsSection({ draft, update, errors, file, isShort, durationSeconds, options }: Props) {
+function DetailsSection({ draft, update, errors, file, isShort, durationSeconds, options, mediaId }: Props) {
   const [undo, setUndo] = useState<Pick<DetailsDraft, 'title' | 'description' | 'tags'> | null>(null);
   const [showTranslations, setShowTranslations] = useState(draft.translations.length > 0);
   const chapters = useMemo(() => parseChapters(draft.description), [draft.description]);
@@ -175,6 +178,7 @@ function DetailsSection({ draft, update, errors, file, isShort, durationSeconds,
             </div>
           )}
           {chapterIssue && <p className="mt-2 text-xs text-amber-700">{chapterIssue} YouTube won’t show chapters until this is fixed.</p>}
+          <TranscriptChapters mediaId={mediaId} onApply={(list) => update({ description: withChapters(draft.description, list) })} />
         </div>
       </div>
 

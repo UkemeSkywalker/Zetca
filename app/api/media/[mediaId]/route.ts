@@ -92,6 +92,11 @@ async function deleteMediaHandler(
       })
     );
 
+    // A video's transcript goes with it
+    if (record.transcript?.key) {
+      await s3.send(new DeleteObjectCommand({ Bucket: cfg.s3MediaBucket, Key: record.transcript.key })).catch(() => {});
+    }
+
     // Delete media record from DynamoDB
     await mediaRepo.deleteMedia(mediaId);
 

@@ -14,6 +14,28 @@ export interface MediaRecord {
   /** S3 multipart upload ID, kept server-side while the parts upload */
   uploadId?: string;
   durationSeconds?: number;
+  /** Speech-to-text of a video, used for chapters and suggestions */
+  transcript?: TranscriptState;
+}
+
+export type TranscriptStatus = 'extracting' | 'transcribing' | 'ready' | 'none' | 'failed';
+
+export interface TranscriptState {
+  status: TranscriptStatus;
+  /** One AWS Transcribe job per audio piece, with where that piece starts in the video */
+  jobs?: { name: string; offsetSeconds: number }[];
+  /** S3 key of the finished transcript (JSON) */
+  key?: string;
+  language?: string;
+  error?: string;
+  startedAt: string;
+  updatedAt: string;
+}
+
+/** A finished transcript: sentences with their times in the video */
+export interface Transcript {
+  language: string;
+  segments: { start: number; end: number; text: string }[];
 }
 
 export type AllowedContentType =

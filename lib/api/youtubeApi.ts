@@ -162,3 +162,17 @@ export async function listVideoPosts(): Promise<ScheduledPost[]> {
     return [];
   }
 }
+
+export type TranscriptStatus = 'extracting' | 'transcribing' | 'ready' | 'none' | 'failed';
+
+export function getTranscriptStatus(mediaId: string) {
+  return call<{ status: TranscriptStatus; language?: string }>(`/api/media/videos/${encodeURIComponent(mediaId)}/transcript`);
+}
+
+export async function suggestChapters(mediaId: string): Promise<{ seconds: number; title: string }[]> {
+  const { chapters } = await call<{ chapters: { seconds: number; title: string }[] }>(
+    `/api/media/videos/${encodeURIComponent(mediaId)}/chapters`,
+    { method: 'POST' }
+  );
+  return chapters;
+}

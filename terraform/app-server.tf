@@ -153,6 +153,13 @@ data "aws_iam_policy_document" "app" {
     resources = ["${aws_s3_bucket.post_media.arn}/*"]
   }
 
+  # Transcripts of uploaded videos (chapters and keyword suggestions)
+  statement {
+    sid       = "Transcripts"
+    actions   = ["transcribe:StartTranscriptionJob", "transcribe:GetTranscriptionJob", "transcribe:DeleteTranscriptionJob"]
+    resources = ["*"]
+  }
+
   statement {
     sid     = "ClaudeOnBedrock"
     actions = ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"]

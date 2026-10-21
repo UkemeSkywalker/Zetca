@@ -63,3 +63,14 @@ export function addChapterLine(description: string, durationSeconds?: number): s
   // Keep the chapter lines together: a blank line before the first one only
   return chapters.length === 0 ? `${trimmed}\n\n${line}` : `${trimmed}\n${line}`;
 }
+
+/** The description with its chapter lines replaced by `chapters` (added at the end) */
+export function withChapters(description: string, chapters: { seconds: number; title: string }[]): string {
+  const kept = description
+    .split('\n')
+    .filter((line) => !/^\s*(?:\d{1,2}:)?\d{1,2}:\d{2}\s/.test(line))
+    .join('\n')
+    .replace(/\s+$/, '');
+  const block = chapters.map((c) => `${formatTimestamp(c.seconds)} ${c.title}`).join('\n');
+  return kept ? `${kept}\n\n${block}` : block;
+}

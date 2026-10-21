@@ -13,7 +13,7 @@ import {
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { getConfig } from '../config';
-import { MediaRecord } from '../../types/media';
+import { MediaRecord, TranscriptState, TranscriptStatus } from '../../types/media';
 
 /**
  * MediaRepository class for managing media metadata in DynamoDB
@@ -118,6 +118,49 @@ export class MediaRepository {
         ExpressionAttributeValues: values,
       })
     );
+  }
+
+  /**
+   * Saves a video's transcript progress. With `onlyIfStatus`, only while the
+   * transcript is in one of those states (or has none, if `null` is listed),
+   * so two servers don't both start one. Returns false if the condition failed.
+   */
+  async setTranscript(
+    mediaId: string,
+    transcript: TranscriptState,
+    onlyIfStatus?: (TranscriptStatus | null)[]
+  ): Promise<boolean> {
+    const names: Record<string, string> = { '#transcript': 'transcript' };
+    const values: Record<string, unknown> = { ':transcript': transcript };
+    let condition: string | undefined;
+    if (onlyIfStatus) {
+      const parts: string[] = [];
+      onlyIfStatus.forEach((status, i) => {
+        if (status === null) parts.push('attribute_not_exists(#transcript)');
+        else {
+          values[`:s${i}`] = status;
+          names['#status'] = 'status';
+          parts.push(`#transcript.#status = :s${i}`);
+        }
+      });
+      condition = parts.join(' OR ');
+    }
+    try {
+      await this.docClient.send(
+        new UpdateCommand({
+          TableName: this.tableName,
+          Key: { mediaId },
+          UpdateExpression: 'SET #transcript = :transcript',
+          ...(condition ? { ConditionExpression: `attribute_exists(mediaId) AND (${condition})` } : {}),
+          ExpressionAttributeNames: names,
+          ExpressionAttributeValues: values,
+        })
+      );
+      return true;
+    } catch (error) {
+      if ((error as { name?: string }).name === 'ConditionalCheckFailedException') return false;
+      throw error;
+    }
   }
 
   /**
