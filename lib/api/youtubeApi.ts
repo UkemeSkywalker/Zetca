@@ -162,3 +162,42 @@ export async function listVideoPosts(): Promise<ScheduledPost[]> {
     return [];
   }
 }
+
+export type TranscriptStatus = 'extracting' | 'transcribing' | 'ready' | 'none' | 'failed';
+
+export function getTranscriptStatus(mediaId: string) {
+  return call<{ status: TranscriptStatus; language?: string }>(`/api/media/videos/${encodeURIComponent(mediaId)}/transcript`);
+}
+
+export async function suggestChapters(mediaId: string): Promise<{ seconds: number; title: string }[]> {
+  const { chapters } = await call<{ chapters: { seconds: number; title: string }[] }>(
+    `/api/media/videos/${encodeURIComponent(mediaId)}/chapters`,
+    { method: 'POST' }
+  );
+  return chapters;
+}
+
+export type { KeywordInsight, TagInsight, Check } from '@/lib/youtube/research';
+import type { KeywordInsight, TagInsight, Check } from '@/lib/youtube/research';
+
+export interface ResearchInput {
+  title: string;
+  mediaId?: string;
+  region: string;
+  language: string;
+  isShort: boolean;
+}
+
+export function researchVideo(input: ResearchInput) {
+  return call<{ keywords: KeywordInsight[]; tags: TagInsight[]; basedOn: 'transcript' | 'title' | 'both' }>('/api/youtube/research', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function writeSuggestions(input: ResearchInput & { keywords: KeywordInsight[]; chaptersOk: boolean | null }) {
+  return call<{
+    titles: { text: string; score: number; checks: Check[] }[];
+    description: { text: string; score: number; checks: Check[] } | null;
+  }>('/api/youtube/suggestions', { method: 'POST', body: JSON.stringify(input) });
+}

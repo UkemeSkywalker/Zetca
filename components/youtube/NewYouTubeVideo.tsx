@@ -356,6 +356,7 @@ export function NewYouTubeVideo() {
                   options={options}
                   onPlaylistCreated={(p) => setOptions((o) => ({ ...o, playlists: [p, ...o.playlists] }))}
                   timeZones={timeZones}
+                  mediaId={upload.state === 'done' ? upload.media.mediaId : undefined}
                 />
               </>
             )}

@@ -176,3 +176,28 @@ resource "aws_iam_access_key" "app" {
   count = local.app_server_count
   user  = aws_iam_user.app[0].name
 }
+
+# Transcripts of uploaded videos (chapters and keyword suggestions).
+# A separate managed policy: the user's inline policies are capped at 2,048
+# bytes in total, and the main one is close to that.
+data "aws_iam_policy_document" "app_transcribe" {
+  count = local.app_server_count
+  statement {
+    sid       = "Transcripts"
+    actions   = ["transcribe:StartTranscriptionJob", "transcribe:GetTranscriptionJob", "transcribe:DeleteTranscriptionJob"]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "app_transcribe" {
+  count       = local.app_server_count
+  name        = "${local.app_name}-transcribe"
+  description = "Lets the Zetca app transcribe uploaded videos"
+  policy      = data.aws_iam_policy_document.app_transcribe[0].json
+}
+
+resource "aws_iam_user_policy_attachment" "app_transcribe" {
+  count      = local.app_server_count
+  user       = aws_iam_user.app[0].name
+  policy_arn = aws_iam_policy.app_transcribe[0].arn
+}
