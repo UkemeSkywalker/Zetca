@@ -24,6 +24,7 @@ interface Config {
   dynamoDbStrategiesTableName: string;
   dynamoDbCopiesTableName: string;
   dynamoDbPublishLogTableName: string;
+  dynamoDbYouTubeVideosTableName: string;
   bedrockModelId: string;
   useMockAgent: boolean;
   agentTimeoutSeconds: number;
@@ -55,6 +56,10 @@ export function getConfig(): Config {
     dynamoDbStrategiesTableName: process.env.DYNAMODB_STRATEGIES_TABLE_NAME || 'strategies-dev',
     dynamoDbCopiesTableName: process.env.DYNAMODB_COPIES_TABLE_NAME || 'copies-dev',
     dynamoDbPublishLogTableName: process.env.DYNAMODB_PUBLISH_LOG_TABLE_NAME || 'publish-log-dev',
+    // Defaults by environment, so the existing prod server needs no new variable
+    dynamoDbYouTubeVideosTableName:
+      process.env.DYNAMODB_YOUTUBE_VIDEOS_TABLE_NAME ||
+      (process.env.NODE_ENV === 'production' ? 'youtube-videos-prod' : 'youtube-videos-dev'),
     bedrockModelId: process.env.BEDROCK_MODEL_ID || 'us.anthropic.claude-sonnet-4-6',
     useMockAgent: process.env.USE_MOCK_AGENT === 'true',
     agentTimeoutSeconds: Number(process.env.AGENT_TIMEOUT_SECONDS || 60),

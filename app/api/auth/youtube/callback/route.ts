@@ -19,6 +19,7 @@ import {
   YOUTUBE_RETURN_PATHS,
 } from '@/lib/services/youtubeClient';
 import { logError } from '@/lib/errors';
+import { forgetYouTubeAccess } from '@/lib/services/youtubeAccess';
 
 function profileRedirect(req: NextRequest, query: string, path = '/dashboard/profile'): Response {
   const response = NextResponse.redirect(new URL(`${path}?${query}`, req.url));
@@ -57,6 +58,8 @@ async function youtubeCallbackHandler(req: NextRequest, userId: string): Promise
       refreshTokenEnc: encryptToken(tokens.refreshToken),
       scopes: tokens.scopes,
     });
+    // A reconnect may have picked a different channel
+    forgetYouTubeAccess(userId);
     // Errors always show on the profile page; success goes back where the user started
     const returnTo = req.cookies.get(YOUTUBE_RETURN_COOKIE)?.value;
     const path = returnTo && (YOUTUBE_RETURN_PATHS as readonly string[]).includes(returnTo) ? returnTo : undefined;

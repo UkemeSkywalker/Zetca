@@ -142,3 +142,94 @@ export async function revokeToken(token: string): Promise<void> {
     body: new URLSearchParams({ token }),
   });
 }
+
+const API_URL = 'https://www.googleapis.com/youtube/v3';
+
+/** A YouTube Data API error (not a sign-in problem) */
+export class YouTubeApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    /** YouTube's reason, e.g. "quotaExceeded" */
+    public reason?: string
+  ) {
+    super(message);
+    this.name = 'YouTubeApiError';
+  }
+}
+
+async function youtubeApi<T>(accessToken: string, path: string, init: RequestInit = {}): Promise<T> {
+  const res = await fetchWithTimeout(`${API_URL}${path}`, {
+    ...init,
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json', ...(init.headers ?? {}) },
+  });
+  if (res.status === 401) throw new YouTubeAuthError('YouTube access was revoked or expired', 'token_revoked');
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const reason = data?.error?.errors?.[0]?.reason as string | undefined;
+    throw new YouTubeApiError(data?.error?.message || `YouTube request failed: ${res.status}`, res.status, reason);
+  }
+  return data as T;
+}
+
+export interface YouTubePlaylist {
+  id: string;
+  title: string;
+  itemCount: number;
+  privacyStatus?: string;
+}
+
+/** The channel's playlists (up to 200) */
+export async function listMyPlaylists(accessToken: string): Promise<YouTubePlaylist[]> {
+  const playlists: YouTubePlaylist[] = [];
+  let pageToken = '';
+  for (let page = 0; page < 4; page++) {
+    const data = await youtubeApi<{
+      items?: { id: string; snippet?: { title?: string }; contentDetails?: { itemCount?: number }; status?: { privacyStatus?: string } }[];
+      nextPageToken?: string;
+    }>(accessToken, `/playlists?part=snippet,contentDetails,status&mine=true&maxResults=50${pageToken ? `&pageToken=${pageToken}` : ''}`);
+    for (const item of data.items ?? []) {
+      playlists.push({
+        id: item.id,
+        title: (item.snippet?.title ?? 'Untitled playlist').slice(0, 150),
+        itemCount: item.contentDetails?.itemCount ?? 0,
+        privacyStatus: item.status?.privacyStatus,
+      });
+    }
+    if (!data.nextPageToken) break;
+    pageToken = encodeURIComponent(data.nextPageToken);
+  }
+  return playlists;
+}
+
+export async function createPlaylist(
+  accessToken: string,
+  input: { title: string; privacyStatus: 'public' | 'unlisted' | 'private' }
+): Promise<YouTubePlaylist> {
+  const data = await youtubeApi<{ id: string; snippet?: { title?: string }; status?: { privacyStatus?: string } }>(
+    accessToken,
+    '/playlists?part=snippet,status',
+    {
+      method: 'POST',
+      body: JSON.stringify({ snippet: { title: input.title }, status: { privacyStatus: input.privacyStatus } }),
+    }
+  );
+  return { id: data.id, title: data.snippet?.title ?? input.title, itemCount: 0, privacyStatus: data.status?.privacyStatus };
+}
+
+export interface YouTubeCategory {
+  id: string;
+  title: string;
+}
+
+/** Categories a video can be put in, for a region (e.g. "US", "NG") */
+export async function listVideoCategories(accessToken: string, regionCode: string): Promise<YouTubeCategory[]> {
+  const data = await youtubeApi<{ items?: { id: string; snippet?: { title?: string; assignable?: boolean } }[] }>(
+    accessToken,
+    `/videoCategories?part=snippet&regionCode=${encodeURIComponent(regionCode)}`
+  );
+  return (data.items ?? [])
+    .filter((c) => c.snippet?.assignable)
+    .map((c) => ({ id: c.id, title: c.snippet?.title ?? c.id }))
+    .sort((a, b) => a.title.localeCompare(b.title));
+}

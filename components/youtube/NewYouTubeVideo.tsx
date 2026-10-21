@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import type { MediaRecord } from '@/types/media';
@@ -12,10 +12,16 @@ import {
   type UploadProgress,
   type VideoMetadata,
 } from '@/lib/api/videoUploadClient';
+import { getOptions, scheduleVideo, YouTubeRequestError } from '@/lib/api/youtubeApi';
+import type { YouTubeVideoRecord } from '@/lib/models/youtubeVideo';
+import { draftToInput, newDraft, sectionForField, titleFromFilename, validateDraft, type DetailsDraft } from '@/lib/youtube/draft';
+import { defaultLanguage } from '@/lib/youtube/languages';
 import type { YouTubeConnection } from '@/types/user';
+import { VideoDetailsForm, SECTIONS, type FormOptions } from './VideoDetailsForm';
+import { ScheduledView } from './ScheduledView';
+import { CARD } from './formKit';
 
 const PAGE_PATH = '/dashboard/scheduler/youtube/new';
-const CARD = 'bg-white rounded-2xl border border-[#c7c4d8]/25 shadow-sm';
 
 type Upload =
   | { state: 'idle' }
@@ -48,12 +54,72 @@ export function fileProblem(file: File): string | null {
   return null;
 }
 
+/** "Thu, 23 Oct, 6:00 PM (WAT)" */
+export function formatPublishTime(draft: Pick<DetailsDraft, 'scheduledDate' | 'scheduledTime' | 'timeZone'>): string {
+  const [y, m, d] = draft.scheduledDate.split('-').map(Number);
+  const [hh, mm] = draft.scheduledTime.split(':').map(Number);
+  if (!y || Number.isNaN(hh)) return '—';
+  const day = new Date(Date.UTC(y, m - 1, d, 12)).toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  });
+  const time = new Date(Date.UTC(2000, 0, 1, hh, mm)).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  });
+  let zone = draft.timeZone;
+  try {
+    zone =
+      new Intl.DateTimeFormat('en-US', { timeZone: draft.timeZone, timeZoneName: 'short' })
+        .formatToParts(new Date(Date.UTC(y, m - 1, d, hh, mm)))
+        .find((p) => p.type === 'timeZoneName')?.value ?? draft.timeZone;
+  } catch {
+    /* unknown zone: show its name */
+  }
+  return `${day}, ${time} (${zone})`;
+}
+
+function browserTimeZone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  } catch {
+    return 'UTC';
+  }
+}
+
+function allTimeZones(current: string): string[] {
+  let zones: string[] = [];
+  try {
+    zones = (Intl as unknown as { supportedValuesOf?: (k: string) => string[] }).supportedValuesOf?.('timeZone') ?? [];
+  } catch {
+    zones = [];
+  }
+  if (!zones.includes(current)) zones = [current, ...zones];
+  return zones.length ? zones : ['UTC'];
+}
+
 export function NewYouTubeVideo() {
   const [channel, setChannel] = useState<YouTubeConnection | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [upload, setUpload] = useState<Upload>({ state: 'idle' });
   const [pickError, setPickError] = useState<string | null>(null);
+  const [draft, setDraft] = useState<DetailsDraft | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [scheduled, setScheduled] = useState<YouTubeVideoRecord | null>(null);
+  const [options, setOptions] = useState<FormOptions>({ playlists: [], categories: [], loading: true, error: null });
   const abortRef = useRef<AbortController | null>(null);
+  const attemptedRef = useRef(false);
+  const uploadRef = useRef<Upload>(upload);
+  useEffect(() => {
+    uploadRef.current = upload;
+  }, [upload]);
+  const timeZone = useMemo(browserTimeZone, []);
+  const timeZones = useMemo(() => allTimeZones(timeZone), [timeZone]);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,53 +135,134 @@ export function NewYouTubeVideo() {
     };
   }, []);
 
+  // Playlists and categories come from the connected channel
+  useEffect(() => {
+    if (!channel?.isConnected) return;
+    let cancelled = false;
+    getOptions()
+      .then((o) => !cancelled && setOptions({ ...o, loading: false, error: null }))
+      .catch((err) => !cancelled && setOptions({ playlists: [], categories: [], loading: false, error: (err as Error).message }));
+    return () => {
+      cancelled = true;
+    };
+  }, [channel?.isConnected]);
+
   // Cancel a running upload and free the preview when leaving the page
   const previewUrl = upload.state === 'idle' ? null : upload.previewUrl;
   useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
   useEffect(() => () => abortRef.current?.abort(), []);
 
-  // Warn before closing the tab mid-upload
+  // Warn before closing the tab with work that isn't scheduled yet
+  const unsaved = upload.state !== 'idle' && !scheduled;
   useEffect(() => {
-    if (upload.state !== 'uploading') return;
+    if (!unsaved) return;
     const warn = (e: BeforeUnloadEvent) => e.preventDefault();
     window.addEventListener('beforeunload', warn);
     return () => window.removeEventListener('beforeunload', warn);
-  }, [upload.state]);
+  }, [unsaved]);
 
-  const start = useCallback(async (file: File) => {
-    const problem = fileProblem(file);
-    if (problem) {
-      setPickError(problem);
-      return;
-    }
-    setPickError(null);
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
+  const start = useCallback(
+    async (file: File) => {
+      const problem = fileProblem(file);
+      if (problem) {
+        setPickError(problem);
+        return;
+      }
+      setPickError(null);
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
 
-    const meta = await readVideoMetadata(file);
-    const url = URL.createObjectURL(file);
-    const base = { file, previewUrl: url, meta };
-    setUpload({ state: 'uploading', ...base, progress: { uploadedBytes: 0, totalBytes: file.size } });
-
-    try {
-      const media = await uploadVideo(file, {
-        metadata: meta,
-        signal: controller.signal,
-        onProgress: (progress) =>
-          !controller.signal.aborted && setUpload({ state: 'uploading', ...base, progress }),
+      const meta = await readVideoMetadata(file);
+      const url = URL.createObjectURL(file);
+      const base = { file, previewUrl: url, meta };
+      // Replacing the video keeps the details, but not the old video's thumbnail or an untouched title
+      const prev = uploadRef.current;
+      setDraft((d) => {
+        if (!d) {
+          const language = defaultLanguage(typeof navigator !== 'undefined' ? navigator.language : undefined);
+          return newDraft(file.name, { language, timeZone });
+        }
+        const autoTitle = prev.state !== 'idle' && d.title === titleFromFilename(prev.file.name);
+        return { ...d, thumbnailMediaId: undefined, ...(autoTitle ? { title: titleFromFilename(file.name) } : {}) };
       });
-      if (!controller.signal.aborted) setUpload({ state: 'done', ...base, media });
-    } catch (error) {
-      if (controller.signal.aborted) return;
-      setUpload({ state: 'failed', ...base, error: (error as Error).message || 'The upload failed' });
-    }
-  }, []);
+      setUpload({ state: 'uploading', ...base, progress: { uploadedBytes: 0, totalBytes: file.size } });
+
+      try {
+        const media = await uploadVideo(file, {
+          metadata: meta,
+          signal: controller.signal,
+          onProgress: (progress) => !controller.signal.aborted && setUpload({ state: 'uploading', ...base, progress }),
+        });
+        if (!controller.signal.aborted) setUpload({ state: 'done', ...base, media });
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        setUpload({ state: 'failed', ...base, error: (error as Error).message || 'The upload failed' });
+      }
+    },
+    [timeZone]
+  );
 
   const cancel = () => {
     abortRef.current?.abort();
     abortRef.current = null;
     setUpload({ state: 'idle' });
+  };
+
+  const update = useCallback((patch: Partial<DetailsDraft>) => {
+    setDraft((d) => {
+      if (!d) return d;
+      const next = { ...d, ...patch };
+      // After a failed attempt, errors update as fields are fixed
+      if (attemptedRef.current) {
+        const found = validateDraft(next);
+        setErrors(found);
+        if (Object.keys(found).length === 0) setSubmitError(null);
+      }
+      return next;
+    });
+  }, []);
+
+  const jumpTo = (section: string) =>
+    document.getElementById(`section-${section}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const submit = async () => {
+    if (!draft || upload.state !== 'done') return;
+    attemptedRef.current = true;
+    setSubmitError(null);
+    const found = validateDraft(draft);
+    setErrors(found);
+    const first = Object.keys(found)[0];
+    if (first) {
+      setSubmitError('Fix the highlighted details first.');
+      jumpTo(sectionForField(first));
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const video = await scheduleVideo(upload.media.mediaId, draftToInput(draft));
+      setScheduled(video);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      const e = err as YouTubeRequestError;
+      setSubmitError(e.message);
+      if (e.fields && Object.keys(e.fields).length) {
+        setErrors(e.fields);
+        jumpTo(sectionForField(Object.keys(e.fields)[0]));
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const reset = () => {
+    abortRef.current = null;
+    attemptedRef.current = false;
+    setUpload({ state: 'idle' });
+    setDraft(null);
+    setErrors({});
+    setSubmitError(null);
+    setScheduled(null);
   };
 
   if (loadError) {
@@ -130,29 +277,100 @@ export function NewYouTubeVideo() {
     );
   }
 
+  if (scheduled && upload.state === 'done') {
+    return (
+      <ScheduledView
+        video={scheduled}
+        channelTitle={channel.channelTitle}
+        thumbnailUrl={upload.previewUrl}
+        publishLabel={scheduled.publishAt && draft ? formatPublishTime(draft) : null}
+        onAnother={reset}
+      />
+    );
+  }
+
+  const short = upload.state !== 'idle' && isShort(upload.meta);
+
   return (
-    <div className="space-y-8">
-      <header className="flex flex-wrap items-center gap-4">
+    <div className="space-y-6 pb-28 lg:pb-0">
+      <header className="flex flex-wrap items-center gap-3 sm:gap-4">
         <h1 className="text-3xl font-bold font-heading text-on-surface tracking-tight">New YouTube video</h1>
+        {draft && (
+          <span className="rounded-full bg-white border border-[#c7c4d8]/40 px-3 py-1 text-xs font-semibold text-outline">● Draft</span>
+        )}
         {channel.isConnected && <ChannelChip channel={channel} />}
       </header>
 
       {!channel.isConnected ? (
         <ConnectCard />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-8 items-start">
-          <div className="min-w-0">
-            {upload.state === 'idle' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-6 lg:gap-8 items-start">
+          {upload.state !== 'idle' && (
+            <aside className="space-y-6 lg:sticky lg:top-24 lg:order-2">
+              <YourVideoCard
+                upload={upload}
+                onCancel={cancel}
+                onRetry={() => upload.state === 'failed' && start(upload.file)}
+                onReplace={start}
+                pickError={pickError}
+              />
+              {draft && (
+                <PublishSummaryCard
+                  draft={draft}
+                  ready={upload.state === 'done'}
+                  submitting={submitting}
+                  error={submitError}
+                  onSchedule={submit}
+                  className="hidden lg:block"
+                />
+              )}
+            </aside>
+          )}
+          <div className="min-w-0 lg:order-1">
+            {upload.state === 'idle' || !draft ? (
               <DropZone onFile={start} error={pickError} />
             ) : (
-              <PreviewCard upload={upload} onReplace={start} error={pickError} />
+              <>
+                <nav
+                  aria-label="Form sections"
+                  className="sticky top-16 lg:top-20 z-10 -mx-1 px-1 py-2 mb-4 flex gap-2 overflow-x-auto bg-surface/90 backdrop-blur"
+                >
+                  {SECTIONS.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => jumpTo(s.id)}
+                      className="shrink-0 rounded-full bg-white border border-[#c7c4d8]/40 px-4 py-1.5 text-sm font-medium text-on-surface hover:border-primary/40 hover:text-primary"
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </nav>
+                <VideoDetailsForm
+                  draft={draft}
+                  update={update}
+                  errors={errors}
+                  file={upload.file}
+                  isShort={short}
+                  durationSeconds={upload.meta.durationSeconds}
+                  options={options}
+                  onPlaylistCreated={(p) => setOptions((o) => ({ ...o, playlists: [p, ...o.playlists] }))}
+                  timeZones={timeZones}
+                />
+              </>
             )}
           </div>
-          <aside className="space-y-6 lg:sticky lg:top-24">
-            <YourVideoCard upload={upload} onCancel={cancel} onRetry={() => upload.state === 'failed' && start(upload.file)} />
-            <PublishSummaryCard uploading={upload.state === 'uploading'} />
-          </aside>
+          {upload.state === 'idle' && (
+            <aside className="space-y-6 lg:sticky lg:top-24 lg:order-2">
+              <EmptyVideoCard />
+            </aside>
+          )}
         </div>
+      )}
+
+      {/* Phones: the summary becomes a bar at the bottom */}
+      {channel.isConnected && draft && upload.state !== 'idle' && (
+        <MobileScheduleBar draft={draft} ready={upload.state === 'done'} submitting={submitting} error={submitError} onSchedule={submit} />
       )}
     </div>
   );
@@ -285,47 +503,15 @@ function DropZone({ onFile, error }: { onFile: (file: File) => void; error: stri
   );
 }
 
-function PreviewCard({
-  upload,
-  onReplace,
-  error,
-}: {
-  upload: Exclude<Upload, { state: 'idle' }>;
-  onReplace: (file: File) => void;
-  error: string | null;
-}) {
-  const picker = useFilePicker(onReplace);
-  const short = isShort(upload.meta);
+
+function EmptyVideoCard() {
   return (
     <section className={`${CARD} p-6`}>
-      {picker.input}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold font-heading text-on-surface">Preview</h2>
-          <p className="text-sm text-outline">Check this is the right video. The details come next.</p>
-        </div>
-        <button
-          type="button"
-          onClick={picker.open}
-          className="text-sm font-semibold text-primary hover:text-primary-700 flex items-center gap-1.5"
-        >
-          <Icon icon="solar:refresh-linear" className="w-4 h-4" />
-          Replace video
-        </button>
+      <h2 className="text-lg font-semibold font-heading text-on-surface">Your video</h2>
+      <div className="mt-5 rounded-xl border border-dashed border-primary-200 bg-primary-50/50 py-12 flex flex-col items-center gap-2 text-outline">
+        <Icon icon="solar:clapperboard-linear" className="w-8 h-8 text-primary-300" />
+        <span className="text-sm">No video yet</span>
       </div>
-      <div className={`mt-5 rounded-xl bg-[#0b1220] overflow-hidden flex justify-center ${short ? 'max-h-[360px] sm:max-h-[560px]' : ''}`}>
-        <video
-          src={upload.previewUrl}
-          controls
-          preload="metadata"
-          className={short ? 'h-[360px] sm:h-[560px] w-auto' : 'w-full aspect-video'}
-        />
-      </div>
-      {error && (
-        <p role="alert" className="mt-4 text-sm font-medium text-red-600">
-          {error}
-        </p>
-      )}
     </section>
   );
 }
@@ -334,91 +520,92 @@ function YourVideoCard({
   upload,
   onCancel,
   onRetry,
+  onReplace,
+  pickError,
 }: {
-  upload: Upload;
+  upload: Exclude<Upload, { state: 'idle' }>;
   onCancel: () => void;
   onRetry: () => void;
+  onReplace: (file: File) => void;
+  pickError: string | null;
 }) {
-  if (upload.state === 'idle') {
-    return (
-      <section className={`${CARD} p-6`}>
-        <h2 className="text-lg font-semibold font-heading text-on-surface">Your video</h2>
-        <div className="mt-5 rounded-xl border border-dashed border-primary-200 bg-primary-50/50 py-12 flex flex-col items-center gap-2 text-outline">
-          <Icon icon="solar:clapperboard-linear" className="w-8 h-8 text-primary-300" />
-          <span className="text-sm">No video yet</span>
-        </div>
-      </section>
-    );
-  }
-
+  const picker = useFilePicker(onReplace);
   const { file, meta } = upload;
+  const short = isShort(meta);
   const pct =
     upload.state === 'uploading'
       ? Math.min(99, Math.floor((upload.progress.uploadedBytes / upload.progress.totalBytes) * 100))
       : 100;
-  const format = isShort(meta) ? 'Short' : 'Long video';
   const duration = formatDuration(meta.durationSeconds);
 
   return (
     <section className={`${CARD} p-6`}>
-      <h2 className="text-lg font-semibold font-heading text-on-surface">Your video</h2>
-
-      <div className="mt-5 rounded-xl bg-primary-50/70 p-4">
-        {upload.state === 'uploading' && (
-          <>
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-medium text-on-surface">Uploading…</span>
-              <span className="font-semibold text-primary">{pct}%</span>
-            </div>
-            <div
-              className="mt-2 h-2 rounded-full bg-primary-100 overflow-hidden"
-              role="progressbar"
-              aria-valuenow={pct}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-label="Upload progress"
-            >
-              <div className="h-full bg-primary rounded-full transition-[width] duration-300" style={{ width: `${pct}%` }} />
-            </div>
-            <div className="mt-2 flex items-center justify-between text-xs text-outline">
-              <span>
-                {formatBytes(upload.progress.uploadedBytes)} of {formatBytes(file.size)}
-              </span>
-              <button type="button" onClick={onCancel} className="font-semibold text-outline hover:text-red-600">
-                Cancel
-              </button>
-            </div>
-          </>
-        )}
-        {upload.state === 'done' && (
-          <div className="flex items-center gap-2 text-sm font-medium text-emerald-700">
-            <Icon icon="solar:check-circle-bold" className="w-5 h-5" />
-            Uploaded to Zetca
-          </div>
-        )}
-        {upload.state === 'failed' && (
-          <div className="space-y-3">
-            <div className="flex items-start gap-2 text-sm text-red-700">
-              <Icon icon="solar:danger-circle-bold" className="w-5 h-5 shrink-0" />
-              <span>{upload.error}</span>
-            </div>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={onRetry}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700"
-              >
-                Try again
-              </button>
-              <button type="button" onClick={onCancel} className="text-sm font-semibold text-outline hover:text-on-surface">
-                Remove
-              </button>
-            </div>
-          </div>
-        )}
+      {picker.input}
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold font-heading text-on-surface">Your video</h2>
+        <button
+          type="button"
+          onClick={picker.open}
+          className="text-xs font-semibold text-primary hover:text-primary-700 flex items-center gap-1"
+        >
+          <Icon icon="solar:refresh-linear" className="w-3.5 h-3.5" />
+          Replace
+        </button>
       </div>
 
-      <dl className="mt-4 space-y-2 text-sm">
+      <div className="mt-4 rounded-xl bg-[#0b1220] overflow-hidden flex justify-center">
+        <video
+          src={upload.previewUrl}
+          controls
+          preload="metadata"
+          className={short ? 'h-[300px] w-auto' : 'w-full aspect-video'}
+        />
+      </div>
+
+      {upload.state === 'uploading' && (
+        <div className="mt-4">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium text-on-surface">Uploading to Zetca…</span>
+            <span className="font-semibold text-primary">{pct}%</span>
+          </div>
+          <div
+            className="mt-2 h-2 rounded-full bg-primary-100 overflow-hidden"
+            role="progressbar"
+            aria-valuenow={pct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Upload progress"
+          >
+            <div className="h-full bg-primary rounded-full transition-[width] duration-300" style={{ width: `${pct}%` }} />
+          </div>
+          <div className="mt-2 flex items-center justify-between text-xs text-outline">
+            <span>
+              {formatBytes(upload.progress.uploadedBytes)} of {formatBytes(file.size)}
+            </span>
+            <button type="button" onClick={onCancel} className="font-semibold text-outline hover:text-red-600">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+      {upload.state === 'failed' && (
+        <div className="mt-4 rounded-xl bg-red-50 p-4 space-y-3">
+          <div className="flex items-start gap-2 text-sm text-red-700">
+            <Icon icon="solar:danger-circle-bold" className="w-5 h-5 shrink-0" />
+            <span>{upload.error}</span>
+          </div>
+          <div className="flex gap-3">
+            <button type="button" onClick={onRetry} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700">
+              Try again
+            </button>
+            <button type="button" onClick={onCancel} className="text-sm font-semibold text-outline hover:text-on-surface">
+              Remove
+            </button>
+          </div>
+        </div>
+      )}
+
+      <dl className="mt-4 space-y-1.5 text-sm">
         <div className="flex justify-between gap-4">
           <dt className="sr-only">File</dt>
           <dd className="font-medium text-on-surface truncate" title={file.name}>
@@ -426,32 +613,125 @@ function YourVideoCard({
           </dd>
           <dd className="text-outline shrink-0">{formatBytes(file.size)}</dd>
         </div>
-        <div className="flex justify-between gap-4 text-outline">
-          <dt>Format</dt>
-          <dd className="text-on-surface">
-            {format}
-            {duration && <span className="text-outline"> · {duration}</span>}
+        {upload.state === 'done' && (
+          <div className="flex items-center gap-1.5 text-emerald-700">
+            <Icon icon="solar:check-circle-bold" className="w-4 h-4" />
+            <span className="font-medium">Uploaded to Zetca</span>
+          </div>
+        )}
+        <div className="flex items-center gap-2 text-outline">
+          <dt>Format:</dt>
+          <dd className="flex items-center gap-1.5">
+            {short ? (
+              <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-600">Short</span>
+            ) : (
+              <span className="text-on-surface">Long video</span>
+            )}
+            {duration && <span>· {duration}</span>}
           </dd>
         </div>
       </dl>
+      {pickError && (
+        <p role="alert" className="mt-3 text-xs font-medium text-red-600">
+          {pickError}
+        </p>
+      )}
     </section>
   );
 }
 
-function PublishSummaryCard({ uploading }: { uploading: boolean }) {
+function summaryRows(draft: DetailsDraft): { label: string; value: string }[] {
+  const visibility = { public: 'Public', unlisted: 'Unlisted', private: 'Private' }[draft.privacyStatus];
+  return [
+    { label: 'Visibility', value: visibility },
+    {
+      label: draft.publishMode === 'schedule' ? 'Publishes' : 'Goes up',
+      value: draft.publishMode === 'schedule' ? formatPublishTime(draft) : 'As soon as it’s uploaded',
+    },
+    { label: 'Notify subscribers', value: draft.notifySubscribers ? 'On' : 'Off' },
+  ];
+}
+
+function scheduleHint(draft: DetailsDraft, ready: boolean): string {
+  if (!ready) return 'Available when the upload finishes';
+  if (draft.publishMode === 'schedule') return 'Zetca uploads it as private; YouTube makes it public at this time.';
+  return 'Zetca uploads it to YouTube straight away.';
+}
+
+function PublishSummaryCard({
+  draft,
+  ready,
+  submitting,
+  error,
+  onSchedule,
+  className = '',
+}: {
+  draft: DetailsDraft;
+  ready: boolean;
+  submitting: boolean;
+  error: string | null;
+  onSchedule: () => void;
+  className?: string;
+}) {
   return (
-    <section className={`${CARD} p-6`}>
+    <section className={`${CARD} p-6 ${className}`}>
       <h2 className="text-lg font-semibold font-heading text-on-surface">Publish summary</h2>
+      <dl className="mt-4 space-y-2.5 text-sm">
+        {summaryRows(draft).map((row) => (
+          <div key={row.label} className="flex justify-between gap-4">
+            <dt className="text-outline">{row.label}</dt>
+            <dd className="text-right font-medium text-on-surface">{row.value}</dd>
+          </div>
+        ))}
+      </dl>
       <button
         type="button"
-        disabled
-        className="mt-5 w-full rounded-xl bg-primary-100 py-4 font-semibold text-white cursor-not-allowed"
+        onClick={onSchedule}
+        disabled={!ready || submitting}
+        className="mt-5 w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-4 font-semibold text-white hover:bg-primary-700 disabled:bg-primary-100 disabled:cursor-not-allowed transition-colors"
       >
-        Schedule video
+        {submitting && <Icon icon="svg-spinners:ring-resize" className="w-5 h-5" />}
+        {draft.publishMode === 'schedule' ? 'Schedule video' : 'Publish video'}
       </button>
-      <p className="mt-3 text-center text-xs text-outline">
-        {uploading ? 'Available when the upload finishes' : 'Add the video details to schedule it'}
-      </p>
+      {error ? (
+        <p role="alert" className="mt-3 text-center text-xs font-medium text-red-600">
+          {error}
+        </p>
+      ) : (
+        <p className="mt-3 text-center text-xs text-outline">{scheduleHint(draft, ready)}</p>
+      )}
     </section>
+  );
+}
+
+function MobileScheduleBar({
+  draft,
+  ready,
+  submitting,
+  error,
+  onSchedule,
+}: {
+  draft: DetailsDraft;
+  ready: boolean;
+  submitting: boolean;
+  error: string | null;
+  onSchedule: () => void;
+}) {
+  const when = draft.publishMode === 'schedule' ? `Publishes ${formatPublishTime(draft)}` : 'Publishes as soon as it’s uploaded';
+  return (
+    <div className="lg:hidden fixed inset-x-0 bottom-0 z-30 border-t border-[#c7c4d8]/40 bg-white/95 backdrop-blur px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">
+      <p className={`text-xs mb-2 truncate ${error ? 'text-red-600 font-medium' : 'text-outline'}`}>
+        {error ?? (ready ? when : 'Available when the upload finishes')}
+      </p>
+      <button
+        type="button"
+        onClick={onSchedule}
+        disabled={!ready || submitting}
+        className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-3.5 font-semibold text-white disabled:bg-primary-100"
+      >
+        {submitting && <Icon icon="svg-spinners:ring-resize" className="w-5 h-5" />}
+        {draft.publishMode === 'schedule' ? 'Schedule video' : 'Publish video'}
+      </button>
+    </div>
   );
 }
