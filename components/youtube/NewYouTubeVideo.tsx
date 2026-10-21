@@ -294,7 +294,7 @@ export function NewYouTubeVideo() {
   return (
     <div className="space-y-6 pb-28 lg:pb-0">
       <header className="flex flex-wrap items-center gap-3 sm:gap-4">
-        <h1 className="text-3xl font-bold font-heading text-on-surface tracking-tight">New YouTube video</h1>
+        <h1 className="sr-only">Upload a YouTube video</h1>
         {draft && (
           <span className="rounded-full bg-white border border-[#c7c4d8]/40 px-3 py-1 text-xs font-semibold text-outline">● Draft</span>
         )}

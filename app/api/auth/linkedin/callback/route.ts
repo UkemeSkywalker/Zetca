@@ -13,11 +13,12 @@ import { withRateLimit } from '@/lib/middleware/withRateLimit';
 import { getConfig } from '@/lib/config';
 import { UserRepository } from '@/lib/db/userRepository';
 import { logError } from '@/lib/errors';
+import { siteUrl } from '@/lib/http/siteUrl';
 
 const PROFILE_URL = '/dashboard/profile';
 
 function profileRedirect(req: NextRequest, query: string): Response {
-  return NextResponse.redirect(new URL(`${PROFILE_URL}?${query}`, req.url));
+  return NextResponse.redirect(siteUrl(`${PROFILE_URL}?${query}`));
 }
 
 async function linkedinCallbackHandler(req: NextRequest, userId: string): Promise<Response> {
