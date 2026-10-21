@@ -2,80 +2,59 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Icon } from '@iconify/react';
 import { ZetcaLogo } from './ZetcaLogo';
 
-interface FooterLink {
-  label: string;
-  href: string;
-}
-
-const footerLinks: FooterLink[] = [
-  { label: 'Features', href: '/#features' },
-  { label: 'Pricing', href: '/#pricing' },
-  { label: 'Dashboard', href: '/dashboard' },
-  { label: 'About', href: '#' },
-  { label: 'Contact', href: '#' },
+const columns = [
+  {
+    title: 'Product',
+    links: [
+      { label: 'Features', href: '/#features' },
+      { label: 'Pricing', href: '/#pricing' },
+      { label: 'FAQ', href: '/#faq' },
+    ],
+  },
+  { title: 'Company', links: [{ label: 'hello@zetca.pro', href: 'mailto:hello@zetca.pro' }] },
+  {
+    title: 'Legal',
+    links: [
+      { label: 'Privacy Policy', href: '/privacy' },
+      { label: 'Terms of Service', href: '/terms' },
+    ],
+  },
 ];
 
-const socialLinks = [
-  { name: 'Instagram', icon: 'solar:instagram-bold', href: '#' },
-  { name: 'Twitter', icon: 'solar:twitter-bold', href: '#' },
-  { name: 'LinkedIn', icon: 'solar:linkedin-bold', href: '#' },
-  { name: 'Facebook', icon: 'solar:facebook-bold', href: '#' },
-];
-
-interface FooterProps {
-  className?: string;
-}
-
-export default function Footer({ className = '' }: FooterProps) {
+export default function Footer() {
   const pathname = usePathname();
-  const currentYear = new Date().getFullYear();
-
-  if (pathname?.startsWith('/dashboard')) {
-    return null;
-  }
+  if (pathname?.startsWith('/dashboard')) return null;
 
   return (
-    <footer className={`bg-on-surface text-surface-container-high ${className}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex flex-col md:flex-row justify-between items-center space-y-6 md:space-y-0 mb-8">
-          <Link href="/" className="hover:opacity-80 transition-opacity" aria-label="Zetca home">
-            <ZetcaLogo tone="light" />
-          </Link>
-
-          <nav className="flex flex-wrap justify-center gap-6">
-            {footerLinks.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                className="text-surface-container-high hover:text-surface-container-lowest transition-colors duration-200"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="flex space-x-6">
-            {socialLinks.map((social) => (
-              <a
-                key={social.name}
-                href={social.href}
-                aria-label={social.name}
-                className="text-outline hover:text-surface-container-lowest transition-colors duration-200"
-              >
-                <Icon icon={social.icon} className="w-6 h-6" />
-              </a>
-            ))}
+    <footer className="bg-white border-t border-slate-200 pt-16 pb-12 px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-10 pb-12 border-b border-slate-200">
+          <div className="col-span-2 md:col-span-1 space-y-3">
+            <Link href="/" aria-label="Zetca home" className="inline-block">
+              <ZetcaLogo />
+            </Link>
+            <p className="text-sm text-[#777587]">Your AI content team.</p>
           </div>
+          {columns.map((col) => (
+            <div key={col.title}>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-[#0B1C30] mb-4">{col.title}</h2>
+              <ul className="space-y-2.5 text-sm text-[#464555]">
+                {col.links.map((link) => (
+                  <li key={link.label}>
+                    <Link href={link.href} className="hover:text-[#0B1C30] transition-colors">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
-
-        <div style={{ borderTop: '1px solid rgba(165, 173, 198, 0.2)' }} className="pt-6">
-          <p className="text-sm text-outline text-center">
-            © {currentYear} Zetca. All rights reserved.
-          </p>
-        </div>
+        <p className="pt-8 text-center sm:text-left text-xs text-[#777587]">
+          © {new Date().getFullYear()} Zetca. All rights reserved.
+        </p>
       </div>
     </footer>
   );

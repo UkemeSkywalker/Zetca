@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function SignupPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center px-4 py-12 bg-surface pt-32">
+    <main className="min-h-[calc(100vh-5rem)] flex items-center justify-center px-4 py-12 bg-surface">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold font-heading text-on-surface mb-2">Create Your Account</h1>

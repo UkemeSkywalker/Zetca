@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Zetca — An AI content team for your brand</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            primary: {
+              DEFAULT: '#4F46E5',
+              hover: '#4338CA',
+              tint: '#EEF2FF',
+            },
+            canvas: '#F7F9FC',
+            heading: '#0B1C30',
+            body: '#464555',
+            muted: '#777587',
+            cardBorder: '#E2E8F0',
+            liveGreen: '#10B981',
+            liveGreenBg: '#ECFDF5',
+            soonAmber: '#B45309',
+            soonAmberBg: '#FEF3C7',
+            appNavy: '#0B1220',
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #F7F9FC;
+      color: #464555;
+      -webkit-font-smoothing: antialiased;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#F7F9FC] text-[#464555] relative selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden">
+<!-- Top Announcement / Soft Glow Background -->
+<div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-[640px] pointer-events-none -z-10 overflow-hidden">
+<div class="absolute top-[-100px] left-1/2 -translate-x-1/2 w-[720px] h-[520px] bg-gradient-to-b from-[#EEF2FF] via-[#EEF2FF]/60 to-transparent rounded-full blur-3xl opacity-80"></div>
+</div>
+<!-- Header / Navigation -->
+<header class="sticky top-0 z-50 bg-[#F7F9FC]/90 backdrop-blur-md border-b border-[#E2E8F0]">
+<div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+<!-- Brand Logo -->
+<a class="flex items-center gap-3 group" href="https://zetca.pro">
+<div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-sm shadow-indigo-200">
+<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewbox="0 0 24 24">
+<rect height="18" rx="3.5" width="18" x="3" y="3"></rect>
+<path d="M3 9h18"></path>
+<path d="M9 21V9"></path>
+</svg>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center text-[20px] font-bold tracking-tight text-[#0B1C30] leading-none">
+            Zetca<span class="inline-block w-1.5 h-1.5 rounded-full bg-primary ml-0.5"></span>
+</div>
+<span class="text-[9px] font-bold tracking-widest text-[#777587] uppercase mt-1 leading-none">CONTENT OS</span>
+</div>
+</a>
+<!-- Navigation Links -->
+<nav class="hidden md:flex items-center gap-8 text-[15px] font-medium text-[#464555]">
+<a class="hover:text-[#0B1C30] transition-colors" href="#features">Tools</a>
+<a class="hover:text-[#0B1C30] transition-colors" href="#how-it-works">How it works</a>
+<a class="hover:text-[#0B1C30] transition-colors" href="#platforms">Channels</a>
+<a class="hover:text-[#0B1C30] transition-colors" href="#pricing">Pricing</a>
+</nav>
+<!-- Auth / Actions -->
+<div class="flex items-center gap-3">
+<a class="px-4 py-2.5 text-[15px] font-semibold text-[#0B1C30] hover:text-primary transition-colors" href="https://zetca.pro/login">Sign in</a>
+<a class="px-5 py-2.5 text-[15px] font-semibold text-white bg-primary hover:bg-[#4338CA] rounded-[12px] shadow-sm shadow-indigo-200 transition-all" href="https://zetca.pro/signup">Get started</a>
+</div>
+</div>
+</header>
+<!-- Part 1: Hero Section (Flanked with creator cards) -->
+<section class="pt-16 pb-16 px-6">
+<div class="max-w-4xl mx-auto text-center">
+<!-- Status Badge -->
+<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#ECFDF5] border border-emerald-200 mb-8">
+<span class="w-2 h-2 rounded-full bg-[#10B981]"></span>
+<span class="text-xs font-semibold text-[#10B981]">Zetca Content OS is live</span>
+</div>
+<!-- Headline: max 8 words -->
+<h1 class="text-5xl sm:text-6xl md:text-[64px] font-bold text-[#0B1C30] tracking-tight leading-[1.08] mb-6">
+        An AI content team for your brand
+      </h1>
+<!-- One-line subheading -->
+<p class="text-lg sm:text-xl text-[#464555] max-w-2xl mx-auto mb-10 leading-relaxed font-normal">
+        Plan strategy, write tailored posts, schedule, and publish automatically from one place.
+      </p>
+<!-- CTA Buttons -->
+<div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+<a class="w-full sm:w-auto px-7 py-3.5 text-[16px] font-semibold text-white bg-primary hover:bg-[#4338CA] rounded-[12px] shadow-sm shadow-indigo-300 transition-all text-center" href="https://zetca.pro/signup">
+          Start planning posts
+        </a>
+<a class="w-full sm:w-auto px-6 py-3.5 text-[16px] font-semibold text-[#0B1C30] bg-white border border-[#E2E8F0] hover:border-slate-300 rounded-[12px] transition-all text-center" href="#how-it-works">
+          See the workflow
+        </a>
+</div>
+<!-- Channel Support Strip -->
+<div class="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 pt-4 border-t border-[#E2E8F0]/70 text-sm font-medium text-[#777587]">
+<span class="text-xs tracking-wider uppercase font-semibold text-[#777587]">Built for</span>
+<span class="inline-flex items-center gap-1.5 text-[#0B1C30]">
+<svg class="w-4 h-4 text-[#FF0000]" fill="currentColor" viewbox="0 0 24 24">
+<path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"></path>
+</svg>
+          YouTube
+        </span>
+<span class="inline-flex items-center gap-1.5 text-[#0B1C30]">
+<svg class="w-4 h-4 text-[#0A66C2]" fill="currentColor" viewbox="0 0 24 24">
+<path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"></path>
+</svg>
+          LinkedIn
+        </span>
+<span class="inline-flex items-center gap-1.5 text-[#0B1C30]">
+<svg class="w-4 h-4 text-[#E4405F]" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"></path>
+</svg>
+          Instagram
+        </span>
+<span class="inline-flex items-center gap-1.5 text-[#0B1C30]">
+<svg class="w-3.5 h-3.5 text-black" fill="currentColor" viewbox="0 0 24 24">
+<path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+</svg>
+          X
+        </span>
+<span class="inline-flex items-center gap-1.5 text-[#0B1C30]">
+<svg class="w-4 h-4 text-[#1877F2]" fill="currentColor" viewbox="0 0 24 24">
+<path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
+</svg>
+          Facebook
+        </span>
+<span class="inline-flex items-center gap-1.5 text-[#0B1C30]">
+<svg class="w-3.5 h-3.5 text-black" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.99v9.18c-.01 1.78-.65 3.56-1.85 4.88-1.44 1.61-3.6 2.5-5.74 2.39-2.22-.09-4.32-1.23-5.55-3.09-1.25-1.83-1.49-4.25-.65-6.26.85-2.02 2.73-3.48 4.9-3.86.32-.05.65-.07.98-.07v4.06c-1.1.06-2.19.74-2.67 1.73-.49 1-.36 2.26.31 3.14.67.89 1.82 1.3 2.92 1.07 1.04-.21 1.85-1.07 2.02-2.12.05-.31.07-.63.07-.95V.02h.62z"></path>
+</svg>
+          TikTok
+        </span>
+</div>
+</div>
+<!-- Product App Showcase Browser Mockup Flanked by Creator Photography -->
+<div class="max-w-7xl mx-auto mt-14 relative">
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-center">
+<!-- Flanking Creator Card Left: Studio Video Creator -->
+<div class="hidden xl:block xl:col-span-3">
+<div class="bg-white p-3 rounded-[16px] border border-[#E2E8F0] shadow-md hover:shadow-lg transition-shadow">
+<div class="h-48 rounded-xl overflow-hidden relative mb-3">
+<img alt="Creator in studio" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLww3O0ynmIDudFcwooPrn9pRKcQEmL97gV3u52E3XATddql1F_y-h_kL1IzEW7OpknXnbUwo0ab8BJClp8DitFHrIF5xvDakT5UBO9OzKY8GnIQEAFjV2XE_Dyf5XrHfX1j-RmipnELSOMZYJEn5SWmFaaQJjRFs_raaWMovd0D7bVtJZSUT-YWIjySkirYcRStqTxe4dhuuqkipqDf2zDLBPaG7UfN17X7ggX7P-XwLyxiYFM1-KDA"/>
+<span class="absolute top-2 left-2 px-2 py-0.5 text-[10px] font-bold text-white bg-black/60 backdrop-blur-md rounded-md">Creator Studio</span>
+<span class="absolute bottom-2 right-2 px-2 py-0.5 text-[10px] font-semibold text-[#10B981] bg-[#ECFDF5] border border-emerald-200 rounded-full">Live Scripting</span>
+</div>
+<div class="text-left px-1">
+<div class="text-xs font-bold text-[#0B1C30]">Emma Vance</div>
+<p class="text-[11px] text-[#777587]">Full production run scheduled 2 weeks early</p>
+</div>
+</div>
+</div>
+<!-- Center Browser Mockup -->
+<div class="xl:col-span-6 w-full">
+<div class="rounded-2xl border border-[#E2E8F0] bg-white shadow-xl shadow-slate-200/50 overflow-hidden">
+<!-- Browser Top Bar -->
+<div class="h-10 bg-slate-50 border-b border-[#E2E8F0] px-4 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-slate-300"></div>
+<div class="w-3 h-3 rounded-full bg-slate-300"></div>
+<div class="w-3 h-3 rounded-full bg-slate-300"></div>
+</div>
+<div class="px-5 py-1 bg-white rounded-md border border-[#E2E8F0] text-xs text-[#777587] font-mono tracking-tight flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
+            app.zetca.pro/scheduler
+          </div>
+<div class="w-10"></div>
+</div>
+<!-- Realistic Zetca App Interface Inside Browser -->
+<div class="flex flex-col md:flex-row min-h-[460px] bg-[#F7F9FC]">
+<!-- App Sidebar: Dark Navy #0B1220 -->
+<div class="w-full md:w-48 bg-[#0B1220] p-4 text-white flex flex-col justify-between shrink-0">
+<div>
+<!-- Sidebar Brand -->
+<div class="flex items-center gap-2.5 px-2 py-2 mb-6">
+<div class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center">
+<div class="w-3.5 h-3.5 border-2 border-white rounded-[2px]"></div>
+</div>
+<div>
+<div class="text-sm font-bold text-white flex items-center">Zetca<span class="w-1 h-1 rounded-full bg-indigo-400 ml-0.5"></span></div>
+<div class="text-[8px] tracking-wider text-slate-400 uppercase">CONTENT OS</div>
+</div>
+</div>
+<!-- Nav Items -->
+<div class="space-y-1 text-xs font-medium">
+<div class="px-3 py-2 rounded-lg text-slate-400 flex items-center gap-2.5">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="7" width="7" x="3" y="3"></rect><rect height="7" width="7" x="14" y="3"></rect><rect height="7" width="7" x="14" y="14"></rect><rect height="7" width="7" x="3" y="14"></rect></svg>
+                  Dashboard
+                </div>
+<div class="px-3 py-2 rounded-lg text-slate-400 flex items-center gap-2.5">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+                  Strategist
+                </div>
+<div class="px-3 py-2 rounded-lg text-slate-400 flex items-center gap-2.5">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                  Copywriter
+                </div>
+<div class="px-3 py-2 rounded-lg bg-primary text-white font-semibold flex items-center gap-2.5 shadow-sm">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="18" rx="2" ry="2" width="18" x="3" y="4"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>
+                  Scheduler
+                </div>
+<div class="px-3 py-2 rounded-lg text-slate-400 flex items-center justify-between">
+<span class="flex items-center gap-2.5">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg>
+                    Designer
+                  </span>
+<span class="text-[9px] font-semibold text-amber-300 bg-amber-900/60 px-1.5 py-0.5 rounded">Soon</span>
+</div>
+<div class="px-3 py-2 rounded-lg text-slate-400 flex items-center gap-2.5">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><line x1="22" x2="11" y1="2" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                  Publisher
+                </div>
+</div>
+</div>
+<!-- Profile Info in Sidebar Bottom -->
+<div class="pt-4 border-t border-slate-800 flex items-center gap-2.5 px-2">
+<div class="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white">AV</div>
+<div class="text-xs truncate">
+<div class="font-medium text-white">Alex Vance Studio</div>
+<div class="text-[10px] text-slate-400">Head of Growth</div>
+</div>
+</div>
+</div>
+<!-- App Main Area: Light Background with Clean Cards -->
+<div class="flex-1 p-5 flex flex-col justify-between">
+<div>
+<!-- App Top Bar -->
+<div class="flex items-center justify-between pb-4 border-b border-[#E2E8F0] mb-4">
+<div>
+<h3 class="text-base font-bold text-[#0B1C30]">Weekly Content Queue</h3>
+<p class="text-xs text-[#777587]">4 platform-ready posts scheduled across connected accounts</p>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 text-[11px] font-semibold bg-[#ECFDF5] text-[#10B981] rounded-full border border-emerald-200">YouTube connected</span>
+<button class="px-2.5 py-1 text-xs font-semibold text-white bg-primary rounded-lg shadow-sm">Schedule post</button>
+</div>
+</div>
+<!-- Cards Grid within App UI -->
+<div class="grid grid-cols-1 gap-3">
+<div class="bg-white p-3 rounded-xl border border-[#E2E8F0] shadow-sm">
+<div class="flex items-center justify-between mb-2">
+<span class="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0B1C30]">
+<svg class="w-3.5 h-3.5 text-[#FF0000]" fill="currentColor" viewbox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"></path></svg>
+                      YouTube Long Video
+                    </span>
+<span class="text-[11px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full">Thu, 23 Oct • 6:00 PM</span>
+</div>
+<div class="flex gap-2.5">
+<div class="w-20 h-12 rounded bg-slate-900 shrink-0 relative overflow-hidden flex items-center justify-center text-white text-[9px] font-medium">
+<span class="relative z-10 bg-black/60 px-1 py-0.5 rounded text-[8px]">15:42</span>
+</div>
+<div class="min-w-0">
+<div class="text-xs font-bold text-[#0B1C30] truncate">15-Minute Full Body Workout — No Equipment</div>
+<div class="text-[10px] text-[#777587] truncate">Alex Vance Studio</div>
+<div class="mt-0.5 flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+<span class="text-[9px] text-emerald-700 font-medium">Scheduled on YouTube</span>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-white p-3 rounded-xl border border-[#E2E8F0] shadow-sm">
+<div class="flex items-center justify-between mb-1.5">
+<span class="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0B1C30]">
+<svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+                      Strategist Topic
+                    </span>
+<span class="text-[10px] font-semibold text-emerald-700 bg-[#ECFDF5] px-2 py-0.5 rounded-full">Approved</span>
+</div>
+<div class="text-xs font-bold text-[#0B1C30] mb-0.5">Morning Mobility for Remote Workers</div>
+<p class="text-[11px] text-[#777587] line-clamp-1">5 mobility exercises addressing lower back tension from prolonged sitting.</p>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-2.5 border-t border-[#E2E8F0] flex items-center justify-between text-[10px] text-[#777587]">
+<span>Publishing queue: All items verified with authentic channel metadata</span>
+<span class="font-medium text-[#0B1C30]">Next upload: Oct 23 at 6:00 PM WAT</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Flanking Creator Card Right: Workspace Content Entrepreneur -->
+<div class="hidden xl:block xl:col-span-3">
+<div class="bg-white p-3 rounded-[16px] border border-[#E2E8F0] shadow-md hover:shadow-lg transition-shadow">
+<div class="h-48 rounded-xl overflow-hidden relative mb-3">
+<img alt="Solo entrepreneur workspace" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkDh6-XABhJArNcuo0xYe9ecNftB16W4aIHbeM-dPom9cKlqvv81QrW6OLde7dWZOmy8Gd1S0uMy4A4rUvsCkMRh4i_s3wuFt_b4A9VnDZKvZBhYMhSoKkP5DnqKaa72soVnnOgWj7C2YGT9bQeLtibQyR6vsFiUj1Q7Fiq9oBk5Xhkftj4nB8-X_KmbXhpAv8F8xxdARsJW51nQeQdYq8JicGTSamkkwyc0bHudQnZesHPSJ3_OI4mw"/>
+<span class="absolute top-2 left-2 px-2 py-0.5 text-[10px] font-bold text-white bg-black/60 backdrop-blur-md rounded-md">Growth Marketer</span>
+<span class="absolute bottom-2 right-2 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-full">Automated</span>
+</div>
+<div class="text-left px-1">
+<div class="text-xs font-bold text-[#0B1C30]">Solo Creator Hub</div>
+<p class="text-[11px] text-[#777587]">10 posts prepared across 3 platforms in minutes</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Contextual Section Banner 1: Visual Bridge to Workflow -->
+<section class="max-w-6xl mx-auto px-6 mb-8">
+<div class="rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 via-white to-blue-50/50 p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-primary text-white flex items-center justify-center shrink-0 shadow-sm shadow-indigo-300">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+</div>
+<div>
+<div class="text-xs font-bold uppercase tracking-wider text-primary">Connected Content Operations</div>
+<div class="text-lg font-bold text-[#0B1C30]">Bridge ideation and automated channel scheduling seamlessly</div>
+</div>
+</div>
+<div class="flex items-center gap-3 shrink-0">
+<span class="text-xs font-semibold text-[#10B981] bg-[#ECFDF5] border border-emerald-200 px-3 py-1 rounded-full flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
+        Autopilot Ready
+      </span>
+<a class="text-xs font-bold text-primary hover:text-[#4338CA] transition-colors flex items-center gap-1" href="#how-it-works">
+        Explore 3-step engine →
+      </a>
+</div>
+</div>
+</section>
+<!-- Part 2: How It Works (Asymmetric Ribbon Layout with Workspace Image) -->
+<section class="py-16 px-6 bg-[#F7F9FC]" id="how-it-works">
+<div class="max-w-6xl mx-auto">
+<!-- Section Header -->
+<div class="max-w-2xl mb-12">
+<span class="text-xs font-bold uppercase tracking-wider text-primary">Workflow</span>
+<h2 class="text-3xl sm:text-4xl font-bold text-[#0B1C30] tracking-tight mt-2 mb-3">
+          How content moves from idea to published post
+        </h2>
+<p class="text-base text-[#464555] font-normal">
+          Three simple steps to keep your channels active without daily manual uploads.
+        </p>
+</div>
+<!-- Asymmetric Ribbon with Steps & Creator Workspace Photo -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+<!-- Steps Column -->
+<div class="lg:col-span-7 flex flex-col justify-between space-y-4">
+<!-- Step 1 -->
+<div class="bg-white p-6 rounded-[16px] border border-[#E2E8F0] shadow-sm flex items-start gap-5 hover:border-indigo-200 transition-colors">
+<div class="w-10 h-10 rounded-xl bg-indigo-50 text-primary font-bold text-sm flex items-center justify-center shrink-0 border border-indigo-100">
+        01
+      </div>
+<div>
+<h3 class="text-lg font-bold text-[#0B1C30] mb-1">Define your plan</h3>
+<p class="text-sm text-[#464555] leading-relaxed">
+          Set your topic themes and posting schedule to generate platform-specific drafts in advance.
+        </p>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="bg-white p-6 rounded-[16px] border border-[#E2E8F0] shadow-sm flex items-start gap-5 hover:border-indigo-200 transition-colors">
+<div class="w-10 h-10 rounded-xl bg-indigo-50 text-primary font-bold text-sm flex items-center justify-center shrink-0 border border-indigo-100">
+        02
+      </div>
+<div>
+<h3 class="text-lg font-bold text-[#0B1C30] mb-1">Review your drafts</h3>
+<p class="text-sm text-[#464555] leading-relaxed">
+          Inspect generated titles, tags, and thumbnails before approving each post for scheduling.
+        </p>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="bg-white p-6 rounded-[16px] border border-[#E2E8F0] shadow-sm flex items-start gap-5 hover:border-indigo-200 transition-colors">
+<div class="w-10 h-10 rounded-xl bg-indigo-50 text-primary font-bold text-sm flex items-center justify-center shrink-0 border border-indigo-100">
+        03
+      </div>
+<div>
+<h3 class="text-lg font-bold text-[#0B1C30] mb-1">Automate publishing</h3>
+<p class="text-sm text-[#464555] leading-relaxed">
+          Zetca pushes your approved posts directly to connected channels at the chosen publish time.
+        </p>
+</div>
+</div>
+</div>
+<!-- Featured Workspace Photo Card on Right -->
+<div class="lg:col-span-5 bg-white rounded-[16px] border border-[#E2E8F0] shadow-sm overflow-hidden flex flex-col justify-between">
+<div class="relative h-64 sm:h-72 w-full overflow-hidden">
+<img alt="Modern creator workspace" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHIj6k0idRlhvx7aFOapU-7u_j3ogNDS_PRXyqJ_bZ6Xm-fBOlIuty_98r0Qowyx469JsYQbSpQWVhRv8JwYUA9Dn2lSAIHl4sZO87tU6BkG3BsKyajQ5T_2XeTCkWWc1ZR-eJS9CLbfFIPs4IUZbIRwFVqpVr9A6BgDXxxD920WKf0J6ajaV5ZLQMQwzGfnWJnYPWtx0EnMa84M-N-BtALOkjW6iAmTzBGJtPXdanK98Ll8yAVGPJ5w"/>
+<div class="absolute inset-0 bg-gradient-to-t from-[#0B1C30]/80 via-transparent to-transparent"></div>
+<div class="absolute bottom-4 left-4 right-4 text-white">
+<span class="px-2.5 py-0.5 text-[10px] font-bold text-[#10B981] bg-black/60 backdrop-blur-md rounded-full border border-emerald-400/40">Real-time scheduling desk</span>
+<div class="text-sm font-bold mt-1">From keyboard thought to auto-published queues</div>
+</div>
+</div>
+<div class="p-5 bg-slate-50 border-t border-[#E2E8F0]">
+<div class="flex items-center justify-between text-xs">
+<span class="text-[#777587]">Verified delivery queue</span>
+<span class="font-bold text-[#0B1C30] flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-[#10B981]"></span>
+          Direct API handoff
+        </span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 4. Features Section (Elevated Bento Grid Layout) -->
+<section class="py-20 px-6 bg-white border-t border-[#E2E8F0]" id="features">
+<div class="max-w-6xl mx-auto">
+<!-- Section Header -->
+<div class="max-w-2xl mb-14">
+<span class="text-xs font-bold uppercase tracking-wider text-primary">FEATURES</span>
+<h2 class="text-3xl sm:text-4xl font-bold text-[#0B1C30] tracking-tight mt-2 mb-3">
+      Everything your content needs
+    </h2>
+<p class="text-base text-[#464555] font-normal">
+      The tools you can use today, and what's coming next.
+    </p>
+</div>
+<!-- Elevated Bento Grid (3-column asymmetric layout with contextual thumbnails) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Bento Card 1: Strategist (Live) with Visual Accents -->
+<div class="bg-[#F7F9FC] p-6 rounded-[16px] border border-[#E2E8F0] shadow-sm flex flex-col justify-between hover:border-indigo-300 transition-colors">
+<div>
+<div class="flex items-center justify-between mb-4">
+<div class="w-11 h-11 rounded-xl bg-white border border-indigo-100 flex items-center justify-center text-primary shadow-xs">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+</svg>
+</div>
+<span class="px-2.5 py-1 text-xs font-semibold text-[#10B981] bg-[#ECFDF5] rounded-full border border-emerald-200">Live</span>
+</div>
+<h3 class="text-lg font-bold text-[#0B1C30] mb-2">Strategist</h3>
+<p class="text-sm text-[#464555] leading-relaxed">
+        A content plan, keywords and channel bios from a quick quiz.
+      </p>
+</div>
+<div class="mt-4 pt-3 border-t border-[#E2E8F0] flex items-center gap-2 text-[11px] font-semibold text-primary">
+<span>Smart brand voice analysis</span>
+<span>→</span>
+</div>
+</div>
+<!-- Bento Card 2: Copywriter (Live) with creator photo thumbnail -->
+<div class="bg-[#F7F9FC] p-6 rounded-[16px] border border-[#E2E8F0] shadow-sm flex flex-col justify-between hover:border-indigo-300 transition-colors">
+<div>
+<div class="flex items-center justify-between mb-4">
+<div class="w-11 h-11 rounded-xl bg-white border border-indigo-100 flex items-center justify-center text-primary shadow-xs">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+</svg>
+</div>
+<span class="px-2.5 py-1 text-xs font-semibold text-[#10B981] bg-[#ECFDF5] rounded-full border border-emerald-200">Live</span>
+</div>
+<h3 class="text-lg font-bold text-[#0B1C30] mb-2">Copywriter</h3>
+<p class="text-sm text-[#464555] leading-relaxed">
+        Chat with your AI copywriter and get posts for every platform.
+      </p>
+</div>
+<div class="mt-4 pt-3 border-t border-[#E2E8F0] flex items-center gap-2 text-[11px] font-semibold text-primary">
+<span>Multi-tone generation</span>
+<span>→</span>
+</div>
+</div>
+<!-- Bento Card 3: Scheduler (Live) -->
+<div class="bg-[#F7F9FC] p-6 rounded-[16px] border border-[#E2E8F0] shadow-sm flex flex-col justify-between hover:border-indigo-300 transition-colors">
+<div>
+<div class="flex items-center justify-between mb-4">
+<div class="w-11 h-11 rounded-xl bg-white border border-indigo-100 flex items-center justify-center text-primary shadow-xs">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<rect height="18" rx="2" ry="2" width="18" x="3" y="4"></rect>
+<line x1="16" x2="16" y1="2" y2="6"></line>
+<line x1="8" x2="8" y1="2" y2="6"></line>
+<line x1="3" x2="21" y1="10" y2="10"></line>
+</svg>
+</div>
+<span class="px-2.5 py-1 text-xs font-semibold text-[#10B981] bg-[#ECFDF5] rounded-full border border-emerald-200">Live</span>
+</div>
+<h3 class="text-lg font-bold text-[#0B1C30] mb-2">Scheduler</h3>
+<p class="text-sm text-[#464555] leading-relaxed">
+        A calendar for every post, with smart time suggestions.
+      </p>
+</div>
+<div class="mt-4 pt-3 border-t border-[#E2E8F0] flex items-center gap-2 text-[11px] font-semibold text-primary">
+<span>Unified multi-channel calendar</span>
+<span>→</span>
+</div>
+</div>
+<!-- Bento Card 4: Auto-publishing (Live) -->
+<div class="bg-white p-6 rounded-[16px] border border-[#E2E8F0] shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-4">
+<div class="w-11 h-11 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-primary">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+<polyline points="22 4 12 14.01 9 11.01"></polyline>
+</svg>
+</div>
+<span class="px-2.5 py-1 text-xs font-semibold text-[#10B981] bg-[#ECFDF5] rounded-full border border-emerald-200">Live</span>
+</div>
+<h3 class="text-lg font-bold text-[#0B1C30] mb-2">Auto-publishing</h3>
+<p class="text-sm text-[#464555] leading-relaxed">
+        Posts publish to LinkedIn on time, with retries if anything fails.
+      </p>
+</div>
+</div>
+<!-- Bento Card 5: YouTube publishing (Coming soon) -->
+<div class="bg-white p-6 rounded-[16px] border border-[#E2E8F0] shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-4">
+<div class="w-11 h-11 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+<svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24">
+<path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"></path>
+</svg>
+</div>
+<span class="px-2.5 py-1 text-xs font-semibold text-[#B45309] bg-[#FEF3C7] rounded-full border border-amber-200">Coming soon</span>
+</div>
+<h3 class="text-lg font-bold text-[#0B1C30] mb-2">YouTube publishing</h3>
+<p class="text-sm text-[#464555] leading-relaxed">
+        Upload Shorts and long videos with every detail, scheduled.
+      </p>
+</div>
+</div>
+<!-- Bento Card 6: Graphic Designer (Coming soon) -->
+<div class="bg-white p-6 rounded-[16px] border border-[#E2E8F0] shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-4">
+<div class="w-11 h-11 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+<path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+<path d="M2 2l7.586 7.586"></path>
+<circle cx="11" cy="11" r="2"></circle>
+</svg>
+</div>
+<span class="px-2.5 py-1 text-xs font-semibold text-[#B45309] bg-[#FEF3C7] rounded-full border border-amber-200">Coming soon</span>
+</div>
+<h3 class="text-lg font-bold text-[#0B1C30] mb-2">Graphic Designer</h3>
+<p class="text-sm text-[#464555] leading-relaxed">
+        Create on-brand images and thumbnails for your posts.
+      </p>
+</div>
+</div>
+<!-- Bento Card 7: Video Editor (Coming soon) with Visual Micro-Preview -->
+<div class="bg-white p-6 rounded-[16px] border border-[#E2E8F0] shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-4">
+<div class="w-11 h-11 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<polygon points="23 7 16 12 23 17 23 7"></polygon>
+<rect height="14" rx="2" ry="2" width="15" x="1" y="5"></rect>
+</svg>
+</div>
+<span class="px-2.5 py-1 text-xs font-semibold text-[#B45309] bg-[#FEF3C7] rounded-full border border-amber-200">Coming soon</span>
+</div>
+<h3 class="text-lg font-bold text-[#0B1C30] mb-2">Video Editor</h3>
+<p class="text-sm text-[#464555] leading-relaxed">
+        Trim, caption and resize videos for each platform.
+      </p>
+</div>
+</div>
+<!-- Bento Card 8: Analytics (Coming soon) -->
+<div class="bg-white p-6 rounded-[16px] border border-[#E2E8F0] shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-4">
+<div class="w-11 h-11 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<line x1="18" x2="18" y1="20" y2="10"></line>
+<line x1="12" x2="12" y1="20" y2="4"></line>
+<line x1="6" x2="6" y1="20" y2="14"></line>
+</svg>
+</div>
+<span class="px-2.5 py-1 text-xs font-semibold text-[#B45309] bg-[#FEF3C7] rounded-full border border-amber-200">Coming soon</span>
+</div>
+<h3 class="text-lg font-bold text-[#0B1C30] mb-2">Analytics</h3>
+<p class="text-sm text-[#464555] leading-relaxed">
+        See what's working across your channels.
+      </p>
+</div>
+</div>
+<!-- Bento Card 9: More platforms (Coming soon) -->
+<div class="bg-white p-6 rounded-[16px] border border-[#E2E8F0] shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-4">
+<div class="w-11 h-11 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="2" x2="22" y1="12" y2="12"></line>
+<path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+</svg>
+</div>
+<span class="px-2.5 py-1 text-xs font-semibold text-[#B45309] bg-[#FEF3C7] rounded-full border border-amber-200">Coming soon</span>
+</div>
+<h3 class="text-lg font-bold text-[#0B1C30] mb-2">More platforms</h3>
+<p class="text-sm text-[#464555] leading-relaxed">
+        Auto-publishing for Instagram, Facebook, X and TikTok.
+      </p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 5. Platforms Strip -->
+<section class="py-12 px-6 bg-[#F7F9FC]" id="platforms">
+<div class="max-w-6xl mx-auto">
+<div class="bg-white rounded-[16px] border border-[#E2E8F0] shadow-sm p-6 sm:p-8 space-y-6">
+<!-- Row 1: Write posts for -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-[#E2E8F0]">
+<div class="text-base font-semibold text-[#0B1C30] min-w-[200px]">
+          Write posts for
+        </div>
+<div class="flex flex-wrap items-center gap-6 sm:gap-8">
+<span class="inline-flex items-center gap-2 text-sm font-semibold text-[#0B1C30]">
+<svg class="w-4 h-4 text-black" fill="currentColor" viewbox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+            X
+          </span>
+<span class="inline-flex items-center gap-2 text-sm font-semibold text-[#0B1C30]">
+<svg class="w-4 h-4 text-[#E4405F]" fill="currentColor" viewbox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"></path></svg>
+            Instagram
+          </span>
+<span class="inline-flex items-center gap-2 text-sm font-semibold text-[#0B1C30]">
+<svg class="w-4 h-4 text-black" fill="currentColor" viewbox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.99v9.18c-.01 1.78-.65 3.56-1.85 4.88-1.44 1.61-3.6 2.5-5.74 2.39-2.22-.09-4.32-1.23-5.55-3.09-1.25-1.83-1.49-4.25-.65-6.26.85-2.02 2.73-3.48 4.9-3.86.32-.05.65-.07.98-.07v4.06c-1.1.06-2.19.74-2.67 1.73-.49 1-.36 2.26.31 3.14.67.89 1.82 1.3 2.92 1.07 1.04-.21 1.85-1.07 2.02-2.12.05-.31.07-.63.07-.95V.02h.62z"></path></svg>
+            TikTok
+          </span>
+<span class="inline-flex items-center gap-2 text-sm font-semibold text-[#0B1C30]">
+<svg class="w-4 h-4 text-[#0A66C2]" fill="currentColor" viewbox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"></path></svg>
+            LinkedIn
+          </span>
+<span class="inline-flex items-center gap-2 text-sm font-semibold text-[#0B1C30]">
+<svg class="w-4 h-4 text-[#1877F2]" fill="currentColor" viewbox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path></svg>
+            Facebook
+          </span>
+<span class="inline-flex items-center gap-2 text-sm font-semibold text-[#0B1C30]">
+<svg class="w-4 h-4 text-[#FF0000]" fill="currentColor" viewbox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"></path></svg>
+            YouTube
+          </span>
+</div>
+</div>
+<!-- Row 2: Publish automatically to -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+<div class="text-base font-semibold text-[#0B1C30] min-w-[200px]">
+          Publish automatically to
+        </div>
+<div class="flex flex-wrap items-center gap-6 sm:gap-8">
+<!-- LinkedIn Live -->
+<div class="inline-flex items-center gap-2 text-sm font-semibold text-[#0B1C30]">
+<svg class="w-4 h-4 text-[#0A66C2]" fill="currentColor" viewbox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"></path></svg>
+<span>LinkedIn</span>
+<span class="px-2 py-0.5 text-[10px] font-bold text-[#10B981] bg-[#ECFDF5] rounded-full border border-emerald-200">Live</span>
+</div>
+<!-- YouTube Soon -->
+<div class="inline-flex items-center gap-2 text-sm font-medium text-[#777587] opacity-60">
+<svg class="w-4 h-4 text-slate-500" fill="currentColor" viewbox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"></path></svg>
+<span>YouTube</span>
+<span class="px-1.5 py-0.5 text-[10px] font-semibold text-[#B45309] bg-[#FEF3C7] rounded">Soon</span>
+</div>
+<!-- Instagram Soon -->
+<div class="inline-flex items-center gap-2 text-sm font-medium text-[#777587] opacity-60">
+<svg class="w-4 h-4 text-slate-500" fill="currentColor" viewbox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"></path></svg>
+<span>Instagram</span>
+<span class="px-1.5 py-0.5 text-[10px] font-semibold text-[#B45309] bg-[#FEF3C7] rounded">Soon</span>
+</div>
+<!-- Facebook Soon -->
+<div class="inline-flex items-center gap-2 text-sm font-medium text-[#777587] opacity-60">
+<svg class="w-4 h-4 text-slate-500" fill="currentColor" viewbox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path></svg>
+<span>Facebook</span>
+<span class="px-1.5 py-0.5 text-[10px] font-semibold text-[#B45309] bg-[#FEF3C7] rounded">Soon</span>
+</div>
+<!-- X Soon -->
+<div class="inline-flex items-center gap-2 text-sm font-medium text-[#777587] opacity-60">
+<svg class="w-4 h-4 text-slate-500" fill="currentColor" viewbox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+<span>X</span>
+<span class="px-1.5 py-0.5 text-[10px] font-semibold text-[#B45309] bg-[#FEF3C7] rounded">Soon</span>
+</div>
+<!-- TikTok Soon -->
+<div class="inline-flex items-center gap-2 text-sm font-medium text-[#777587] opacity-60">
+<svg class="w-4 h-4 text-slate-500" fill="currentColor" viewbox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.99v9.18c-.01 1.78-.65 3.56-1.85 4.88-1.44 1.61-3.6 2.5-5.74 2.39-2.22-.09-4.32-1.23-5.55-3.09-1.25-1.83-1.49-4.25-.65-6.26.85-2.02 2.73-3.48 4.9-3.86.32-.05.65-.07.98-.07v4.06c-1.1.06-2.19.74-2.67 1.73-.49 1-.36 2.26.31 3.14.67.89 1.82 1.3 2.92 1.07 1.04-.21 1.85-1.07 2.02-2.12.05-.31.07-.63.07-.95V.02h.62z"></path></svg>
+<span>TikTok</span>
+<span class="px-1.5 py-0.5 text-[10px] font-semibold text-[#B45309] bg-[#FEF3C7] rounded">Soon</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 6. Two Feature Highlight Rows (Alternating) -->
+<section class="py-20 px-6 bg-white border-t border-[#E2E8F0]">
+<div class="max-w-6xl mx-auto space-y-24">
+<!-- Row 1: Image Right -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+<div>
+<span class="text-xs font-bold uppercase tracking-wider text-primary">STRATEGIST</span>
+<h3 class="text-3xl sm:text-[32px] font-bold text-[#0B1C30] tracking-tight mt-2 mb-4 leading-tight">
+          Know what to post
+        </h3>
+<p class="text-base text-[#464555] leading-relaxed mb-6">
+          Generate tailored content pillars and platform strategy designed for your specific brand voice and target audience.
+        </p>
+<ul class="space-y-3">
+<li class="flex items-center gap-3 text-sm font-medium text-[#0B1C30]">
+<span class="w-5 h-5 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center shrink-0">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+</span>
+            Content pillars and themes
+          </li>
+<li class="flex items-center gap-3 text-sm font-medium text-[#0B1C30]">
+<span class="w-5 h-5 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center shrink-0">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+</span>
+            SEO-ready channel bios
+          </li>
+<li class="flex items-center gap-3 text-sm font-medium text-[#0B1C30]">
+<span class="w-5 h-5 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center shrink-0">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+</span>
+            Keywords for your niche
+          </li>
+</ul>
+</div>
+<!-- Screenshot/Mockup 1: Strategist -->
+<div class="rounded-2xl border border-[#E2E8F0] bg-white shadow-xl shadow-slate-200/50 overflow-hidden">
+<div class="h-9 bg-slate-50 border-b border-[#E2E8F0] px-4 flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
+<span class="text-[11px] font-mono text-[#777587] ml-2">app.zetca.pro/strategist</span>
+</div>
+<div class="flex min-h-[340px] bg-[#F7F9FC]">
+<!-- Mini dark sidebar -->
+<div class="w-36 bg-[#0B1220] p-3 text-white hidden sm:flex flex-col justify-between shrink-0">
+<div class="space-y-2 text-[11px]">
+<div class="text-xs font-bold text-white mb-3">Zetca</div>
+<div class="px-2 py-1.5 rounded text-slate-400">Dashboard</div>
+<div class="px-2 py-1.5 rounded bg-primary text-white font-semibold">Strategist</div>
+<div class="px-2 py-1.5 rounded text-slate-400">Copywriter</div>
+<div class="px-2 py-1.5 rounded text-slate-400">Scheduler</div>
+</div>
+<div class="text-[9px] text-slate-400">Active Brand</div>
+</div>
+<!-- Main Content: Strategy Pillars -->
+<div class="flex-1 p-5">
+<div class="flex items-center justify-between pb-3 border-b border-[#E2E8F0] mb-4">
+<div>
+<div class="text-xs font-bold text-[#0B1C30]">Brand Content Strategy</div>
+<div class="text-[10px] text-[#777587]">Voice: Authority • Pragmatic • High Energy</div>
+</div>
+<span class="px-2 py-0.5 text-[10px] font-semibold text-primary bg-indigo-50 rounded-full border border-indigo-200">Refreshed today</span>
+</div>
+<div class="space-y-3">
+<div class="p-3 bg-white rounded-xl border border-[#E2E8F0] shadow-xs">
+<div class="flex items-center justify-between mb-1">
+<span class="text-xs font-bold text-[#0B1C30]">Educational Tutorials</span>
+<span class="text-[9px] font-semibold px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full">40% share</span>
+</div>
+<p class="text-[10px] text-[#777587] mb-2 leading-relaxed">Deep-dive video walkthroughs and step-by-step guides for creators.</p>
+<div class="flex flex-wrap gap-1">
+<span class="text-[9px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">#GrowthHacks</span>
+<span class="text-[9px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">#Workflows</span>
+</div>
+</div>
+<div class="p-3 bg-white rounded-xl border border-[#E2E8F0] shadow-xs">
+<div class="flex items-center justify-between mb-1">
+<span class="text-xs font-bold text-[#0B1C30]">Industry Insights</span>
+<span class="text-[9px] font-semibold px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full">35% share</span>
+</div>
+<p class="text-[10px] text-[#777587] mb-2 leading-relaxed">Weekly opinion essays and market trends formatted for LinkedIn readers.</p>
+<div class="flex flex-wrap gap-1">
+<span class="text-[9px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">#AIStrategy</span>
+<span class="text-[9px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">#ContentOps</span>
+</div>
+</div>
+<div class="p-3 bg-white rounded-xl border border-[#E2E8F0] shadow-xs">
+<div class="flex items-center justify-between mb-1">
+<span class="text-xs font-bold text-[#0B1C30]">Behind the Scenes</span>
+<span class="text-[9px] font-semibold px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full">25% share</span>
+</div>
+<p class="text-[10px] text-[#777587] mb-2 leading-relaxed">Raw building logs, studio setup snapshots, and failure retrospectives.</p>
+<div class="flex flex-wrap gap-1">
+<span class="text-[9px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">#BuildInPublic</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Row 2: Image Left -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+<!-- Screenshot/Mockup 2: Scheduler (Left) -->
+<div class="rounded-2xl border border-[#E2E8F0] bg-white shadow-xl shadow-slate-200/50 overflow-hidden order-2 lg:order-1">
+<div class="h-9 bg-slate-50 border-b border-[#E2E8F0] px-4 flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
+<span class="text-[11px] font-mono text-[#777587] ml-2">app.zetca.pro/calendar</span>
+</div>
+<div class="flex min-h-[340px] bg-[#F7F9FC]">
+<!-- Mini dark sidebar -->
+<div class="w-36 bg-[#0B1220] p-3 text-white hidden sm:flex flex-col justify-between shrink-0">
+<div class="space-y-2 text-[11px]">
+<div class="text-xs font-bold text-white mb-3">Zetca</div>
+<div class="px-2 py-1.5 rounded text-slate-400">Dashboard</div>
+<div class="px-2 py-1.5 rounded text-slate-400">Strategist</div>
+<div class="px-2 py-1.5 rounded text-slate-400">Copywriter</div>
+<div class="px-2 py-1.5 rounded bg-primary text-white font-semibold">Scheduler</div>
+</div>
+<div class="text-[9px] text-slate-400">Queued: 8 posts</div>
+</div>
+<!-- Main Content: Interactive Calendar -->
+<div class="flex-1 p-5">
+<div class="flex items-center justify-between pb-3 border-b border-[#E2E8F0] mb-3">
+<span class="text-xs font-bold text-[#0B1C30]">October 2025 Calendar</span>
+<div class="flex items-center gap-1.5 text-[10px]">
+<span class="px-2 py-0.5 bg-white border border-[#E2E8F0] rounded font-semibold text-[#0B1C30]">Week view</span>
+<span class="px-2 py-0.5 bg-primary text-white rounded font-semibold">+ Add slot</span>
+</div>
+</div>
+<!-- Days grid strip -->
+<div class="grid grid-cols-4 gap-2">
+<div class="p-2 bg-white rounded-lg border border-[#E2E8F0] min-h-[170px] flex flex-col justify-between">
+<div>
+<div class="text-[10px] font-bold text-[#777587] mb-1">MON 20</div>
+<div class="p-1.5 rounded bg-blue-50 border border-blue-200 mb-1.5">
+<div class="flex items-center justify-between">
+<span class="text-[8px] font-bold text-blue-700">LINKEDIN</span>
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+</div>
+<div class="text-[9px] font-bold text-[#0B1C30] truncate mt-0.5">SaaS Pricing Playbook</div>
+<div class="text-[8px] text-[#777587]">09:00 AM</div>
+</div>
+</div>
+<div class="text-[8px] text-emerald-600 font-semibold flex items-center gap-1">
+<span>✓</span> Published
+                </div>
+</div>
+<div class="p-2 bg-white rounded-lg border border-[#E2E8F0] min-h-[170px] flex flex-col justify-between">
+<div>
+<div class="text-[10px] font-bold text-[#777587] mb-1">TUE 21</div>
+<div class="p-1.5 rounded bg-red-50 border border-red-200 mb-1.5">
+<div class="flex items-center justify-between">
+<span class="text-[8px] font-bold text-red-700">YOUTUBE</span>
+<span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+</div>
+<div class="text-[9px] font-bold text-[#0B1C30] truncate mt-0.5">Weekly Q&amp;A Live Clip</div>
+<div class="text-[8px] text-[#777587]">06:30 PM</div>
+</div>
+</div>
+<div class="text-[8px] text-indigo-600 font-semibold flex items-center gap-1">
+<span>•</span> Ready
+                </div>
+</div>
+<div class="p-2 bg-white rounded-lg border border-[#E2E8F0] min-h-[170px] flex flex-col justify-between ring-1 ring-primary/40">
+<div>
+<div class="text-[10px] font-bold text-primary mb-1">WED 22 • TODAY</div>
+<div class="p-1.5 rounded bg-blue-50 border border-blue-200 mb-1.5">
+<div class="flex items-center justify-between">
+<span class="text-[8px] font-bold text-blue-700">LINKEDIN</span>
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+</div>
+<div class="text-[9px] font-bold text-[#0B1C30] truncate mt-0.5">3 Team Habits</div>
+<div class="text-[8px] text-[#777587]">02:15 PM</div>
+</div>
+</div>
+<div class="text-[8px] text-amber-600 font-semibold">Queued (auto)</div>
+</div>
+<div class="p-2 bg-slate-50/70 rounded-lg border border-dashed border-[#E2E8F0] min-h-[170px] flex flex-col justify-between items-center text-center">
+<div class="w-full">
+<div class="text-[10px] font-bold text-[#777587] mb-1">THU 23</div>
+<div class="mt-4 p-2 rounded border border-dashed border-slate-300 text-[9px] text-[#777587]">
+                    Drop draft here
+                  </div>
+</div>
+<div class="text-[8px] text-primary font-semibold">+ Optimal slot</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Text Content (Right) -->
+<div class="order-1 lg:order-2">
+<span class="text-xs font-bold uppercase tracking-wider text-primary">SCHEDULER</span>
+<h3 class="text-3xl sm:text-[32px] font-bold text-[#0B1C30] tracking-tight mt-2 mb-4 leading-tight">
+          Never miss a post
+        </h3>
+<p class="text-base text-[#464555] leading-relaxed mb-6">
+          Organize drafts into a visual multi-channel calendar with automated time suggestions and publishing status.
+        </p>
+<ul class="space-y-3">
+<li class="flex items-center gap-3 text-sm font-medium text-[#0B1C30]">
+<span class="w-5 h-5 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center shrink-0">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+</span>
+            Drag posts to reschedule
+          </li>
+<li class="flex items-center gap-3 text-sm font-medium text-[#0B1C30]">
+<span class="w-5 h-5 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center shrink-0">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+</span>
+            Auto-schedule a whole set
+          </li>
+<li class="flex items-center gap-3 text-sm font-medium text-[#0B1C30]">
+<span class="w-5 h-5 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center shrink-0">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+</span>
+            See what's published or failed
+          </li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<!-- Full-Width Interstitial Banner 2: Real Agency Collaboration -->
+<section class="max-w-6xl mx-auto px-6 py-6">
+<div class="relative rounded-2xl overflow-hidden border border-[#E2E8F0] shadow-lg">
+<div class="relative h-72 sm:h-80 w-full">
+<img alt="Creative marketing agency team collaborating" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEjgSP33WxGeW08UbyX0n4w9gsqDkuJmn0aNDpSTfSUbibahkzEMfdLxgNG61kQCuyccMCDi2CssuH6es2SU5FkRQqXiHoK2LVqWb9fYYhObz0Mo8LDiLCTyNf5ItE1lOIddRECLtUqQTuGaB00etXA9Yy4tGExHF1vmVfM4hEupIQLbZAfY2Yaqkp_s0DsQTd_CB0aVtCWhxMDpaWxz0DaH4dJi-zPcQzBJmAvkmkycq4U66h2KoXHg"/>
+<div class="absolute inset-0 bg-gradient-to-r from-[#0B1C30]/90 via-[#0B1C30]/65 to-transparent"></div>
+</div>
+<div class="absolute inset-0 p-8 sm:p-12 flex flex-col justify-center max-w-xl text-white">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-semibold mb-4 w-fit">
+<span class="w-2 h-2 rounded-full bg-[#10B981]"></span>
+        Built for Modern Growth Teams
+      </div>
+<h3 class="text-2xl sm:text-3xl font-bold tracking-tight mb-3">
+        Scale your entire social voice together
+      </h3>
+<p class="text-sm sm:text-base text-slate-200 leading-relaxed mb-6 font-normal">
+        From boutique studios to high-growth startup marketing units, keep your strategy unified and posts flowing across platforms.
+      </p>
+<div class="flex items-center gap-3">
+<a class="px-5 py-2.5 bg-primary hover:bg-[#4338CA] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-md transition-all" href="https://zetca.pro/signup">
+          Start planning posts
+        </a>
+<span class="text-xs text-slate-300">No credit card required</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Part 3: Pricing Section -->
+<section class="py-20 px-6 bg-[#F7F9FC] border-t border-[#E2E8F0]" id="pricing">
+<div class="max-w-6xl mx-auto">
+<div class="max-w-2xl mx-auto text-center mb-16">
+<span class="text-xs font-bold uppercase tracking-wider text-primary">SIMPLE PRICING</span>
+<h2 class="text-3xl sm:text-4xl font-bold text-[#0B1C30] tracking-tight mt-2 mb-3">
+      Simple pricing
+    </h2>
+<p class="text-base text-[#464555]">
+      Start free. Upgrade when you're ready.
+    </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+<!-- Card 1: Free -->
+<div class="bg-white p-8 rounded-[16px] border border-[#E2E8F0] shadow-sm flex flex-col justify-between">
+<div>
+<h3 class="text-xl font-bold text-[#0B1C30] mb-1">Free</h3>
+<p class="text-xs text-[#777587] mb-6">Perfect for getting started</p>
+<div class="flex items-baseline gap-1 mb-8">
+<span class="text-4xl font-bold text-[#0B1C30]">$0</span>
+<span class="text-sm font-medium text-[#777587]">/month</span>
+</div>
+<ul class="space-y-3.5 text-sm text-[#464555] mb-8">
+<li class="flex items-center gap-2.5">
+<span class="w-4 h-4 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center text-xs shrink-0">✓</span>
+            Up to 10 posts per month
+          </li>
+<li class="flex items-center gap-2.5">
+<span class="w-4 h-4 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center text-xs shrink-0">✓</span>
+            Basic AI strategy
+          </li>
+<li class="flex items-center gap-2.5">
+<span class="w-4 h-4 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center text-xs shrink-0">✓</span>
+            2 social media accounts
+          </li>
+<li class="flex items-center gap-2.5">
+<span class="w-4 h-4 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center text-xs shrink-0">✓</span>
+            Email support
+          </li>
+<li class="flex items-center gap-2.5">
+<span class="w-4 h-4 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center text-xs shrink-0">✓</span>
+<span>Basic analytics</span>
+<span class="px-2 py-0.5 text-[10px] font-semibold text-[#B45309] bg-[#FEF3C7] rounded">Coming soon</span>
+</li>
+</ul>
+</div>
+<a class="block w-full py-3 text-center text-sm font-semibold text-[#0B1C30] bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors" href="https://zetca.pro/signup">
+        Get started
+      </a>
+</div>
+<!-- Card 2: Pro (Middle Raised, Popular) -->
+<div class="bg-white p-8 rounded-[16px] border-2 border-primary shadow-xl md:-translate-y-2 relative flex flex-col justify-between">
+<div class="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-white text-xs font-bold rounded-full shadow-sm">
+        Popular
+      </div>
+<div>
+<h3 class="text-xl font-bold text-[#0B1C30] mb-1">Pro</h3>
+<p class="text-xs text-[#777587] mb-6">Best for growing businesses</p>
+<div class="flex items-baseline gap-1 mb-8">
+<span class="text-4xl font-bold text-[#0B1C30]">$49</span>
+<span class="text-sm font-medium text-[#777587]">/month</span>
+</div>
+<ul class="space-y-3.5 text-sm text-[#464555] mb-8">
+<li class="flex items-center gap-2.5">
+<span class="w-4 h-4 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center text-xs shrink-0">✓</span>
+            Unlimited posts
+          </li>
+<li class="flex items-center gap-2.5">
+<span class="w-4 h-4 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center text-xs shrink-0">✓</span>
+            Advanced AI strategy
+          </li>
+<li class="flex items-center gap-2.5">
+<span class="w-4 h-4 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center text-xs shrink-0">✓</span>
+            Unlimited social accounts
+          </li>
+<li class="flex items-center gap-2.5">
+<span class="w-4 h-4 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center text-xs shrink-0">✓</span>
+            Priority support
+          </li>
+<li class="flex items-center gap-2.5">
+<span class="w-4 h-4 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center text-xs shrink-0">✓</span>
+<span>Advanced analytics</span>
+<span class="px-2 py-0.5 text-[10px] font-semibold text-[#B45309] bg-[#FEF3C7] rounded">Coming soon</span>
+</li>
+<li class="flex items-center gap-2.5">
+<span class="w-4 h-4 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center text-xs shrink-0">✓</span>
+<span>AI image generation</span>
+<span class="px-2 py-0.5 text-[10px] font-semibold text-[#B45309] bg-[#FEF3C7] rounded">Coming soon</span>
+</li>
+<li class="flex items-center gap-2.5">
+<span class="w-4 h-4 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center text-xs shrink-0">✓</span>
+<span>Team collaboration</span>
+<span class="px-2 py-0.5 text-[10px] font-semibold text-[#B45309] bg-[#FEF3C7] rounded">Coming soon</span>
+</li>
+<li class="flex items-center gap-2.5">
+<span class="w-4 h-4 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center text-xs shrink-0">✓</span>
+<span>Custom branding</span>
+<span class="px-2 py-0.5 text-[10px] font-semibold text-[#B45309] bg-[#FEF3C7] rounded">Coming soon</span>
+</li>
+</ul>
+</div>
+<a class="block w-full py-3 text-center text-sm font-semibold text-white bg-primary hover:bg-[#4338CA] rounded-xl transition-colors shadow-md" href="https://zetca.pro/signup">
+        Start free trial
+      </a>
+</div>
+<!-- Card 3: Enterprise -->
+<div class="bg-white p-8 rounded-[16px] border border-[#E2E8F0] shadow-sm flex flex-col justify-between">
+<div>
+<h3 class="text-xl font-bold text-[#0B1C30] mb-1">Enterprise</h3>
+<p class="text-xs text-[#777587] mb-6">For large organizations</p>
+<div class="flex items-baseline gap-1 mb-8">
+<span class="text-4xl font-bold text-[#0B1C30]">Custom</span>
+<span class="text-sm font-medium text-[#777587]">/month</span>
+</div>
+<ul class="space-y-3.5 text-sm text-[#464555] mb-8">
+<li class="flex items-center gap-2.5">
+<span class="w-4 h-4 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center text-xs shrink-0">✓</span>
+            Everything in Pro
+          </li>
+<li class="flex items-center gap-2.5">
+<span class="w-4 h-4 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center text-xs shrink-0">✓</span>
+            Dedicated account manager
+          </li>
+<li class="flex items-center gap-2.5">
+<span class="w-4 h-4 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center text-xs shrink-0">✓</span>
+            Custom integrations
+          </li>
+<li class="flex items-center gap-2.5">
+<span class="w-4 h-4 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center text-xs shrink-0">✓</span>
+            SLA guarantee
+          </li>
+<li class="flex items-center gap-2.5">
+<span class="w-4 h-4 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center text-xs shrink-0">✓</span>
+            Advanced security
+          </li>
+<li class="flex items-center gap-2.5">
+<span class="w-4 h-4 rounded-full bg-emerald-100 text-[#10B981] flex items-center justify-center text-xs shrink-0">✓</span>
+<span>White-label options</span>
+<span class="px-2 py-0.5 text-[10px] font-semibold text-[#B45309] bg-[#FEF3C7] rounded">Coming soon</span>
+</li>
+</ul>
+</div>
+<a class="block w-full py-3 text-center text-sm font-semibold text-[#0B1C30] bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors" href="mailto:hello@zetca.pro">
+        Contact sales
+      </a>
+</div>
+</div>
+</div>
+</section>
+<!-- 8. FAQ Section -->
+<section class="py-20 px-6 bg-white border-t border-[#E2E8F0]">
+<div class="max-w-3xl mx-auto">
+<div class="text-center mb-12">
+<span class="text-xs font-bold uppercase tracking-wider text-primary">FAQ</span>
+<h2 class="text-3xl sm:text-4xl font-bold text-[#0B1C30] tracking-tight mt-2">
+        Questions, answered
+      </h2>
+</div>
+<!-- Accordion of 5 rows -->
+<div class="divide-y divide-slate-200 border-t border-b border-slate-200">
+<!-- Row 1: Open by default -->
+<details class="group py-6" open="">
+<summary class="flex items-center justify-between cursor-pointer list-none text-base sm:text-lg font-bold text-[#0B1C30]">
+<span>Which platforms can Zetca publish to?</span>
+<span class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[#777587] transition-transform group-open:rotate-180">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</span>
+</summary>
+<p class="mt-3 text-sm text-[#464555] leading-relaxed">
+          LinkedIn today. YouTube, Instagram, Facebook, X and TikTok are coming soon, and Zetca already writes posts for all of them.
+        </p>
+</details>
+<!-- Row 2 -->
+<details class="group py-6">
+<summary class="flex items-center justify-between cursor-pointer list-none text-base sm:text-lg font-bold text-[#0B1C30]">
+<span>Can I edit posts before they go out?</span>
+<span class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[#777587] transition-transform group-open:rotate-180">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</span>
+</summary>
+<p class="mt-3 text-sm text-[#464555] leading-relaxed">
+          Yes, every drafted post can be reviewed, edited, or rewritten with our AI copywriter before you approve it for publication.
+        </p>
+</details>
+<!-- Row 3 -->
+<details class="group py-6">
+<summary class="flex items-center justify-between cursor-pointer list-none text-base sm:text-lg font-bold text-[#0B1C30]">
+<span>Do I need a card to sign up?</span>
+<span class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[#777587] transition-transform group-open:rotate-180">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</span>
+</summary>
+<p class="mt-3 text-sm text-[#464555] leading-relaxed">
+          No, you can get started on the Free plan without entering any credit card information.
+        </p>
+</details>
+<!-- Row 4 -->
+<details class="group py-6">
+<summary class="flex items-center justify-between cursor-pointer list-none text-base sm:text-lg font-bold text-[#0B1C30]">
+<span>Is my data safe?</span>
+<span class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[#777587] transition-transform group-open:rotate-180">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</span>
+</summary>
+<p class="mt-3 text-sm text-[#464555] leading-relaxed">
+          Yes, your channel tokens and content are encrypted with industry-standard protocols, and we never post without your permission.
+        </p>
+</details>
+<!-- Row 5 -->
+<details class="group py-6">
+<summary class="flex items-center justify-between cursor-pointer list-none text-base sm:text-lg font-bold text-[#0B1C30]">
+<span>What are the Graphic Designer and Video Editor?</span>
+<span class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[#777587] transition-transform group-open:rotate-180">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</span>
+</summary>
+<p class="mt-3 text-sm text-[#464555] leading-relaxed">
+          They are upcoming creative modules that will automatically produce custom social graphics and formatted vertical video clips from your content.
+        </p>
+</details>
+</div>
+</div>
+</section>
+<!-- 9. Final Call to Action -->
+<section class="px-6 py-8">
+<div class="max-w-5xl mx-auto">
+<div class="bg-[#4F46E5] text-white p-12 md:p-16 rounded-3xl text-center shadow-xl my-16">
+<h2 class="text-3xl md:text-4xl font-bold tracking-tight">
+        Start creating with Zetca
+      </h2>
+<p class="text-indigo-100 text-lg mt-3 max-w-xl mx-auto">
+        Start free, no card needed.
+      </p>
+<a class="bg-white text-indigo-600 font-bold px-8 py-3.5 rounded-xl mt-8 inline-block hover:bg-indigo-50 transition shadow-sm" href="https://zetca.pro/signup">
+        Get started free
+      </a>
+</div>
+</div>
+</section>
+<!-- 10. Footer on White -->
+<footer class="bg-white border-t border-slate-200 pt-16 pb-12 px-6">
+<div class="max-w-7xl mx-auto">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-slate-200">
+<!-- Left Column: Brand & Copy -->
+<div class="space-y-3">
+<a class="flex items-center gap-2.5" href="https://zetca.pro">
+<div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-sm">
+<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewbox="0 0 24 24">
+<rect height="18" rx="3.5" width="18" x="3" y="3"></rect>
+<path d="M3 9h18"></path>
+<path d="M9 21V9"></path>
+</svg>
+</div>
+<div>
+<div class="text-lg font-bold text-[#0B1C30] tracking-tight leading-none">
+              Zetca<span class="text-primary">.</span>
+</div>
+<div class="text-[9px] font-bold tracking-widest text-[#777587] uppercase mt-0.5 leading-none">CONTENT OS</div>
+</div>
+</a>
+<p class="text-xs text-[#777587]">
+          Your AI content team.
+        </p>
+</div>
+<!-- Column 2: Product -->
+<div>
+<div class="text-xs font-bold uppercase tracking-wider text-[#0B1C30] mb-4">Product</div>
+<ul class="space-y-2.5 text-sm text-[#464555]">
+<li><a class="hover:text-[#0B1C30] transition-colors" href="#features">Features</a></li>
+<li><a class="hover:text-[#0B1C30] transition-colors" href="#pricing">Pricing</a></li>
+<li><a class="hover:text-[#0B1C30] transition-colors" href="#how-it-works">FAQ</a></li>
+</ul>
+</div>
+<!-- Column 3: Company -->
+<div>
+<div class="text-xs font-bold uppercase tracking-wider text-[#0B1C30] mb-4">Company</div>
+<ul class="space-y-2.5 text-sm text-[#464555]">
+<li><a class="hover:text-[#0B1C30] transition-colors" href="mailto:hello@zetca.pro">hello@zetca.pro</a></li>
+</ul>
+</div>
+<!-- Column 4: Legal -->
+<div>
+<div class="text-xs font-bold uppercase tracking-wider text-[#0B1C30] mb-4">Legal</div>
+<ul class="space-y-2.5 text-sm text-[#464555]">
+<li><a class="hover:text-[#0B1C30] transition-colors" href="https://zetca.pro/privacy">Privacy Policy</a></li>
+<li><a class="hover:text-[#0B1C30] transition-colors" href="https://zetca.pro/terms">Terms of Service</a></li>
+</ul>
+</div>
+</div>
+<!-- Bottom Line -->
+<div class="pt-8 text-center sm:text-left text-xs text-[#777587]">
+      © 2026 Zetca. All rights reserved.
+    </div>
+</div>
+</footer>
+</body></html>
