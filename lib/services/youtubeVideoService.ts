@@ -123,6 +123,30 @@ export class YouTubeVideoService {
     });
   }
 
+  /** Queues a failed video again, for the channel that's connected now */
+  async retry(userId: string, videoId: string): Promise<YouTubeVideoRecord> {
+    const record = await this.get(userId, videoId);
+    if (record.status !== 'failed') {
+      throw new YouTubeVideoError('Only failed videos can be retried', 'NOT_FAILED', 409);
+    }
+    const user = await this.users.getUserById(userId);
+    if (!user?.youtubeChannelId || !user.youtubeRefreshTokenEnc) {
+      throw new YouTubeVideoError('Connect a YouTube channel first', 'NOT_CONNECTED', 409);
+    }
+    // A different channel means a fresh upload; the old session belonged to the old one
+    const sameChannel = user.youtubeChannelId === record.channelId;
+    const changed = await this.videos.update(
+      videoId,
+      { status: 'queued', attempts: 0, channelId: user.youtubeChannelId },
+      {
+        remove: ['error', 'nextAttemptAt', 'heartbeatAt', ...(sameChannel ? [] : (['uploadSessionUri', 'youtubeVideoId', 'uploadedBytes'] as const))],
+        onlyIfStatus: 'failed',
+      }
+    );
+    if (!changed) throw new YouTubeVideoError('This video changed; refresh and try again', 'CONFLICT', 409);
+    return this.get(userId, videoId);
+  }
+
   async get(userId: string, videoId: string): Promise<YouTubeVideoRecord> {
     const record = await this.videos.getById(videoId);
     if (!record || record.userId !== userId) throw new YouTubeVideoError('Video not found', 'NOT_FOUND', 404);

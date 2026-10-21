@@ -13,7 +13,7 @@ import {
   type VideoMetadata,
 } from '@/lib/api/videoUploadClient';
 import { getOptions, scheduleVideo, YouTubeRequestError } from '@/lib/api/youtubeApi';
-import type { YouTubeVideoRecord } from '@/lib/models/youtubeVideo';
+import type { PublicYouTubeVideo } from '@/lib/models/youtubeVideo';
 import { draftToInput, newDraft, sectionForField, titleFromFilename, validateDraft, type DetailsDraft } from '@/lib/youtube/draft';
 import { defaultLanguage } from '@/lib/youtube/languages';
 import type { YouTubeConnection } from '@/types/user';
@@ -110,7 +110,7 @@ export function NewYouTubeVideo() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [scheduled, setScheduled] = useState<YouTubeVideoRecord | null>(null);
+  const [scheduled, setScheduled] = useState<PublicYouTubeVideo | null>(null);
   const [options, setOptions] = useState<FormOptions>({ playlists: [], categories: [], loading: true, error: null });
   const abortRef = useRef<AbortController | null>(null);
   const attemptedRef = useRef(false);
