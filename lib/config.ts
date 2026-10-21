@@ -30,6 +30,7 @@ interface Config {
   agentTimeoutSeconds: number;
   publisherEnabled: boolean;
   publisherScanIntervalSeconds: number;
+  youtubeWorkerEnabled: boolean;
   linkedinApiTimeoutSeconds: number;
 }
 
@@ -69,6 +70,12 @@ export function getConfig(): Config {
         ? process.env.PUBLISHER_ENABLED === 'true'
         : process.env.NODE_ENV === 'production',
     publisherScanIntervalSeconds: Number(process.env.PUBLISHER_SCAN_INTERVAL_SECONDS || 60),
+    // Uploads scheduled YouTube videos. Dev and prod use separate tables, but it's off
+    // in dev by default so a local server doesn't upload to real channels unasked
+    youtubeWorkerEnabled:
+      process.env.YOUTUBE_WORKER_ENABLED !== undefined
+        ? process.env.YOUTUBE_WORKER_ENABLED === 'true'
+        : process.env.NODE_ENV === 'production',
     linkedinApiTimeoutSeconds: Number(process.env.LINKEDIN_API_TIMEOUT_SECONDS || 30),
   };
 

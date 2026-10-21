@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { Calendar } from './Calendar';
 import { SchedulingModal } from './SchedulingModal';
@@ -461,7 +462,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
       )}
 
       {/* Header with view toggle */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-2">
           <Button
             variant={viewMode === 'grid' ? 'primary' : 'outline'}
@@ -481,7 +482,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
           </Button>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Clear All button — only show when there are posts */}
           {posts.length > 0 && (
             <Button
@@ -529,6 +530,14 @@ export function Scheduler({ className = '' }: SchedulerProps) {
               </div>
             )}
           </div>
+
+          <Link
+            href="/dashboard/scheduler/youtube/new"
+            className="inline-flex items-center gap-2 rounded-lg border border-[#c7c4d8]/60 bg-white px-4 py-2.5 text-sm font-semibold text-on-surface hover:border-primary/40 hover:text-primary transition-colors"
+          >
+            <Icon icon="mdi:youtube" className="w-5 h-5 text-[#FF0000]" />
+            New YouTube video
+          </Link>
 
           <Button
             onClick={() => handleScheduleNewPost()}

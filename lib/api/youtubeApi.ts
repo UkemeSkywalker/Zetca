@@ -4,7 +4,7 @@
 
 import { requestUploadUrl, uploadFileToS3 } from '@/lib/api/mediaClient';
 import type { YouTubeCategory, YouTubePlaylist } from '@/lib/services/youtubeClient';
-import type { VideoDetailsInput, YouTubeVideoRecord } from '@/lib/models/youtubeVideo';
+import type { VideoDetailsInput, PublicYouTubeVideo } from '@/lib/models/youtubeVideo';
 import type { VideoWriterRequest, VideoWriterResponse } from '@/lib/models/videoWriter';
 
 export type { YouTubeCategory, YouTubePlaylist };
@@ -73,8 +73,8 @@ export async function uploadThumbnail(image: Blob, filename: string): Promise<st
   return mediaId;
 }
 
-export async function scheduleVideo(mediaId: string, details: VideoDetailsInput): Promise<YouTubeVideoRecord> {
-  const { video } = await call<{ video: YouTubeVideoRecord }>('/api/youtube/videos', {
+export async function scheduleVideo(mediaId: string, details: VideoDetailsInput): Promise<PublicYouTubeVideo> {
+  const { video } = await call<{ video: PublicYouTubeVideo }>('/api/youtube/videos', {
     method: 'POST',
     body: JSON.stringify({ mediaId, details }),
   });
@@ -83,4 +83,16 @@ export async function scheduleVideo(mediaId: string, details: VideoDetailsInput)
 
 export function writeVideoCopy(input: VideoWriterRequest) {
   return call<VideoWriterResponse>('/api/youtube/write', { method: 'POST', body: JSON.stringify(input) });
+}
+
+export async function getVideo(videoId: string): Promise<PublicYouTubeVideo> {
+  const { video } = await call<{ video: PublicYouTubeVideo }>(`/api/youtube/videos/${encodeURIComponent(videoId)}`);
+  return video;
+}
+
+export async function retryVideo(videoId: string): Promise<PublicYouTubeVideo> {
+  const { video } = await call<{ video: PublicYouTubeVideo }>(`/api/youtube/videos/${encodeURIComponent(videoId)}/retry`, {
+    method: 'POST',
+  });
+  return video;
 }

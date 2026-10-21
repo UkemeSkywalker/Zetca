@@ -12,11 +12,16 @@ export async function register() {
 
   const { getConfig } = await import('./lib/config');
   const cfg = getConfig();
-  if (!cfg.publisherEnabled) return;
 
-  const { getPublisherService } = await import('./lib/services/container');
-  const { PublishScanner } = await import('./lib/services/publishScanner');
+  if (cfg.publisherEnabled) {
+    const { getPublisherService } = await import('./lib/services/container');
+    const { PublishScanner } = await import('./lib/services/publishScanner');
+    new PublishScanner(getPublisherService()).start();
+  }
 
-  const scanner = new PublishScanner(getPublisherService());
-  scanner.start();
+  // Uploads scheduled YouTube videos
+  if (cfg.youtubeWorkerEnabled) {
+    const { YouTubeUploadScanner } = await import('./lib/services/youtubeUploadScanner');
+    new YouTubeUploadScanner().start();
+  }
 }

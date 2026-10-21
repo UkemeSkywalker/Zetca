@@ -125,8 +125,31 @@ export interface YouTubeVideoRecord {
   isShort: boolean;
   youtubeVideoId?: string;
   error?: { code: string; message: string };
+  /** Things that didn't work but didn't stop the upload, e.g. a thumbnail on an unverified channel */
+  warnings?: string[];
+  /** Upload attempts so far, and when the next may start (after a failure or the daily limit) */
+  attempts?: number;
+  nextAttemptAt?: string;
+  /** Set while a worker is uploading; refreshed as each piece goes up */
+  heartbeatAt?: string;
+  /** YouTube's resumable upload session, so an interrupted upload continues where it stopped */
+  uploadSessionUri?: string;
+  uploadedBytes?: number;
+  totalBytes?: number;
+  /** When it went up on YouTube */
+  uploadedAt?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+/** A video as the browser sees it: without the upload session, which works like a key to the upload */
+export type PublicYouTubeVideo = Omit<YouTubeVideoRecord, 'uploadSessionUri' | 'heartbeatAt'>;
+
+export function toPublicVideo(record: YouTubeVideoRecord): PublicYouTubeVideo {
+  const { uploadSessionUri: _session, heartbeatAt: _heartbeat, ...rest } = record;
+  void _session;
+  void _heartbeat;
+  return rest;
 }
 
 /** Field path → first error message, for showing errors next to fields */
