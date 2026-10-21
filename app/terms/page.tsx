@@ -162,8 +162,8 @@ export default function TermsPage() {
       updated={UPDATED}
       intro={
         <p>
-          These terms apply when you use Zetca at zetca.pro. Please read them; by creating an account or using Zetca you
-          agree to them.
+          These terms are an agreement between you and Mac Tidar AI Venture Studio Ltd (“we”, “us”), which builds and
+          operates Zetca at zetca.pro. Please read them; by creating an account or using Zetca you agree to them.
         </p>
       }
       sections={sections}

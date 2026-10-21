@@ -53,7 +53,7 @@ export default function Footer() {
           ))}
         </div>
         <p className="pt-8 text-center sm:text-left text-xs text-[#777587]">
-          © {new Date().getFullYear()} Zetca. All rights reserved.
+          © {new Date().getFullYear()} Mac Tidar AI Venture Studio Ltd. Zetca is a Mac Tidar AI Venture Studio product.
         </p>
       </div>
     </footer>

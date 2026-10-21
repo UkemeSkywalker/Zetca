@@ -215,8 +215,9 @@ export default function PrivacyPage() {
       updated={UPDATED}
       intro={
         <p>
-          Zetca (“we”, “us”) is an AI content tool at zetca.pro that plans content strategies, writes posts, schedules them
-          and publishes them to the accounts you connect. This policy explains what information we collect, how we use and
+          Zetca is an AI content tool at zetca.pro that plans content strategies, writes posts, schedules them and
+          publishes them to the accounts you connect. Zetca is built and operated by Mac Tidar AI Venture Studio Ltd
+          (“we”, “us”), which is responsible for your information. This policy explains what information we collect, how we use and
           share it, and the choices you have.
         </p>
       }
