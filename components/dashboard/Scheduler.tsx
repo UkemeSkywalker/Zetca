@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { Calendar } from './Calendar';
 import { SchedulingModal } from './SchedulingModal';
@@ -15,6 +16,7 @@ import { StrategyRecord } from '@/types/strategy';
 import * as schedulerClient from '@/lib/api/schedulerClient';
 import { listStrategies } from '@/lib/api/strategyClient';
 import { getDownloadUrl } from '@/lib/api/mediaClient';
+import { isYouTubeItem, listVideoPosts, videoPagePath } from '@/lib/api/youtubeApi';
 
 interface SchedulerProps {
   className?: string;
@@ -43,6 +45,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   };
 
+  const router = useRouter();
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [posts, setPosts] = useState<ScheduledPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -84,8 +87,9 @@ export function Scheduler({ className = '' }: SchedulerProps) {
   const fetchPosts = useCallback(async () => {
     try {
       setError(null);
-      const data = await schedulerClient.listPosts();
-      setPosts(data);
+      // YouTube videos show alongside posts; they're managed on their own page
+      const [data, videos] = await Promise.all([schedulerClient.listPosts(), listVideoPosts()]);
+      setPosts([...data, ...videos]);
     } catch (err) {
       console.error('[Scheduler] fetchPosts: error', err);
       const message = err instanceof schedulerClient.SchedulerAPIError
@@ -212,6 +216,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
 
   // Handle deleting a post via API
   const handleDeletePost = async (postId: string) => {
+    if (isYouTubeItem(postId)) return openYouTubeItem(postId);
     setOperationError(null);
     try {
       await schedulerClient.deletePost(postId);
@@ -224,8 +229,15 @@ export function Scheduler({ className = '' }: SchedulerProps) {
     }
   };
 
+  /** YouTube videos open their own status page instead of the post editor */
+  const openYouTubeItem = (postId: string) => {
+    const post = posts.find(p => p.id === postId);
+    if (post?.youtube) router.push(videoPagePath(post.youtube.videoId));
+  };
+
   // Handle editing a post
   const handleEditPost = async (postId: string) => {
+    if (isYouTubeItem(postId)) return openYouTubeItem(postId);
     const post = posts.find(p => p.id === postId);
     if (post) {
       // Convert UTC stored date/time to local for the editing modal
@@ -301,7 +313,8 @@ export function Scheduler({ className = '' }: SchedulerProps) {
     setShowClearConfirm(false);
     try {
       await schedulerClient.deleteAllPosts();
-      setPosts([]);
+      // Clears posts only; YouTube videos stay
+      await fetchPosts();
     } catch (err) {
       const message = err instanceof schedulerClient.SchedulerAPIError
         ? err.message
@@ -313,8 +326,14 @@ export function Scheduler({ className = '' }: SchedulerProps) {
   };
 
   // Handle moving posts to a new date via drag-and-drop
-  const handleMovePosts = async (postIds: string[], targetDate: string) => {
+  const handleMovePosts = async (allIds: string[], targetDate: string) => {
     setOperationError(null);
+    // A YouTube video's time is set on YouTube, so dragging moves only the posts
+    const postIds = allIds.filter((id) => !isYouTubeItem(id));
+    if (postIds.length < allIds.length) {
+      setOperationError('YouTube videos can’t be moved on the calendar. Open the video to see its publish time.');
+    }
+    if (postIds.length === 0) return;
     try {
       await Promise.all(
         postIds.map(id => {
@@ -354,6 +373,8 @@ export function Scheduler({ className = '' }: SchedulerProps) {
     x: 'ri:twitter-x-fill',
     linkedin: 'simple-icons:linkedin',
     facebook: 'simple-icons:facebook',
+    youtube: 'simple-icons:youtube',
+    tiktok: 'simple-icons:tiktok',
   };
 
   const platformColors: Record<string, string> = {
@@ -362,6 +383,8 @@ export function Scheduler({ className = '' }: SchedulerProps) {
     x: '#000000',
     linkedin: '#0A66C2',
     facebook: '#1877F2',
+    youtube: '#FF0000',
+    tiktok: '#000000',
   };
 
   // Format date for display (converts UTC stored date to local)
@@ -484,7 +507,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Clear All button — only show when there are posts */}
-          {posts.length > 0 && (
+          {posts.some((p) => !p.youtube) && (
             <Button
               variant="outline"
               size="sm"
@@ -554,6 +577,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
           posts={posts}
           onDateClick={handleDateClick}
           onMovePosts={handleMovePosts}
+          onOpenItem={(post) => openYouTubeItem(post.id)}
         />
       )}
 
@@ -615,7 +639,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
                         <div
                           key={post.id}
                           className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col hover:shadow-md transition-shadow cursor-pointer"
-                          onClick={() => setPreviewPost(post)}
+                          onClick={() => (post.youtube ? openYouTubeItem(post.id) : setPreviewPost(post))}
                         >
                           {/* Media preview on top */}
                           {mUrl && post.mediaType === 'image' ? (
@@ -664,7 +688,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
                                   style={{ color: platformColors[post.platform] || '#6B7280' }}
                                 />
                               </div>
-                              <div className="flex items-center gap-1">
+                              <div className={`flex items-center gap-1 ${post.youtube ? 'hidden' : ''}`}>
                                 <button
                                   onClick={(e) => { e.stopPropagation(); handleEditPost(post.id); }}
                                   className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -697,7 +721,8 @@ export function Scheduler({ className = '' }: SchedulerProps) {
                               <span className="font-medium">{formatTime(post.scheduledDate, post.scheduledTime)}</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              {(mUrl) && (
+                              {post.youtube && <YouTubeStatusLabel status={post.youtube.status} />}
+                              {mUrl && !post.youtube && (
                                 <>
                                   <button
                                     onClick={(e) => { e.stopPropagation(); handleEditPost(post.id); }}
@@ -817,4 +842,18 @@ export function Scheduler({ className = '' }: SchedulerProps) {
       )}
     </div>
   );
+}
+
+const YOUTUBE_LABELS: Record<NonNullable<ScheduledPost['youtube']>['status'], { text: string; cls: string }> = {
+  queued: { text: 'Uploading soon', cls: 'bg-primary-50 text-primary' },
+  uploading: { text: 'Uploading…', cls: 'bg-primary-50 text-primary' },
+  waiting_quota: { text: 'Uploads tomorrow', cls: 'bg-amber-50 text-amber-700' },
+  scheduled: { text: 'Scheduled on YouTube', cls: 'bg-primary-50 text-primary' },
+  published: { text: 'On YouTube', cls: 'bg-emerald-50 text-emerald-700' },
+  failed: { text: 'Upload failed', cls: 'bg-red-50 text-red-600' },
+};
+
+function YouTubeStatusLabel({ status }: { status: NonNullable<ScheduledPost['youtube']>['status'] }) {
+  const label = YOUTUBE_LABELS[status];
+  return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${label.cls}`}>{label.text}</span>;
 }

@@ -3,11 +3,13 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ScheduledPost } from '@/types/scheduler';
 import { Icon } from '@iconify/react';
+import Link from 'next/link';
 import { listPosts } from '@/lib/api/schedulerClient';
+import { listVideoPosts, videoPagePath } from '@/lib/api/youtubeApi';
 import { publishPost } from '@/lib/api/publisherClient';
 
 type StatusFilter = 'all' | 'scheduled' | 'published' | 'draft';
-type PlatformFilter = 'all' | 'linkedin' | 'instagram' | 'twitter' | 'facebook';
+type PlatformFilter = 'all' | 'linkedin' | 'youtube' | 'instagram' | 'twitter' | 'facebook';
 type ViewMode = 'list' | 'grid';
 
 interface PostsTableProps {
@@ -30,6 +32,7 @@ const platformColors: Record<string, string> = {
   instagram: 'bg-pink-500',
   twitter: 'bg-sky-500',
   facebook: 'bg-blue-500',
+  youtube: 'bg-red-600',
 };
 
 const platformLabels: Record<string, string> = {
@@ -37,6 +40,7 @@ const platformLabels: Record<string, string> = {
   instagram: 'Instagram',
   twitter: 'Twitter / X',
   facebook: 'Facebook',
+  youtube: 'YouTube',
 };
 
 const thumbnailColors = [
@@ -106,8 +110,9 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await listPosts();
-      setPosts(data);
+      // YouTube videos are listed with posts; each opens its own status page
+      const [data, videos] = await Promise.all([listPosts(), listVideoPosts()]);
+      setPosts([...data, ...videos]);
     } catch (err) {
       setError((err as Error).message || 'Failed to load posts');
     } finally {
@@ -171,6 +176,7 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
       twitter: 'simple-icons:x',
       linkedin: 'mdi:linkedin',
       facebook: 'mdi:facebook',
+      youtube: 'mdi:youtube',
     };
     return map[platform] || 'solar:global-bold';
   };
@@ -285,7 +291,7 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
                 <p className="text-[11px] font-semibold text-outline uppercase tracking-wider mb-1.5 px-1">
                   Platform
                 </p>
-                {(['all', 'linkedin', 'instagram', 'twitter', 'facebook'] as PlatformFilter[]).map(
+                {(['all', 'linkedin', 'youtube', 'instagram', 'twitter', 'facebook'] as PlatformFilter[]).map(
                   (filter) => (
                     <button
                       key={filter}
@@ -421,7 +427,16 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
 
                   {/* Actions */}
                   <div className="flex items-center gap-1.5">
-                    {post.status === 'published' && (
+                    {post.youtube && (
+                      <Link
+                        href={videoPagePath(post.youtube.videoId)}
+                        className="p-2.5 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors"
+                        aria-label={`Open YouTube video: ${post.content.substring(0, 40)}`}
+                      >
+                        <Icon icon="solar:eye-bold" className="w-5 h-5" />
+                      </Link>
+                    )}
+                    {post.status === 'published' && !post.youtube && (
                       <button
                         className="p-2.5 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors"
                         aria-label="View post"
@@ -616,7 +631,16 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
                       {publishingPostId === post.id ? 'Publishing...' : 'Publish'}
                     </button>
                   )}
-                  {post.status === 'published' && (
+                  {post.youtube && (
+                      <Link
+                        href={videoPagePath(post.youtube.videoId)}
+                        className="p-2.5 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors"
+                        aria-label={`Open YouTube video: ${post.content.substring(0, 40)}`}
+                      >
+                        <Icon icon="solar:eye-bold" className="w-5 h-5" />
+                      </Link>
+                    )}
+                    {post.status === 'published' && !post.youtube && (
                     <button
                       className="p-2 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors"
                       aria-label="View post"

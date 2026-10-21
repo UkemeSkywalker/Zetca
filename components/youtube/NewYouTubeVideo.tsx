@@ -282,7 +282,7 @@ export function NewYouTubeVideo() {
       <ScheduledView
         video={scheduled}
         channelTitle={channel.channelTitle}
-        thumbnailUrl={upload.previewUrl}
+        preview={{ type: 'video', url: upload.previewUrl }}
         publishLabel={scheduled.publishAt && draft ? formatPublishTime(draft) : null}
         onAnother={reset}
       />
