@@ -16,7 +16,9 @@ import { StrategyRecord } from '@/types/strategy';
 import * as schedulerClient from '@/lib/api/schedulerClient';
 import { listStrategies } from '@/lib/api/strategyClient';
 import { getDownloadUrl } from '@/lib/api/mediaClient';
-import { isYouTubeItem, listVideoPosts, videoPagePath } from '@/lib/api/youtubeApi';
+import { isYouTubeItem, listVideoPosts, removeVideo, videoPagePath } from '@/lib/api/youtubeApi';
+import { removeCopy } from '@/lib/content/itemActions';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 interface SchedulerProps {
   className?: string;
@@ -104,6 +106,18 @@ export function Scheduler({ className = '' }: SchedulerProps) {
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
+
+  // The Publisher links here with ?edit=<postId> to open a post in the editor
+  const editRequested = useRef(false);
+  useEffect(() => {
+    if (editRequested.current || !posts.length) return;
+    const id = new URLSearchParams(window.location.search).get('edit');
+    if (!id) return;
+    editRequested.current = true;
+    window.history.replaceState(null, '', window.location.pathname);
+    handleEditPost(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [posts]);
 
   // Fetch media download URLs for grid view
   useEffect(() => {
@@ -215,18 +229,22 @@ export function Scheduler({ className = '' }: SchedulerProps) {
   };
 
   // Handle deleting a post via API
+  // Every delete asks first; this is the item waiting for that answer
+  const [pendingRemove, setPendingRemove] = useState<ScheduledPost | null>(null);
+
   const handleDeletePost = async (postId: string) => {
-    if (isYouTubeItem(postId)) return openYouTubeItem(postId);
-    setOperationError(null);
-    try {
-      await schedulerClient.deletePost(postId);
+    const post = posts.find((p) => p.id === postId);
+    if (post) setPendingRemove(post);
+  };
+
+  const removeItem = async (post: ScheduledPost) => {
+    if (post.youtube) {
+      await removeVideo(post.youtube.videoId);
       await fetchPosts();
-    } catch (err) {
-      const message = err instanceof schedulerClient.SchedulerAPIError
-        ? err.message
-        : 'Failed to delete post';
-      setOperationError(message);
+      return;
     }
+    await schedulerClient.deletePost(post.id);
+    await fetchPosts();
   };
 
   /** YouTube videos open their own status page instead of the post editor */
@@ -237,7 +255,11 @@ export function Scheduler({ className = '' }: SchedulerProps) {
 
   // Handle editing a post
   const handleEditPost = async (postId: string) => {
-    if (isYouTubeItem(postId)) return openYouTubeItem(postId);
+    if (isYouTubeItem(postId)) {
+      const item = posts.find((p) => p.id === postId);
+      if (item?.youtube) router.push(`${videoPagePath(item.youtube.videoId)}/edit`);
+      return;
+    }
     const post = posts.find(p => p.id === postId);
     if (post) {
       // Convert UTC stored date/time to local for the editing modal
@@ -688,7 +710,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
                                   style={{ color: platformColors[post.platform] || '#6B7280' }}
                                 />
                               </div>
-                              <div className={`flex items-center gap-1 ${post.youtube ? 'hidden' : ''}`}>
+                              <div className="flex items-center gap-1">
                                 <button
                                   onClick={(e) => { e.stopPropagation(); handleEditPost(post.id); }}
                                   className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -722,7 +744,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
                             </div>
                             <div className="flex items-center gap-1">
                               {post.youtube && <YouTubeStatusLabel status={post.youtube.status} />}
-                              {mUrl && !post.youtube && (
+                              {mUrl && (
                                 <>
                                   <button
                                     onClick={(e) => { e.stopPropagation(); handleEditPost(post.id); }}
@@ -803,6 +825,17 @@ export function Scheduler({ className = '' }: SchedulerProps) {
       />
 
       {/* Post Preview Modal */}
+      {pendingRemove && (
+        <ConfirmDialog
+          open
+          title={removeCopy(pendingRemove).title}
+          message={<p>{removeCopy(pendingRemove).message}</p>}
+          confirmLabel={removeCopy(pendingRemove).confirmLabel}
+          onClose={() => setPendingRemove(null)}
+          onConfirm={() => removeItem(pendingRemove)}
+        />
+      )}
+
       <PostPreviewModal
         isOpen={!!previewPost}
         onClose={() => setPreviewPost(null)}

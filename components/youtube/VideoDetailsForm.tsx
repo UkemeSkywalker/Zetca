@@ -336,7 +336,7 @@ function MoreOptionsSection({ draft, update, errors }: Props) {
   );
 }
 
-function VisibilitySection({ draft, update, errors, timeZones }: Props) {
+function VisibilitySection({ draft, update, errors, timeZones, published }: Props) {
   const today = useMemo(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -353,6 +353,10 @@ function VisibilitySection({ draft, update, errors, timeZones }: Props) {
         <RadioRow name="privacy" label="Private" description="Only you" checked={draft.privacyStatus === 'private'} onSelect={() => setPrivacy('private')} />
       </div>
 
+      {published ? (
+        <p className="text-xs text-outline">This video is already public, so its publish time can’t change. You can still change who can see it.</p>
+      ) : (
+      <>
       <div>
         <div className="inline-flex rounded-xl bg-surface-container-low p-1" role="tablist" aria-label="When to publish">
           {(['now', 'schedule'] as const).map((mode) => {
@@ -421,6 +425,9 @@ function VisibilitySection({ draft, update, errors, timeZones }: Props) {
             error={errors.timeZone}
           />
         </div>
+      )}
+
+      </>
       )}
 
       <Toggle

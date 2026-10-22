@@ -128,7 +128,10 @@ const STATUS_FOR_POST: Record<PublicYouTubeVideo['status'], ScheduledPost['statu
  * A YouTube video as a Scheduler item, so it shows on the calendar, grid and
  * Publisher alongside posts. It sits on its publish time, or when it went up.
  */
-export function videoToPost(video: PublicYouTubeVideo): ScheduledPost {
+export function videoToPost(input: PublicYouTubeVideo): ScheduledPost {
+  // YouTube publishes a scheduled video at its time, before Zetca's next check
+  const video: PublicYouTubeVideo =
+    input.status === 'scheduled' && input.publishAt && new Date(input.publishAt) <= new Date() ? { ...input, status: 'published' } : input;
   const when = new Date(video.publishAt ?? video.uploadedAt ?? video.createdAt);
   const iso = when.toISOString();
   return {
@@ -200,4 +203,15 @@ export function writeSuggestions(input: ResearchInput & { keywords: KeywordInsig
     titles: { text: string; score: number; checks: Check[] }[];
     description: { text: string; score: number; checks: Check[] } | null;
   }>('/api/youtube/suggestions', { method: 'POST', body: JSON.stringify(input) });
+}
+
+export function updateVideo(videoId: string, details: VideoDetailsInput) {
+  return call<{ video: PublicYouTubeVideo; warnings: string[] }>(`/api/youtube/videos/${encodeURIComponent(videoId)}`, {
+    method: 'PUT',
+    body: JSON.stringify({ details }),
+  });
+}
+
+export function removeVideo(videoId: string) {
+  return call<{ onYouTube: boolean }>(`/api/youtube/videos/${encodeURIComponent(videoId)}`, { method: 'DELETE' });
 }

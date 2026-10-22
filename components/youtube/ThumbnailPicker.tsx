@@ -23,7 +23,8 @@ export function ThumbnailPicker({
   onChange,
   error,
 }: {
-  file: File;
+  /** The local video; without it (when editing) only an uploaded image can be used */
+  file: File | null;
   isShort: boolean;
   value?: string;
   onChange: (mediaId: string | undefined) => void;
@@ -43,6 +44,10 @@ export function ThumbnailPicker({
     let cancelled = false;
     setTiles([]);
     setSelectedKey(null);
+    if (!file) {
+      setLoadingFrames(false);
+      return;
+    }
     setLoadingFrames(true);
     captureFrames(file)
       .then((blobs) => {
