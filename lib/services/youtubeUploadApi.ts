@@ -186,3 +186,69 @@ export async function insertCaptions(accessToken: string, youtubeVideoId: string
   });
   if (!res.ok) await failure(res, 'Adding captions');
 }
+
+/** The parts of a video Zetca reads and edits */
+export const EDITABLE_PARTS = ['snippet', 'status', 'recordingDetails', 'localizations'] as const;
+
+export interface YouTubeVideoResource {
+  id: string;
+  snippet?: {
+    title?: string;
+    description?: string;
+    tags?: string[];
+    categoryId?: string;
+    defaultLanguage?: string;
+    defaultAudioLanguage?: string;
+  } & Record<string, unknown>;
+  status?: {
+    uploadStatus?: string;
+    failureReason?: string;
+    rejectionReason?: string;
+    privacyStatus?: string;
+    publishAt?: string;
+    license?: string;
+    embeddable?: boolean;
+    publicStatsViewable?: boolean;
+    selfDeclaredMadeForKids?: boolean;
+    containsSyntheticMedia?: boolean;
+  };
+  recordingDetails?: { recordingDate?: string };
+  localizations?: Record<string, { title: string; description: string }>;
+}
+
+/** A video's current details on YouTube, or null if it no longer exists */
+export async function getVideoResource(accessToken: string, youtubeVideoId: string): Promise<YouTubeVideoResource | null> {
+  const res = await send(`${API_URL}/videos?part=${EDITABLE_PARTS.join(',')}&id=${encodeURIComponent(youtubeVideoId)}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) await failure(res, 'Reading the video');
+  const data = (await res.json()) as { items?: YouTubeVideoResource[] };
+  return data.items?.[0] ?? null;
+}
+
+/** Saves the given parts of a video (each part is replaced as a whole) */
+export async function updateVideo(accessToken: string, resource: YouTubeVideoResource, parts: string[]): Promise<void> {
+  const res = await send(`${API_URL}/videos?part=${parts.join(',')}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(resource),
+  });
+  if (!res.ok) await failure(res, 'Saving to YouTube');
+}
+
+/** Removes a video from a playlist (finds its playlist item first) */
+export async function removeFromPlaylist(accessToken: string, playlistId: string, youtubeVideoId: string): Promise<void> {
+  const res = await send(
+    `${API_URL}/playlistItems?part=id&maxResults=50&playlistId=${encodeURIComponent(playlistId)}&videoId=${encodeURIComponent(youtubeVideoId)}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  if (!res.ok) await failure(res, 'Finding the playlist item');
+  const data = (await res.json()) as { items?: { id: string }[] };
+  for (const item of data.items ?? []) {
+    const del = await send(`${API_URL}/playlistItems?id=${encodeURIComponent(item.id)}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!del.ok && del.status !== 404) await failure(del, 'Removing from the playlist');
+  }
+}

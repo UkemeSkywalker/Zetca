@@ -82,7 +82,7 @@ export function formatPublishTime(draft: Pick<DetailsDraft, 'scheduledDate' | 's
   return `${day}, ${time} (${zone})`;
 }
 
-function browserTimeZone(): string {
+export function browserTimeZone(): string {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
   } catch {
@@ -90,7 +90,7 @@ function browserTimeZone(): string {
   }
 }
 
-function allTimeZones(current: string): string[] {
+export function allTimeZones(current: string): string[] {
   let zones: string[] = [];
   try {
     zones = (Intl as unknown as { supportedValuesOf?: (k: string) => string[] }).supportedValuesOf?.('timeZone') ?? [];

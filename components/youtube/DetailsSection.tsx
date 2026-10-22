@@ -134,7 +134,7 @@ export function DetailsSection({ draft, update, errors, file, isShort, durationS
           </label>
           <span className="flex items-center gap-3">
             {descriptionScore && <FieldScore score={descriptionScore.score} checks={descriptionScore.checks} label="Description" />}
-            <WriteWithCopywriter filename={file.name} durationSeconds={durationSeconds} isShort={isShort} language={draft.language} onWritten={applyCopy} />
+            <WriteWithCopywriter filename={file?.name ?? draft.title} durationSeconds={durationSeconds} isShort={isShort} language={draft.language} onWritten={applyCopy} />
           </span>
         </div>
         <textarea

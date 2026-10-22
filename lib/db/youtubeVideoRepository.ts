@@ -3,7 +3,7 @@
  */
 
 import { DynamoDBClient, type DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand, GetCommand, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, PutCommand, GetCommand, QueryCommand, UpdateCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
 import { getConfig } from '../config';
 import type { YouTubeVideoRecord, YouTubeVideoStatus } from '../models/youtubeVideo';
@@ -74,6 +74,28 @@ export class YouTubeVideoRepository {
       })
     );
     return (result.Items as YouTubeVideoRecord[]) ?? [];
+  }
+
+  /** Scheduled videos whose publish time has passed (up to `limit`) */
+  async listDueScheduled(now: Date, limit = 10): Promise<YouTubeVideoRecord[]> {
+    const items: YouTubeVideoRecord[] = [];
+    let lastKey: Record<string, unknown> | undefined;
+    do {
+      const result = await this.docClient.send(
+        new QueryCommand({
+          TableName: this.tableName,
+          IndexName: 'StatusIndex',
+          KeyConditionExpression: '#status = :status',
+          FilterExpression: 'publishAt <= :now',
+          ExpressionAttributeNames: { '#status': 'status' },
+          ExpressionAttributeValues: { ':status': 'scheduled', ':now': now.toISOString() },
+          ExclusiveStartKey: lastKey,
+        })
+      );
+      items.push(...((result.Items as YouTubeVideoRecord[]) ?? []));
+      lastKey = result.LastEvaluatedKey;
+    } while (lastKey && items.length < limit);
+    return items.slice(0, limit);
   }
 
   /**
@@ -177,5 +199,9 @@ export class YouTubeVideoRepository {
       lastKey = result.LastEvaluatedKey;
     } while (lastKey && items.length < max);
     return items.slice(0, max);
+  }
+
+  async delete(videoId: string): Promise<void> {
+    await this.docClient.send(new DeleteCommand({ TableName: this.tableName, Key: { videoId } }));
   }
 }

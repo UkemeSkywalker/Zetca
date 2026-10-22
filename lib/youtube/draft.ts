@@ -115,3 +115,33 @@ export function sectionForField(path: string): string {
   }
   return 'details';
 }
+
+/** Saved details back into form state, for editing */
+export function draftFromDetails(details: import('@/lib/models/youtubeVideo').VideoDetails, fallbackTimeZone: string): DetailsDraft {
+  const base = newDraft('', { language: details.language ?? 'en', timeZone: details.timeZone ?? fallbackTimeZone });
+  return {
+    ...base,
+    title: details.title,
+    description: details.description,
+    tags: details.tags,
+    categoryId: details.categoryId,
+    language: details.language ?? base.language,
+    translations: details.translations,
+    thumbnailMediaId: details.thumbnailMediaId,
+    playlistIds: details.playlistIds,
+    madeForKids: details.madeForKids,
+    paidPromotion: details.paidPromotion,
+    alteredContent: details.alteredContent,
+    captions: details.captions,
+    recordingDate: details.recordingDate ?? '',
+    license: details.license,
+    embeddable: details.embeddable,
+    publicStatsViewable: details.publicStatsViewable,
+    privacyStatus: details.privacyStatus,
+    publishMode: details.publishMode,
+    scheduledDate: details.scheduledDate ?? base.scheduledDate,
+    scheduledTime: details.scheduledTime ?? base.scheduledTime,
+    timeZone: details.timeZone ?? base.timeZone,
+    notifySubscribers: details.notifySubscribers,
+  };
+}

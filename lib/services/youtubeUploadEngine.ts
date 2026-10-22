@@ -90,6 +90,23 @@ export function classify(error: unknown): Outcome {
   return { kind: 'retry', message: (error as Error)?.message || 'Upload failed' };
 }
 
+/** YouTube's rejection reasons, in words a creator can act on */
+export function rejectionMessage(reason: string): string {
+  const messages: Record<string, string> = {
+    copyright: 'YouTube blocked this video for copyright. See the details in YouTube Studio.',
+    claim: 'YouTube blocked this video because of a copyright claim. See the details in YouTube Studio.',
+    duplicate: 'YouTube rejected this video as a duplicate of one already on the channel.',
+    trademark: 'YouTube rejected this video for trademark reasons. See YouTube Studio for details.',
+    inappropriate: 'YouTube rejected this video for breaking its community guidelines.',
+    termsOfUse: 'YouTube rejected this video for breaking its terms of use.',
+    legal: 'YouTube rejected this video for legal reasons.',
+    length: 'YouTube rejected this video because it is too long for the channel.',
+    uploaderAccountSuspended: 'YouTube rejected this video because the channel is suspended.',
+    uploaderAccountClosed: 'YouTube rejected this video because the channel is closed.',
+  };
+  return messages[reason] ?? `YouTube didn’t accept this video (${reason}). See YouTube Studio for details.`;
+}
+
 class VideoFileMissing extends Error {}
 class ChannelChanged extends Error {}
 
@@ -144,9 +161,49 @@ export class YouTubeUploadEngine {
     };
   }
 
+  /**
+   * Checks scheduled videos whose publish time has passed: published, or
+   * rejected by YouTube (copyright, duplicate…), or deleted there.
+   */
+  async settleScheduled(): Promise<void> {
+    const { videos, access, youtube, now } = this.deps;
+    const at = now();
+    for (const video of await videos.listDueScheduled(at)) {
+      try {
+        const { accessToken } = await access(video.userId);
+        const current = await youtube.getVideoResource(accessToken, video.youtubeVideoId!);
+        if (!current) {
+          await videos.update(video.videoId, { status: 'failed', error: { code: 'deleted', message: 'This video was deleted on YouTube.' } });
+          continue;
+        }
+        const s = current.status ?? {};
+        if (s.uploadStatus === 'rejected' || s.uploadStatus === 'failed') {
+          const reason = s.rejectionReason ?? s.failureReason ?? 'unknown';
+          await videos.update(video.videoId, {
+            status: 'failed',
+            error: { code: `youtube_${s.uploadStatus}`, message: rejectionMessage(reason) },
+          });
+        } else if (s.privacyStatus === 'private' && s.publishAt && new Date(s.publishAt) > at) {
+          // The time was moved in YouTube Studio
+          await videos.update(video.videoId, { publishAt: new Date(s.publishAt).toISOString() });
+        } else {
+          await videos.update(video.videoId, { status: 'published' });
+        }
+      } catch (error) {
+        // Can't ask YouTube (e.g. signed out): after a day, assume YouTube published it
+        if (at.getTime() - new Date(video.publishAt!).getTime() > 24 * 60 * 60 * 1000) {
+          await videos.update(video.videoId, { status: 'published' });
+        } else {
+          console.warn(`Couldn't check YouTube video ${video.youtubeVideoId}: ${(error as Error).message}`);
+        }
+      }
+    }
+  }
+
   /** Uploads the videos that are due. Returns how many were handled. */
   async runCycle(): Promise<number> {
     const { videos, now } = this.deps;
+    await this.settleScheduled().catch((e) => console.error(`Settling scheduled videos failed: ${(e as Error)?.message ?? e}`));
     const at = now();
     const staleBefore = new Date(at.getTime() - STALE_AFTER_MS);
     const candidates = [

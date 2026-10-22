@@ -4,8 +4,12 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ScheduledPost } from '@/types/scheduler';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
-import { listPosts } from '@/lib/api/schedulerClient';
-import { listVideoPosts, videoPagePath } from '@/lib/api/youtubeApi';
+import { listPosts, deletePost } from '@/lib/api/schedulerClient';
+import { useRouter } from 'next/navigation';
+import { ActionsMenu, type MenuAction } from '@/components/ui/ActionsMenu';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { canEdit, removeCopy } from '@/lib/content/itemActions';
+import { listVideoPosts, removeVideo, videoPagePath } from '@/lib/api/youtubeApi';
 import { publishPost } from '@/lib/api/publisherClient';
 
 type StatusFilter = 'all' | 'scheduled' | 'published' | 'draft';
@@ -145,6 +149,35 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
     currentPage * POSTS_PER_PAGE
   );
 
+  const router = useRouter();
+  const [pendingRemove, setPendingRemove] = useState<ScheduledPost | null>(null);
+
+  /** Edit and delete for a row; YouTube videos have their own pages */
+  const actionsFor = (post: ScheduledPost): MenuAction[] => {
+    const actions: MenuAction[] = [];
+    if (post.youtube) {
+      actions.push({ label: 'Open video', icon: 'solar:eye-linear', onSelect: () => router.push(videoPagePath(post.youtube!.videoId)) });
+    }
+    if (canEdit(post)) {
+      actions.push({
+        label: post.youtube?.youtubeVideoId ? 'Edit (updates YouTube)' : 'Edit',
+        icon: 'solar:pen-linear',
+        onSelect: () =>
+          router.push(post.youtube ? `${videoPagePath(post.youtube.videoId)}/edit` : `/dashboard/scheduler?edit=${encodeURIComponent(post.id)}`),
+      });
+    }
+    if (post.youtube?.status !== 'uploading') {
+      actions.push({ label: removeCopy(post).menuLabel, icon: 'solar:trash-bin-trash-linear', danger: true, onSelect: () => setPendingRemove(post) });
+    }
+    return actions;
+  };
+
+  const removeItem = async (post: ScheduledPost) => {
+    if (post.youtube) await removeVideo(post.youtube.videoId);
+    else await deletePost(post.id);
+    await fetchPosts();
+  };
+
   const handlePublish = async (postId: string) => {
     try {
       setPublishingPostId(postId);
@@ -187,6 +220,16 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
 
   return (
     <div className={`w-full ${className}`}>
+      {pendingRemove && (
+        <ConfirmDialog
+          open
+          title={removeCopy(pendingRemove).title}
+          message={<p>{removeCopy(pendingRemove).message}</p>}
+          confirmLabel={removeCopy(pendingRemove).confirmLabel}
+          onClose={() => setPendingRemove(null)}
+          onConfirm={() => removeItem(pendingRemove)}
+        />
+      )}
       {/* Error Banner */}
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between">
@@ -457,12 +500,7 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
                         {publishingPostId === post.id ? 'Publishing...' : 'Publish'}
                       </button>
                     )}
-                    <button
-                      className="p-2.5 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors"
-                      aria-label="More options"
-                    >
-                      <Icon icon="solar:menu-dots-bold" className="w-5 h-5" />
-                    </button>
+                    <ActionsMenu actions={actionsFor(post)} />
                   </div>
                 </div>
               );
@@ -540,12 +578,7 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
                     ) : (
                       <div />
                     )}
-                    <button
-                      className="p-2 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors"
-                      aria-label="More options"
-                    >
-                      <Icon icon="solar:menu-dots-bold" className="w-5 h-5" />
-                    </button>
+                    <ActionsMenu actions={actionsFor(post)} />
                   </div>
                 </div>
               );
@@ -586,12 +619,7 @@ export const PostsTable: React.FC<PostsTableProps> = ({ className = '' }) => {
                       Updated {updatedAgoLabels[globalIdx % updatedAgoLabels.length]}
                     </p>
                   </div>
-                  <button
-                    className="p-2 rounded-lg text-outline hover:text-on-surface"
-                    aria-label="More options"
-                  >
-                    <Icon icon="solar:menu-dots-bold" className="w-5 h-5" />
-                  </button>
+                  <ActionsMenu actions={actionsFor(post)} />
                 </div>
 
                 {/* Meta row */}
