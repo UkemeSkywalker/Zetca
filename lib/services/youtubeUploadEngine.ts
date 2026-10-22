@@ -200,10 +200,45 @@ export class YouTubeUploadEngine {
     }
   }
 
+  /**
+   * Copyright alerts: checks videos on YouTube every 20 minutes (scheduled
+   * ones until they go public, others for 2 days after upload) and marks a
+   * video failed, with YouTube's reason, as soon as YouTube blocks it.
+   */
+  async checkUploaded(): Promise<void> {
+    const { videos, access, youtube, now } = this.deps;
+    const at = now();
+    const due = await videos.listDueChecks(new Date(at.getTime() - 2 * 24 * 60 * 60 * 1000), new Date(at.getTime() - 20 * 60 * 1000));
+    for (const video of due) {
+      try {
+        const { accessToken } = await access(video.userId);
+        const current = await youtube.getVideoResource(accessToken, video.youtubeVideoId!);
+        if (!current) {
+          await videos.update(video.videoId, { status: 'failed', error: { code: 'deleted', message: 'This video was deleted on YouTube.' } });
+          continue;
+        }
+        const s = current.status ?? {};
+        if (s.uploadStatus === 'rejected' || s.uploadStatus === 'failed') {
+          const reason = s.rejectionReason ?? s.failureReason ?? 'unknown';
+          await videos.update(video.videoId, {
+            status: 'failed',
+            error: { code: `youtube_${s.uploadStatus}`, message: rejectionMessage(reason) },
+            youtubeCheck: { uploadStatus: s.uploadStatus, checkedAt: at.toISOString() },
+          });
+        } else {
+          await videos.update(video.videoId, { youtubeCheck: { uploadStatus: s.uploadStatus ?? 'unknown', checkedAt: at.toISOString() } });
+        }
+      } catch (error) {
+        console.warn(`Couldn't check YouTube video ${video.youtubeVideoId}: ${(error as Error).message}`);
+      }
+    }
+  }
+
   /** Uploads the videos that are due. Returns how many were handled. */
   async runCycle(): Promise<number> {
     const { videos, now } = this.deps;
     await this.settleScheduled().catch((e) => console.error(`Settling scheduled videos failed: ${(e as Error)?.message ?? e}`));
+    await this.checkUploaded().catch((e) => console.error(`Checking uploaded videos failed: ${(e as Error)?.message ?? e}`));
     const at = now();
     const staleBefore = new Date(at.getTime() - STALE_AFTER_MS);
     const candidates = [

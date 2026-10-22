@@ -354,18 +354,66 @@ function ResearchCard({ insights, keywords, onRun, hasVideo }: { insights: Insig
           <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {keywords.map((k) => (
               <li key={k.phrase} className="rounded-lg bg-white border border-[#c7c4d8]/30 px-3 py-2">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <ScoreBadge score={k.score} className="text-sm" />
                   <span className="text-sm font-medium text-on-surface">{k.phrase}</span>
+                  {k.channelViews !== undefined && (
+                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">Your viewers search this</span>
+                  )}
                 </div>
                 <p className="mt-0.5 text-[11px] text-outline">
                   Top {k.sampleSize}: median {compactNumber(k.medianViews)} views · {k.recentCount} from the last 6 months · {k.strongCompetitors} strong rivals
+                  {k.channelViews !== undefined && <> · {compactNumber(k.channelViews)} views to your channel</>}
                 </p>
               </li>
             ))}
           </ul>
         </div>
       )}
+
+      {insights.channel && <ChannelSearchesBlock channel={insights.channel} />}
+    </div>
+  );
+}
+
+/** Searches that already bring viewers to the creator's channel (YouTube Analytics, last 90 days) */
+function ChannelSearchesBlock({ channel }: { channel: NonNullable<Insights['channel']> }) {
+  if (!channel.available) {
+    const text = {
+      no_permission: 'See which searches already bring viewers to your channel: reconnect YouTube and allow “View YouTube Analytics reports”.',
+      not_enabled: 'Your channel’s search terms aren’t available yet: the YouTube Analytics API needs switching on for Zetca.',
+      unavailable: 'Your channel’s search terms couldn’t be loaded right now.',
+    }[channel.reason];
+    return (
+      <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-outline">
+        <Icon icon="solar:info-circle-linear" className="w-4 h-4 text-primary shrink-0" />
+        {text}
+        {channel.reason === 'no_permission' && (
+          <a href="/api/auth/youtube?return=%2Fdashboard%2Fprofile" className="font-semibold text-primary hover:text-primary-700">
+            Reconnect YouTube
+          </a>
+        )}
+      </p>
+    );
+  }
+  if (!channel.terms.length) {
+    return <p className="mt-4 text-xs text-outline">Your channel doesn’t have enough YouTube search traffic yet to show which searches find it.</p>;
+  }
+  return (
+    <div className="mt-4">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-outline mb-2">Searches that already bring you viewers (last 90 days)</p>
+      <ul className="flex flex-wrap gap-2">
+        {channel.terms.map((t) => (
+          <li
+            key={t.term}
+            className={`rounded-full border px-2.5 py-1 text-xs ${t.related ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-[#c7c4d8]/50 bg-white text-on-surface'}`}
+            title={t.related ? 'Related to this video' : 'Another search that finds your channel'}
+          >
+            {t.term} <span className="font-semibold tabular-nums">{compactNumber(t.views)}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2 text-[11px] text-outline">Green ones relate to this video. Numbers are views from YouTube search.</p>
     </div>
   );
 }

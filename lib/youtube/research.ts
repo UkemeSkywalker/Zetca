@@ -27,6 +27,8 @@ export interface KeywordInsight {
   strongCompetitors: number;
   /** How many top results were looked at */
   sampleSize: number;
+  /** Views this search already brought the creator's channel (YouTube Analytics), if any */
+  channelViews?: number;
 }
 
 export interface TagInsight {
@@ -177,4 +179,14 @@ export function groundedIn(phrase: string, source: string): boolean {
   const words = normalize(phrase).split(' ').filter(Boolean);
   const haystack = new Set(normalize(source).split(' '));
   return words.length > 0 && words.every((w) => haystack.has(w));
+}
+
+const STOPWORDS = new Set(['the', 'and', 'for', 'with', 'how', 'what', 'your', 'you', 'this', 'that', 'from', 'are', 'was', 'can', 'all', 'new', 'best', 'top']);
+
+/** Whether a search shares a meaningful word with the video's title or transcript */
+export function relatedTo(term: string, source: string): boolean {
+  const words = new Set(normalize(source).split(' '));
+  return normalize(term)
+    .split(' ')
+    .some((w) => w.length >= 4 && !STOPWORDS.has(w) && words.has(w));
 }

@@ -9,6 +9,7 @@ import {
   type KeywordInsight,
   type ResearchInput,
   type TagInsight,
+  type ChannelSearchesView,
 } from '@/lib/api/youtubeApi';
 
 export type InsightsPhase = 'idle' | 'researching' | 'writing' | 'ready' | 'error';
@@ -18,6 +19,7 @@ export interface Insights {
   keywords: KeywordInsight[];
   tags: TagInsight[];
   basedOn?: 'transcript' | 'title' | 'both';
+  channel?: ChannelSearchesView;
   titles: { text: string; score: number; checks: Check[] }[];
   description: { text: string; score: number; checks: Check[] } | null;
   error: string | null;
@@ -48,7 +50,14 @@ export function useVideoInsights() {
       setInsights({ ...EMPTY, phase: 'error', error: 'YouTube returned no results for this video’s topics.' });
       return;
     }
-    setInsights({ ...EMPTY, phase: 'writing', keywords: research.keywords, tags: research.tags, basedOn: research.basedOn });
+    setInsights({
+      ...EMPTY,
+      phase: 'writing',
+      keywords: research.keywords,
+      tags: research.tags,
+      basedOn: research.basedOn,
+      channel: research.channel,
+    });
     await write(base, research.keywords);
   }, []);
 

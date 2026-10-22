@@ -551,7 +551,17 @@ const ProfileFormInner: React.FC<ProfileFormProps> = ({ className = '' }) => {
                         {youtubeData.channelTitle}
                         {youtubeData.customUrl ? ` · ${youtubeData.customUrl}` : ''}
                       </p>
-                    ) : (
+                    ) : null}
+                    {youtubeData.isConnected && youtubeData.analytics === false ? (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Channel search terms are off.{' '}
+                        <a href="/api/auth/youtube?return=%2Fdashboard%2Fprofile" className="font-semibold text-primary hover:underline">
+                          Reconnect
+                        </a>{' '}
+                        and allow “View YouTube Analytics reports” to use them in suggestions.
+                      </p>
+                    ) : null}
+                    {!youtubeData.isConnected && (
                       <p className="text-sm text-gray-500">Upload and schedule videos to your channel</p>
                     )}
                   </div>

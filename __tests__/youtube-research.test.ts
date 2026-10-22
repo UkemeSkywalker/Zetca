@@ -107,6 +107,7 @@ describe('YouTubeResearchService', () => {
       search,
       transcripts: { get: async () => ({ language: 'en-US', segments: [{ start: 0, end: 5, text: 'Today a home workout with beginner squats.' }] }) },
       agent: agent as never,
+      channel: async () => ({ available: false, reason: 'no_permission' }),
     });
 
   it('drops phrases not in the video, and scores the rest from YouTube', async () => {
@@ -130,5 +131,35 @@ describe('YouTubeResearchService', () => {
     const out = await service().write('u1', { title: '', region: 'NG', language: 'en', isShort: false, keywords, chaptersOk: null });
     expect(out.titles.map((t) => t.text)).toEqual(['Home Workout for Beginners: No Equipment']);
     expect(out.description?.text).not.toMatch(/[<>]/);
+  });
+});
+
+describe('channel searches in research', () => {
+  beforeEach(() => resetResearchCache());
+
+  it('puts a related search that already brings the channel viewers first, with its views', async () => {
+    const service = new YouTubeResearchService({
+      access: async () => ({ accessToken: 't', channelId: 'UC1' }),
+      search: jest.fn(async (_t: string, q: string) => [video({ title: q, views: 100_000 })]),
+      transcripts: { get: async () => ({ language: 'en-US', segments: [{ start: 0, end: 5, text: 'Today a home workout with beginner squats.' }] }) },
+      agent: { topics: async () => ['home workout', 'beginner squats'], write: async () => ({ titles: [], description: '' }) } as never,
+      channel: async () => ({
+        available: true,
+        terms: [
+          { term: 'cooking pasta', views: 900 },
+          { term: 'squats at home for women', views: 420 },
+        ],
+      }),
+    });
+    const out = await service.research('u1', { title: 'Workout', mediaId: '11111111-1111-4111-8111-111111111111', region: 'NG', language: 'en', isShort: false });
+    const fromChannel = out.keywords.find((k) => k.channelViews !== undefined);
+    expect(fromChannel).toMatchObject({ phrase: 'squats at home for women', channelViews: 420 });
+    expect(out.channel).toEqual({
+      available: true,
+      terms: [
+        { term: 'squats at home for women', views: 420, related: true },
+        { term: 'cooking pasta', views: 900, related: false },
+      ],
+    });
   });
 });

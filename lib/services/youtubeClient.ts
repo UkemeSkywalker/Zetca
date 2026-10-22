@@ -10,10 +10,14 @@ import { getConfig } from '../config';
 export const YOUTUBE_RETURN_PATHS = ['/dashboard/profile', '/dashboard/scheduler/youtube/new'] as const;
 export const YOUTUBE_RETURN_COOKIE = 'youtube_oauth_return';
 
+/** Permissions Zetca needs to upload and manage videos */
 export const YOUTUBE_SCOPES = [
   'https://www.googleapis.com/auth/youtube.upload',
   'https://www.googleapis.com/auth/youtube.force-ssl',
 ];
+
+/** Optional: the channel's analytics, for the searches that already bring it viewers */
+export const YOUTUBE_ANALYTICS_SCOPE = 'https://www.googleapis.com/auth/yt-analytics.readonly';
 
 const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
@@ -56,7 +60,7 @@ export function buildAuthUrl(state: string): string {
   url.searchParams.set('client_id', cfg.youtubeClientId);
   url.searchParams.set('redirect_uri', cfg.youtubeRedirectUri);
   url.searchParams.set('response_type', 'code');
-  url.searchParams.set('scope', YOUTUBE_SCOPES.join(' '));
+  url.searchParams.set('scope', [...YOUTUBE_SCOPES, YOUTUBE_ANALYTICS_SCOPE].join(' '));
   url.searchParams.set('access_type', 'offline');
   url.searchParams.set('prompt', 'consent');
   url.searchParams.set('include_granted_scopes', 'true');
@@ -266,4 +270,35 @@ export async function searchTopVideos(
     tags: v.snippet?.tags ?? [],
     channelTitle: v.snippet?.channelTitle ?? '',
   }));
+}
+
+/**
+ * The YouTube searches that brought viewers to the channel (YouTube Analytics,
+ * last `days` days), most views first. Needs the analytics permission.
+ */
+export async function getChannelSearchTerms(accessToken: string, days = 90): Promise<{ term: string; views: number }[]> {
+  const end = new Date();
+  const start = new Date(end.getTime() - days * 24 * 60 * 60 * 1000);
+  const params = new URLSearchParams({
+    ids: 'channel==MINE',
+    startDate: start.toISOString().slice(0, 10),
+    endDate: end.toISOString().slice(0, 10),
+    metrics: 'views',
+    dimensions: 'insightTrafficSourceDetail',
+    filters: 'insightTrafficSourceType==YT_SEARCH',
+    sort: '-views',
+    maxResults: '25',
+  });
+  const res = await fetchWithTimeout(`https://youtubeanalytics.googleapis.com/v2/reports?${params}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (res.status === 401) throw new YouTubeAuthError('YouTube access was revoked or expired', 'token_revoked');
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const reason = data?.error?.errors?.[0]?.reason as string | undefined;
+    throw new YouTubeApiError(data?.error?.message || `YouTube Analytics failed: ${res.status}`, res.status, reason);
+  }
+  return ((data.rows ?? []) as [string, number][])
+    .filter(([term]) => typeof term === 'string' && term.trim())
+    .map(([term, views]) => ({ term: term.trim().toLowerCase(), views: Number(views) || 0 }));
 }

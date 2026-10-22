@@ -204,4 +204,38 @@ export class YouTubeVideoRepository {
   async delete(videoId: string): Promise<void> {
     await this.docClient.send(new DeleteCommand({ TableName: this.tableName, Key: { videoId } }));
   }
+
+  /**
+   * Videos on YouTube that are due a check for blocks: scheduled ones, and
+   * ones that went up after `uploadedAfter`, last checked before `checkedBefore`.
+   */
+  async listDueChecks(uploadedAfter: Date, checkedBefore: Date, limit = 20): Promise<YouTubeVideoRecord[]> {
+    const items: YouTubeVideoRecord[] = [];
+    for (const status of ['scheduled', 'published'] as const) {
+      let lastKey: Record<string, unknown> | undefined;
+      do {
+        const result = await this.docClient.send(
+          new QueryCommand({
+            TableName: this.tableName,
+            IndexName: 'StatusIndex',
+            KeyConditionExpression: '#status = :status',
+            FilterExpression:
+              'attribute_exists(youtubeVideoId) AND (#status = :scheduled OR uploadedAt >= :after) AND ' +
+              '(attribute_not_exists(youtubeCheck) OR youtubeCheck.checkedAt < :before)',
+            ExpressionAttributeNames: { '#status': 'status' },
+            ExpressionAttributeValues: {
+              ':status': status,
+              ':scheduled': 'scheduled',
+              ':after': uploadedAfter.toISOString(),
+              ':before': checkedBefore.toISOString(),
+            },
+            ExclusiveStartKey: lastKey,
+          })
+        );
+        items.push(...((result.Items as YouTubeVideoRecord[]) ?? []));
+        lastKey = result.LastEvaluatedKey;
+      } while (lastKey && items.length < limit);
+    }
+    return items.slice(0, limit);
+  }
 }

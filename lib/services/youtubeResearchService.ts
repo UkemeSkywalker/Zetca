@@ -12,7 +12,9 @@ import { getYouTubeAccess } from './youtubeAccess';
 import { searchTopVideos } from './youtubeClient';
 import { TranscriptService } from './transcriptService';
 import { getVideoInsightsAgent } from './container';
+import { channelSearches, type ChannelSearches } from './channelSearchService';
 import {
+  relatedTo,
   groundedIn,
   normalize,
   scoreDescription,
@@ -47,6 +49,10 @@ export interface ResearchResult {
   tags: TagInsight[];
   /** Where the phrases came from: the video's speech, its title, or both */
   basedOn: 'transcript' | 'title' | 'both';
+  /** Searches that already bring viewers to the channel, marked when related to this video */
+  channel:
+    | { available: true; terms: { term: string; views: number; related: boolean }[] }
+    | { available: false; reason: 'no_permission' | 'not_enabled' | 'unavailable' };
 }
 
 export interface ScoredTitle {
@@ -85,6 +91,7 @@ export class YouTubeResearchService {
       access?: typeof getYouTubeAccess;
       search?: typeof searchTopVideos;
       transcripts?: Pick<TranscriptService, 'get'>;
+      channel?: (userId: string) => Promise<ChannelSearches>;
       agent?: ReturnType<typeof getVideoInsightsAgent>;
     } = {}
   ) {}
@@ -130,20 +137,48 @@ export class YouTubeResearchService {
       .filter((p) => groundedIn(p, source))
       .slice(0, SEARCHES_PER_RESEARCH);
     if (!phrases.length && req.title.trim()) phrases.push(normalize(req.title).split(' ').slice(0, 5).join(' '));
+
+    // A search that already brings this channel viewers and fits this video is the strongest keyword
+    const channel = await (this.deps.channel ?? channelSearches)(userId).catch(
+      (): ChannelSearches => ({ available: false, reason: 'unavailable' })
+    );
+    const channelTerms = channel.available
+      ? channel.terms.map((t) => ({ ...t, related: relatedTo(t.term, source) }))
+      : [];
+    const best = channelTerms.find((t) => t.related && !phrases.includes(normalize(t.term)));
+    if (best) {
+      if (phrases.length >= SEARCHES_PER_RESEARCH) phrases.pop();
+      phrases.unshift(normalize(best.term));
+    }
     if (!phrases.length) throw new ResearchError('Couldn’t find search phrases in this video.');
 
     const { accessToken } = await (this.deps.access ?? getYouTubeAccess)(userId);
     const results = await Promise.all(phrases.map((p) => this.topVideos(accessToken, p, req.region, req.language)));
 
+    const viewsFor = new Map(channelTerms.map((t) => [normalize(t.term), t.views]));
     const keywords = phrases
-      .map((p, i) => scoreKeyword(p, results[i]))
+      .map((p, i) => {
+        const k = scoreKeyword(p, results[i]);
+        return viewsFor.has(p) ? { ...k, channelViews: viewsFor.get(p) } : k;
+      })
       .filter((k) => k.sampleSize > 0)
       .sort((a, b) => b.score - a.score);
     const tags = scoreTags(results.flat());
 
     const inTitle = phrases.some((p) => groundedIn(p, req.title));
     const inSpeech = phrases.some((p) => groundedIn(p, spoken));
-    return { keywords, tags, basedOn: inTitle && inSpeech ? 'both' : inSpeech ? 'transcript' : 'title' };
+    return {
+      keywords,
+      tags,
+      basedOn: inTitle && inSpeech ? 'both' : inSpeech ? 'transcript' : 'title',
+      channel: channel.available
+        ? {
+            available: true,
+            // Related searches first, then the channel's other top searches
+            terms: [...channelTerms.filter((t) => t.related), ...channelTerms.filter((t) => !t.related)].slice(0, 10),
+          }
+        : channel,
+    };
   }
 
   /** Titles and a description written around researched keywords, each scored */

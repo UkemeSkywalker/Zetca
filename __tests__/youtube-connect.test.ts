@@ -10,7 +10,7 @@ process.env.YOUTUBE_CLIENT_SECRET = 'GOCSPX-test';
 process.env.YOUTUBE_REDIRECT_URI = 'http://localhost:3000/api/auth/youtube/callback';
 
 import { encryptToken, decryptToken } from '@/lib/crypto/tokenCipher';
-import { buildAuthUrl, exchangeCode, getMyChannel, refreshAccessToken, YOUTUBE_SCOPES } from '@/lib/services/youtubeClient';
+import { buildAuthUrl, exchangeCode, getMyChannel, refreshAccessToken, YOUTUBE_SCOPES, YOUTUBE_ANALYTICS_SCOPE } from '@/lib/services/youtubeClient';
 
 const realFetch = global.fetch;
 afterEach(() => {
@@ -51,7 +51,8 @@ describe('youtubeClient', () => {
     expect(url.origin + url.pathname).toBe('https://accounts.google.com/o/oauth2/v2/auth');
     expect(url.searchParams.get('client_id')).toBe('client-123.apps.googleusercontent.com');
     expect(url.searchParams.get('redirect_uri')).toBe('http://localhost:3000/api/auth/youtube/callback');
-    expect(url.searchParams.get('scope')?.split(' ')).toEqual(YOUTUBE_SCOPES);
+    // Analytics is asked for too, but it's optional (see the next tests)
+    expect(url.searchParams.get('scope')?.split(' ')).toEqual([...YOUTUBE_SCOPES, YOUTUBE_ANALYTICS_SCOPE]);
     expect(url.searchParams.get('access_type')).toBe('offline');
     expect(url.searchParams.get('prompt')).toBe('consent');
     expect(url.searchParams.get('state')).toBe('state-abc');

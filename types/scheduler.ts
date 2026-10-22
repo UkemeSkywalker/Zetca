@@ -36,6 +36,8 @@ export interface ScheduledPost {
     videoId: string;
     status: 'queued' | 'uploading' | 'waiting_quota' | 'scheduled' | 'published' | 'failed';
     youtubeVideoId?: string;
+    /** YouTube blocked it (copyright, duplicate…) */
+    blocked?: boolean;
   };
 }
 

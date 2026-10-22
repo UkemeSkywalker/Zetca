@@ -153,7 +153,12 @@ export function videoToPost(input: PublicYouTubeVideo): ScheduledPost {
     mediaType: 'video',
     ...(video.status === 'failed' && video.error ? { lastError: video.error.message, lastErrorCode: video.error.code } : {}),
     ...(video.nextAttemptAt ? { nextAttemptAt: video.nextAttemptAt } : {}),
-    youtube: { videoId: video.videoId, status: video.status, youtubeVideoId: video.youtubeVideoId },
+    youtube: {
+      videoId: video.videoId,
+      status: video.status,
+      youtubeVideoId: video.youtubeVideoId,
+      ...(video.error?.code.startsWith('youtube_') ? { blocked: true } : {}),
+    },
   };
 }
 
@@ -183,6 +188,11 @@ export async function suggestChapters(mediaId: string): Promise<{ seconds: numbe
 export type { KeywordInsight, TagInsight, Check } from '@/lib/youtube/research';
 import type { KeywordInsight, TagInsight, Check } from '@/lib/youtube/research';
 
+/** Searches that already bring viewers to the channel (from YouTube Analytics) */
+export type ChannelSearchesView =
+  | { available: true; terms: { term: string; views: number; related: boolean }[] }
+  | { available: false; reason: 'no_permission' | 'not_enabled' | 'unavailable' };
+
 export interface ResearchInput {
   title: string;
   mediaId?: string;
@@ -192,7 +202,7 @@ export interface ResearchInput {
 }
 
 export function researchVideo(input: ResearchInput) {
-  return call<{ keywords: KeywordInsight[]; tags: TagInsight[]; basedOn: 'transcript' | 'title' | 'both' }>('/api/youtube/research', {
+  return call<{ keywords: KeywordInsight[]; tags: TagInsight[]; basedOn: 'transcript' | 'title' | 'both'; channel: ChannelSearchesView }>('/api/youtube/research', {
     method: 'POST',
     body: JSON.stringify(input),
   });
