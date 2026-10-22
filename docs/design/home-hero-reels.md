@@ -46,14 +46,15 @@ Build it in the site: a React client component in Next.js, styled with Tailwind 
 
 ## Card media (light, from Pexels)
 
-- **Mix:** the cards show the range of content Zetca helps with, never several of the same kind side by side:
+- **Mix:** the 12 cards show the range of content Zetca helps with, never two of a kind side by side, and the row holds exactly one of each, so the loop never repeats a card next to itself:
   - creators: a ring-light setup (9384669), recording at a laptop (13929655)
-  - products: showing make-up (7291758), a serum dropper bottle (6801666), coffee being poured (6963730)
+  - products: white sneakers (8992077), coffee being poured (6963730)
   - real estate: an agent showing a house (8814190), a realtor opening the door to a family (7646491)
-  - sport: a woman working out (6390400), a basketball portrait (8337359)
-  - text posts, drawn in the page (no download): "LinkedIn post · 5 hooks that stop the scroll", "Just listed · 3-bed family home with a garden view", "Day 12 of 30 · No-gym full body workout in 15 minutes", on Zetca gradients, with lines that appear one after another on a loop (off with reduced motion). Text cards have no play icon.
+  - sport: a footballer dribbling (9440064), a goalkeeper defending the goal (9517747)
+  - a motion-graphics ad: a bright glitch-art animation (7223609) with animated ad text on top ("NEW DROP", "SUMMER SALE", "30% off this week")
+  - text posts, drawn in the page with no download, on solid high-contrast colours that pop: green with white ("LinkedIn post · 5 hooks that stop the scroll"), yellow with near-black ("Just listed · 3-bed family home with a garden view"), red with white ("Day 12 of 30 · No-gym full body workout in 15 minutes"). Lines appear one after another on a loop (off with reduced motion). The label pill uses the reverse colours, and text cards have no play icon.
 - **Source:** the video clips are free Pexels stock (free for commercial use under the Pexels licence, no attribution required). They load straight from Pexels' CDN (`videos.pexels.com`, which sends `access-control-allow-origin: *` and a one-year cache). Later these move to Zetca's own AI-generated clips.
-- **Files:** each clip is the 360×640 SD file (≈0.2–0.9 MB, ≈5 MB for all nine), with a poster from `images.pexels.com` at `w=360` (≈8–50 KB). The row cycles through the 12 reels. Cards that share a clip share one `src`, so each file downloads once.
+- **Files:** each clip is the 360×640 SD file (≈0.3–0.9 MB, ≈5.5 MB for all nine), with a poster from `images.pexels.com` at `w=360` (≈8–50 KB).  Cards that share a clip share one `src`, so each file downloads once.
 - **Keeping it light:**
   - Posters show first. Videos start only after the page has loaded and the browser is idle.
   - Only cards on screen play; others pause. Everything pauses when the hero scrolls away or the tab is hidden.

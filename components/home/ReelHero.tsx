@@ -20,53 +20,59 @@ const caveat = Caveat({ subsets: ['latin'], weight: ['600'] });
 interface VideoReel {
   kind: 'video';
   id: number;
-  fps: number;
-  poster: string;
   alt: string;
   video: string;
   posterUrl: string;
+  /** Ad text over the clip, so an abstract animation reads as a motion-graphics ad */
+  overlay?: { tag: string; title: string; offer: string };
 }
 
-/** A text post drawn in the page: no download at all */
+/** A text post drawn in the page: no download at all. Solid, high-contrast colours so it pops. */
 interface TextReel {
   kind: 'text';
   label: string;
   lines: string[];
   background: string;
+  color: string;
 }
 
 type Reel = VideoReel | TextReel;
 
-const video = (id: number, fps: number, poster: string, alt: string): VideoReel => ({
+const video = (id: number, file: string, poster: string, alt: string, overlay?: VideoReel['overlay']): VideoReel => ({
   kind: 'video',
   id,
-  fps,
-  poster,
   alt,
-  video: `https://videos.pexels.com/video-files/${id}/${id}-sd_360_640_${fps}fps.mp4`,
+  video: `https://videos.pexels.com/video-files/${id}/${id}-${file}.mp4`,
   posterUrl: `https://images.pexels.com/videos/${id}/${poster}.jpeg?auto=compress&cs=tinysrgb&w=360`,
+  ...(overlay ? { overlay } : {}),
 });
 
-/** Creators, products, real estate, sport and text posts, mixed so neighbouring cards differ */
+/** Creators, products, real estate, sport, a motion-graphics ad and text posts, mixed so neighbours differ */
 const REELS: Reel[] = [
-  video(9384669, 24, 'adolescent-adult-beautiful-child-9384669', 'A creator setting up a phone and ring light'),
-  { kind: 'text', label: 'LinkedIn post', lines: ['5 hooks that', 'stop the scroll', '↓ save this'], background: 'linear-gradient(160deg, #4F46E5, #7C3AED)' },
-  video(7291758, 25, 'pexels-photo-7291758', 'Make-up being shown to camera'),
-  video(8814190, 25, 'pexels-photo-8814190', 'An estate agent showing a house'),
-  video(6390400, 25, 'pexels-photo-6390400', 'A woman working out'),
-  video(6963730, 24, 'ceramic-cup-ceramic-vase-interior-decor-interior-decoration-6963730', 'Coffee being poured into a cup'),
-  { kind: 'text', label: 'Just listed', lines: ['3-bed family', 'home with a', 'garden view'], background: 'linear-gradient(160deg, #0B1C30, #3730A3)' },
-  video(13929655, 24, 'adult-brunette-computer-creativity-13929655', 'A creator recording at a laptop'),
-  video(7646491, 25, 'buying-a-house-new-home-realtor-realty-7646491', 'A realtor opening the door for a family'),
-  video(6801666, 30, '4k-4k-resolution-4k-video-aromatherapy-6801666', 'A serum bottle placed on a table'),
-  video(8337359, 30, 'adolescent-adult-ball-basketball-8337359', 'A player posing with a basketball'),
-  { kind: 'text', label: 'Day 12 of 30', lines: ['No-gym full', 'body workout', 'in 15 minutes'], background: 'linear-gradient(160deg, #6366F1, #EC4899)' },
+  video(9384669, 'sd_360_640_24fps', 'adolescent-adult-beautiful-child-9384669', 'A creator setting up a phone and ring light'),
+  { kind: 'text', label: 'LinkedIn post', lines: ['5 hooks that', 'stop the scroll', '↓ save this'], background: '#16A34A', color: '#FFFFFF' },
+  video(8992077, 'sd_360_640_25fps', 'abstraction-ballet-blogger-board-8992077', 'White sneakers on a wooden floor'),
+  video(8814190, 'sd_360_640_25fps', 'pexels-photo-8814190', 'An estate agent showing a house'),
+  video(9440064, 'sd_338_640_24fps', 'pexels-photo-9440064', 'A footballer dribbling on a pitch'),
+  video(7223609, 'sd_360_640_30fps', 'abstract-animation-animation-animation-loop-background-7223609', 'A colourful motion-graphics advert', {
+    tag: 'New drop',
+    title: 'SUMMER SALE',
+    offer: '30% off this week',
+  }),
+  { kind: 'text', label: 'Just listed', lines: ['3-bed family', 'home with a', 'garden view'], background: '#FACC15', color: '#0B1C30' },
+  video(13929655, 'sd_360_640_24fps', 'adult-brunette-computer-creativity-13929655', 'A creator recording at a laptop'),
+  video(6963730, 'sd_360_640_24fps', 'ceramic-cup-ceramic-vase-interior-decor-interior-decoration-6963730', 'Coffee being poured into a cup'),
+  video(7646491, 'sd_360_640_25fps', 'buying-a-house-new-home-realtor-realty-7646491', 'A realtor opening the door for a family'),
+  video(9517747, 'sd_338_640_24fps', 'coach-competition-female-power-feminism-9517747', 'A goalkeeper defending the goal'),
+  { kind: 'text', label: 'Day 12 of 30', lines: ['No-gym full', 'body workout', 'in 15 minutes'], background: '#DC2626', color: '#FFFFFF' },
 ];
+
+/** One of each reel, so the loop never puts a reel next to its own copy (12 × 196u covers screens up to ~2350px) */
+const CARD_COUNT = REELS.length;
 
 /** Index of each video among the videos only (phones play just the first few) */
 const VIDEO_ORDER = new Map(REELS.filter((r): r is VideoReel => r.kind === 'video').map((r, i) => [r.id, i]));
 
-const CARD_COUNT = 14; // enough to fill very wide screens
 const AUTO_SPEED = 50; // units per second, right → left
 const PHONE_MAX = 820;
 const PHONE_BAND = 250;
@@ -374,8 +380,11 @@ export function ReelHero() {
               style={{ visibility: 'hidden' }}
             >
               {reel.kind === 'text' ? (
-                <div className="absolute inset-0 flex flex-col justify-center px-[9cqw] text-white" style={{ background: reel.background }}>
-                  <span className="mb-[5cqw] self-start rounded-full bg-white/20 px-[5cqw] py-[1.5cqw] text-[length:6.5cqw] font-semibold">
+                <div className="absolute inset-0 flex flex-col justify-center px-[9cqw]" style={{ background: reel.background, color: reel.color }}>
+                  <span
+                    className="mb-[5cqw] self-start rounded-full px-[5cqw] py-[1.5cqw] text-[length:6.5cqw] font-bold"
+                    style={{ background: reel.color, color: reel.background }}
+                  >
                     {reel.label}
                   </span>
                   {reel.lines.map((line, n) => (
@@ -410,6 +419,25 @@ export function ReelHero() {
                       }}
                       className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${loaded[i] ? 'opacity-100' : 'opacity-0'}`}
                     />
+                  )}
+                  {reel.overlay && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center bg-black/25 px-[6cqw]">
+                      <span className="zetca-text-line rounded-full bg-white px-[5cqw] py-[1.5cqw] text-[length:6.5cqw] font-bold uppercase tracking-wide text-[#DC2626]">
+                        {reel.overlay.tag}
+                      </span>
+                      <span
+                        className="zetca-text-line mt-[4cqw] font-heading font-extrabold leading-[0.95] text-white text-[length:17cqw] [text-shadow:0_2px_12px_rgba(0,0,0,0.45)]"
+                        style={{ animationDelay: '0.35s' }}
+                      >
+                        {reel.overlay.title}
+                      </span>
+                      <span
+                        className="zetca-text-line mt-[4cqw] rounded-md bg-[#FACC15] px-[4cqw] py-[1.5cqw] text-[length:7cqw] font-extrabold text-[#0B1C30]"
+                        style={{ animationDelay: '0.7s' }}
+                      >
+                        {reel.overlay.offer}
+                      </span>
+                    </div>
                   )}
                 </>
               )}
