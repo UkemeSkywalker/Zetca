@@ -32,6 +32,8 @@ export interface YouTubeConnection {
   customUrl?: string;
   thumbnailUrl?: string;
   connectedAt?: string;
+  /** Whether Zetca may read the channel's analytics (for its search terms) */
+  analytics?: boolean;
 }
 
 export interface GeneratedImage {

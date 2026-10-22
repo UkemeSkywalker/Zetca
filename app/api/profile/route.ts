@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/middleware/withAuth';
 import { UserRepository } from '@/lib/db/userRepository';
+import { YOUTUBE_ANALYTICS_SCOPE } from '@/lib/services/youtubeClient';
 import {
   validateAndSanitizeEmail,
   validateAndSanitizeName,
@@ -47,6 +48,7 @@ export async function GET(req: NextRequest) {
             customUrl: user.youtubeChannelCustomUrl,
             thumbnailUrl: user.youtubeChannelThumbnailUrl,
             connectedAt: user.youtubeConnectedAt,
+            analytics: !!user.youtubeScopes?.includes(YOUTUBE_ANALYTICS_SCOPE),
           }
         : { isConnected: false };
 

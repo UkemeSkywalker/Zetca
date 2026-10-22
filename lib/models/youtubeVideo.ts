@@ -138,6 +138,8 @@ export interface YouTubeVideoRecord {
   totalBytes?: number;
   /** When it went up on YouTube */
   uploadedAt?: string;
+  /** The latest check of YouTube's processing and blocks (copyright, duplicate…) */
+  youtubeCheck?: { uploadStatus: string; checkedAt: string };
   createdAt: string;
   updatedAt: string;
 }

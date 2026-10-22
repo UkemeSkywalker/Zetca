@@ -743,7 +743,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
                               <span className="font-medium">{formatTime(post.scheduledDate, post.scheduledTime)}</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              {post.youtube && <YouTubeStatusLabel status={post.youtube.status} />}
+                              {post.youtube && <YouTubeStatusLabel status={post.youtube.status} blocked={post.youtube.blocked} />}
                               {mUrl && (
                                 <>
                                   <button
@@ -886,7 +886,7 @@ const YOUTUBE_LABELS: Record<NonNullable<ScheduledPost['youtube']>['status'], { 
   failed: { text: 'Upload failed', cls: 'bg-red-50 text-red-600' },
 };
 
-function YouTubeStatusLabel({ status }: { status: NonNullable<ScheduledPost['youtube']>['status'] }) {
-  const label = YOUTUBE_LABELS[status];
+function YouTubeStatusLabel({ status, blocked }: { status: NonNullable<ScheduledPost['youtube']>['status']; blocked?: boolean }) {
+  const label = blocked ? { text: 'Blocked by YouTube', cls: 'bg-red-50 text-red-600' } : YOUTUBE_LABELS[status];
   return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${label.cls}`}>{label.text}</span>;
 }

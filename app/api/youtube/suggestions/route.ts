@@ -21,6 +21,7 @@ const Body = ResearchRequestSchema.extend({
         recentCount: z.number().int().min(0),
         strongCompetitors: z.number().int().min(0),
         sampleSize: z.number().int().min(0),
+        channelViews: z.number().min(0).optional(),
       })
     )
     .max(10),

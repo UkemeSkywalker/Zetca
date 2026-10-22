@@ -116,3 +116,37 @@ describe('settling scheduled videos', () => {
     expect(updates[0]).toMatchObject({ status: 'failed', error: { code: 'deleted' } });
   });
 });
+
+describe('copyright and block checks', () => {
+  function setup(resource: YouTubeVideoResource | null) {
+    const updates: Record<string, unknown>[] = [];
+    const videos = {
+      listDueChecks: jest.fn(async () => [{ videoId: 'v1', userId: 'u1', youtubeVideoId: 'yt1', status: 'scheduled' }]),
+      update: jest.fn(async (_id: string, set: Record<string, unknown>) => {
+        updates.push(set);
+        return true;
+      }),
+    };
+    const engine = new YouTubeUploadEngine({
+      videos: videos as unknown as YouTubeVideoRepository,
+      access: async () => ({ accessToken: 't', channelId: 'UC1' }),
+      youtube: { getVideoResource: jest.fn(async () => resource) } as unknown as EngineDeps['youtube'],
+      now: () => new Date('2026-10-22T08:00:00Z'),
+      media: {} as never,
+      files: {} as never,
+    });
+    return { engine, updates };
+  }
+
+  it('flags a scheduled video YouTube blocked for copyright before it goes public', async () => {
+    const { engine, updates } = setup({ id: 'yt1', status: { uploadStatus: 'rejected', rejectionReason: 'claim' } });
+    await engine.checkUploaded();
+    expect(updates[0]).toMatchObject({ status: 'failed', error: { code: 'youtube_rejected', message: rejectionMessage('claim') } });
+  });
+
+  it('records a clean check with its time', async () => {
+    const { engine, updates } = setup({ id: 'yt1', status: { uploadStatus: 'processed', privacyStatus: 'private' } });
+    await engine.checkUploaded();
+    expect(updates).toEqual([{ youtubeCheck: { uploadStatus: 'processed', checkedAt: '2026-10-22T08:00:00.000Z' } }]);
+  });
+});

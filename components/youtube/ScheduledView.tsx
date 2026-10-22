@@ -159,6 +159,10 @@ export function ScheduledView({
         </div>
       </div>
 
+      {video.youtubeVideoId && (video.status === 'scheduled' || video.status === 'published') && (
+        <YouTubeChecks video={video} goesPublic={video.status === 'scheduled' ? goesPublic : null} />
+      )}
+
       {video.warnings && video.warnings.length > 0 && (
         <ul className="mt-5 space-y-2 text-left">
           {video.warnings.map((w) => (
@@ -217,6 +221,42 @@ export function ScheduledView({
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Copyright and other blocks: Zetca checks YouTube every 20 minutes, but
+ * claims that don't block a video only show in YouTube Studio.
+ */
+function YouTubeChecks({ video, goesPublic }: { video: PublicYouTubeVideo; goesPublic: string | null }) {
+  const check = video.youtubeCheck;
+  const processed = check?.uploadStatus === 'processed';
+  const time = check ? new Date(check.checkedAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : null;
+  return (
+    <div className="mt-5 rounded-xl border border-[#c7c4d8]/40 bg-white p-4 text-left">
+      <p className="flex items-center gap-2 text-sm font-semibold text-on-surface">
+        <Icon icon={processed ? 'solar:shield-check-bold' : 'solar:shield-linear'} className={`w-5 h-5 ${processed ? 'text-emerald-600' : 'text-outline'}`} />
+        Copyright and YouTube checks
+      </p>
+      <p className="mt-1.5 text-sm text-outline">
+        {processed
+          ? `YouTube has processed it and hasn’t blocked it (checked ${time}).`
+          : 'YouTube is still processing it. Zetca checks for copyright blocks every 20 minutes and tells you here.'}
+      </p>
+      <p className="mt-1.5 text-xs text-outline">
+        {goesPublic ? `Before it goes public on ${goesPublic}, look` : 'Look'} at the Checks in YouTube Studio too: copyright claims that
+        don’t block a video only show there.
+      </p>
+      <a
+        href={`https://studio.youtube.com/video/${encodeURIComponent(video.youtubeVideoId!)}/edit`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-700"
+      >
+        See checks in YouTube Studio
+        <Icon icon="solar:arrow-right-up-linear" className="w-3.5 h-3.5" />
+      </a>
     </div>
   );
 }
