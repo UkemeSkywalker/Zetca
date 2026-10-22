@@ -30,6 +30,8 @@ import { MockQuizStrategistAgent } from '../agents/mockQuizStrategistAgent';
 import { CopywriterAgent } from '../agents/copywriterAgent';
 import { MockCopywriterAgent } from '../agents/mockCopywriterAgent';
 import { SchedulerAgent } from '../agents/schedulerAgent';
+import { DesignWriterAgent, MockDesignWriterAgent } from '../agents/designWriterAgent';
+import { DesignRepository } from '../db/designRepository';
 import { MockSchedulerAgent } from '../agents/mockSchedulerAgent';
 
 function memo<T>(factory: () => T): () => T {
@@ -165,6 +167,19 @@ export const getSchedulerAgent = memo(() => {
     awsSecretAccessKey: cfg.awsSecretAccessKey,
   });
 });
+
+export const getDesignWriterAgent = memo(() => {
+  const cfg = getConfig();
+  if (cfg.useMockAgent) return new MockDesignWriterAgent();
+  return new DesignWriterAgent({
+    awsRegion: cfg.awsRegion,
+    modelId: cfg.bedrockModelId,
+    awsAccessKeyId: cfg.awsAccessKeyId,
+    awsSecretAccessKey: cfg.awsSecretAccessKey,
+  });
+});
+
+export const getDesignRepository = memo(() => new DesignRepository());
 
 export const getLinkedInClient = memo(() => new LinkedInClient(getConfig().linkedinApiTimeoutSeconds));
 

@@ -143,6 +143,7 @@ data "aws_iam_policy_document" "app" {
         aws_dynamodb_table.publish_log.arn,
         aws_dynamodb_table.post_media.arn,
         aws_dynamodb_table.youtube_videos.arn,
+        aws_dynamodb_table.designs.arn,
       ] : [arn, "${arn}/index/*"]
     ])
   }

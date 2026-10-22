@@ -92,3 +92,8 @@ output "dynamodb_youtube_videos_table_name" {
   value       = aws_dynamodb_table.youtube_videos.name
   description = "Name of the DynamoDB YouTube videos table"
 }
+
+output "dynamodb_designs_table_name" {
+  value       = aws_dynamodb_table.designs.name
+  description = "Name of the DynamoDB designs table"
+}

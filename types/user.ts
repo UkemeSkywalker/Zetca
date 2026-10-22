@@ -36,11 +36,3 @@ export interface YouTubeConnection {
   analytics?: boolean;
 }
 
-export interface GeneratedImage {
-  id: string;
-  prompt: string;
-  url: string;
-  width: number;
-  height: number;
-  createdAt: Date;
-}

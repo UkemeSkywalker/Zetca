@@ -25,6 +25,7 @@ interface Config {
   dynamoDbCopiesTableName: string;
   dynamoDbPublishLogTableName: string;
   dynamoDbYouTubeVideosTableName: string;
+  dynamoDbDesignsTableName: string;
   bedrockModelId: string;
   useMockAgent: boolean;
   agentTimeoutSeconds: number;
@@ -61,6 +62,9 @@ export function getConfig(): Config {
     dynamoDbYouTubeVideosTableName:
       process.env.DYNAMODB_YOUTUBE_VIDEOS_TABLE_NAME ||
       (process.env.NODE_ENV === 'production' ? 'youtube-videos-prod' : 'youtube-videos-dev'),
+    dynamoDbDesignsTableName:
+      process.env.DYNAMODB_DESIGNS_TABLE_NAME ||
+      (process.env.NODE_ENV === 'production' ? 'designs-prod' : 'designs-dev'),
     bedrockModelId: process.env.BEDROCK_MODEL_ID || 'us.anthropic.claude-sonnet-4-6',
     useMockAgent: process.env.USE_MOCK_AGENT === 'true',
     agentTimeoutSeconds: Number(process.env.AGENT_TIMEOUT_SECONDS || 60),
