@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Hero } from '@/components/home/Hero';
+import { ReelHero } from '@/components/home/ReelHero';
 import { WorkflowBanner, HowItWorks } from '@/components/home/HowItWorks';
 import { Features, Platforms } from '@/components/home/Features';
 import { Highlights, TeamBanner } from '@/components/home/Highlights';
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <div className="bg-[#F7F9FC] text-[#464555] overflow-x-hidden">
-      <Hero />
+      <ReelHero />
       <WorkflowBanner />
       <HowItWorks />
       <Features />
