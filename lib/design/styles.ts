@@ -86,6 +86,13 @@ export const samplePhotoUrl = (photoId: string) => `/designer/samples/${photoId.
 
 const M = 84; // margin
 
+/** The space the headline can fill: between the label above (if any) and the footer below (if any) */
+function headlineBox(h: number, text: DesignText, labelSpace = 90) {
+  const top = M + (text.kicker ? labelSpace : 0);
+  const bottom = h - M - (text.footer ? 80 : 0);
+  return { y: top, height: bottom - top };
+}
+
 function layer(partial: Partial<TextLayer> & Pick<TextLayer, 'id' | 'role' | 'text' | 'x' | 'y' | 'width' | 'height'>): TextLayer {
   return {
     font: 'jakarta',
@@ -129,7 +136,7 @@ export const STYLES: DesignStyle[] = [
       const h = FORMATS[format].height;
       return solid(format, this.id, p.background, [
         ...kickerLayer(text.kicker, p.text),
-        layer({ id: 'headline', role: 'headline', text: text.headline, x: M, y: M + 90, width: 1080 - M * 2, height: h - M * 2 - 220, size: 190, font: 'anton', color: p.text, valign: 'middle', lineHeight: 1.0, uppercase: true }),
+        layer({ id: 'headline', role: 'headline', text: text.headline, x: M, ...headlineBox(h, text), width: 1080 - M * 2, size: 190, font: 'anton', color: p.text, valign: 'middle', lineHeight: 1.0, uppercase: true }),
         ...footerLayer(text.footer, p.text, h),
       ]);
     },
@@ -163,7 +170,7 @@ export const STYLES: DesignStyle[] = [
       const h = FORMATS[format].height;
       return solid(format, this.id, p.background, [
         ...kickerLayer(text.kicker, p.text),
-        layer({ id: 'headline', role: 'headline', text: text.headline, x: M, y: M + 90, width: 1080 - M * 2, height: h - M * 2 - 220, size: 230, font: 'archivo', color: p.text, valign: 'bottom', lineHeight: 0.98, uppercase: true, letterSpacing: -0.02 }),
+        layer({ id: 'headline', role: 'headline', text: text.headline, x: M, ...headlineBox(h, text), width: 1080 - M * 2, size: 230, font: 'archivo', color: p.text, valign: 'bottom', lineHeight: 0.98, uppercase: true, letterSpacing: -0.02 }),
         ...footerLayer(text.footer, p.text, h),
       ]);
     },
@@ -182,7 +189,7 @@ export const STYLES: DesignStyle[] = [
         ...(text.kicker
           ? [layer({ id: 'kicker', role: 'pill', text: text.kicker, x: M, y: M, width: 1080 - M * 2, height: 70, size: 30, color: pillText, fill: p.accent, uppercase: true, letterSpacing: 0.08 })]
           : []),
-        layer({ id: 'headline', role: 'headline', text: text.headline, x: M, y: M + 110, width: 1080 - M * 2, height: h - M * 2 - 240, size: 200, font: 'anton', color: p.text, valign: 'middle', lineHeight: 0.98, uppercase: true }),
+        layer({ id: 'headline', role: 'headline', text: text.headline, x: M, ...headlineBox(h, text, 110), width: 1080 - M * 2, size: 200, font: 'anton', color: p.text, valign: 'middle', lineHeight: 0.98, uppercase: true }),
         ...footerLayer(text.footer, p.text, h),
       ]);
     },
@@ -225,7 +232,7 @@ export const STYLES: DesignStyle[] = [
         background: { kind: 'gradient', from, to, angle: 160 },
         layers: [
           ...kickerLayer(text.kicker, color, 'center'),
-          layer({ id: 'headline', role: 'headline', text: text.headline, x: M, y: M + 90, width: 1080 - M * 2, height: h - M * 2 - 220, size: 170, font: 'jakarta', weight: 800, color, align: 'center', valign: 'middle', lineHeight: 1.0, letterSpacing: -0.03 }),
+          layer({ id: 'headline', role: 'headline', text: text.headline, x: M, ...headlineBox(h, text), width: 1080 - M * 2, size: 170, font: 'jakarta', weight: 800, color, align: 'center', valign: 'middle', lineHeight: 1.0, letterSpacing: -0.03 }),
           ...footerLayer(text.footer, color, h, 'center'),
         ],
       };
@@ -248,7 +255,7 @@ export const STYLES: DesignStyle[] = [
         overlay: { color: '#000000', opacity: 0.45 },
         layers: [
           ...kickerLayer(text.kicker, '#FFFFFF', 'center'),
-          layer({ id: 'headline', role: 'headline', text: text.headline, x: M, y: M + 90, width: 1080 - M * 2, height: h - M * 2 - 220, size: 190, font: 'archivo', color: '#FFFFFF', align: 'center', valign: 'middle', lineHeight: 0.98, uppercase: true, letterSpacing: -0.01 }),
+          layer({ id: 'headline', role: 'headline', text: text.headline, x: M, ...headlineBox(h, text), width: 1080 - M * 2, size: 190, font: 'archivo', color: '#FFFFFF', align: 'center', valign: 'middle', lineHeight: 0.98, uppercase: true, letterSpacing: -0.01 }),
           ...footerLayer(text.footer, '#FFFFFF', h, 'center'),
         ],
       });

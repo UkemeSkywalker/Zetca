@@ -10,6 +10,7 @@ import { Modal } from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import MediaUploader from '@/components/dashboard/MediaUploader';
+import { VisualRow } from './PostVisual';
 import { clipboardText, copyToClipboard, formatHashtags, platformInfo } from './platforms';
 
 const LABEL_MD = 'text-[13px] leading-[18px] tracking-[0.01em] font-semibold';
@@ -20,10 +21,12 @@ interface CopyEditorProps {
   onBack: () => void;
   onSaved: (copy: CopyRecord) => void;
   onDelete: () => Promise<void>;
+  /** The post's visual (the same controls as on its card) */
+  visual?: Omit<React.ComponentProps<typeof VisualRow>, 'copy' | 'size'>;
 }
 
 /** Edit one copy in place: text, hashtags and media, then save, copy or schedule it */
-export function CopyEditor({ copy, onBack, onSaved, onDelete }: CopyEditorProps) {
+export function CopyEditor({ copy, onBack, onSaved, onDelete, visual }: CopyEditorProps) {
   const platform = platformInfo(copy.platform);
   const [text, setText] = useState(copy.text);
   const [hashtags, setHashtags] = useState(() => formatHashtags(copy.hashtags));
@@ -217,6 +220,12 @@ export function CopyEditor({ copy, onBack, onSaved, onDelete }: CopyEditorProps)
         </div>
 
         <div className="px-5 pb-5 space-y-2">
+          {visual && (
+            <div>
+              <p className="mb-2 text-[11px] font-bold tracking-[0.05em] text-[#777587] uppercase">Visual</p>
+              <VisualRow copy={copy} size="lg" {...visual} />
+            </div>
+          )}
           {postVisual && !media && (
             <p className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[12px] font-semibold text-emerald-700">
               <Icon icon="material-symbols:image-outline" width={14} height={14} />

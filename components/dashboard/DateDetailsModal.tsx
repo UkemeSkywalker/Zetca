@@ -7,6 +7,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ScheduledPost } from '@/types/scheduler';
 import { getDownloadUrl } from '@/lib/api/mediaClient';
 import { PublishStatusNote } from './PublishStatusNote';
+import { ScheduledVisualActions } from '@/components/designer/ScheduledPostVisual';
 
 interface DateDetailsModalProps {
   isOpen: boolean;
@@ -16,6 +17,8 @@ interface DateDetailsModalProps {
   onScheduleNew: () => void;
   onEditPost: (postId: string) => void;
   onDeletePost: (postId: string) => void;
+  /** A post changed here (e.g. it got a visual from the Designer) */
+  onPostChanged?: (post: ScheduledPost) => void;
 }
 
 const platformIcons: Record<string, string> = {
@@ -24,6 +27,8 @@ const platformIcons: Record<string, string> = {
   x: 'ri:twitter-x-fill',
   linkedin: 'simple-icons:linkedin',
   facebook: 'simple-icons:facebook',
+  tiktok: 'simple-icons:tiktok',
+  youtube: 'simple-icons:youtube',
 };
 
 const platformColors: Record<string, string> = {
@@ -32,6 +37,8 @@ const platformColors: Record<string, string> = {
   x: '#000000',
   linkedin: '#0A66C2',
   facebook: '#1877F2',
+  tiktok: '#000000',
+  youtube: '#FF0000',
 };
 
 export function DateDetailsModal({
@@ -42,6 +49,7 @@ export function DateDetailsModal({
   onScheduleNew,
   onEditPost,
   onDeletePost,
+  onPostChanged,
 }: DateDetailsModalProps) {
   const [mediaUrls, setMediaUrls] = useState<Record<string, string>>({});
 
@@ -250,6 +258,11 @@ export function DateDetailsModal({
                                 Delete
                               </button>
                             </div>
+                            {onPostChanged && (
+                              <div className="mt-3">
+                                <ScheduledVisualActions post={post} onChanged={onPostChanged} />
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>

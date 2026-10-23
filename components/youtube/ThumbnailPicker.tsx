@@ -5,6 +5,7 @@ import { Icon } from '@iconify/react';
 import { captureFrames } from '@/lib/youtube/frames';
 import { uploadThumbnail } from '@/lib/api/youtubeApi';
 import { FieldError } from './formKit';
+import { ThumbnailDesigner } from '@/components/designer/ThumbnailDesigner';
 
 const MAX_BYTES = 2 * 1024 * 1024;
 
@@ -22,7 +23,12 @@ export function ThumbnailPicker({
   value,
   onChange,
   error,
+  title,
+  description,
 }: {
+  /** The video's title, for "Design a thumbnail" */
+  title?: string;
+  description?: string;
   /** The local video; without it (when editing) only an uploaded image can be used */
   file: File | null;
   isShort: boolean;
@@ -35,6 +41,7 @@ export function ThumbnailPicker({
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [loadingFrames, setLoadingFrames] = useState(true);
+  const [designing, setDesigning] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const tilesRef = useRef<Tile[]>([]);
   tilesRef.current = tiles;
@@ -109,6 +116,14 @@ export function ThumbnailPicker({
     await choose(tile);
   };
 
+  /** A thumbnail made in the Designer goes in as the custom one */
+  const addDesigned = async (image: Blob) => {
+    setDesigning(false);
+    const tile: Tile = { key: `custom-design-${Date.now()}`, url: URL.createObjectURL(image), blob: image };
+    setTiles((all) => [tile, ...all.filter((t) => !t.key.startsWith('custom-'))]);
+    await choose(tile);
+  };
+
   if (isShort) {
     return (
       <p className="flex items-start gap-2 rounded-xl bg-surface-container-low px-4 py-3 text-sm text-outline">
@@ -141,6 +156,17 @@ export function ThumbnailPicker({
         >
           <Icon icon="solar:gallery-add-linear" className="w-6 h-6" />
           <span className="text-xs font-semibold">Upload thumbnail</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setDesigning(true)}
+          disabled={!title?.trim()}
+          title={title?.trim() ? undefined : 'Add a title first'}
+          className="aspect-video rounded-xl border-2 border-dashed border-primary-200 bg-gradient-to-br from-primary-50 to-violet-50 flex flex-col items-center justify-center gap-1.5 text-primary hover:border-primary/50 transition-colors disabled:opacity-50"
+        >
+          <Icon icon="lucide:palette" className="w-6 h-6" />
+          <span className="text-xs font-semibold">Design a thumbnail</span>
+          <span className="text-[10px] font-bold text-emerald-600">FREE</span>
         </button>
         {loadingFrames &&
           [0, 1, 2].map((i) => <div key={i} className="aspect-video rounded-xl bg-surface-container-low animate-pulse" />)}
@@ -177,6 +203,7 @@ export function ThumbnailPicker({
         1280 × 720, JPG or PNG, up to 2 MB. Custom thumbnails need a verified channel. Leave it empty and YouTube picks one.
       </p>
       <FieldError message={problem ?? error} />
+      {designing && title && <ThumbnailDesigner title={title} description={description} onClose={() => setDesigning(false)} onPick={addDesigned} />}
     </div>
   );
 }

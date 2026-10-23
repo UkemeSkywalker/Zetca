@@ -16,6 +16,7 @@ import { StrategyRecord } from '@/types/strategy';
 import * as schedulerClient from '@/lib/api/schedulerClient';
 import { listStrategies } from '@/lib/api/strategyClient';
 import { getDownloadUrl } from '@/lib/api/mediaClient';
+import { ScheduledVisualActions } from '@/components/designer/ScheduledPostVisual';
 import { isYouTubeItem, listVideoPosts, removeVideo, videoPagePath } from '@/lib/api/youtubeApi';
 import { removeCopy } from '@/lib/content/itemActions';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -59,6 +60,9 @@ export function Scheduler({ className = '' }: SchedulerProps) {
   const [editingMediaUrl, setEditingMediaUrl] = useState<string | undefined>(undefined);
   const [mediaUrls, setMediaUrls] = useState<Record<string, string>>({});
   const [previewPost, setPreviewPost] = useState<ScheduledPost | null>(null);
+
+  /** A post changed somewhere on the page, e.g. it got a visual from the Designer */
+  const replacePost = (updated: ScheduledPost) => setPosts((all) => all.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)));
 
   // Auto-schedule state
   const [strategies, setStrategies] = useState<StrategyRecord[]>([]);
@@ -736,6 +740,11 @@ export function Scheduler({ className = '' }: SchedulerProps) {
                             </p>
                           </div>
 
+                          {/* The Designer: create a visual, or edit the one made there */}
+                          <div className="px-4 pb-3 empty:hidden">
+                            <ScheduledVisualActions post={post} size="sm" onChanged={replacePost} />
+                          </div>
+
                           {/* Bottom: time + actions */}
                           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
                             <div className="flex items-center gap-1.5 text-sm text-gray-500">
@@ -787,6 +796,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
 
       {/* Date Details Modal */}
       <DateDetailsModal
+        onPostChanged={replacePost}
         isOpen={isDateDetailsModalOpen}
         onClose={() => {
           setIsDateDetailsModalOpen(false);

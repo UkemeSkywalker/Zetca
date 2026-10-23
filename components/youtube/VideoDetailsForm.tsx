@@ -36,6 +36,8 @@ export function VideoDetailsForm(props: Props) {
           value={props.draft.thumbnailMediaId}
           onChange={(thumbnailMediaId) => props.update({ thumbnailMediaId })}
           error={props.errors.thumbnailMediaId}
+          title={props.draft.title}
+          description={props.draft.description}
         />
       </SectionCard>
       <PlaylistsSection {...props} />
