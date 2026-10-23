@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="web_dashboard" name="shell-type"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Syne:wght@700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    @layer base {
+      html, body { margin: 0; padding: 0; }
+      body { overscroll-behavior: none; }
+      main > :first-child { margin-top: 0 !important; }
+      main > :last-child { margin-bottom: 0 !important; }
+    }
+    ::-webkit-scrollbar { display: none; }
+  </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "secondary-fixed": "#dce2f6",
+            "on-tertiary-container": "#ffcede",
+            "on-primary-container": "#dad7ff",
+            "surface-dim": "#d6dadf",
+            "surface-container-highest": "#dfe3e8",
+            "surface-container-high": "#e4e9ed",
+            "surface": "#f6faff",
+            "on-primary-fixed-variant": "#3323cc",
+            "on-surface": "#171c20",
+            "on-tertiary-fixed-variant": "#8c0053",
+            "on-secondary-container": "#5c6274",
+            "error-container": "#ffdad6",
+            "inverse-surface": "#2c3135",
+            "tertiary": "#8f0055",
+            "on-secondary": "#ffffff",
+            "outline": "#777587",
+            "on-background": "#171c20",
+            "outline-variant": "#c7c4d8",
+            "secondary-container": "#d9dff4",
+            "surface-variant": "#dfe3e8",
+            "on-secondary-fixed-variant": "#404757",
+            "on-error-container": "#93000a",
+            "secondary": "#585e6f",
+            "tertiary-fixed-dim": "#ffb0cd",
+            "on-tertiary": "#ffffff",
+            "primary-fixed": "#e2dfff",
+            "on-secondary-fixed": "#151b2a",
+            "surface-tint": "#4d44e3",
+            "surface-container": "#eaeef3",
+            "primary": "#3525cd",
+            "background": "#f6faff",
+            "error": "#ba1a1a",
+            "tertiary-fixed": "#ffd9e4",
+            "secondary-fixed-dim": "#c0c6da",
+            "surface-container-lowest": "#ffffff",
+            "on-surface-variant": "#464555",
+            "surface-container-low": "#f0f4f9",
+            "primary-fixed-dim": "#c3c0ff",
+            "inverse-on-surface": "#edf1f6",
+            "on-error": "#ffffff",
+            "on-primary": "#ffffff",
+            "surface-bright": "#f6faff",
+            "on-tertiary-fixed": "#3e0022",
+            "on-primary-fixed": "#0f0069",
+            "primary-container": "#4f46e5",
+            "tertiary-container": "#b6166f",
+            "inverse-primary": "#c3c0ff"
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            full: "9999px"
+          },
+          spacing: {
+            "space-xl": "2.5rem",
+            "space-xs": "0.25rem",
+            "space-md": "1rem",
+            "margin-desktop": "2rem",
+            "gutter-desktop": "1.5rem",
+            "gutter": "1.25rem",
+            "space-lg": "1.5rem",
+            "margin": "1rem",
+            "margin-tablet": "1.5rem",
+            "space-sm": "0.5rem"
+          },
+          fontFamily: {
+            "display-md": ["Syne"],
+            "display-lg-mobile": ["Syne"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "display-md-mobile": ["Syne"],
+            "label-md": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "display-lg": ["Syne"]
+          },
+          fontSize: {
+            "display-md": ["40px", { lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "display-lg-mobile": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "800" }],
+            "headline-sm": ["18px", { lineHeight: "26px", fontWeight: "600" }],
+            "body-sm": ["12px", { lineHeight: "16px", fontWeight: "400" }],
+            "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.04em", fontWeight: "700" }],
+            "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+            "display-md-mobile": ["28px", { lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "700" }],
+            "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "600" }],
+            "headline-md": ["22px", { lineHeight: "30px", letterSpacing: "-0.01em", fontWeight: "600" }],
+            "label-lg": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+            "body-md": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+            "display-lg": ["56px", { lineHeight: "64px", letterSpacing: "-0.03em", fontWeight: "800" }]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-surface-container font-body-md text-on-surface antialiased">
+<!-- Persistent Zetca Navy Navigation Rail -->
+<aside class="fixed left-0 top-0 h-full w-[248px] bg-[#090D16] z-50 flex flex-col justify-between py-space-lg px-space-md">
+<div class="flex flex-col gap-space-lg">
+<div class="flex items-center gap-3 px-space-xs">
+<div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-container to-primary flex items-center justify-center shadow-lg">
+<span class="material-symbols-outlined text-on-primary text-[20px]">layers</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1 leading-none">
+<span class="font-headline-sm text-headline-sm text-surface-container-lowest font-bold tracking-tight">Zetca</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+</div>
+<span class="font-label-sm text-[10px] tracking-widest uppercase text-secondary-fixed-dim/70 mt-1 font-semibold">CONTENT OS</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<div class="px-space-xs mb-1">
+<span class="font-label-sm text-[10px] tracking-widest uppercase text-secondary-fixed-dim/50 font-bold">PLATFORM SUITE</span>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-secondary-fixed-dim hover:bg-white/5 hover:text-surface-container-lowest transition-colors font-label-md text-label-md" data-path="dashboard" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-secondary-fixed-dim hover:bg-white/5 hover:text-surface-container-lowest transition-colors font-label-md text-label-md" data-path="strategist" href="#">
+<span class="material-symbols-outlined text-[20px]">psychology</span>
+<span>Strategist</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-secondary-fixed-dim hover:bg-white/5 hover:text-surface-container-lowest transition-colors font-label-md text-label-md" data-path="copywriter" href="#">
+<span class="material-symbols-outlined text-[20px]">edit_note</span>
+<span>Copywriter</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-secondary-fixed-dim hover:bg-white/5 hover:text-surface-container-lowest transition-colors font-label-md text-label-md" data-path="scheduler" href="#">
+<span class="material-symbols-outlined text-[20px]">calendar_today</span>
+<span>Scheduler</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/10 text-surface-container-lowest font-semibold transition-colors font-label-md text-label-md" data-path="designer" href="#">
+<span class="material-symbols-outlined text-[20px]">palette</span>
+<span>Designer</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-secondary-fixed-dim hover:bg-white/5 hover:text-surface-container-lowest transition-colors font-label-md text-label-md" data-path="publisher" href="#">
+<span class="material-symbols-outlined text-[20px]">rocket_launch</span>
+<span>Publisher</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-secondary-fixed-dim hover:bg-white/5 hover:text-surface-container-lowest transition-colors font-label-md text-label-md" data-path="analysis" href="#">
+<span class="material-symbols-outlined text-[20px]">insights</span>
+<span>Analysis</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-secondary-fixed-dim hover:bg-white/5 hover:text-surface-container-lowest transition-colors font-label-md text-label-md" data-path="profile" href="#">
+<span class="material-symbols-outlined text-[20px]">account_circle</span>
+<span>Profile</span>
+</a>
+</nav>
+</div>
+</div>
+<div class="px-space-xs">
+<div class="p-3 rounded-xl bg-white/[0.04] flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+<span class="font-label-sm text-label-sm text-secondary-fixed-dim">Cluster Connected</span>
+</div>
+<span class="material-symbols-outlined text-[18px] text-secondary-fixed-dim">bolt</span>
+</div>
+</div>
+</aside>
+<!-- App Header & Shell Container -->
+<div class="pl-[248px]">
+<header class="fixed top-0 left-[248px] right-0 h-[78px] bg-surface-container-lowest border-b border-surface-container-highest z-40 flex items-center justify-between px-gutter-desktop">
+<div class="flex-1 max-w-xl">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3.5 text-on-surface-variant text-[20px] pointer-events-none">search</span>
+<input class="w-full h-11 pl-10 pr-4 rounded-xl bg-surface-container-low border border-surface-container-highest text-on-surface placeholder:text-on-surface-variant/60 font-body-sm text-body-sm focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary-container/10 transition-all" placeholder="Search campaigns, generated drafts, schedules…" type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-1">
+<button class="w-10 h-10 rounded-xl flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">mail</span>
+</button>
+<button class="relative w-10 h-10 rounded-xl flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-error ring-2 ring-surface-container-lowest"></span>
+</button>
+</div>
+<div class="h-8 w-px bg-surface-container-highest"></div>
+<div class="flex items-center gap-3 pl-1">
+<div class="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center text-on-primary font-label-sm text-label-sm font-bold shadow-sm">AV</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold leading-tight">Alex Vance</span>
+<span class="font-label-sm text-[11px] text-on-surface-variant leading-tight">Head of Growth</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Studio Canvas: Cinema Suite Variant -->
+<main class="relative pt-[78px] min-h-screen w-full px-gutter-desktop py-space-lg bg-surface-container flex flex-col gap-space-md">
+<!-- Top Command Bar (64px high, crisp white canvas surface) -->
+<header class="w-full h-16 bg-surface-container-lowest rounded-xl shadow-sm px-gutter-desktop flex items-center justify-between shrink-0">
+<!-- Left Section: Navigation, Editable Title, Saved Pill -->
+<div class="flex items-center gap-space-md min-w-0">
+<button aria-label="Go back" class="w-9 h-9 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+</button>
+<div class="flex items-center gap-2 min-w-0">
+<div class="relative flex items-center group">
+<input class="font-headline-sm text-headline-sm text-on-surface font-bold bg-transparent hover:bg-surface-container-low focus:bg-surface-container-lowest px-2 py-1 rounded-lg focus:outline-none transition-colors w-36 truncate" type="text" value="Sunrise run"/>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant/50 group-hover:text-on-surface-variant pointer-events-none -ml-1">edit</span>
+</div>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-container text-emerald-600 font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              Saved ✓
+            </span>
+</div>
+</div>
+<!-- Centre Section: Aspect Ratio & History -->
+<div class="flex items-center gap-3">
+<div class="relative">
+<button class="flex items-center gap-2 h-9 px-3 rounded-lg bg-surface-container-low text-on-surface font-label-md text-label-md hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">stay_current_portrait</span>
+<span>Story 9:16 · TikTok / Reels</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">expand_more</span>
+</button>
+</div>
+<div class="h-5 w-px bg-surface-container-highest"></div>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" title="Undo" type="button">
+<span class="material-symbols-outlined text-[18px]">undo</span>
+</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant/40 cursor-not-allowed" disabled="" title="Redo" type="button">
+<span class="material-symbols-outlined text-[18px]">redo</span>
+</button>
+</div>
+</div>
+<!-- Right Section: Actions -->
+<div class="flex items-center gap-2.5">
+<button class="h-9 px-3.5 rounded-lg bg-surface-container-lowest border border-surface-container-highest text-on-surface font-label-md text-label-md shadow-sm hover:bg-surface-container-low transition-colors flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[18px]">download</span>
+<span>Download</span>
+</button>
+<button class="h-9 px-3.5 rounded-lg bg-surface-container-lowest border border-surface-container-highest text-on-surface font-label-md text-label-md shadow-sm hover:bg-surface-container-low transition-colors flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[18px]">save</span>
+<span>Save</span>
+</button>
+<!-- Only one primary indigo button -->
+<button class="h-9 px-4 rounded-lg bg-primary-container text-on-primary font-label-md text-label-md font-semibold hover:bg-primary transition-colors flex items-center gap-1.5 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">send</span>
+<span>Attach to post</span>
+</button>
+</div>
+</header>
+<!-- Upper Tier: Left Cinema Stage + Right Dual-Deck Inspector -->
+<div class="grid grid-cols-12 gap-space-md items-start w-full">
+<!-- Cinema Monitor Stage (Left 7 Cols) -->
+<div class="col-span-12 xl:col-span-7 rounded-xl bg-surface-container-low shadow-sm border border-surface-container-highest/60 relative overflow-hidden flex flex-col items-center justify-center p-6 min-h-[580px]">
+<!-- Studio dot-grid decorative backdrop -->
+<div class="absolute inset-0 opacity-40 pointer-events-none" style="background-image: radial-gradient(var(--tw-colors-outline-variant, #c7c4d8) 1.2px, transparent 1.2px); background-size: 18px 18px;"></div>
+<!-- Cinema Monitor Frame Badge -->
+<div class="absolute top-3 left-4 flex items-center gap-2 text-on-surface-variant font-label-sm text-[11px] tracking-wider uppercase font-semibold">
+<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+<span>Preview Monitor · 9:16 Canvas</span>
+</div>
+<!-- Vertical 9:16 Video Player -->
+<div class="relative w-[280px] sm:w-[304px] h-[496px] sm:h-[538px] rounded-2xl overflow-hidden shadow-2xl z-10 flex flex-col justify-between group my-2 border border-white/20">
+<!-- Runner media -->
+<div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida/AEtjO1WPdk0r6OeNs08fpYqP9_7JGZlUA7QIB0IAJOgmrC1UZ6brN0OPEAxiFWlB2ShTi4V98PBu_y20_bguE669CumYzBSifH5E4wz67z492t03fvEbycKiV2cP6-sstFzD1ALuiqCRri2vT76w8XnipnQ0aoN2NGM51o2vkMu-o8e36Yu4Z0Ids3MNiDkPwbLoelkJ_LuOM22BrxXNN7Bnr1mT6MiYEXNqXj2PyOMuIn_tiHO8ET3uG95iOg')"></div>
+<!-- Top gradient scrim -->
+<div class="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-none"></div>
+<!-- Bottom gradient scrim -->
+<div class="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/85 via-black/40 to-transparent pointer-events-none"></div>
+<!-- Graphic Typography Overlay (Top) -->
+<div class="relative z-20 pt-8 px-6 text-center flex flex-col items-center">
+<span class="font-display-md text-display-md-mobile text-white uppercase font-extrabold tracking-tight drop-shadow-md leading-[1.05]">
+                RUN BEFORE<br/>THE CITY WAKES
+              </span>
+<span class="mt-2 text-white/80 font-label-sm text-[10px] tracking-widest uppercase bg-black/30 backdrop-blur-sm px-2.5 py-0.5 rounded-full">
+                SUNRISE CLUB · 05:30 AM
+              </span>
+</div>
+<!-- Handle / Credit (Bottom) -->
+<div class="relative z-20 pb-5 px-6 flex items-center justify-between text-white">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]">directions_run</span>
+</div>
+<span class="font-label-md text-label-md font-medium tracking-wide text-white drop-shadow">@alexvancestudio</span>
+</div>
+<span class="material-symbols-outlined text-[18px] text-white/80 drop-shadow">hd</span>
+</div>
+</div>
+<!-- Playback Controls Bar -->
+<div class="relative z-10 mt-3 w-full max-w-[380px] bg-surface-container-lowest/95 backdrop-blur shadow-md rounded-xl p-3 flex items-center gap-3 border border-surface-container-highest">
+<button aria-label="Toggle playback" class="w-9 h-9 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center transition-colors shrink-0" id="play-pause-btn" type="button">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">pause</span>
+</button>
+<div class="flex-1 flex flex-col gap-1">
+<div class="relative w-full h-2 bg-surface-container rounded-full cursor-pointer overflow-hidden flex items-center">
+<div class="h-full bg-primary-container rounded-full w-1/2"></div>
+<div class="absolute left-1/2 -ml-1.5 w-3 h-3 rounded-full bg-primary-container ring-2 ring-surface-container-lowest shadow"></div>
+</div>
+<div class="flex justify-between items-center px-0.5">
+<span class="font-label-sm text-[11px] text-on-surface font-semibold tracking-tight">0:03 / 0:06</span>
+<span class="font-label-sm text-[10px] text-on-surface-variant uppercase font-medium">60 FPS</span>
+</div>
+</div>
+<button aria-label="Toggle volume" class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors shrink-0" type="button">
+<span class="material-symbols-outlined text-[18px]">volume_up</span>
+</button>
+</div>
+</div>
+<!-- Consolidated Dual-Deck Inspector (Right 5 Cols) -->
+<div class="col-span-12 xl:col-span-5 flex flex-col gap-space-md">
+<!-- Deck Panel A: Video Details & AI Generation -->
+<div class="w-full bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-space-md border border-surface-container-highest/60">
+<div class="flex items-center justify-between pb-1 border-b border-surface-container">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px] text-primary-container">tune</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold">Video details</span>
+</div>
+<span class="font-label-sm text-[11px] text-on-surface-variant font-medium">Model v3.4</span>
+</div>
+<!-- Card "Made with AI" -->
+<div class="rounded-xl bg-surface-container-low p- space-md p-3.5 flex flex-col gap-space-sm border border-surface-container-highest/40">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 text-primary-container">
+<span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+<span class="font-label-md text-label-md font-bold text-on-surface">Made with AI</span>
+</div>
+<span class="font-label-sm text-[10px] uppercase font-bold text-secondary tracking-wider bg-surface-container px-2 py-0.5 rounded">Prompt gen</span>
+</div>
+<!-- Prompt displayed in muted inset box -->
+<div class="p-2.5 rounded-lg bg-surface-container-lowest text-on-surface-variant font-body-sm text-body-sm italic leading-relaxed border border-surface-container shadow-inner">
+                “A runner on a city bridge at sunrise, cinematic, slow motion”
+              </div>
+<!-- Secondary styled Regenerate Button -->
+<button class="w-full h-10 px-3 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md font-semibold border border-surface-container-highest hover:bg-surface-container transition-colors flex items-center justify-center gap-2 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">refresh</span>
+<span>Regenerate</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-[10px] font-bold">
+                  5 credits
+                </span>
+</button>
+<p class="text-center font-label-sm text-[11px] text-on-surface-variant/80 mt-0.5">
+                12 of 20 AI credits left
+              </p>
+</div>
+<!-- Technical specs strip -->
+<div class="grid grid-cols-3 gap-2 pt-1">
+<div class="flex flex-col p-2 bg-surface-container-low/70 rounded-lg border border-surface-container">
+<span class="font-label-sm text-[10px] text-on-surface-variant uppercase font-semibold">Resolution</span>
+<span class="text-on-surface font-semibold font-label-md text-label-md truncate">1080 × 1920 (9:16)</span>
+</div>
+<div class="flex flex-col p-2 bg-surface-container-low/70 rounded-lg border border-surface-container">
+<span class="font-label-sm text-[10px] text-on-surface-variant uppercase font-semibold">Duration</span>
+<span class="text-on-surface font-semibold font-label-md text-label-md truncate">6.0 seconds</span>
+</div>
+<div class="flex flex-col p-2 bg-surface-container-low/70 rounded-lg border border-surface-container">
+<span class="font-label-sm text-[10px] text-on-surface-variant uppercase font-semibold">Target Format</span>
+<span class="text-on-surface font-semibold font-label-md text-label-md truncate">H.264 / MP4</span>
+</div>
+</div>
+</div>
+<!-- Deck Panel B: Typography & Audio Layer Configuration -->
+<div class="w-full bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-space-md border border-surface-container-highest/60">
+<!-- Text on video configuration -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<label class="font-headline-sm text-headline-sm text-on-surface font-bold flex items-center gap-1.5" for="headline-input">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">title</span>
+<span>Text on video</span>
+</label>
+<span class="font-label-sm text-label-sm text-on-surface-variant/70">Top display</span>
+</div>
+<div class="relative">
+<input class="w-full h-10 px-3 rounded-lg bg-surface-container-low border border-surface-container-highest/80 text-on-surface font-label-md text-label-md uppercase tracking-wide focus:outline-none focus:bg-surface-container-lowest focus:border-primary-container transition-colors shadow-inner font-semibold" id="headline-input" type="text" value="RUN BEFORE THE CITY WAKES"/>
+</div>
+<div class="flex items-center justify-between mt-1">
+<span class="font-label-sm text-[11px] uppercase tracking-wider text-on-surface-variant font-bold">Text appears</span>
+<div class="flex items-center gap-1.5">
+<button class="px-3 py-1 rounded-full bg-surface-container-highest text-on-surface font-label-sm text-label-sm font-bold border border-primary-container/30" type="button">
+                    At start
+                  </button>
+<button class="px-3 py-1 rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container font-label-sm text-label-sm transition-colors" type="button">
+                    After 1s
+                  </button>
+<button class="px-3 py-1 rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container font-label-sm text-label-sm transition-colors" type="button">
+                    Whole video
+                  </button>
+</div>
+</div>
+</div>
+<div class="h-px w-full bg-surface-container"></div>
+<!-- Sound section -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">music_note</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold">Sound</span>
+</div>
+<div class="flex items-center gap-1.5">
+<button class="px-3 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container font-label-sm text-label-sm transition-colors" type="button">
+                  None
+                </button>
+<!-- Selected Sound Chip (White pill with border & soft accent) -->
+<button class="px-3 py-1.5 rounded-full bg-surface-container-highest text-on-surface border border-surface-container-highest font-label-sm text-label-sm font-bold flex items-center gap-1 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px] text-primary-container">graphic_eq</span>
+<span>Soft beat</span>
+</button>
+<button class="px-3 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container font-label-sm text-label-sm transition-colors" type="button">
+                  Upbeat
+                </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Lower Tier: Full-Width Production Timeline & Cover Frame Horizon Scrub Deck -->
+<section class="w-full bg-surface-container-lowest rounded-xl shadow-sm p- space-md p-4 border border-surface-container-highest/60 flex flex-col gap-3">
+<!-- Deck Header & Metadata -->
+<div class="flex items-center justify-between pb-1">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[20px] text-on-surface-variant">movie_edit</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold">Cover frame</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-surface-container font-label-sm text-[11px] text-on-surface-variant font-medium">
+              Frame 2 selected
+            </span>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant font-label-sm text-[11px]">
+<span class="flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+              Keyframe Scrub
+            </span>
+<span class="text-on-surface-variant/50">|</span>
+<span>Total: 5 In-Stream Cuts</span>
+</div>
+</div>
+<!-- Cinema Studio Horizontal Scrub Rail & Filmstrip -->
+<div class="relative bg-surface-container-low rounded-xl p-3 border border-surface-container flex flex-col gap-2">
+<!-- Time indicator ruler markers -->
+<div class="flex justify-between items-center px-4 font-label-sm text-[10px] text-on-surface-variant/70 font-mono tracking-wider">
+<span>00:00.00</span>
+<span>00:00.80</span>
+<span>00:01.60</span>
+<span>00:02.40</span>
+<span>00:03.20</span>
+</div>
+<!-- Filmstrip Sequence Deck: 5 Frames -->
+<div class="grid grid-cols-5 gap-3">
+<!-- Frame 1 -->
+<button class="group relative aspect-[16/9] sm:aspect-[2.2/1] rounded-lg overflow-hidden shadow-sm hover:opacity-95 transition-all border border-surface-container-highest/80 flex flex-col justify-end p-2 bg-black" type="button">
+<img class="absolute inset-0 w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform" data-alt="Athletic female runner starting her sprint on a suspension bridge at early dawn, soft misty pastel lighting, moody cinematic wide framing." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCbWk_NYth97q_ZwBwKaE63zNnQDUyFdRYlQc-QlihqDmXQF701LESUlNJjyUbIZDzbw4NrmT3zwtE5VHfvdWyj3MVXg1QUD7-o7-NnE2eeTBfIBiGn4BCAcewdIBbeCinnzRvbn-k8P3SRAApNZIpE-boZdRWexWyAn6dZ75AxeexEXvet95ZRuPCZ89pNuiMHDDQvl-ryfPUddQ5xJ53c6UHsp1uBMReizjDLafFuLqccO6KO4fx"/>
+<div class="relative z-10 flex justify-between items-center w-full">
+<span class="font-label-sm text-[10px] text-white bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-sm">Frame 1</span>
+<span class="font-label-sm text-[10px] text-white bg-black/60 px-1.5 py-0.5 rounded font-mono">0.0s</span>
+</div>
+</button>
+<!-- Frame 2 (Active / Selected) -->
+<button class="group relative aspect-[16/9] sm:aspect-[2.2/1] rounded-lg overflow-hidden shadow-md ring-2 ring-primary-container ring-offset-2 ring-offset-surface-container-lowest transition-all flex flex-col justify-end p-2 bg-black" type="button">
+<img class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform" data-alt="Athletic female runner in navy blue athletic kit running towards the camera on a suspension bridge footpath at sunrise, golden rim lighting and morning mist over San Francisco skyline." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKyIiNdL3mJKAcIaTmhCkpuKX1IoiwHDa6Xdfr1Z-sEIjsyj8Xeg4jEqbHwHDiuolYhfABuYdn2YrCPOT00a5lUADp_FNNLo6QJ5ukN83Q0y1r0B4sFh4Sr_jlyKh5opAY7dnj6qCiiFri2-jfqW6aoHTbJdg8UNtHKwSsgTK3bk6_efzbAmt4tRCoBq2sXkwPTJhm_VswBPcHKGeozHOjUbw3VCbgCUo_xL_7O4--GuBN5UHsTS8k"/>
+<div class="absolute inset-0 bg-primary-container/15"></div>
+<div class="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary-container text-on-primary flex items-center justify-center shadow-md">
+<span class="material-symbols-outlined text-[13px] font-bold">check</span>
+</div>
+<div class="relative z-10 flex justify-between items-center w-full">
+<span class="font-label-sm text-[10px] text-white bg-primary-container px-1.5 py-0.5 rounded font-bold">Selected</span>
+<span class="font-label-sm text-[10px] text-on-primary bg-primary-container/90 px-1.5 py-0.5 rounded font-mono font-bold">0.8s</span>
+</div>
+</button>
+<!-- Frame 3 -->
+<button class="group relative aspect-[16/9] sm:aspect-[2.2/1] rounded-lg overflow-hidden shadow-sm hover:opacity-95 transition-all border border-surface-container-highest/80 flex flex-col justify-end p-2 bg-black" type="button">
+<img class="absolute inset-0 w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform" data-alt="Female runner crossing suspension bridge tower pylons, dramatic low morning sun flares casting long shadows on wet pavement." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBR36eFMfXVyrJ4zRKA5T_pi8nPZZPv0pe3DwM3D_Meo8ICtxzlFyX_rQ3eWBRwSbH6o-W0XZv-g0yJOcykC5koh7DnlA3CVfnuRLiS9UjJwxvukKmP_vg6KTGbznv2thLViwOS76wiw2O88PWW2Wfwv5h2kbr1-A3WQEJgwxGXrz6qTZPPmxUGBdrBWZIy1Z-vZVguLTepuXBZM1HGkDuLkOffq2yTuWsTr9Mx33GP9jSIgU6dap1U"/>
+<div class="relative z-10 flex justify-between items-center w-full">
+<span class="font-label-sm text-[10px] text-white bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-sm">Frame 3</span>
+<span class="font-label-sm text-[10px] text-white bg-black/60 px-1.5 py-0.5 rounded font-mono">1.6s</span>
+</div>
+</button>
+<!-- Frame 4 -->
+<button class="group relative aspect-[16/9] sm:aspect-[2.2/1] rounded-lg overflow-hidden shadow-sm hover:opacity-95 transition-all border border-surface-container-highest/80 flex flex-col justify-end p-2 bg-black" type="button">
+<img class="absolute inset-0 w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform" data-alt="Runner mid-stride on bridge sidewalk with cable suspension lines receding into golden morning haze and coastal fog." src="https://lh3.googleusercontent.com/aida-public/AB6AXuChlurzjesLnROUOpPLVo0VFb5FF6qVla6sUc3bOYSGQHknMkxbYg6o17uqB3vCGj05FBroNlHkH598Yg1hseY8ANEWVEGxvuyhF7e2BkLL6_2bMg4A3_hWgYv1zxhUdVUCRkptTrvpBkfVIofMQMfOxmfXQLd9kSTQ8NgFn0CFVqZ9SqTbhPrc0coSdaulywVdU5n8LEXw_XxIKtAbTQDaFkcdZj2iBIAds1cxGd_S5MO5ozJ8wmBK"/>
+<div class="relative z-10 flex justify-between items-center w-full">
+<span class="font-label-sm text-[10px] text-white bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-sm">Frame 4</span>
+<span class="font-label-sm text-[10px] text-white bg-black/60 px-1.5 py-0.5 rounded font-mono">2.4s</span>
+</div>
+</button>
+<!-- Frame 5 -->
+<button class="group relative aspect-[16/9] sm:aspect-[2.2/1] rounded-lg overflow-hidden shadow-sm hover:opacity-95 transition-all border border-surface-container-highest/80 flex flex-col justify-end p-2 bg-black" type="button">
+<img class="absolute inset-0 w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform" data-alt="Full speed running silhouette moving past vintage bridge lampposts against radiant golden sunrise backdrop." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAValO9jydrWNZXtu3MGuf4GjqWS29yw0CWeHMa8_Gk6Jg56TICXXHJugYD_5uGiw_ys7xc2sqLHI2jYm0jWW2nBHCorurVwUiR-yFSDgYGLFzrqJ91wZjw5N2PwNQj0pLYUp4cjiDO8ynxv4dWvo0ySscwfB2SNl9A4TvZQA7W_u2iByMuU73E3tSklK10y91MUx8Au8F9nWHge1C0ZKIWAyCuXqdJuGJBtJ7UNCQxXlvdH9v-biU5"/>
+<div class="relative z-10 flex justify-between items-center w-full">
+<span class="font-label-sm text-[10px] text-white bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-sm">Frame 5</span>
+<span class="font-label-sm text-[10px] text-white bg-black/60 px-1.5 py-0.5 rounded font-mono">3.2s</span>
+</div>
+</button>
+</div>
+</div>
+</section>
+</main>
+</div>
+<script>
+    // Playback toggle micro-interaction
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    if (playPauseBtn) {
+      playPauseBtn.addEventListener('click', () => {
+        const icon = playPauseBtn.querySelector('.material-symbols-outlined');
+        if (icon.textContent === 'pause') {
+          icon.textContent = 'play_arrow';
+        } else {
+          icon.textContent = 'pause';
+        }
+      });
+    }
+  </script>
+</body></html>

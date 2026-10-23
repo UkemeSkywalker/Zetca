@@ -122,32 +122,6 @@ data "aws_iam_policy_document" "app" {
   count = local.app_server_count
 
   statement {
-    sid = "AppTables"
-    actions = [
-      "dynamodb:GetItem",
-      "dynamodb:PutItem",
-      "dynamodb:UpdateItem",
-      "dynamodb:DeleteItem",
-      "dynamodb:Query",
-      "dynamodb:Scan",
-      "dynamodb:BatchGetItem",
-      "dynamodb:BatchWriteItem",
-      "dynamodb:DescribeTable",
-    ]
-    resources = flatten([
-      for arn in [
-        aws_dynamodb_table.users.arn,
-        aws_dynamodb_table.strategies.arn,
-        aws_dynamodb_table.copies.arn,
-        aws_dynamodb_table.scheduled_posts.arn,
-        aws_dynamodb_table.publish_log.arn,
-        aws_dynamodb_table.post_media.arn,
-        aws_dynamodb_table.youtube_videos.arn,
-      ] : [arn, "${arn}/index/*"]
-    ])
-  }
-
-  statement {
     sid       = "MediaObjects"
     actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:AbortMultipartUpload"]
     resources = ["${aws_s3_bucket.post_media.arn}/*"]
@@ -169,6 +143,55 @@ resource "aws_iam_user_policy" "app" {
   name   = "${local.app_name}-app"
   user   = aws_iam_user.app[0].name
   policy = data.aws_iam_policy_document.app[0].json
+
+  # The table access moved to its own policy: attach that first so the app never loses it
+  depends_on = [aws_iam_user_policy_attachment.app_tables]
+}
+
+# The app's DynamoDB tables. A managed policy (6,144-byte limit) because the
+# user's inline policies share a 2,048-byte total that the table list outgrew.
+data "aws_iam_policy_document" "app_tables" {
+  count = local.app_server_count
+
+  statement {
+    sid = "AppTables"
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+      "dynamodb:DeleteItem",
+      "dynamodb:Query",
+      "dynamodb:Scan",
+      "dynamodb:BatchGetItem",
+      "dynamodb:BatchWriteItem",
+      "dynamodb:DescribeTable",
+    ]
+    resources = flatten([
+      for arn in [
+        aws_dynamodb_table.users.arn,
+        aws_dynamodb_table.strategies.arn,
+        aws_dynamodb_table.copies.arn,
+        aws_dynamodb_table.scheduled_posts.arn,
+        aws_dynamodb_table.publish_log.arn,
+        aws_dynamodb_table.post_media.arn,
+        aws_dynamodb_table.youtube_videos.arn,
+        aws_dynamodb_table.designs.arn,
+      ] : [arn, "${arn}/index/*"]
+    ])
+  }
+}
+
+resource "aws_iam_policy" "app_tables" {
+  count       = local.app_server_count
+  name        = "${local.app_name}-tables"
+  description = "Lets the Zetca app read and write its DynamoDB tables"
+  policy      = data.aws_iam_policy_document.app_tables[0].json
+}
+
+resource "aws_iam_user_policy_attachment" "app_tables" {
+  count      = local.app_server_count
+  user       = aws_iam_user.app[0].name
+  policy_arn = aws_iam_policy.app_tables[0].arn
 }
 
 # The secret is kept in Terraform state (the state bucket is encrypted and private)

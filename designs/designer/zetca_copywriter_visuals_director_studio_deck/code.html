@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Zetca - Copywriter: visuals</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Syne:wght@700;800&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            syne: ['"Syne"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            },
+            sidebar: '#0d1117',
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .dot-pattern {
+      background-image: radial-gradient(#cbd5e1 1.25px, transparent 1.25px);
+      background-size: 20px 20px;
+    }
+  </style>
+</head>
+<body class="bg-[#F8FAFC] text-slate-900 font-sans antialiased overflow-x-hidden min-h-screen flex">
+<!-- Persistent Dark Left Sidebar -->
+<aside class="w-64 bg-[#0B0F17] flex-shrink-0 flex flex-col justify-between border-r border-slate-800/80 min-h-screen text-slate-300 select-none z-20">
+<div class="p-6">
+<!-- Zetca Logo -->
+<div class="flex items-center gap-3 mb-8">
+<div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-lg shadow-indigo-600/30">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewbox="0 0 24 24">
+<path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="text-white font-syne font-bold text-xl tracking-tight">Zetca</span>
+<span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+</div>
+<p class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Content OS</p>
+</div>
+</div>
+<!-- Navigation Section -->
+<div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3 px-3">Platform Suite</div>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors" href="#">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          Dashboard
+        </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors" href="#">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          Strategist
+        </a>
+<!-- ACTIVE COPYWRITER ITEM -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 shadow-md shadow-indigo-600/30" href="#">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewbox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          Copywriter
+        </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors" href="#">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          Scheduler
+        </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors" href="#">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          Designer
+        </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors" href="#">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          Publisher
+        </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors" href="#">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          Analysis
+        </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors" href="#">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          Profile
+        </a>
+</nav>
+</div>
+<!-- Cluster status indicator -->
+<div class="p-4 m-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+<span class="text-xs font-medium text-slate-300">Cluster Connected</span>
+</div>
+<svg class="w-3.5 h-3.5 text-slate-500" fill="currentColor" viewbox="0 0 20 20"><path clip-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.381z" fill-rule="evenodd"></path></svg>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col min-w-0 bg-[#F8FAFC]">
+<!-- Top Global Header -->
+<header class="h-16 bg-white border-b border-slate-200/80 px-8 flex items-center justify-between sticky top-0 z-10 shadow-sm/50">
+<div class="w-96 relative">
+<input class="w-full bg-slate-100/90 text-sm pl-10 pr-4 py-2 rounded-xl border border-transparent focus:border-indigo-500 focus:bg-white focus:outline-none transition-all placeholder:text-slate-400" placeholder="Search campaigns, generated drafts, schedules..." type="text"/>
+<svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg relative">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewbox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</button>
+<button class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg relative">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewbox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span class="w-2 h-2 rounded-full bg-rose-500 absolute top-1.5 right-1.5 ring-2 ring-white"></span>
+</button>
+<div class="h-6 w-px bg-slate-200"></div>
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">AV</div>
+<div class="text-left hidden sm:block">
+<div class="text-xs font-bold text-slate-800 leading-tight">Alex Vance</div>
+<div class="text-[11px] text-slate-400 leading-tight">Head of Growth</div>
+</div>
+</div>
+</div>
+</header>
+<!-- Page Body Container with Dotted Studio Texture -->
+<main class="flex-1 p-8 dot-pattern max-w-[1440px] w-full mx-auto">
+<!-- Top Title Bar -->
+<div class="flex items-center justify-between mb-5">
+<h1 class="text-[28px] font-bold text-slate-900 tracking-tight leading-none font-syne">Copywriter</h1>
+<div class="flex items-center gap-3">
+<!-- Strategy pill -->
+<div class="px-3.5 py-1.5 rounded-full bg-slate-100 border border-slate-200/90 text-xs font-semibold text-slate-700 flex items-center gap-1.5 shadow-sm">
+<span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+            Summer fitness push
+          </div>
+<!-- Primary button: Schedule all -->
+<button class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-sm shadow-indigo-600/30 flex items-center gap-1.5">
+            Schedule all
+          </button>
+</div>
+</div>
+<!-- Slim Indigo-tint Banner Card (#EEF2FF, 16px radius) -->
+<section class="bg-[#EEF2FF] border border-indigo-100 rounded-2xl p-4 sm:px-6 mb-7 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm shadow-indigo-600/20">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12 2L14.2 8.3L20.5 10.5L14.2 12.7L12 19L9.8 12.7L3.5 10.5L9.8 8.3L12 2Z"></path>
+</svg>
+</div>
+<div class="flex items-center gap-2 flex-wrap">
+<span class="text-sm font-bold text-slate-900">7 posts need a visual</span>
+<span class="text-xs text-slate-400 font-medium">·</span>
+<span class="text-xs font-medium text-slate-600">5 free</span>
+<span class="text-xs text-slate-400 font-medium">·</span>
+<span class="text-xs font-semibold text-indigo-700">2 use AI (6 credits)</span>
+<button class="ml-2 text-xs font-bold text-indigo-600 hover:text-indigo-800 underline underline-offset-2">Change</button>
+</div>
+</div>
+<button class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-sm shadow-indigo-600/20 flex items-center gap-2">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewbox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          Create all visuals
+        </button>
+</section>
+<!-- RADICAL LAYOUT: Director's Studio Deck & Visual Split Console -->
+<div class="flex flex-col lg:flex-row gap-6 items-start">
+<!-- LEFT COLUMN (~65% width): Social Publishing Stream -->
+<section class="w-full lg:w-[65%] space-y-4">
+<div class="flex items-center justify-between pb-1 px-1">
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold uppercase tracking-wider text-slate-500">Chronological Stream</span>
+<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200/80 text-slate-700">6 Posts</span>
+</div>
+<span class="text-xs text-slate-400">Click entry to inspect visual staging</span>
+</div>
+<!-- STREAM ITEM 1: Instagram (Consistency angle) -->
+<article class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm hover:border-indigo-300 hover:shadow-md transition group cursor-pointer">
+<div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+<div class="flex-1">
+<div class="flex items-center gap-2.5 mb-2.5">
+<div class="w-6 h-6 rounded-lg bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 flex items-center justify-center text-white flex-shrink-0">
+<svg class="w-3.5 h-3.5" fill="currentColor" viewbox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"></path></svg>
+</div>
+<span class="text-xs font-bold text-slate-800">Instagram</span>
+<span class="text-[11px] font-medium text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">Consistency angle</span>
+</div>
+<p class="text-xs text-slate-700 leading-relaxed mb-2 font-normal">
+                  Most training routines fail because they rely on motivation instead of daily friction reduction. Set your shoes out before bedtime, commit to just 15 minutes…
+                </p>
+<p class="text-[11px] font-semibold text-indigo-600">#DailyDiscipline #MorningRoutine #FitnessHabits</p>
+</div>
+<!-- Stream inline visual attachment indicator -->
+<div class="flex sm:flex-col items-center sm:items-end justify-between gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100 flex-shrink-0">
+<div class="flex items-center gap-2">
+<div class="relative group/thumb w-10 h-10 rounded-lg overflow-hidden bg-[#16a34a] flex-shrink-0 border border-emerald-700 flex flex-col items-center justify-center p-0.5">
+<span class="text-[6px] font-syne font-black text-white leading-tight uppercase text-center">NO GYM<br/>NO<br/>PROB</span>
+</div>
+<div class="text-left sm:text-right">
+<div class="text-[11px] font-semibold text-slate-800 flex items-center sm:justify-end gap-1">
+<span>Text design</span>
+<span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-700">Free</span>
+</div>
+<div class="text-[10px] text-slate-500 font-medium">Visual required</div>
+</div>
+</div>
+<button class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[11px] font-semibold text-slate-700 flex items-center gap-1 transition">
+<span>Select</span>
+<svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</button>
+</div>
+</div>
+</article>
+<!-- STREAM ITEM 2: TikTok (ACTIVE / INSPECTED IN CONSOLE) -->
+<article class="bg-indigo-50/40 rounded-2xl border-2 border-indigo-500/80 p-5 shadow-sm ring-4 ring-indigo-500/10 cursor-pointer relative">
+<div class="absolute -top-2.5 right-6 px-2.5 py-0.5 rounded-full bg-indigo-600 text-[9px] font-bold uppercase tracking-wider text-white shadow-sm flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+              Active in Director Deck
+            </div>
+<div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+<div class="flex-1">
+<div class="flex items-center gap-2.5 mb-2.5">
+<div class="w-6 h-6 rounded-lg bg-black flex items-center justify-center text-white flex-shrink-0">
+<svg class="w-3.5 h-3.5" fill="currentColor" viewbox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z"></path></svg>
+</div>
+<span class="text-xs font-bold text-slate-800">TikTok</span>
+<span class="text-[11px] font-medium text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">Energy &amp; Pace</span>
+</div>
+<p class="text-xs text-slate-700 leading-relaxed mb-2 font-normal">
+                  When the city is still asleep, that's when champions build momentum. No traffic, no phone notifications, just your feet pounding the damp concrete…
+                </p>
+<p class="text-[11px] font-semibold text-indigo-600">#RunBeforeTheCityWakes #SunriseClub #5AMClub</p>
+</div>
+<!-- Stream inline visual attachment indicator -->
+<div class="flex sm:flex-col items-center sm:items-end justify-between gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200 flex-shrink-0">
+<div class="flex items-center gap-2">
+<div class="w-10 h-10 rounded-lg overflow-hidden bg-slate-900 border border-slate-300 relative flex-shrink-0">
+<img alt="Runner clip" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1WPdk0r6OeNs08fpYqP9_7JGZlUA7QIB0IAJOgmrC1UZ6brN0OPEAxiFWlB2ShTi4V98PBu_y20_bguE669CumYzBSifH5E4wz67z492t03fvEbycKiV2cP6-sstFzD1ALuiqCRri2vT76w8XnipnQ0aoN2NGM51o2vkMu-o8e36Yu4Z0Ids3MNiDkPwbLoelkJ_LuOM22BrxXNN7Bnr1mT6MiYEXNqXj2PyOMuIn_tiHO8ET3uG95iOg"/>
+</div>
+<div class="text-left sm:text-right">
+<div class="text-[11px] font-semibold text-slate-800 flex items-center sm:justify-end gap-1">
+<span>AI video</span>
+<span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-indigo-100 text-indigo-700">5 credits</span>
+</div>
+<div class="text-[10px] text-slate-500 font-medium">Visual required</div>
+</div>
+</div>
+<button class="px-2.5 py-1 rounded-lg bg-indigo-600 text-[11px] font-semibold text-white flex items-center gap-1 shadow-sm">
+<span>Selected</span>
+<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</button>
+</div>
+</div>
+</article>
+<!-- STREAM ITEM 3: LinkedIn (Executive Insight) -->
+<article class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm hover:border-indigo-300 hover:shadow-md transition group cursor-pointer">
+<div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+<div class="flex-1">
+<div class="flex items-center gap-2.5 mb-2.5">
+<div class="w-6 h-6 rounded-lg bg-[#0077B5] flex items-center justify-center text-white flex-shrink-0">
+<svg class="w-3.5 h-3.5" fill="currentColor" viewbox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"></path></svg>
+</div>
+<span class="text-xs font-bold text-slate-800">LinkedIn</span>
+<span class="text-[11px] font-medium text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">Executive Insight</span>
+</div>
+<p class="text-xs text-slate-700 leading-relaxed mb-2 font-normal">
+                  High-output leaders treat physical fitness like cognitive risk management. When you optimize heart-rate variability and recovery, quarterly decision quality skyrockets…
+                </p>
+<p class="text-[11px] font-semibold text-indigo-600">#Leadership #CognitiveHealth #FounderHabits</p>
+</div>
+<!-- Stream inline visual attachment indicator -->
+<div class="flex sm:flex-col items-center sm:items-end justify-between gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100 flex-shrink-0">
+<div class="flex items-center gap-2">
+<div class="w-10 h-10 rounded-lg border border-dashed border-slate-200 bg-slate-50 flex items-center justify-center text-slate-300 flex-shrink-0">
+<svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" stroke-width="1.6" viewbox="0 0 24 24"><path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</div>
+<div class="text-left sm:text-right">
+<div class="text-[11px] font-semibold text-slate-800">None</div>
+<div class="text-[10px] text-slate-500 font-medium">Text-only post</div>
+</div>
+</div>
+<button class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[11px] font-semibold text-slate-700 flex items-center gap-1 transition">
+<span>None</span>
+<svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</button>
+</div>
+</div>
+</article>
+<!-- STREAM ITEM 4: X (Direct hook) -->
+<article class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm hover:border-indigo-300 hover:shadow-md transition group cursor-pointer">
+<div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+<div class="flex-1">
+<div class="flex items-center gap-2.5 mb-2.5">
+<div class="w-6 h-6 rounded-lg bg-black flex items-center justify-center text-white flex-shrink-0">
+<svg class="w-3 h-3" fill="currentColor" viewbox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+</div>
+<span class="text-xs font-bold text-slate-800">X</span>
+<span class="text-[11px] font-medium text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">Direct hook</span>
+</div>
+<p class="text-xs text-slate-700 leading-relaxed mb-2 font-normal">
+                  Stop waiting for the "perfect Monday" to start working out. Your calendar isn't going to get lighter next month. Start with 15 pushups today…
+                </p>
+<p class="text-[11px] font-semibold text-indigo-600">#FitnessMotivation #NoExcuses</p>
+</div>
+<!-- Stream inline visual attachment indicator -->
+<div class="flex sm:flex-col items-center sm:items-end justify-between gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100 flex-shrink-0">
+<div class="flex items-center gap-2">
+<div class="w-10 h-10 rounded-lg overflow-hidden bg-slate-950 flex-shrink-0 border border-slate-800 flex flex-col items-center justify-center p-0.5">
+<span class="text-[5px] tracking-widest uppercase bg-amber-400 text-black px-0.5 rounded-sm font-black">DROP</span>
+</div>
+<div class="text-left sm:text-right">
+<div class="text-[11px] font-semibold text-slate-800 flex items-center sm:justify-end gap-1">
+<span>Text design</span>
+<span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-700">Free</span>
+</div>
+<div class="text-[10px] text-slate-500 font-medium">Ready to schedule</div>
+</div>
+</div>
+<button class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[11px] font-semibold text-slate-700 flex items-center gap-1 transition">
+<span>Select</span>
+<svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</button>
+</div>
+</div>
+</article>
+<!-- STREAM ITEM 5: Instagram (Action Plan - Creating…) -->
+<article class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm hover:border-indigo-300 hover:shadow-md transition group cursor-pointer">
+<div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+<div class="flex-1">
+<div class="flex items-center gap-2.5 mb-2.5">
+<div class="w-6 h-6 rounded-lg bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 flex items-center justify-center text-white flex-shrink-0">
+<svg class="w-3.5 h-3.5" fill="currentColor" viewbox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"></path></svg>
+</div>
+<span class="text-xs font-bold text-slate-800">Instagram</span>
+<span class="text-[11px] font-medium text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">Action Plan</span>
+</div>
+<p class="text-xs text-slate-700 leading-relaxed mb-2 font-normal">
+                  3 non-negotiables for this training cycle: 1) Hydrate before caffeine, 2) 7,000 steps minimum before noon, 3) 20g protein per breakfast…
+                </p>
+<p class="text-[11px] font-semibold text-indigo-600">#SummerCut #TrainingPlan #AthleteDaily</p>
+</div>
+<!-- Stream inline visual attachment indicator -->
+<div class="flex sm:flex-col items-center sm:items-end justify-between gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100 flex-shrink-0">
+<div class="flex items-center gap-2">
+<div class="w-10 h-10 rounded-lg border-2 border-dashed border-indigo-300 bg-indigo-50/50 flex-shrink-0 flex items-center justify-center">
+<svg class="w-4 h-4 text-indigo-600 animate-spin" fill="none" viewbox="0 0 24 24">
+<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+<path class="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor"></path>
+</svg>
+</div>
+<div class="text-left sm:text-right">
+<div class="text-[11px] font-semibold text-slate-800 flex items-center sm:justify-end gap-1">
+<span>Stock photo + text</span>
+<span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-700">Free</span>
+</div>
+<div class="text-[10px] text-slate-600 font-medium flex items-center sm:justify-end gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                      Creating…
+                    </div>
+</div>
+</div>
+<button class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[11px] font-semibold text-slate-700 flex items-center gap-1 transition">
+<span>Select</span>
+<svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</button>
+</div>
+</div>
+</article>
+<!-- STREAM ITEM 6: Facebook (Community Story) -->
+<article class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm hover:border-indigo-300 hover:shadow-md transition group cursor-pointer">
+<div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+<div class="flex-1">
+<div class="flex items-center gap-2.5 mb-2.5">
+<div class="w-6 h-6 rounded-lg bg-[#1877F2] flex items-center justify-center text-white flex-shrink-0">
+<svg class="w-3.5 h-3.5" fill="currentColor" viewbox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path></svg>
+</div>
+<span class="text-xs font-bold text-slate-800">Facebook</span>
+<span class="text-[11px] font-medium text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">Community Story</span>
+</div>
+<p class="text-xs text-slate-700 leading-relaxed mb-2 font-normal">
+                  Full equipment tour and beginner setup guide for anyone joining the summer conditioning camp. Bring your water bottle and comfortable shoes…
+                </p>
+<p class="text-[11px] font-semibold text-indigo-600">#GymCommunity #SummerFitness #WorkoutTour</p>
+</div>
+<!-- Stream inline visual attachment indicator -->
+<div class="flex sm:flex-col items-center sm:items-end justify-between gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100 flex-shrink-0">
+<div class="flex items-center gap-2">
+<div class="w-10 h-10 rounded-lg overflow-hidden bg-slate-900 border border-slate-800 flex flex-col justify-between p-1 flex-shrink-0">
+<span class="text-[5.5px] font-syne font-extrabold text-white text-center leading-tight">15-MIN FULL</span>
+</div>
+<div class="text-left sm:text-right">
+<div class="text-[11px] font-semibold text-slate-800 flex items-center sm:justify-end gap-1">
+<span>Stock photo + text</span>
+<span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-700">Free</span>
+</div>
+<div class="text-[10px] text-slate-500 font-medium">Ready to schedule</div>
+</div>
+</div>
+<button class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[11px] font-semibold text-slate-700 flex items-center gap-1 transition">
+<span>Select</span>
+<svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</button>
+</div>
+</div>
+</article>
+</section>
+<!-- RIGHT COLUMN (~35% width, sticky/elevated): Visual Director Deck & Batch Asset Manager -->
+<aside class="w-full lg:w-[35%] lg:sticky lg:top-24 space-y-5">
+<!-- Active Inspector Console Card -->
+<div class="bg-white rounded-2xl border border-slate-200 shadow-md p-6 relative overflow-hidden">
+<div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-lg bg-black flex items-center justify-center text-white">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z"></path></svg>
+</div>
+<div>
+<h2 class="text-sm font-bold text-slate-900 leading-tight">Visual Director Deck</h2>
+<p class="text-[11px] text-slate-400 font-medium">TikTok · Energy &amp; Pace</p>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                Visual required
+              </span>
+</div>
+<!-- Staging Canvas & Media Preview -->
+<div class="mb-5">
+<div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Stage Canvas</div>
+<div class="relative group rounded-xl overflow-hidden bg-slate-900 border border-slate-200 aspect-[9/10] max-h-56 w-full flex items-center justify-center shadow-inner cursor-pointer">
+<img alt="Runner clip" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1WPdk0r6OeNs08fpYqP9_7JGZlUA7QIB0IAJOgmrC1UZ6brN0OPEAxiFWlB2ShTi4V98PBu_y20_bguE669CumYzBSifH5E4wz67z492t03fvEbycKiV2cP6-sstFzD1ALuiqCRri2vT76w8XnipnQ0aoN2NGM51o2vkMu-o8e36Yu4Z0Ids3MNiDkPwbLoelkJ_LuOM22BrxXNN7Bnr1mT6MiYEXNqXj2PyOMuIn_tiHO8ET3uG95iOg"/>
+<!-- Video play indicator pill -->
+<div class="absolute bottom-3 right-3 bg-black/80 backdrop-blur-sm px-2 py-1 rounded-md text-[10px] font-bold text-white flex items-center gap-1.5 shadow-sm">
+<svg class="w-2.5 h-2.5 fill-current" viewbox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg>
+                  0:06
+                </div>
+<!-- Hover edit pencil -->
+<div class="absolute inset-0 bg-slate-900/60 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<div class="w-9 h-9 rounded-full bg-white text-slate-900 flex items-center justify-center shadow-xl">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewbox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</div>
+</div>
+</div>
+</div>
+<!-- Exploded Source Selector Inspector Panel -->
+<div class="space-y-3 mb-5">
+<div class="flex items-center justify-between">
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Visual Source Selector</span>
+<span class="text-[11px] font-semibold text-indigo-600">Active: AI video</span>
+</div>
+<!-- Source list / Expanded menu options -->
+<div class="space-y-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+<!-- Active AI Video -->
+<div class="p-2 rounded-lg bg-white border border-indigo-300 shadow-xs flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+<span class="text-xs font-semibold text-slate-800">AI video</span>
+</div>
+<span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-indigo-100 text-indigo-700">5 credits</span>
+</div>
+<!-- Text design option -->
+<div class="p-2 rounded-lg hover:bg-white text-slate-700 flex items-center justify-between transition cursor-pointer">
+<span class="text-xs font-medium">Text design</span>
+<span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-700">Free</span>
+</div>
+<!-- Stock photo + text option -->
+<div class="p-2 rounded-lg hover:bg-white text-slate-700 flex items-center justify-between transition cursor-pointer">
+<span class="text-xs font-medium">Stock photo + text</span>
+<span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-700">Free</span>
+</div>
+<!-- Disabled None Option with tooltip constraint -->
+<div class="p-2 rounded-lg bg-slate-100/80 border border-dashed border-slate-300 text-slate-400 flex flex-col gap-0.5">
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold text-slate-400">None (Disabled)</span>
+<span class="text-[10px] text-rose-500 font-bold">Constraint</span>
+</div>
+<div class="text-[10px] text-slate-500 leading-tight">TikTok needs a vertical video to publish.</div>
+</div>
+</div>
+</div>
+<!-- Single Primary Action in Right Panel -->
+<button class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-sm shadow-indigo-600/30 flex items-center justify-center gap-2">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewbox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              Edit visual in studio
+            </button>
+</div>
+<!-- Batch Asset Mini-Deck Overview -->
+<div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-3">
+<div class="flex items-center justify-between">
+<h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Batch Visual Staging</h3>
+<span class="text-[11px] font-semibold text-indigo-600">6 thumbnails</span>
+</div>
+<div class="grid grid-cols-6 gap-2">
+<!-- Thumb 1 -->
+<div class="w-full aspect-square rounded-lg bg-[#16a34a] border border-emerald-700 flex flex-col items-center justify-center p-0.5 text-white shadow-xs cursor-pointer" title="Instagram: Text design">
+<span class="text-[5px] font-syne font-black text-center leading-none uppercase">NO<br/>GYM</span>
+</div>
+<!-- Thumb 2 (Active) -->
+<div class="w-full aspect-square rounded-lg overflow-hidden bg-slate-900 border-2 border-indigo-600 shadow-sm relative cursor-pointer" title="TikTok: AI video">
+<img alt="Runner clip" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1WPdk0r6OeNs08fpYqP9_7JGZlUA7QIB0IAJOgmrC1UZ6brN0OPEAxiFWlB2ShTi4V98PBu_y20_bguE669CumYzBSifH5E4wz67z492t03fvEbycKiV2cP6-sstFzD1ALuiqCRri2vT76w8XnipnQ0aoN2NGM51o2vkMu-o8e36Yu4Z0Ids3MNiDkPwbLoelkJ_LuOM22BrxXNN7Bnr1mT6MiYEXNqXj2PyOMuIn_tiHO8ET3uG95iOg"/>
+</div>
+<!-- Thumb 3 -->
+<div class="w-full aspect-square rounded-lg border border-dashed border-slate-300 bg-slate-100 flex items-center justify-center text-slate-400 cursor-pointer" title="LinkedIn: None">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.6" viewbox="0 0 24 24"><path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</div>
+<!-- Thumb 4 -->
+<div class="w-full aspect-square rounded-lg bg-slate-950 border border-slate-800 flex flex-col items-center justify-center p-0.5 text-amber-400 cursor-pointer" title="X: Text design">
+<span class="text-[5.5px] font-syne font-black uppercase text-center leading-none">DROP</span>
+</div>
+<!-- Thumb 5 -->
+<div class="w-full aspect-square rounded-lg border-2 border-dashed border-indigo-300 bg-indigo-50/50 flex items-center justify-center cursor-pointer" title="Instagram: Creating…">
+<svg class="w-3.5 h-3.5 text-indigo-600 animate-spin" fill="none" viewbox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor"></path></svg>
+</div>
+<!-- Thumb 6 -->
+<div class="w-full aspect-square rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center p-0.5 text-white cursor-pointer" title="Facebook: Stock photo + text">
+<span class="text-[5px] font-syne font-black uppercase text-center leading-none">15-M</span>
+</div>
+</div>
+<div class="text-[11px] text-slate-500 pt-1 flex items-center justify-between border-t border-slate-100">
+<span>Ready: 4 posts</span>
+<span class="text-indigo-600 font-semibold">1 processing</span>
+</div>
+</div>
+</aside>
+</div>
+</main>
+</div>
+</body></html>
