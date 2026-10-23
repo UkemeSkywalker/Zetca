@@ -7,7 +7,18 @@ import { FONT_FAMILIES, loadDesignFonts } from './fonts';
 import { usePhotoImages } from './photos';
 
 /** Draws a design at full size and scales it to the width of its container */
-export function DesignCanvas({ doc, className = '', label }: { doc: DesignDoc; className?: string; label?: string }) {
+export function DesignCanvas({
+  doc,
+  className = '',
+  label,
+  resolution = 1,
+}: {
+  doc: DesignDoc;
+  className?: string;
+  label?: string;
+  /** Below 1 for thumbnails, so many designs on a page stay light */
+  resolution?: number;
+}) {
   const ref = useRef<HTMLCanvasElement>(null);
   const [fontsReady, setFontsReady] = useState(false);
   const photos = usePhotoImages(doc);
@@ -21,15 +32,15 @@ export function DesignCanvas({ doc, className = '', label }: { doc: DesignDoc; c
   }, []);
 
   useEffect(() => {
-    if (ref.current) drawDesign(ref.current, doc, FONT_FAMILIES, photos);
-  }, [doc, fontsReady, photos]);
+    if (ref.current) drawDesign(ref.current, doc, FONT_FAMILIES, photos, resolution);
+  }, [doc, fontsReady, photos, resolution]);
 
   const { width, height } = FORMATS[doc.format];
   return (
     <canvas
       ref={ref}
-      width={width}
-      height={height}
+      width={Math.round(width * resolution)}
+      height={Math.round(height * resolution)}
       role="img"
       aria-label={label ?? designLabel(doc)}
       className={`block w-full h-auto ${className}`}
@@ -44,13 +55,23 @@ export function designLabel(doc: DesignDoc): string {
 }
 
 /** A design thumbnail letterboxed into a fixed-shape frame */
-export function DesignThumb({ doc, frame = 'portrait', className = '' }: { doc: DesignDoc; frame?: 'portrait' | 'square'; className?: string }) {
+export function DesignThumb({
+  doc,
+  frame = 'portrait',
+  className = '',
+  resolution = 0.4,
+}: {
+  doc: DesignDoc;
+  frame?: 'portrait' | 'square';
+  className?: string;
+  resolution?: number;
+}) {
   const tall = FORMATS[doc.format].height / FORMATS[doc.format].width;
   const frameRatio = frame === 'portrait' ? 1.25 : 1;
   return (
     <div className={`relative flex items-center justify-center overflow-hidden bg-surface-container-low ${frame === 'portrait' ? 'aspect-[4/5]' : 'aspect-square'} ${className}`}>
       <div style={{ width: tall > frameRatio ? `${(frameRatio / tall) * 100}%` : '100%' }}>
-        <DesignCanvas doc={doc} />
+        <DesignCanvas doc={doc} resolution={resolution} />
       </div>
     </div>
   );

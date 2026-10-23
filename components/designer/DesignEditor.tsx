@@ -10,6 +10,7 @@ import { getDesign, saveDesign } from '@/lib/api/designApi';
 import { DesignCanvas } from './DesignCanvas';
 import { FONT_FAMILIES, loadDesignFonts } from './fonts';
 import { photosFor, withSavedPhoto } from './photos';
+import { updatePostVisual } from './postVisuals';
 import { LeftPanel, RightPanel, type Tab } from './EditorPanels';
 import { SecondaryButton, PrimaryButton } from './ui';
 
@@ -28,6 +29,7 @@ export function DesignEditor({ designId }: { designId: string }) {
   const [tab, setTab] = useState<Tab>('text');
   const [saveState, setSaveState] = useState<SaveState>('saved');
   const [downloading, setDownloading] = useState(false);
+  const [updatingPost, setUpdatingPost] = useState<'idle' | 'busy' | 'done' | 'error'>('idle');
   const lastPush = useRef(0);
 
   useEffect(() => {
@@ -158,11 +160,28 @@ export function DesignEditor({ designId }: { designId: string }) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${(name || 'design').replace(/[^\w-]+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'design'}.png`;
+      a.download = `${(name || 'design').replace(/[^\w-]+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'design'}.${blob.type === 'image/jpeg' ? 'jpg' : 'png'}`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } finally {
       setDownloading(false);
+    }
+  };
+
+  /** Saves the design and gives its post the new image */
+  const updatePost = async () => {
+    if (!doc || !design) return;
+    const toSave = withSavedPhoto(doc);
+    if (toSave.background.kind === 'photo' && isUnsavedPhoto(toSave.background.photoId)) return;
+    setUpdatingPost('busy');
+    try {
+      const { design: saved } = await updatePostVisual(design, toSave, name.trim() || design.name);
+      setDesign(saved);
+      setSaveState('saved');
+      setUpdatingPost('done');
+      setTimeout(() => setUpdatingPost('idle'), 2500);
+    } catch {
+      setUpdatingPost('error');
     }
   };
 
@@ -233,9 +252,20 @@ export function DesignEditor({ designId }: { designId: string }) {
             {downloading ? <Icon icon="lucide:loader-circle" className="w-4 h-4 animate-spin" aria-hidden /> : <Icon icon="lucide:download" className="w-4 h-4" aria-hidden />}
             Download
           </SecondaryButton>
-          <PrimaryButton type="button" onClick={save} disabled={saveState === 'saving' || saveState === 'saved'} className="h-10">
-            Save
-          </PrimaryButton>
+          {design.attachedTo ? (
+            <PrimaryButton type="button" onClick={updatePost} disabled={updatingPost === 'busy'} className="h-10">
+              {updatingPost === 'busy' ? (
+                <Icon icon="lucide:loader-circle" className="w-4 h-4 animate-spin" aria-hidden />
+              ) : (
+                <Icon icon={updatingPost === 'done' ? 'lucide:check' : 'lucide:send'} className="w-4 h-4" aria-hidden />
+              )}
+              {updatingPost === 'done' ? 'Post updated' : updatingPost === 'error' ? 'Try again' : 'Update post'}
+            </PrimaryButton>
+          ) : (
+            <PrimaryButton type="button" onClick={save} disabled={saveState === 'saving' || saveState === 'saved'} className="h-10">
+              Save
+            </PrimaryButton>
+          )}
         </div>
       </div>
 

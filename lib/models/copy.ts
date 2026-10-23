@@ -25,8 +25,49 @@ export const CopyItemSchema = z.object({
   platform: z.string().describe('Target social media platform'),
   hashtags: z.array(z.string()).default([]).describe('List of relevant hashtags'),
   angle: z.string().optional().describe('Short name of the angle this copy takes, e.g. "Bold hook"'),
+  /** The copywriter's suggestion for a visual: none, a text design or a photo with text */
+  visual: z.enum(['none', 'text', 'photo']).optional(),
 });
 export type CopyItem = z.infer<typeof CopyItemSchema>;
+
+// ---------------------------------------------------------------------------
+// The visual that goes with a post
+// ---------------------------------------------------------------------------
+
+export const VISUAL_KINDS = ['none', 'template', 'stock', 'ai_image', 'ai_video'] as const;
+export type VisualKind = (typeof VISUAL_KINDS)[number];
+
+/** Platforms whose posts can't go out without an image or video */
+export const VISUAL_REQUIRED_PLATFORMS = new Set(['instagram', 'tiktok']);
+
+export interface CopyVisual {
+  kind: VisualKind;
+  /** The Designer design behind the image */
+  design_id?: string;
+  /** The finished image or video, ready to schedule */
+  media_id?: string;
+  media_type?: 'image' | 'video';
+}
+
+/**
+ * The visual a new copy starts with: the copywriter's suggestion, except that
+ * Instagram and TikTok always get one, and no suggestion means a text design
+ * only where a visual is required.
+ */
+export function suggestedVisual(platform: string, suggestion?: CopyItem['visual']): CopyVisual {
+  const kind: VisualKind = suggestion === 'photo' ? 'stock' : suggestion === 'text' ? 'template' : 'none';
+  if (kind === 'none' && VISUAL_REQUIRED_PLATFORMS.has(platform)) return { kind: platform === 'tiktok' ? 'stock' : 'template' };
+  return { kind };
+}
+
+export const CopyVisualSchema = z
+  .object({
+    kind: z.enum(VISUAL_KINDS),
+    design_id: z.string().trim().min(1).max(80).optional(),
+    media_id: z.string().trim().min(1).max(80).optional(),
+    media_type: z.enum(['image', 'video']).optional(),
+  })
+  .refine((v) => !v.media_id || v.media_type, { message: 'media_type is needed with media_id' });
 
 export const CopyOutputSchema = z.object({
   copies: z.array(CopyItemSchema).min(1).describe('List of generated copies, 7 variations per platform'),
@@ -44,6 +85,8 @@ export interface CopyRecord {
   angle?: string;
   /** The background generation job that wrote this copy, if any */
   job_id?: string;
+  /** The image or video that goes with it */
+  visual?: CopyVisual;
   created_at: string;
   updated_at: string;
 }
@@ -56,6 +99,7 @@ export function newCopyRecord(data: {
   hashtags: string[];
   angle?: string;
   job_id?: string;
+  visual?: CopyVisual;
 }): CopyRecord {
   const now = new Date().toISOString();
   return { id: randomUUID(), created_at: now, updated_at: now, ...data };

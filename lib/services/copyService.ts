@@ -19,6 +19,9 @@ import {
   COPIES_PER_PLATFORM,
   newChatMessage,
   newCopyRecord,
+  suggestedVisual,
+  CopyVisualSchema,
+  VISUAL_REQUIRED_PLATFORMS,
 } from '../models/copy';
 import {
   COPY_PLATFORMS,
@@ -32,6 +35,7 @@ import { StrategyRecord } from '../models/strategy';
 import { CopyRepository } from '../db/copyRepository';
 import { StrategyRepository } from '../db/strategyRepository';
 import { ApiError } from '../errors';
+import { MediaRepository } from '../db/mediaRepository';
 import { closeFeed, laneCopySaved, laneDone, laneWriting, openFeed } from './copyJobFeed';
 
 /** A running job that hasn't saved a copy for this long was interrupted (e.g. the server restarted) */
@@ -126,6 +130,7 @@ export class CopyService {
         platform: normalizePlatform(item.platform),
         hashtags: item.hashtags,
         angle: item.angle,
+        visual: suggestedVisual(normalizePlatform(item.platform), item.visual),
       })
     );
 
@@ -219,6 +224,7 @@ export class CopyService {
             hashtags: item.hashtags,
             angle: item.angle,
             job_id: job.id,
+            visual: suggestedVisual(platform, item.visual),
           })
         );
         completed[platform] = (completed[platform] ?? 0) + 1;
@@ -340,6 +346,7 @@ export class CopyService {
           platform: platform in COPY_PLATFORMS ? platform : 'instagram',
           hashtags: decision.copy.hashtags,
           angle: decision.copy.angle || 'From chat',
+          visual: suggestedVisual(platform in COPY_PLATFORMS ? platform : 'instagram'),
         })
       );
     } else if (action === 'generate_all') {
@@ -384,6 +391,25 @@ export class CopyService {
     if (belongsToOther) throw new ApiError('Access denied: You do not have permission to access this resource', 403);
     if (record === null) throw new ApiError('Copy not found', 404);
     return this.copyRepository.updateCopy(copyId, text, hashtags);
+  }
+
+  /**
+   * Sets the image or video that goes with a copy. Instagram and TikTok posts
+   * always need one, and any finished image must be the user's own.
+   */
+  async setVisual(copyId: string, userId: string, input: unknown): Promise<CopyRecord> {
+    const visual = CopyVisualSchema.parse(input);
+    const [record, belongsToOther] = await this.getCopy(copyId, userId);
+    if (belongsToOther) throw new ApiError('Access denied: You do not have permission to access this resource', 403);
+    if (record === null) throw new ApiError('Copy not found', 404);
+    if (visual.kind === 'none' && VISUAL_REQUIRED_PLATFORMS.has(record.platform)) {
+      throw new ApiError(`${record.platform === 'tiktok' ? 'TikTok' : 'Instagram'} posts need an image or video`, 400);
+    }
+    if (visual.media_id) {
+      const media = await new MediaRepository().getMediaById(visual.media_id);
+      if (!media || media.userId !== userId) throw new ApiError('That image isn’t yours', 403);
+    }
+    return this.copyRepository.updateVisual(copyId, visual);
   }
 
   /** All copies for a strategy, after verifying ownership. */

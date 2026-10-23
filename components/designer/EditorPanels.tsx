@@ -126,7 +126,7 @@ function StylesTab({ doc, onChange }: { doc: DesignDoc; onChange: Change }) {
               onClick={() => onChange((d) => restyle(d, style.id, currentPalette(d)))}
               className={`rounded-xl overflow-hidden border-2 text-left ${doc.styleId === style.id ? 'border-primary' : 'border-transparent hover:border-primary/40'}`}
             >
-              <DesignCanvas doc={preview} />
+              <DesignCanvas doc={preview} resolution={0.25} />
               <span className="block px-1.5 py-1 text-[11px] font-semibold text-[#0B1C30] truncate">{style.name}</span>
             </button>
           ))}

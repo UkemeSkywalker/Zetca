@@ -18,7 +18,7 @@ import {
   type BatchWriteCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
 import { getConfig } from '../config';
-import { CopyRecord } from '../models/copy';
+import { CopyRecord, CopyVisual } from '../models/copy';
 
 type WriteRequests = NonNullable<BatchWriteCommandInput['RequestItems']>[string];
 
@@ -32,6 +32,7 @@ interface CopyItemRow {
   hashtags?: string[];
   angle?: string;
   jobId?: string;
+  visual?: { kind: CopyVisual['kind']; designId?: string; mediaId?: string; mediaType?: 'image' | 'video' };
   createdAt: string;
   updatedAt: string;
 }
@@ -128,6 +129,21 @@ export class CopyRepository {
     return this.itemToRecord(result.Attributes as CopyItemRow);
   }
 
+  /** Sets the image or video that goes with a copy */
+  async updateVisual(copyId: string, visual: CopyVisual): Promise<CopyRecord> {
+    const result = await this.docClient.send(
+      new UpdateCommand({
+        TableName: this.tableName,
+        Key: { copyId },
+        UpdateExpression: 'SET visual = :visual, updatedAt = :updatedAt',
+        ConditionExpression: 'attribute_exists(copyId)',
+        ExpressionAttributeValues: { ':visual': visualToItem(visual), ':updatedAt': new Date().toISOString() },
+        ReturnValues: 'ALL_NEW',
+      })
+    );
+    return this.itemToRecord(result.Attributes as CopyItemRow);
+  }
+
   /** Delete many copies, 25 per request, retrying any DynamoDB leaves unprocessed */
   async deleteCopies(copyIds: string[]): Promise<void> {
     for (let i = 0; i < copyIds.length; i += 25) {
@@ -159,6 +175,7 @@ export class CopyRepository {
       hashtags: record.hashtags,
       ...(record.angle ? { angle: record.angle } : {}),
       ...(record.job_id ? { jobId: record.job_id } : {}),
+      ...(record.visual ? { visual: visualToItem(record.visual) } : {}),
       createdAt: record.created_at,
       updatedAt: record.updated_at,
     };
@@ -174,8 +191,25 @@ export class CopyRepository {
       hashtags: item.hashtags || [],
       ...(item.angle ? { angle: item.angle } : {}),
       ...(item.jobId ? { job_id: item.jobId } : {}),
+      ...(item.visual
+        ? {
+            visual: {
+              kind: item.visual.kind,
+              ...(item.visual.designId ? { design_id: item.visual.designId } : {}),
+              ...(item.visual.mediaId ? { media_id: item.visual.mediaId, media_type: item.visual.mediaType ?? 'image' } : {}),
+            },
+          }
+        : {}),
       created_at: item.createdAt,
       updated_at: item.updatedAt,
     };
   }
+}
+
+function visualToItem(v: CopyVisual): NonNullable<CopyItemRow['visual']> {
+  return {
+    kind: v.kind,
+    ...(v.design_id ? { designId: v.design_id } : {}),
+    ...(v.media_id ? { mediaId: v.media_id, mediaType: v.media_type ?? 'image' } : {}),
+  };
 }
