@@ -21,6 +21,8 @@ import { CopyCard, CopyCardSkeleton } from './CopyCard';
 import { CopyEditor } from './CopyEditor';
 import { CopyChatPanel } from './CopyChatPanel';
 import { GeneratePicker } from './GeneratePicker';
+import { EditVisualModal, VisualsBanner } from './PostVisual';
+import { needsVisual, usePostVisuals, visualOf } from './usePostVisuals';
 import { PLATFORM_STYLE, platformInfo } from './platforms';
 
 const LABEL_MD = 'text-[13px] leading-[18px] tracking-[0.01em] font-semibold';
@@ -220,6 +222,27 @@ export function CopywriterWorkspace() {
   const job = ready ? workspace!.job : null;
   const chat = ready ? workspace!.chat : [];
   const openCopy = copies.find((c) => c.id === openCopyId) ?? null;
+
+  // Visuals: the image that goes with each post
+  const replaceCopy = useCallback(
+    (saved: CopyRecord) =>
+      setWorkspace((prev) => (prev ? { ...prev, copies: prev.copies.map((c) => (c.id === saved.id ? saved : c)) } : prev)),
+    []
+  );
+  const visuals = usePostVisuals(replaceCopy);
+  const [editingVisualId, setEditingVisualId] = useState<string | null>(null);
+  const [creatingAll, setCreatingAll] = useState(false);
+  const visualsToMake = copies.filter(needsVisual).length;
+  const createAllVisuals = async () => {
+    setCreatingAll(true);
+    try {
+      await visuals.makeAll(copies);
+    } finally {
+      setCreatingAll(false);
+    }
+  };
+  const editingCopy = copies.find((c) => c.id === editingVisualId) ?? null;
+  const editingDesign = editingCopy ? visuals.designFor(editingCopy) : undefined;
 
   // The picker starts with the platforms last used for this strategy, else the strategy's own
   const initialPlatforms = (): CopyPlatformId[] => {
@@ -421,6 +444,8 @@ export function CopywriterWorkspace() {
           />
         ) : (
           <>
+            <VisualsBanner count={visualsToMake} busy={creatingAll} onCreateAll={createAllVisuals} />
+
             {/* Platform tabs */}
             <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4" role="tablist" aria-label="Platforms">
               <PlatformTab active={platform === 'all'} onClick={() => setPlatform('all')} label="All" count={copies.length} />
@@ -459,6 +484,14 @@ export function CopywriterWorkspace() {
                             fresh={fresh.has(item.id)}
                             onOpen={() => setOpenCopyId(item.id)}
                             onDelete={() => removeCopy(item.id)}
+                            visual={{
+                              design: visuals.designFor(item),
+                              making: visuals.making.has(item.id),
+                              error: visuals.errors[item.id],
+                              onChoose: (kind) => void visuals.choose(item, kind),
+                              onCreate: () => void visuals.make(item, visualOf(item).kind),
+                              onEdit: () => setEditingVisualId(item.id),
+                            }}
                           />
                         )
                       )}
@@ -470,6 +503,24 @@ export function CopywriterWorkspace() {
           </>
         )}
       </div>
+
+      {editingCopy && editingDesign && (
+        <EditVisualModal
+          key={editingDesign.updatedAt}
+          copy={editingCopy}
+          design={editingDesign}
+          onClose={() => setEditingVisualId(null)}
+          onSaved={(copy, design) => {
+            visuals.replaceDesign(design);
+            if (copy) replaceCopy(copy);
+            setEditingVisualId(null);
+          }}
+          onChoose={(kind) => {
+            setEditingVisualId(null);
+            void visuals.choose(editingCopy, kind);
+          }}
+        />
+      )}
 
       {/* Chat: fixed on the right on large screens, a sheet on smaller ones */}
       <aside className="hidden lg:block w-[clamp(460px,45%,720px)] shrink-0 h-full">{chatPanel()}</aside>

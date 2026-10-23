@@ -49,10 +49,11 @@ export function DesignLibrary() {
   const download = async (d: DesignRecord) => {
     setMenu(null);
     await loadDesignFonts();
-    const url = URL.createObjectURL(await designToBlob(d.doc, FONT_FAMILIES, await photosFor(d.doc)));
+    const blob = await designToBlob(d.doc, FONT_FAMILIES, await photosFor(d.doc));
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${d.name.replace(/[^\w-]+/g, '-').toLowerCase() || 'design'}.png`;
+    a.download = `${d.name.replace(/[^\w-]+/g, '-').toLowerCase() || 'design'}.${blob.type === 'image/jpeg' ? 'jpg' : 'png'}`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
@@ -130,7 +131,15 @@ export function DesignLibrary() {
                       <p className="text-xs text-[#777587]">
                         {FORMATS[d.doc.format].label} · {timeAgo(d.updatedAt)}
                       </p>
-                      <span className="mt-2 inline-block rounded-md bg-[#F1F5F9] px-2 py-0.5 text-[11px] font-semibold text-[#464555]">{d.doc.background.kind === 'photo' ? 'Stock photo' : 'Text design'}</span>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        <span className="inline-block rounded-md bg-[#F1F5F9] px-2 py-0.5 text-[11px] font-semibold text-[#464555]">{d.doc.background.kind === 'photo' ? 'Stock photo' : 'Text design'}</span>
+                        {d.attachedTo && (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-primary-50 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                            <Icon icon="lucide:link" className="w-3 h-3" aria-hidden />
+                            {d.attachedTo.platform.charAt(0).toUpperCase() + d.attachedTo.platform.slice(1)} post
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="relative">
                       <button

@@ -32,8 +32,21 @@ export interface CopyRecord {
   angle?: string;
   /** The background generation job that wrote this copy, if any */
   jobId?: string;
+  /** The image or video that goes with it */
+  visual?: CopyVisual;
   createdAt: string;
   updatedAt: string;
+}
+
+export type VisualKind = 'none' | 'template' | 'stock' | 'ai_image' | 'ai_video';
+
+export interface CopyVisual {
+  kind: VisualKind;
+  /** The Designer design behind the image */
+  designId?: string;
+  /** The finished image or video, ready to schedule */
+  mediaId?: string;
+  mediaType?: 'image' | 'video';
 }
 
 /** A full set being written in the background */

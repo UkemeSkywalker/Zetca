@@ -3,7 +3,7 @@
  * Handles communication with the Python FastAPI service for copy operations
  */
 
-import { CopyRecord, ChatResponse, CopyJob, CopyChatMessage, CopyWorkspace, CopyChatResult } from '@/types/agent';
+import { CopyRecord, ChatResponse, CopyJob, CopyChatMessage, CopyWorkspace, CopyChatResult, CopyVisual } from '@/types/agent';
 import type {
   CopyRecord as WireCopyRecord,
   ChatResponse as WireChatResponse,
@@ -75,6 +75,15 @@ function convertCopyRecord(record: WireCopyRecord): CopyRecord {
     hashtags: record.hashtags || [],
     ...(record.angle ? { angle: record.angle } : {}),
     ...(record.job_id ? { jobId: record.job_id } : {}),
+    ...(record.visual
+      ? {
+          visual: {
+            kind: record.visual.kind,
+            ...(record.visual.design_id ? { designId: record.visual.design_id } : {}),
+            ...(record.visual.media_id ? { mediaId: record.visual.media_id, mediaType: record.visual.media_type ?? 'image' } : {}),
+          },
+        }
+      : {}),
     createdAt: record.created_at,
     updatedAt: record.updated_at,
   };
@@ -163,6 +172,23 @@ export async function sendCopyChat(strategyId: string, message: string, copyId?:
 }
 
 /** Save the user's edits to a copy */
+/** Sets the image or video that goes with a copy */
+export async function setCopyVisual(copyId: string, visual: CopyVisual): Promise<CopyRecord> {
+  const data = await copyRequest<WireCopyRecord>(
+    `/api/copy/${encodeURIComponent(copyId)}/visual`,
+    {
+      method: 'PUT',
+      body: JSON.stringify({
+        kind: visual.kind,
+        ...(visual.designId ? { design_id: visual.designId } : {}),
+        ...(visual.mediaId ? { media_id: visual.mediaId, media_type: visual.mediaType ?? 'image' } : {}),
+      }),
+    },
+    'Couldn’t save the visual. Please try again.'
+  );
+  return convertCopyRecord(data);
+}
+
 export async function updateCopy(copyId: string, text: string, hashtags: string[]): Promise<CopyRecord> {
   const data = await copyRequest<WireCopyRecord>(
     `/api/copy/${encodeURIComponent(copyId)}`,

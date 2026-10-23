@@ -372,7 +372,7 @@ function ResultCard({ doc, busy, disabled, onOpen }: { doc: DesignDoc; busy: boo
   return (
     <div>
       <div className="group relative overflow-hidden rounded-2xl shadow-sm">
-        <DesignCanvas doc={doc} />
+        <DesignCanvas doc={doc} resolution={0.6} />
         <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 group-hover:bg-black/35 group-hover:opacity-100 focus-within:bg-black/35 focus-within:opacity-100 transition">
           <button type="button" onClick={onOpen} disabled={disabled} className="inline-flex items-center gap-2 rounded-xl bg-white px-4 h-10 text-sm font-semibold text-[#0B1C30] shadow">
             {busy ? <Icon icon="lucide:loader-circle" className="w-4 h-4 animate-spin" aria-hidden /> : <Icon icon="lucide:pencil" className="w-4 h-4" aria-hidden />}

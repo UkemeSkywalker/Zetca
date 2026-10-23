@@ -39,6 +39,10 @@ export function CopyEditor({ copy, onBack, onSaved, onDelete }: CopyEditorProps)
   const [scheduling, setScheduling] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // An uploaded file wins; otherwise the post's own visual from the Designer goes with it
+  const postVisual = copy.visual?.mediaId ? { id: copy.visual.mediaId, type: copy.visual.mediaType ?? ('image' as const) } : null;
+  const attached = media ?? postVisual;
+
   const dirty = text !== copy.text || hashtags.join(' ') !== formatHashtags(copy.hashtags).join(' ');
   const over = text.length > platform.limit;
 
@@ -104,7 +108,7 @@ export function CopyEditor({ copy, onBack, onSaved, onDelete }: CopyEditorProps)
         scheduledDate: localToUtcSlot(scheduleDate, scheduleTime).date,
         scheduledTime: localToUtcSlot(scheduleDate, scheduleTime).time,
         platform: platform.id,
-        ...(media ? { mediaId: media.id, mediaType: media.type } : {}),
+        ...(attached ? { mediaId: attached.id, mediaType: attached.type } : {}),
       });
       setScheduleOpen(false);
       flash('Scheduled');
@@ -212,7 +216,13 @@ export function CopyEditor({ copy, onBack, onSaved, onDelete }: CopyEditorProps)
           />
         </div>
 
-        <div className="px-5 pb-5">
+        <div className="px-5 pb-5 space-y-2">
+          {postVisual && !media && (
+            <p className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[12px] font-semibold text-emerald-700">
+              <Icon icon="material-symbols:image-outline" width={14} height={14} />
+              <span className="text-inherit">This post’s visual is attached. Upload a file to use that instead.</span>
+            </p>
+          )}
           <MediaUploader
             onMediaAttached={(id, type) => setMedia({ id, type })}
             onMediaRemoved={() => setMedia(null)}

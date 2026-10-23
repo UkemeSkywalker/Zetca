@@ -30,15 +30,24 @@ export class DesignService {
   }
 
   async create(userId: string, input: unknown): Promise<DesignRecord> {
-    const { name, source, doc } = DesignInputSchema.parse(input);
+    const { name, source, doc, attachedTo, mediaId } = DesignInputSchema.parse(input);
     const now = new Date().toISOString();
-    return this.repo.put({ designId: randomUUID(), userId, name, source, doc, createdAt: now, updatedAt: now });
+    return this.repo.put({ designId: randomUUID(), userId, name, source, doc, attachedTo, mediaId, createdAt: now, updatedAt: now });
   }
 
   async update(userId: string, designId: string, input: unknown): Promise<DesignRecord> {
     const existing = await this.get(userId, designId);
-    const { name, source, doc } = DesignInputSchema.parse(input);
-    return this.repo.put({ ...existing, name, source, doc, updatedAt: new Date().toISOString() });
+    const { name, source, doc, attachedTo, mediaId } = DesignInputSchema.parse(input);
+    // Keeps the post it's attached to unless told otherwise; a changed design needs a new image
+    return this.repo.put({
+      ...existing,
+      name,
+      source,
+      doc,
+      attachedTo: attachedTo ?? existing.attachedTo,
+      mediaId,
+      updatedAt: new Date().toISOString(),
+    });
   }
 
   async remove(userId: string, designId: string): Promise<void> {

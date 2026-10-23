@@ -123,12 +123,22 @@ function drawLayer(ctx: Ctx, layer: TextLayer, fitted: FittedText, families: Fon
 }
 
 /** Draws the design; the canvas is resized to the design's full size */
-export function drawDesign(canvas: HTMLCanvasElement, doc: DesignDoc, families: FontFamilies, photos: PhotoImages = {}): LaidOutLayer[] {
+export function drawDesign(
+  canvas: HTMLCanvasElement,
+  doc: DesignDoc,
+  families: FontFamilies,
+  photos: PhotoImages = {},
+  /** Draw smaller than full size (thumbnails); 1 = 1080 wide */
+  resolution = 1
+): LaidOutLayer[] {
   const { width, height } = FORMATS[doc.format];
-  if (canvas.width !== width) canvas.width = width;
-  if (canvas.height !== height) canvas.height = height;
+  const w = Math.round(width * resolution);
+  const h = Math.round(height * resolution);
+  if (canvas.width !== w) canvas.width = w;
+  if (canvas.height !== h) canvas.height = h;
   const ctx = canvas.getContext('2d');
   if (!ctx) return [];
+  ctx.setTransform(resolution, 0, 0, resolution, 0, 0);
   ctx.clearRect(0, 0, width, height);
   drawBackground(ctx, doc, width, height, photos);
   return doc.layers.map((layer) => {
@@ -142,7 +152,9 @@ export function drawDesign(canvas: HTMLCanvasElement, doc: DesignDoc, families: 
 export function designToBlob(doc: DesignDoc, families: FontFamilies, photos: PhotoImages = {}): Promise<Blob> {
   const canvas = document.createElement('canvas');
   drawDesign(canvas, doc, families, photos);
+  // Photos are much smaller as JPEG; flat colours and text stay crisp as PNG
+  const [type, quality] = doc.background.kind === 'photo' ? ['image/jpeg', 0.9] : ['image/png', undefined];
   return new Promise((resolve, reject) =>
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Couldn’t make the image'))), 'image/png')
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Couldn’t make the image'))), type, quality)
   );
 }

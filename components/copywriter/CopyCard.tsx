@@ -4,6 +4,9 @@ import { Icon } from '@iconify/react';
 import { useState } from 'react';
 import type { CopyRecord } from '@/types/agent';
 import { clipboardText, copyToClipboard, formatHashtags, platformInfo } from './platforms';
+import type { DesignRecord } from '@/lib/design/types';
+import type { VisualKind } from '@/types/agent';
+import { VisualRow } from './PostVisual';
 
 const LABEL_SM = 'text-[11px] leading-[14px] tracking-[0.05em] font-bold';
 
@@ -13,9 +16,18 @@ interface CopyCardProps {
   fresh: boolean;
   onOpen: () => void;
   onDelete: () => Promise<void>;
+  /** The post's visual, when the page handles visuals */
+  visual?: {
+    design?: DesignRecord;
+    making: boolean;
+    error?: string;
+    onChoose: (kind: VisualKind) => void;
+    onCreate: () => void;
+    onEdit: () => void;
+  };
 }
 
-export function CopyCard({ copy, fresh, onOpen, onDelete }: CopyCardProps) {
+export function CopyCard({ copy, fresh, onOpen, onDelete, visual }: CopyCardProps) {
   const platform = platformInfo(copy.platform);
   const [copied, setCopied] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -90,7 +102,9 @@ export function CopyCard({ copy, fresh, onOpen, onDelete }: CopyCardProps) {
         <p className="text-[12px] leading-[18px] font-medium text-[#3525cd] line-clamp-1">{tags.join(' ')}</p>
       )}
 
-      <div className="mt-auto pt-3 border-t border-[#e5eeff] flex items-center justify-between gap-2">
+      {visual && <VisualRow copy={copy} {...visual} />}
+
+      <div className={`${visual ? '' : 'mt-auto'} pt-3 border-t border-[#e5eeff] flex items-center justify-between gap-2`}>
         <span className={`${LABEL_SM} ${over ? 'text-[#ba1a1a]' : 'text-[#777587]'}`}>
           {copy.text.length.toLocaleString()} / {platform.limit.toLocaleString()}
         </span>

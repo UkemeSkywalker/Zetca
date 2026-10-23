@@ -7,6 +7,7 @@
  *
  *   ### COPY
  *   ANGLE: Bold hook
+ *   VISUAL: photo
  *   HASHTAGS: #OutfitIdeas #Lumier
  *   TEXT:
  *   The caption, over as many lines as it needs.
@@ -22,6 +23,7 @@ export const COPY_FORMAT = `Write each copy in exactly this format, one after an
 
 ### COPY
 ANGLE: <the angle's short name, e.g. Bold hook>
+VISUAL: <none, text or photo: text = bold words on a colour, photo = a stock photo with words on top, none = text-only; Instagram and TikTok always need text or photo>
 HASHTAGS: <the hashtags, separated by spaces>
 TEXT:
 <the caption, which may span several lines; do not put the hashtags here>
@@ -65,23 +67,25 @@ export function createCopyStreamParser(platform: string): CopyStreamParser {
   return parse;
 }
 
-function readFields(block: string): { angle?: string; hashtags?: string; text?: string } {
+function readFields(block: string): { angle?: string; visual?: CopyItem['visual']; hashtags?: string; text?: string } {
   const angle = /^ANGLE:[ \t]*(.+)$/m.exec(block)?.[1]?.trim();
+  const visualWord = /^VISUAL:[ \t]*(\w+)/m.exec(block)?.[1]?.toLowerCase();
+  const visual = visualWord === 'none' || visualWord === 'text' || visualWord === 'photo' ? visualWord : undefined;
   const hashtags = /^HASHTAGS:[ \t]*(.*)$/m.exec(block)?.[1];
   const textStart = /^TEXT:[ \t]*\n?/m.exec(block);
   const text = textStart ? block.slice(textStart.index + textStart[0].length).replace(/\s+$/, '') : undefined;
-  return { angle: angle || undefined, hashtags, text };
+  return { angle: angle || undefined, visual, hashtags, text };
 }
 
 function parseBlock(block: string, platform: string): CopyItem | null {
   const start = block.indexOf(START);
   if (start === -1) return null;
-  const { angle, hashtags, text } = readFields(block.slice(start + START.length));
+  const { angle, visual, hashtags, text } = readFields(block.slice(start + START.length));
   if (!text?.trim()) return null;
   const tags = (hashtags ?? '')
     .split(/[\s,]+/)
     .map((t) => t.replace(/^#+/, '').trim())
     .filter(Boolean)
     .map((t) => `#${t}`);
-  return { text: text.trim(), platform, hashtags: tags, ...(angle ? { angle } : {}) };
+  return { text: text.trim(), platform, hashtags: tags, ...(angle ? { angle } : {}), ...(visual ? { visual } : {}) };
 }

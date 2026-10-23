@@ -190,7 +190,7 @@ function StyleCard({ style, busy, disabled, onUse }: { style: DesignStyle; busy:
   return (
     <div className={`${CARD} p-3 flex flex-col group transition-transform hover:-translate-y-0.5 hover:shadow-lg`}>
       <div className="relative overflow-hidden rounded-xl">
-        <DesignCanvas doc={doc} />
+        <DesignCanvas doc={doc} resolution={0.5} />
         <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 group-hover:bg-black/35 group-hover:opacity-100 focus-within:bg-black/35 focus-within:opacity-100 transition">
           <button
             type="button"

@@ -90,12 +90,19 @@ export type DesignDoc = z.infer<typeof DesignDocSchema>;
 export const DESIGN_SOURCES = ['template', 'stock', 'ai_image', 'ai_video'] as const;
 export type DesignSource = (typeof DESIGN_SOURCES)[number];
 
+/** The post a design is the visual for */
+export const AttachedToSchema = z.object({ copyId: z.string().min(1).max(80), platform: z.string().max(20) });
+export type AttachedTo = z.infer<typeof AttachedToSchema>;
+
 export interface DesignRecord {
   designId: string;
   userId: string;
   name: string;
   source: DesignSource;
   doc: DesignDoc;
+  attachedTo?: AttachedTo;
+  /** The exported image of the current version, if it's been made */
+  mediaId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -103,6 +110,8 @@ export interface DesignRecord {
 export const DesignInputSchema = z.object({
   name: z.string().trim().min(1, 'Give the design a name').max(80),
   source: z.enum(DESIGN_SOURCES).default('template'),
+  attachedTo: AttachedToSchema.optional(),
+  mediaId: z.string().min(1).max(80).optional(),
   doc: DesignDocSchema.refine((d) => d.background.kind !== 'photo' || !isUnsavedPhoto(d.background.photoId), {
     message: 'Save the photo before saving the design',
   }),
