@@ -114,7 +114,7 @@ export const STYLES: DesignStyle[] = [
       const h = FORMATS[format].height;
       return solid(format, this.id, p.background, [
         layer({ id: 'mark', role: 'kicker', text: '“', x: M, y: h * 0.16, width: 1080 - M * 2, height: 200, size: 260, lineHeight: 0.75, font: 'serif', color: p.accent === p.background ? p.text : bestTextColor([p.background], [p.accent, p.text]), align: 'center' }),
-        layer({ id: 'headline', role: 'headline', text: text.headline, x: M + 20, y: h * 0.16 + 200, width: 1080 - (M + 20) * 2, height: h * 0.5 - 120, size: 96, font: 'serif', weight: 400, color: p.text, align: 'center', valign: 'middle', lineHeight: 1.15 }),
+        layer({ id: 'headline', role: 'headline', text: text.headline, x: M + 20, y: h * 0.16 + 200, width: 1080 - (M + 20) * 2, height: h * 0.5 - 120, size: 120, font: 'serif', weight: 400, color: p.text, align: 'center', valign: 'middle', lineHeight: 1.15 }),
         ...(text.footer
           ? [layer({ id: 'footer', role: 'footer', text: text.footer, x: M, y: h * 0.66 + 120, width: 1080 - M * 2, height: 50, size: 32, color: p.text, align: 'center', uppercase: true, letterSpacing: 0.1 })]
           : []),
