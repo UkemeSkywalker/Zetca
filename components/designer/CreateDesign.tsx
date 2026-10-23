@@ -5,31 +5,37 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { STYLES, styleById, variationPalettes, type DesignText } from '@/lib/design/styles';
-import { FORMATS, FORMAT_IDS, backgroundColors, type DesignDoc, type FormatId } from '@/lib/design/types';
+import { loadPhoto, rememberSaved, tonesOf } from './photos';
+import { FORMATS, FORMAT_IDS, backgroundColors, isUnsavedPhoto, type DesignDoc, type FormatId, type PhotoBackground } from '@/lib/design/types';
 import { worstContrast } from '@/lib/design/contrast';
-import { createDesign, designerPath, rememberedHandle, writeDesignText } from '@/lib/api/designApi';
+import { createDesign, designerPath, rememberHandle, rememberedHandle, savePhoto, searchPhotos, writeDesignText } from '@/lib/api/designApi';
 import { DESIGN_STYLE_IDS } from '@/lib/models/designWriter';
 import { DesignCanvas } from './DesignCanvas';
 import { CARD, Chip, CostBadge, INPUT, LABEL, PrimaryButton, SecondaryButton } from './ui';
 
-type StyleChoice = 'auto' | (typeof DESIGN_STYLE_IDS)[number];
+type StyleChoice = 'auto' | string;
+type Source = 'template' | 'stock';
 
 const SOURCES = [
   { id: 'template', name: 'Text design', line: 'Bold text on a colour', icon: 'lucide:type', cost: 'free' as const, ready: true },
-  { id: 'stock', name: 'Stock photo', line: 'Real photo with text on top', icon: 'lucide:image', cost: 'free' as const, ready: false },
+  { id: 'stock', name: 'Stock photo', line: 'Real photo with text on top', icon: 'lucide:image', cost: 'free' as const, ready: true },
   { id: 'ai_image', name: 'AI image', line: 'A new image made by AI', icon: 'lucide:sparkles', cost: 1, ready: false },
   { id: 'ai_video', name: 'AI video', line: 'A short clip made by AI', icon: 'lucide:clapperboard', cost: 5, ready: false },
 ];
 
 const isFormat = (v: string | null): v is FormatId => !!v && (FORMAT_IDS as string[]).includes(v);
+const isWriterStyle = (id: string): id is (typeof DESIGN_STYLE_IDS)[number] => (DESIGN_STYLE_IDS as readonly string[]).includes(id);
 
 export function CreateDesign() {
   const router = useRouter();
   const params = useSearchParams();
   const [prompt, setPrompt] = useState(params.get('prompt') ?? '');
   const [format, setFormat] = useState<FormatId>(isFormat(params.get('format')) ? (params.get('format') as FormatId) : 'square');
-  const [style, setStyle] = useState<StyleChoice>('auto');
+  const [source, setSource] = useState<Source>(params.get('source') === 'stock' ? 'stock' : 'template');
+  const [style, setStyle] = useState<StyleChoice>(params.get('style') ?? 'auto');
   const [text, setText] = useState<DesignText>({ headline: '', kicker: '', body: '', footer: '' });
+  const [photoQuery, setPhotoQuery] = useState('');
+  const [photoPage, setPhotoPage] = useState(1);
   const [results, setResults] = useState<DesignDoc[]>([]);
   const [busy, setBusy] = useState<'write' | 'create' | null>(null);
   const [opening, setOpening] = useState<number | null>(null);
@@ -40,23 +46,64 @@ export function CreateDesign() {
     setText((t) => ({ ...t, footer: t.footer || rememberedHandle() }));
   }, []);
 
+  const stylesForSource = STYLES.filter((s) => !!s.usesPhoto === (source === 'stock'));
   const chosenStyle = style === 'auto' ? null : styleById(style);
 
+  const pickSource = (next: Source) => {
+    setSource(next);
+    setResults([]);
+    setStyle((st) => (st !== 'auto' && !!styleById(st)?.usesPhoto !== (next === 'stock') ? 'auto' : st));
+  };
+
   /** Asks the writer for the words (and a style, if none is picked) */
-  const write = async (): Promise<{ text: DesignText; styleId: string } | null> => {
+  const write = async (): Promise<{ text: DesignText; styleId: string; photoQuery: string } | null> => {
     if (prompt.trim().length < 3) {
       setError('Say a few words about the post first.');
       return null;
     }
-    const written = await writeDesignText({ prompt, ...(style === 'auto' ? {} : { styleId: style }) });
+    const written = await writeDesignText({ prompt, ...(style !== 'auto' && isWriterStyle(style) ? { styleId: style } : {}) });
     const next = { ...text, headline: written.headline, kicker: written.kicker ?? '', body: written.body ?? '' };
     setText(next);
-    return { text: next, styleId: written.styleId };
+    setPhotoQuery(written.photoQuery ?? '');
+    return { text: next, styleId: written.styleId, photoQuery: written.photoQuery ?? '' };
   };
 
-  const make = (words: DesignText, styleId: string) => {
+  const makeText = (words: DesignText, styleId: string) => {
     const s = styleById(styleId) ?? STYLES[0];
     setResults(variationPalettes(s).map((p) => s.build(clean(words), format, p)));
+  };
+
+  /** 4 designs over 4 different stock photos */
+  const makeStock = async (words: DesignText, query: string, page = 1) => {
+    const s = chosenStyle?.usesPhoto ? chosenStyle : styleById('photo-text')!;
+    const q = query.trim() || prompt.split(/\s+/).filter((w) => w.length > 3).slice(0, 2).join(' ') || 'lifestyle';
+    const photos = await searchPhotos(q, format === 'square' ? 'all' : 'vertical', page);
+    if (!photos.length) {
+      setResults([]);
+      setError(`No photos found for “${q}”. Try different words in the description.`);
+      return;
+    }
+    const picks = photos.slice(0, 4);
+    const docs = await Promise.all(
+      picks.map(async (photo, i) => {
+        const photoId = `pixabay:${photo.id}`;
+        const img = await loadPhoto({ photoId, previewUrl: photo.previewUrl });
+        const bg: PhotoBackground = {
+          kind: 'photo',
+          photoId,
+          previewUrl: photo.previewUrl,
+          width: img.width,
+          height: img.height,
+          focusX: 0.5,
+          focusY: 0.5,
+          fit: 'fill',
+          tones: tonesOf(img),
+          credit: { ...photo.credit, source: 'pixabay' },
+        };
+        return s.build(clean(words), format, variationPalettes(s)[i % 4], bg);
+      })
+    );
+    setResults(docs);
   };
 
   const writeForMe = async () => {
@@ -64,7 +111,7 @@ export function CreateDesign() {
     setError('');
     try {
       const r = await write();
-      if (r && style === 'auto') setStyle(r.styleId as StyleChoice);
+      if (r && style === 'auto' && source === 'template') setStyle(r.styleId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Couldn’t write that');
     } finally {
@@ -75,16 +122,23 @@ export function CreateDesign() {
   const create = async () => {
     setBusy('create');
     setError('');
+    setPhotoPage(1);
     try {
-      if (text.headline.trim()) {
-        make(text, chosenStyle?.id ?? 'bold-statement');
-      } else {
+      let words = text;
+      let styleId = chosenStyle?.id ?? 'bold-statement';
+      let query = photoQuery;
+      if (!text.headline.trim()) {
         const r = await write();
-        if (r) {
-          if (style === 'auto') setStyle(r.styleId as StyleChoice);
-          make(r.text, style === 'auto' ? r.styleId : style);
+        if (!r) return;
+        words = r.text;
+        query = r.photoQuery;
+        if (style === 'auto' && source === 'template') {
+          setStyle(r.styleId);
+          styleId = r.styleId;
         }
       }
+      if (source === 'stock') await makeStock(words, query);
+      else makeText(words, styleId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Couldn’t make the designs');
     } finally {
@@ -100,19 +154,45 @@ export function CreateDesign() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const tryMore = () => {
+  const tryMore = async () => {
+    setError('');
+    if (source === 'stock') {
+      const next = photoPage + 1;
+      setPhotoPage(next);
+      setBusy('create');
+      try {
+        await makeStock(text, photoQuery, next);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Couldn’t find more photos');
+      } finally {
+        setBusy(null);
+      }
+      return;
+    }
     const current = results[0]?.styleId;
-    const others = STYLES.filter((s) => s.id !== current);
+    const others = stylesForSource.filter((s) => s.id !== current);
     const next = others[Math.floor(Math.random() * others.length)];
-    setStyle(next.id as StyleChoice);
-    make(text, next.id);
+    setStyle(next.id);
+    makeText(text, next.id);
   };
 
   const open = async (doc: DesignDoc, i: number) => {
     setOpening(i);
     setError('');
     try {
-      const design = await createDesign({ name: (text.headline || 'New design').replace(/\n/g, ' ').slice(0, 60), source: 'template', doc });
+      let toSave = doc;
+      const bg = doc.background;
+      if (bg.kind === 'photo' && isUnsavedPhoto(bg.photoId)) {
+        const saved = await savePhoto(Number(bg.photoId.split(':')[1]));
+        rememberSaved(bg.photoId, { ...bg, photoId: saved.photoId, previewUrl: undefined });
+        toSave = { ...doc, background: { ...bg, photoId: saved.photoId, previewUrl: undefined } };
+      }
+      if (text.footer?.startsWith('@')) rememberHandle(text.footer);
+      const design = await createDesign({
+        name: (text.headline || 'New design').replace(/\n/g, ' ').slice(0, 60),
+        source: toSave.background.kind === 'photo' ? 'stock' : 'template',
+        doc: toSave,
+      });
       router.push(designerPath(design.designId));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Couldn’t save the design');
@@ -168,18 +248,23 @@ export function CreateDesign() {
             <legend className={LABEL}>Make it with</legend>
             <div className="grid grid-cols-2 gap-3">
               {SOURCES.map((s) => (
-                <div
+                <button
+                  type="button"
                   key={s.id}
-                  aria-disabled={!s.ready}
-                  className={`rounded-xl border p-3 ${s.ready ? 'border-primary bg-primary-50/60 ring-1 ring-primary' : 'border-[#E2E8F0] bg-[#F8F9FF] opacity-60'}`}
+                  disabled={!s.ready}
+                  aria-pressed={source === s.id}
+                  onClick={() => pickSource(s.id as Source)}
+                  className={`text-left rounded-xl border p-3 transition-colors ${
+                    source === s.id ? 'border-primary bg-primary-50/60 ring-1 ring-primary' : s.ready ? 'border-[#E2E8F0] bg-white hover:border-primary/40' : 'border-[#E2E8F0] bg-[#F8F9FF] opacity-60 cursor-not-allowed'
+                  }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <Icon icon={s.icon} className={`w-5 h-5 ${s.ready ? 'text-primary' : 'text-[#777587]'}`} aria-hidden />
+                    <Icon icon={s.icon} className={`w-5 h-5 ${source === s.id ? 'text-primary' : 'text-[#777587]'}`} aria-hidden />
                     <CostBadge cost={s.ready ? s.cost : 'soon'} />
                   </div>
                   <p className="mt-2 text-sm font-bold text-[#0B1C30]">{s.name}</p>
                   <p className="text-xs text-[#777587]">{s.line}</p>
-                </div>
+                </button>
               ))}
             </div>
           </fieldset>
@@ -190,8 +275,8 @@ export function CreateDesign() {
               <Chip selected={style === 'auto'} onClick={() => setStyle('auto')}>
                 Pick for me
               </Chip>
-              {STYLES.map((s) => (
-                <Chip key={s.id} selected={style === s.id} onClick={() => setStyle(s.id as StyleChoice)}>
+              {stylesForSource.map((s) => (
+                <Chip key={s.id} selected={style === s.id} onClick={() => setStyle(s.id)}>
                   {s.name}
                 </Chip>
               ))}
@@ -261,9 +346,17 @@ export function CreateDesign() {
                   <ResultCard key={`${doc.styleId}-${i}`} doc={doc} busy={opening === i} disabled={opening !== null} onOpen={() => open(doc, i)} />
                 ))}
               </div>
+              {source === 'stock' && (
+                <p className="mt-4 text-center text-xs text-[#777587]">
+                  Free photos from{' '}
+                  <a href="https://pixabay.com/" target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">
+                    Pixabay
+                  </a>
+                </p>
+              )}
               <div className="mt-5 flex justify-center">
-                <SecondaryButton type="button" onClick={tryMore}>
-                  <Icon icon="lucide:refresh-cw" className="w-4 h-4" aria-hidden /> Try another style
+                <SecondaryButton type="button" onClick={tryMore} disabled={!!busy}>
+                  <Icon icon="lucide:refresh-cw" className="w-4 h-4" aria-hidden /> {source === 'stock' ? 'Try other photos' : 'Try another style'}
                 </SecondaryButton>
               </div>
             </>

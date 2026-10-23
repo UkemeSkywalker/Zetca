@@ -10,7 +10,7 @@ import { createDesign, designerPath, listDesigns, rememberedHandle } from '@/lib
 import { DesignCanvas, DesignThumb } from './DesignCanvas';
 import { CARD, Chip, CostBadge, timeAgo } from './ui';
 
-type Filter = 'all' | StyleCategory | 'photo' | 'ai_image' | 'ai_video';
+type Filter = 'all' | StyleCategory | 'ai_image' | 'ai_video';
 
 const FILTERS: { id: Filter; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -25,7 +25,6 @@ const FILTERS: { id: Filter; label: string }[] = [
 
 /** Sources still being built, shown honestly as "Soon" */
 const COMING: { id: Filter; name: string; description: string; icon: string; cost: number | 'free' }[] = [
-  { id: 'photo', name: 'Photo + text', description: 'Free stock photos with your words on top', icon: 'lucide:image', cost: 'free' },
   { id: 'ai_image', name: 'AI image', description: 'A new image made from your description', icon: 'lucide:sparkles', cost: 1 },
   { id: 'ai_video', name: 'AI video', description: 'A short clip made from your description', icon: 'lucide:clapperboard', cost: 5 },
 ];

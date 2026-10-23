@@ -3,12 +3,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
-import { FORMATS, FORMAT_IDS, type DesignDoc, type DesignRecord, type FormatId } from '@/lib/design/types';
+import { FORMATS, FORMAT_IDS, isUnsavedPhoto, type DesignDoc, type DesignRecord, type FormatId } from '@/lib/design/types';
 import { changeFormat, clampBox, duplicateLayer, removeLayer, updateLayer } from '@/lib/design/edit';
 import { designToBlob } from '@/lib/design/render';
 import { getDesign, saveDesign } from '@/lib/api/designApi';
 import { DesignCanvas } from './DesignCanvas';
 import { FONT_FAMILIES, loadDesignFonts } from './fonts';
+import { photosFor, withSavedPhoto } from './photos';
 import { LeftPanel, RightPanel, type Tab } from './EditorPanels';
 import { SecondaryButton, PrimaryButton } from './ui';
 
@@ -36,6 +37,8 @@ export function DesignEditor({ designId }: { designId: string }) {
         setDoc(d.doc);
         setName(d.name);
         setSelected(d.doc.layers.find((l) => l.role === 'headline')?.id ?? null);
+        // A style example still has its sample photo: offer real ones first
+        if (d.doc.background.kind === 'photo' && d.doc.background.photoId.startsWith('sample:')) setTab('photos');
       },
       (err) => setLoadError(err instanceof Error ? err.message : 'Couldn’t open this design')
     );
@@ -90,9 +93,13 @@ export function DesignEditor({ designId }: { designId: string }) {
 
   const save = useCallback(async () => {
     if (!doc || !design) return;
+    const toSave = withSavedPhoto(doc);
+    // A photo still being copied to storage: try again once it's there
+    if (toSave.background.kind === 'photo' && isUnsavedPhoto(toSave.background.photoId)) return;
     setSaveState('saving');
     try {
-      const saved = await saveDesign(design.designId, { name: name.trim() || 'Untitled design', source: design.source, doc });
+      const source = toSave.background.kind === 'photo' ? 'stock' : 'template';
+      const saved = await saveDesign(design.designId, { name: name.trim() || 'Untitled design', source, doc: toSave });
       setDesign(saved);
       setSaveState((s) => (s === 'saving' ? 'saved' : s));
     } catch {
@@ -147,7 +154,7 @@ export function DesignEditor({ designId }: { designId: string }) {
     setDownloading(true);
     try {
       await loadDesignFonts();
-      const blob = await designToBlob(doc, FONT_FAMILIES);
+      const blob = await designToBlob(doc, FONT_FAMILIES, await photosFor(doc));
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

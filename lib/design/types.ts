@@ -21,11 +21,36 @@ export type FontId = (typeof FONT_IDS)[number];
 
 const hex = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Use a colour like #16A34A');
 
+/**
+ * Where a photo comes from:
+ * - "sample:<name>": a photo that ships with Zetca (used by the style examples)
+ * - "pixabay:<id>": a search result not saved yet (shown from `previewUrl`)
+ * - anything else: a photo saved to the user's storage
+ */
+export const PhotoBackgroundSchema = z.object({
+  kind: z.literal('photo'),
+  photoId: z.string().min(1).max(80),
+  previewUrl: z.string().url().max(500).optional(),
+  width: z.number().positive(),
+  height: z.number().positive(),
+  /** The point of the photo kept in view when it's cropped, 0–1 */
+  focusX: z.number().min(0).max(1),
+  focusY: z.number().min(0).max(1),
+  fit: z.enum(['fill', 'fit']),
+  /** The photo's average and lightest tones, to check text contrast against */
+  tones: z.array(hex).min(1).max(4),
+  credit: z.object({ name: z.string().max(80), url: z.string().url().max(300), source: z.enum(['pixabay', 'sample']) }),
+});
+export type PhotoBackground = z.infer<typeof PhotoBackgroundSchema>;
+
 export const BackgroundSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('solid'), color: hex }),
   z.object({ kind: z.literal('gradient'), from: hex, to: hex, angle: z.number().min(0).max(360) }),
+  PhotoBackgroundSchema,
 ]);
 export type Background = z.infer<typeof BackgroundSchema>;
+
+export const isUnsavedPhoto = (id: string) => id.startsWith('pixabay:');
 
 export const TextLayerSchema = z.object({
   id: z.string().min(1).max(40),
@@ -78,14 +103,16 @@ export interface DesignRecord {
 export const DesignInputSchema = z.object({
   name: z.string().trim().min(1, 'Give the design a name').max(80),
   source: z.enum(DESIGN_SOURCES).default('template'),
-  doc: DesignDocSchema,
+  doc: DesignDocSchema.refine((d) => d.background.kind !== 'photo' || !isUnsavedPhoto(d.background.photoId), {
+    message: 'Save the photo before saving the design',
+  }),
 });
 export type DesignInput = z.infer<typeof DesignInputSchema>;
 
 /** The colours behind the text, to check contrast against */
 export function backgroundColors(doc: DesignDoc): string[] {
   const bg = doc.background;
-  const colors = bg.kind === 'solid' ? [bg.color] : [bg.from, bg.to];
+  const colors = bg.kind === 'solid' ? [bg.color] : bg.kind === 'gradient' ? [bg.from, bg.to] : bg.tones;
   const overlay = doc.overlay;
   return overlay ? colors.map((c) => blend(c, overlay.color, overlay.opacity)) : colors;
 }

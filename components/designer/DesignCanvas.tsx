@@ -4,11 +4,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { drawDesign } from '@/lib/design/render';
 import { FORMATS, type DesignDoc } from '@/lib/design/types';
 import { FONT_FAMILIES, loadDesignFonts } from './fonts';
+import { usePhotoImages } from './photos';
 
 /** Draws a design at full size and scales it to the width of its container */
 export function DesignCanvas({ doc, className = '', label }: { doc: DesignDoc; className?: string; label?: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const [fontsReady, setFontsReady] = useState(false);
+  const photos = usePhotoImages(doc);
 
   useEffect(() => {
     let live = true;
@@ -19,8 +21,8 @@ export function DesignCanvas({ doc, className = '', label }: { doc: DesignDoc; c
   }, []);
 
   useEffect(() => {
-    if (ref.current) drawDesign(ref.current, doc, FONT_FAMILIES);
-  }, [doc, fontsReady]);
+    if (ref.current) drawDesign(ref.current, doc, FONT_FAMILIES, photos);
+  }, [doc, fontsReady, photos]);
 
   const { width, height } = FORMATS[doc.format];
   return (

@@ -28,6 +28,7 @@ LINKEDIN_CLIENT_ID="$(local_env LINKEDIN_CLIENT_ID)"
 LINKEDIN_CLIENT_SECRET="$(local_env LINKEDIN_CLIENT_SECRET)"
 YOUTUBE_CLIENT_ID="$(local_env YOUTUBE_CLIENT_ID)"
 YOUTUBE_CLIENT_SECRET="$(local_env YOUTUBE_CLIENT_SECRET)"
+PIXABAY_API_KEY="$(local_env PIXABAY_API_KEY)"
 [ -n "$LINKEDIN_CLIENT_ID" ] || echo "Note: no LINKEDIN_CLIENT_ID in .env; LinkedIn sign-in will be off until you add it on the server."
 
 SSH=(ssh -i "$KEY" -o StrictHostKeyChecking=accept-new "ubuntu@$HOST")
@@ -70,6 +71,9 @@ YOUTUBE_CLIENT_SECRET=$YOUTUBE_CLIENT_SECRET
 YOUTUBE_REDIRECT_URI=https://$DOMAIN/api/auth/youtube/callback
 # Encrypts stored OAuth refresh tokens; changing it disconnects every YouTube channel
 TOKEN_ENCRYPTION_KEY=$(openssl rand -base64 32 | tr -d '\n')
+
+# Free stock photos in the Designer
+PIXABAY_API_KEY=$PIXABAY_API_KEY
 
 PUBLISHER_ENABLED=true
 PUBLISHER_SCAN_INTERVAL_SECONDS=60

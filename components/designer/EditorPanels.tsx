@@ -5,13 +5,18 @@ import { Icon } from '@iconify/react';
 import { PALETTES, STYLES, restyle, type Palette } from '@/lib/design/styles';
 import { backgroundColors, type Background, type DesignDoc, type TextLayer } from '@/lib/design/types';
 import { worstContrast, bestTextColor } from '@/lib/design/contrast';
-import { addText, fixContrast, lowContrastLayers, setBackground, setHandle, updateLayer, type NewTextKind } from '@/lib/design/edit';
+import { addText, fixContrast, lowContrastLayers, setBackground, setHandle, setOverlay, setPhotoBackground, updateLayer, type NewTextKind } from '@/lib/design/edit';
+import { photoCredit, readableOverlay } from '@/lib/design/photo';
+import { textOf } from '@/lib/design/styles';
+import { FORMATS, type PhotoBackground } from '@/lib/design/types';
+import { DesignRequestError, savePhoto, searchPhotos, type StockPhoto } from '@/lib/api/designApi';
+import { loadPhoto, rememberSaved, tonesOf } from './photos';
 import { rememberHandle, rememberedHandle } from '@/lib/api/designApi';
 import { DesignCanvas } from './DesignCanvas';
 import { FONT_FAMILIES, FONT_OPTIONS } from './fonts';
 import { ContrastBadge, INPUT } from './ui';
 
-export type Tab = 'styles' | 'text' | 'background' | 'brand';
+export type Tab = 'styles' | 'text' | 'background' | 'photos' | 'brand';
 
 type Change = (next: (d: DesignDoc) => DesignDoc, opts?: { coalesce?: boolean }) => void;
 
@@ -19,6 +24,7 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'styles', label: 'Styles', icon: 'lucide:layout-template' },
   { id: 'text', label: 'Text', icon: 'lucide:type' },
   { id: 'background', label: 'Background', icon: 'lucide:paint-bucket' },
+  { id: 'photos', label: 'Photos', icon: 'lucide:image' },
   { id: 'brand', label: 'Brand', icon: 'lucide:badge-check' },
 ];
 
@@ -38,7 +44,7 @@ const GRADIENTS: { from: string; to: string }[] = [
 
 /** The palette a design looks closest to (by background colour) */
 function currentPalette(doc: DesignDoc): Palette {
-  const bg = doc.background.kind === 'solid' ? doc.background.color : doc.background.to;
+  const bg = doc.background.kind === 'solid' ? doc.background.color : doc.background.kind === 'gradient' ? doc.background.to : '';
   return PALETTES.find((p) => p.background.toLowerCase() === bg.toLowerCase()) ?? PALETTES[0];
 }
 
@@ -78,6 +84,7 @@ export function LeftPanel({
         {tab === 'styles' && <StylesTab doc={doc} onChange={onChange} />}
         {tab === 'text' && <TextTab doc={doc} onChange={onChange} onSelect={onSelect} selected={selected} />}
         {tab === 'background' && <BackgroundTab doc={doc} onChange={onChange} />}
+        {tab === 'photos' && <PhotosTab doc={doc} onChange={onChange} />}
         {tab === 'brand' && <BrandTab doc={doc} onChange={onChange} />}
       </div>
     </div>
@@ -220,6 +227,222 @@ function BackgroundTab({ doc, onChange }: { doc: DesignDoc; onChange: Change }) 
       </div>
       <p className="text-xs text-[#777587]">Text colours change by themselves if they’d be hard to read.</p>
     </>
+  );
+}
+
+/** Words worth searching for, from the design's headline */
+function suggestedQuery(doc: DesignDoc): string {
+  const words = textOf(doc).headline.toLowerCase().replace(/[^\p{L}\s]/gu, ' ').split(/\s+/);
+  const stop = new Set(['the', 'and', 'for', 'your', 'with', 'you', 'our', 'are', 'this', 'that', 'from', 'every', 'even', 'new', 'not']);
+  return words.filter((w) => w.length > 2 && !stop.has(w)).slice(0, 2).join(' ');
+}
+
+function PhotosTab({ doc, onChange }: { doc: DesignDoc; onChange: Change }) {
+  const [query, setQuery] = useState(() => suggestedQuery(doc) || 'fitness');
+  const [searched, setSearched] = useState('');
+  const [results, setResults] = useState<StockPhoto[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [picking, setPicking] = useState<number | null>(null);
+  const [error, setError] = useState('');
+  const orientation = doc.format === 'square' ? 'all' : 'vertical';
+
+  const run = async (q: string) => {
+    if (!q.trim()) return;
+    setBusy(true);
+    setError('');
+    try {
+      setResults(await searchPhotos(q, orientation));
+      setSearched(q);
+    } catch (err) {
+      setError(err instanceof DesignRequestError ? err.message : 'Couldn’t search photos');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  useEffect(() => {
+    void run(query);
+    // Search once when the tab opens
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const pick = async (photo: StockPhoto) => {
+    setPicking(photo.id);
+    setError('');
+    const previewId = `pixabay:${photo.id}`;
+    try {
+      // Show it straight away from the preview, then keep a copy in Zetca
+      const img = await loadPhoto({ photoId: previewId, previewUrl: photo.previewUrl });
+      const preview: PhotoBackground = {
+        kind: 'photo',
+        photoId: previewId,
+        previewUrl: photo.previewUrl,
+        width: img.width,
+        height: img.height,
+        focusX: 0.5,
+        focusY: 0.5,
+        fit: 'fill',
+        tones: tonesOf(img),
+        credit: { ...photo.credit, source: 'pixabay' },
+      };
+      onChange((d) => setPhotoBackground(d, preview));
+      const saved = await savePhoto(photo.id);
+      rememberSaved(previewId, { ...preview, photoId: saved.photoId, previewUrl: undefined });
+      onChange(
+        (d) =>
+          d.background.kind === 'photo' && d.background.photoId === previewId
+            ? { ...d, background: { ...d.background, photoId: saved.photoId, previewUrl: undefined } }
+            : d,
+        { coalesce: true }
+      );
+    } catch (err) {
+      setError(err instanceof DesignRequestError ? err.message : 'Couldn’t use that photo. Try another one.');
+    } finally {
+      setPicking(null);
+    }
+  };
+
+  const current = doc.background.kind === 'photo' ? doc.background.credit.url : null;
+
+  return (
+    <>
+      <form
+        className="space-y-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void run(query);
+        }}
+      >
+        <div className="relative">
+          <Icon icon="lucide:search" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#777587]" aria-hidden />
+          <input aria-label="Search free photos" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search photos" className={`${INPUT} pl-9 py-2.5`} />
+        </div>
+        <p className="text-xs text-[#777587]">
+          Free photos from{' '}
+          <a href="https://pixabay.com/" target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">
+            Pixabay
+          </a>
+        </p>
+      </form>
+      {error && (
+        <p role="alert" className="text-sm font-medium text-red-600">
+          {error}
+        </p>
+      )}
+      {busy && !results ? (
+        <div className="grid grid-cols-2 gap-2">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="aspect-[3/4] rounded-xl bg-[#F1F5F9] animate-pulse" />
+          ))}
+        </div>
+      ) : results && results.length === 0 ? (
+        <div className="py-8 text-center">
+          <Icon icon="lucide:search-x" className="mx-auto w-8 h-8 text-[#94A3B8]" aria-hidden />
+          <p className="mt-2 text-sm font-semibold text-[#0B1C30]">No photos for “{searched}”</p>
+          <p className="text-xs text-[#777587]">Try a shorter word.</p>
+        </div>
+      ) : (
+        <div className={`grid grid-cols-2 gap-2 ${busy ? 'opacity-60' : ''}`} aria-busy={busy}>
+          {(results ?? []).map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => pick(p)}
+              disabled={picking !== null}
+              aria-label={`Use photo: ${p.tags}`}
+              aria-pressed={current === p.credit.url}
+              className={`relative overflow-hidden rounded-xl border-2 bg-[#F1F5F9] ${current === p.credit.url ? 'border-primary' : 'border-transparent hover:border-primary/40'}`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={p.previewUrl} alt="" loading="lazy" className="block w-full aspect-[3/4] object-cover" />
+              {picking === p.id && (
+                <span className="absolute inset-0 flex items-center justify-center bg-black/40">
+                  <Icon icon="lucide:loader-circle" className="w-6 h-6 text-white animate-spin" aria-hidden />
+                </span>
+              )}
+              {current === p.credit.url && (
+                <span className="absolute top-1.5 right-1.5 rounded-full bg-primary p-0.5 text-white">
+                  <Icon icon="lucide:check" className="w-3.5 h-3.5" aria-hidden />
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+const OVERLAY_COLORS = ['#000000', '#FFFFFF', '#312E81'];
+
+function PhotoControls({ doc, bg, onChange }: { doc: DesignDoc; bg: PhotoBackground; onChange: Change }) {
+  const overlay = doc.overlay ?? { color: '#000000', opacity: 0 };
+  const setBg = (patch: Partial<PhotoBackground>) => onChange((d) => (d.background.kind === 'photo' ? { ...d, background: { ...d.background, ...patch } } : d), { coalesce: true });
+  const focusCells = [0.15, 0.5, 0.85];
+  return (
+    <div className="space-y-4 border-t border-[#E2E8F0] pt-4">
+      <h3 className="text-base font-bold text-[#0B1C30]">Photo</h3>
+      <div className="space-y-2">
+        <p className={HEADING}>Overlay</p>
+        <div className="flex items-center gap-2">
+          {OVERLAY_COLORS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              aria-label={`Overlay ${c}`}
+              aria-pressed={overlay.color === c}
+              onClick={() => onChange((d) => readableOverlay(setOverlay(d, { ...overlay, color: c })))}
+              className={`h-8 w-8 rounded-full border-2 ${overlay.color === c ? 'border-primary ring-2 ring-primary/30' : 'border-[#E2E8F0]'}`}
+              style={{ background: c }}
+            />
+          ))}
+        </div>
+        <Slider label="Darkness" min={0} max={0.9} step={0.01} value={overlay.opacity} onChange={(v) => onChange((d) => setOverlay(d, { ...overlay, opacity: v }), { coalesce: true })} format={(v) => `${Math.round(v * 100)}%`} />
+      </div>
+      <div className="space-y-2">
+        <p className={HEADING}>Fit</p>
+        <div className="flex gap-2">
+          {(['fill', 'fit'] as const).map((f) => (
+            <button
+              key={f}
+              type="button"
+              aria-pressed={bg.fit === f}
+              onClick={() => setBg({ fit: f })}
+              className={`flex-1 h-9 rounded-full text-xs font-semibold ${bg.fit === f ? 'bg-primary text-white' : 'bg-[#F1F5F9] text-[#464555]'}`}
+            >
+              {f === 'fill' ? 'Fill' : 'Show all'}
+            </button>
+          ))}
+        </div>
+      </div>
+      {bg.fit === 'fill' && (
+        <div className="space-y-2">
+          <p className={HEADING}>Keep in view</p>
+          <div className="grid grid-cols-3 gap-1 w-24" role="group" aria-label="Part of the photo to keep in view">
+            {focusCells.flatMap((fy) =>
+              focusCells.map((fx) => {
+                const on = Math.abs(bg.focusX - fx) < 0.2 && Math.abs(bg.focusY - fy) < 0.2;
+                return (
+                  <button
+                    key={`${fx}-${fy}`}
+                    type="button"
+                    aria-label={`${fy < 0.3 ? 'Top' : fy > 0.7 ? 'Bottom' : 'Middle'} ${fx < 0.3 ? 'left' : fx > 0.7 ? 'right' : 'centre'}`}
+                    aria-pressed={on}
+                    onClick={() => setBg({ focusX: fx, focusY: fy })}
+                    className={`aspect-square rounded-md border ${on ? 'bg-primary border-primary' : 'bg-[#F1F5F9] border-[#E2E8F0] hover:border-primary/40'}`}
+                  />
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+      <p className="text-xs text-[#777587]">
+        <a href={bg.credit.url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+          {photoCredit(bg)}
+        </a>
+      </p>
+    </div>
   );
 }
 
@@ -396,6 +619,9 @@ function DesignSummary({ doc, onChange }: { doc: DesignDoc; onChange: Change }) 
     <div className={`${PANEL} min-h-0 overflow-y-auto p-4 space-y-4`}>
       <h2 className="text-lg font-bold text-[#0B1C30]">Design</h2>
       <p className="text-sm text-[#464555]">Click any text on the design to change it. Drag to move it, or use the round handle to resize its box.</p>
+      <p className="text-xs text-[#777587]">
+        {FORMATS[doc.format].label} · {FORMATS[doc.format].width} × {FORMATS[doc.format].height}px
+      </p>
       {low.length === 0 ? (
         <p className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
           <Icon icon="lucide:check" className="w-3.5 h-3.5" aria-hidden /> All text is easy to read
@@ -405,11 +631,12 @@ function DesignSummary({ doc, onChange }: { doc: DesignDoc; onChange: Change }) 
           <p className="text-sm font-semibold text-red-700">
             {low.length === 1 ? '1 text is' : `${low.length} texts are`} hard to read on this background.
           </p>
-          <button type="button" onClick={() => onChange(fixContrast)} className="text-sm font-semibold text-primary hover:underline">
-            Fix colours
+          <button type="button" onClick={() => onChange((d) => (d.background.kind === 'photo' ? readableOverlay(fixContrast(d)) : fixContrast(d)))} className="text-sm font-semibold text-primary hover:underline">
+            {doc.background.kind === 'photo' ? 'Fix it' : 'Fix colours'}
           </button>
         </div>
       )}
+      {doc.background.kind === 'photo' && <PhotoControls doc={doc} bg={doc.background} onChange={onChange} />}
     </div>
   );
 }

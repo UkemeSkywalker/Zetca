@@ -82,9 +82,9 @@ describe('styles', () => {
 
 describe('design writer output', () => {
   it('turns a written "\\n" into a real line break and drops quotes and hashtags', () => {
-    expect(cleanDesignText({ styleId: 'bold-statement', headline: '"Show up\\neven on empty" #fit' }).headline).toBe('Show up\neven on empty fit');
+    expect(cleanDesignText({ styleId: 'bold-statement', headline: '"Show up\\neven on empty" #fit', photoQuery: 'gym' }).headline).toBe('Show up\neven on empty fit');
   });
   it('keeps the supporting line only for tip cards', () => {
-    expect(cleanDesignText({ styleId: 'glow', headline: 'Hi', body: 'More' }).body).toBeUndefined();
+    expect(cleanDesignText({ styleId: 'glow', headline: 'Hi', body: 'More', photoQuery: '' }).body).toBeUndefined();
   });
 });

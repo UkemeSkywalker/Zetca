@@ -2,8 +2,9 @@
  * Small, pure edits to a design, used by the editor (and easy to test)
  */
 
-import { bestTextColor, passes } from './contrast';
-import { FORMATS, backgroundColors, type Background, type DesignDoc, type FormatId, type TextLayer } from './types';
+import { bestTextColor, luminance, passes } from './contrast';
+import { FORMATS, backgroundColors, type Background, type DesignDoc, type FormatId, type PhotoBackground, type TextLayer } from './types';
+import { readableOverlay } from './photo';
 
 export function updateLayer(doc: DesignDoc, id: string, patch: Partial<TextLayer>): DesignDoc {
   return { ...doc, layers: doc.layers.map((l) => (l.id === id ? { ...l, ...patch } : l)) };
@@ -60,7 +61,8 @@ export function addText(doc: DesignDoc, kind: NewTextKind): { doc: DesignDoc; id
  * (pills keep their own fill, so they're left alone).
  */
 export function setBackground(doc: DesignDoc, background: Background): DesignDoc {
-  const next = { ...doc, background };
+  // Overlays only darken photos; a plain colour or gradient doesn't need one
+  const next: DesignDoc = background.kind === 'photo' ? { ...doc, background } : { ...doc, background, overlay: undefined };
   const behind = backgroundColors(next);
   return {
     ...next,
@@ -135,4 +137,25 @@ export function clampBox(doc: DesignDoc, box: { x: number; y: number; width: num
     x: Math.round(Math.min(Math.max(box.x, -width / 2), W - width / 2)),
     y: Math.round(Math.min(Math.max(box.y, -height / 2), H - height / 2)),
   };
+}
+
+/**
+ * Puts a photo behind the design: adds a dark overlay if there isn't one,
+ * gives text the colour that reads best, then darkens the overlay further
+ * only if some text still wouldn't be easy to read.
+ */
+export function setPhotoBackground(doc: DesignDoc, photo: PhotoBackground): DesignDoc {
+  const overlay = doc.overlay ?? { color: '#000000', opacity: 0.45 };
+  // Text sits on the overlay: light text on a dark one, dark text on a light one
+  const onOverlay = luminance(overlay.color) < 0.5 ? '#FFFFFF' : '#0B0B0F';
+  const next: DesignDoc = { ...doc, background: photo, overlay };
+  const behind = backgroundColors(next);
+  return readableOverlay({
+    ...next,
+    layers: next.layers.map((l) => (l.fill || passes(l.color, behind) ? l : { ...l, color: onOverlay })),
+  });
+}
+
+export function setOverlay(doc: DesignDoc, overlay: { color: string; opacity: number }): DesignDoc {
+  return { ...doc, overlay };
 }

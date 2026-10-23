@@ -5,6 +5,10 @@
 
 import { FORMATS, type DesignDoc, type FontId, type TextLayer } from './types';
 import { fitText, type FittedText } from './textFit';
+import { photoRect } from './photo';
+
+/** Loaded photos by photoId, for photo backgrounds */
+export type PhotoImages = Record<string, CanvasImageSource & { width: number; height: number }>;
 
 /** CSS font-family for each font (from next/font, so the names are hashed) */
 export type FontFamilies = Record<FontId, string>;
@@ -45,10 +49,13 @@ export function layoutLayer(ctx: Ctx, layer: TextLayer, families: FontFamilies):
 
 const padding = (size: number) => Math.round(size * 0.55);
 
-function drawBackground(ctx: Ctx, doc: DesignDoc, w: number, h: number) {
+function drawBackground(ctx: Ctx, doc: DesignDoc, w: number, h: number, photos: PhotoImages) {
   const bg = doc.background;
   if (bg.kind === 'solid') {
     ctx.fillStyle = bg.color;
+  } else if (bg.kind === 'photo') {
+    // The photo's average colour shows while it loads, and around it in "fit"
+    ctx.fillStyle = bg.tones[0];
   } else {
     // A gradient line through the centre at `angle` (0 = bottom to top, like CSS)
     const rad = ((bg.angle - 90) * Math.PI) / 180;
@@ -61,6 +68,11 @@ function drawBackground(ctx: Ctx, doc: DesignDoc, w: number, h: number) {
     ctx.fillStyle = g;
   }
   ctx.fillRect(0, 0, w, h);
+  const image = bg.kind === 'photo' ? photos[bg.photoId] : undefined;
+  if (bg.kind === 'photo' && image) {
+    const r = photoRect(image.width, image.height, w, h, bg.fit, bg.focusX, bg.focusY);
+    ctx.drawImage(image, r.sx, r.sy, r.sw, r.sh, r.dx, r.dy, r.dw, r.dh);
+  }
   if (doc.overlay && doc.overlay.opacity > 0) {
     ctx.globalAlpha = doc.overlay.opacity;
     ctx.fillStyle = doc.overlay.color;
@@ -111,14 +123,14 @@ function drawLayer(ctx: Ctx, layer: TextLayer, fitted: FittedText, families: Fon
 }
 
 /** Draws the design; the canvas is resized to the design's full size */
-export function drawDesign(canvas: HTMLCanvasElement, doc: DesignDoc, families: FontFamilies): LaidOutLayer[] {
+export function drawDesign(canvas: HTMLCanvasElement, doc: DesignDoc, families: FontFamilies, photos: PhotoImages = {}): LaidOutLayer[] {
   const { width, height } = FORMATS[doc.format];
   if (canvas.width !== width) canvas.width = width;
   if (canvas.height !== height) canvas.height = height;
   const ctx = canvas.getContext('2d');
   if (!ctx) return [];
   ctx.clearRect(0, 0, width, height);
-  drawBackground(ctx, doc, width, height);
+  drawBackground(ctx, doc, width, height, photos);
   return doc.layers.map((layer) => {
     const fitted = layoutLayer(ctx, layer, families);
     drawLayer(ctx, layer, fitted, families);
@@ -127,9 +139,9 @@ export function drawDesign(canvas: HTMLCanvasElement, doc: DesignDoc, families: 
 }
 
 /** The design as a PNG file */
-export function designToBlob(doc: DesignDoc, families: FontFamilies): Promise<Blob> {
+export function designToBlob(doc: DesignDoc, families: FontFamilies, photos: PhotoImages = {}): Promise<Blob> {
   const canvas = document.createElement('canvas');
-  drawDesign(canvas, doc, families);
+  drawDesign(canvas, doc, families, photos);
   return new Promise((resolve, reject) =>
     canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Couldn’t make the image'))), 'image/png')
   );
