@@ -6,6 +6,7 @@ import { getStrategyService } from '@/lib/services/container';
 import { DescriptionNotAvailableError } from '@/lib/services/strategyService';
 import { PLATFORM_IDS } from '@/lib/models/strategy';
 import { jsonError, withTimeout, handleRouteError } from '@/lib/api/routeHelpers';
+import { priceOf, withCredits } from '@/lib/billing/charge';
 
 const RegenerateSchema = z.object({ platform: z.enum(PLATFORM_IDS) });
 
@@ -15,11 +16,11 @@ async function regenerateHandler(req: NextRequest, userId: string, strategyId: s
     const { platform } = RegenerateSchema.parse(await req.json());
     const cfg = getConfig();
 
-    const description = await withTimeout(
+    const description = await withCredits(userId, 'copy_rewrite', priceOf('copy_rewrite'), () => withTimeout(
       getStrategyService().regenerateChannelDescription(strategyId, userId, platform),
       cfg.agentTimeoutSeconds,
       `Regenerating the description timed out after ${cfg.agentTimeoutSeconds} seconds. Please try again.`
-    );
+    ));
     if (description === null) return jsonError('Strategy not found', 404);
 
     return NextResponse.json(description, { status: 200 });

@@ -13,14 +13,16 @@ import { CostBadge } from '@/components/designer/ui';
 import { MAKEABLE, VISUAL_LABELS, updatePostVisual } from '@/components/designer/postVisuals';
 import type { CopyRecord, VisualKind } from '@/types/agent';
 import { platformInfo } from './platforms';
+import { useCredits } from '@/components/billing/useCredits';
 import { VISUAL_REQUIRED, visualOf } from './usePostVisuals';
 
 const COSTS: Record<VisualKind, 'free' | number | 'soon'> = {
   none: 'free',
-  template: 'free',
-  stock: 'free',
-  ai_image: 'soon',
-  ai_video: 'soon',
+  // Text and stock visuals cost 1 credit for the words the AI writes for them
+  template: 1,
+  stock: 1,
+  ai_image: 1,
+  ai_video: 26,
 };
 const KINDS: VisualKind[] = ['none', 'template', 'stock', 'ai_image', 'ai_video'];
 
@@ -46,6 +48,8 @@ export function VisualRow({
   size?: 'sm' | 'lg';
 }) {
   const kind = visualOf(copy).kind;
+  const { credits } = useCredits();
+  const aiLocked = credits !== null && !credits.aiMedia;
   const required = VISUAL_REQUIRED.has(copy.platform);
   const ready = !!copy.visual?.mediaId;
   const status = making
@@ -113,7 +117,7 @@ export function VisualRow({
             className="min-w-0 flex-1 h-8 pl-2 pr-6 rounded-lg border border-[#c7c4d8]/60 bg-white text-[12px] font-semibold text-[#0b1c30] disabled:opacity-50"
           >
             {KINDS.map((k) => (
-              <option key={k} value={k} disabled={(k === 'none' && required) || COSTS[k] === 'soon'}>
+              <option key={k} value={k} disabled={(k === 'none' && required) || COSTS[k] === 'soon' || (aiLocked && (k === 'ai_image' || k === 'ai_video'))}>
                 {VISUAL_LABELS[k]}
                 {k === 'none' && required
                   ? ` (${platformInfo(copy.platform).label} needs a visual)`
@@ -150,7 +154,7 @@ export function VisualsBanner({ count, busy, onCreateAll, aiCredits = 0 }: { cou
       </span>
       <p className="flex-1 min-w-[180px] text-[14px] text-[#0b1c30]">
         <span className="font-bold">{busy ? 'Creating visuals…' : `${count} ${count === 1 ? 'post needs' : 'posts need'} a visual`}</span>
-        <span className="text-[#464555]"> · {aiCredits ? `Uses ${aiCredits} AI ${aiCredits === 1 ? 'credit' : 'credits'}` : 'Free: text designs and stock photos'}</span>
+        <span className="text-[#464555]"> · {`Uses ${aiCredits} ${aiCredits === 1 ? 'credit' : 'credits'}`}</span>
       </p>
       <button
         type="button"
@@ -350,7 +354,7 @@ export function EditVisualModal({
                         onClick={() => !active && onChoose(k)}
                         className={`h-9 rounded-lg text-[12px] font-semibold ${active ? 'bg-white text-[#0b1c30] shadow-sm' : 'text-[#464555] hover:bg-white/60'} disabled:opacity-50`}
                       >
-                        {k === 'template' ? 'Text design' : k === 'stock' ? 'Stock photo' : 'AI image'} · {soon ? 'Soon' : k === 'ai_image' ? '1 credit' : 'Free'}
+                        {k === 'template' ? 'Text design' : k === 'stock' ? 'Stock photo' : 'AI image'} · {soon ? 'Soon' : k === 'ai_image' ? '2 credits' : '1 credit'}
                       </button>
                     );
                   })}

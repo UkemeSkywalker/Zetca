@@ -6,6 +6,7 @@ import type { PlatformId } from './BrandStep';
 import type { Niche, NicheTopic } from './NicheStep';
 import type { SkillLevel } from './AudienceStep';
 import { summariseAges } from './StrategyRail';
+import { ACTIONS } from '@/lib/billing/prices';
 
 export type ReviewSection = 'brand' | 'niche' | 'audience' | 'content';
 
@@ -257,6 +258,7 @@ export function ReviewStep(props: ReviewStepProps) {
             </>
           )}
         </button>
+        {!generating && <p className={`${LABEL_MD} text-[#777587] text-center mt-2`}>Uses {ACTIONS.strategy.credits} credits</p>}
         {error ? (
           <p className={`${LABEL_MD} text-[#ba1a1a] text-center mt-2`} role="alert">
             {error}

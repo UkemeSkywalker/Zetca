@@ -57,6 +57,7 @@ DYNAMODB_YOUTUBE_VIDEOS_TABLE_NAME=$(tf dynamodb_youtube_videos_table_name)
 DYNAMODB_SCHEDULED_POSTS_TABLE_NAME=$(tf dynamodb_scheduled_posts_table_name)
 DYNAMODB_PUBLISH_LOG_TABLE_NAME=$(tf dynamodb_publish_log_table_name)
 DYNAMODB_MEDIA_TABLE_NAME=$(tf dynamodb_post_media_table_name)
+DYNAMODB_CREDIT_LEDGER_TABLE_NAME=$(tf dynamodb_credit_ledger_table_name)
 S3_MEDIA_BUCKET=$(tf s3_post_media_bucket_name)
 
 BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-4-6
@@ -75,9 +76,8 @@ TOKEN_ENCRYPTION_KEY=$(openssl rand -base64 32 | tr -d '\n')
 
 # Free stock photos in the Designer
 PIXABAY_API_KEY=$PIXABAY_API_KEY
-# AI images and videos in the Designer, and how many AI credits each user gets a month
+# AI images and videos in the Designer (credits per plan are in lib/billing/plans.ts)
 HIGGSFIELD_API_KEY=$HIGGSFIELD_API_KEY
-AI_CREDITS_PER_MONTH=20
 
 PUBLISHER_ENABLED=true
 PUBLISHER_SCAN_INTERVAL_SECONDS=60

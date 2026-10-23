@@ -17,8 +17,13 @@ import type { FormatId } from '../design/types';
 import { MediaRepository } from '../db/mediaRepository';
 import { generateS3Key } from '../media/validation';
 import { photoKey } from './stockPhotoService';
-import { AI_ASPECT, HiggsfieldClient, HiggsfieldError, type HiggsfieldRequest } from './higgsfieldClient';
-import { AI_COSTS, AiCredits, monthOf, type AiKind } from './aiCredits';
+import { HiggsfieldClient, HiggsfieldError, type HiggsfieldRequest } from './higgsfieldClient';
+import { Credits, type CreditSource } from '../billing/credits';
+import { Ledger } from '../billing/ledger';
+import { requireAiMedia } from '../billing/charge';
+import { FRAME_MODEL, imageCredits, imageModel, videoCostUsd, videoCredits, videoModel } from '../billing/aiModels';
+
+export type AiKind = 'image' | 'video';
 
 export interface AiJob {
   jobId: string;
@@ -27,11 +32,16 @@ export interface AiJob {
   format: FormatId;
   prompt: string;
   stage: 'image' | 'video' | 'done' | 'failed';
+  /** The model picked (an image model, or a video model; videos' first frame uses the frame model) */
+  model: string;
   imageRequestId: string;
   videoRequestId?: string;
+  /** Credits taken, where from, and the month (refunds go back to the same place) */
   cost: number;
-  /** The month the credits were taken in (refunds only apply within it) */
+  source: CreditSource;
   month: string;
+  /** What the job costs Zetca at Higgsfield */
+  costUsd: number;
   createdAt: string;
   updatedAt: string;
   error?: string;
@@ -42,17 +52,19 @@ export interface AiJob {
 }
 
 /** What the page sees */
-export type PublicAiJob = Pick<AiJob, 'jobId' | 'kind' | 'format' | 'stage' | 'error' | 'photoId' | 'mediaId' | 'createdAt'>;
+export type PublicAiJob = Pick<AiJob, 'jobId' | 'kind' | 'format' | 'model' | 'stage' | 'error' | 'photoId' | 'mediaId' | 'createdAt' | 'cost'>;
 
-export const toPublicJob = ({ jobId, kind, format, stage, error, photoId, mediaId, createdAt }: AiJob): PublicAiJob => ({
+export const toPublicJob = ({ jobId, kind, format, model, stage, error, photoId, mediaId, createdAt, cost }: AiJob): PublicAiJob => ({
   jobId,
   kind,
   format,
+  model,
   stage,
   error,
   photoId,
   mediaId,
   createdAt,
+  cost,
 });
 
 const jobKey = (userId: string, jobId: string) => `designs/${userId}/ai/${jobId}.json`;
@@ -73,9 +85,11 @@ export class AiDesignService {
 
   constructor(
     private hf = new HiggsfieldClient(),
-    private credits = new AiCredits(),
+    private credits = new Credits(),
     s3?: S3Client,
-    private media = new MediaRepository()
+    private media = new MediaRepository(),
+    private ledger = new Ledger(),
+    private checkPlan: (userId: string, what: string, tier: number) => Promise<void> = requireAiMedia
   ) {
     const cfg = getConfig();
     const s3Config: S3ClientConfig = { region: cfg.awsRegion };
@@ -105,30 +119,37 @@ export class AiDesignService {
     }
   }
 
-  /** Takes the credits and starts the image */
-  async start(userId: string, input: { kind: AiKind; prompt: string; format: FormatId }): Promise<AiJob> {
-    const cost = AI_COSTS[input.kind];
-    await this.credits.take(userId, cost);
-    const month = monthOf();
+  /** Checks the plan, takes the credits and starts the image (a video's first frame) */
+  async start(userId: string, input: { kind: AiKind; prompt: string; format: FormatId; model?: string }): Promise<AiJob> {
+    const video = input.kind === 'video' ? videoModel(input.model) : null;
+    const image = video ? imageModel(FRAME_MODEL) : imageModel(input.model);
+    const model = video ?? image;
+    await this.checkPlan(userId, video ? `${video.name} videos` : `${image.name} images`, model.tier);
+    const cost = video ? videoCredits(video) : imageCredits(image);
+    const costUsd = video ? videoCostUsd(video) : image.costUsd;
+    const taken = await this.credits.take(userId, cost);
     const jobId = randomUUID();
     try {
-      const req = await this.hf.submitImage(imagePrompt(input.prompt), AI_ASPECT[input.format], `${jobId}-image`);
+      const req = await this.hf.submit(image.endpoint, image.body(imagePrompt(input.prompt), input.format), `${jobId}-image`);
       const now = new Date().toISOString();
       return await this.save({
         jobId,
         userId,
         kind: input.kind,
         format: input.format,
+        model: model.id,
         prompt: input.prompt,
         stage: 'image',
         imageRequestId: req.request_id,
         cost,
-        month,
+        source: taken.source,
+        month: taken.month,
+        costUsd,
         createdAt: now,
         updatedAt: now,
       });
     } catch (error) {
-      await this.credits.refund(userId, cost, month);
+      await this.credits.refund(userId, cost, taken.source, taken.month);
       throw error;
     }
   }
@@ -148,8 +169,9 @@ export class AiDesignService {
         await this.s3.send(
           new PutObjectCommand({ Bucket: this.bucket, Key: photoKey(userId, photoId), Body: await this.hf.download(url), ContentType: contentTypeOf(url) })
         );
-        if (job.kind === 'image') return this.save({ ...job, photoId, stage: 'done' });
-        const video = await this.hf.submitVideo(videoPrompt(job.prompt), url, `${job.jobId}-video`);
+        if (job.kind === 'image') return this.finish({ ...job, photoId, stage: 'done' });
+        const vm = videoModel(job.model);
+        const video = await this.hf.submit(vm.endpoint, vm.body(videoPrompt(job.prompt), url), `${job.jobId}-video`);
         job = await this.save({ ...job, photoId, stage: 'video', videoRequestId: video.request_id });
         return job;
       }
@@ -175,7 +197,7 @@ export class AiDesignService {
         createdAt: new Date().toISOString(),
         durationSeconds: 5,
       });
-      return this.save({ ...job, mediaId, stage: 'done' });
+      return this.finish({ ...job, mediaId, stage: 'done' });
     } catch (error) {
       // A busy or briefly unreachable service: keep the job and check again later
       if (error instanceof HiggsfieldError && (error.statusCode === 429 || error.statusCode === 502)) return job;
@@ -183,8 +205,20 @@ export class AiDesignService {
     }
   }
 
+  /** Records the finished job in the credit ledger */
+  private async finish(job: AiJob): Promise<AiJob> {
+    const saved = await this.save(job);
+    await this.ledger
+      .add({ userId: job.userId, action: job.kind === 'video' ? 'ai_video' : 'ai_image', credits: job.cost, source: job.source, detail: job.model, costUsd: job.costUsd, status: 'charged' })
+      .catch((e) => console.error('Credit ledger: couldn’t record an AI job:', (e as Error).message));
+    return saved;
+  }
+
   private async fail(job: AiJob, req: HiggsfieldRequest): Promise<AiJob> {
-    await this.credits.refund(job.userId, job.cost, job.month);
+    await this.credits.refund(job.userId, job.cost, job.source, job.month);
+    await this.ledger
+      .add({ userId: job.userId, action: job.kind === 'video' ? 'ai_video' : 'ai_image', credits: 0, source: job.source, detail: job.model, status: 'refunded' })
+      .catch(() => undefined);
     const error = req.status === 'nsfw' ? BLOCKED : req.status === 'canceled' ? 'The AI request was cancelled.' : 'The AI couldn’t make that. Your credits were given back.';
     return this.save({ ...job, stage: 'failed', error });
   }

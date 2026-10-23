@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Icon } from '@iconify/react';
 import { useAuth } from '@/context/AuthContext';
 import LogoutButton from '@/components/auth/LogoutButton';
+import { HeaderCredits } from '@/components/billing/HeaderCredits';
 
 interface DashboardHeaderProps {
   /** Positioning and sizing for the outer bar, e.g. fixed beside the sidebar or sticky full width */
@@ -65,6 +66,7 @@ export function DashboardHeader({ className = '', leading, trailing, mobileTitle
         {/* Right Side Icons */}
         <div className="flex items-center gap-1.5 md:gap-3">
           {trailing}
+          <HeaderCredits />
           <button
             className="relative p-2 md:p-2.5 text-outline hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
             aria-label="Messages"

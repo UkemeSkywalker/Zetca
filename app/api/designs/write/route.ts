@@ -10,12 +10,13 @@ import { getDesignWriterAgent } from '@/lib/services/container';
 import { DesignWriterRequestSchema } from '@/lib/models/designWriter';
 import { withTimeout } from '@/lib/api/routeHelpers';
 import { designErrorResponse } from '@/lib/design/routeErrors';
+import { priceOf, withCredits } from '@/lib/billing/charge';
 
 export async function POST(req: NextRequest) {
   const handler = await withAuth(async (request: NextRequest, userId: string) => {
     try {
       const input = DesignWriterRequestSchema.parse(await request.json().catch(() => ({})));
-      const text = await withTimeout(getDesignWriterAgent().write(input), getConfig().agentTimeoutSeconds, 'That took too long. Please try again.');
+      const text = await withCredits(userId, 'design_words', priceOf('design_words'), () => withTimeout(getDesignWriterAgent().write(input), getConfig().agentTimeoutSeconds, 'That took too long. Please try again.'));
       return NextResponse.json(text);
     } catch (error) {
       return designErrorResponse(error, { endpoint: '/api/designs/write', userId });

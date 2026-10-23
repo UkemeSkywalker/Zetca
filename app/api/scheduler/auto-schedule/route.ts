@@ -4,6 +4,7 @@ import { getConfig } from '@/lib/config';
 import { getSchedulerService } from '@/lib/services/container';
 import { AutoScheduleInputSchema } from '@/lib/models/scheduler';
 import { withTimeout, handleRouteError } from '@/lib/api/routeHelpers';
+import { priceOf, withCredits } from '@/lib/billing/charge';
 
 async function autoScheduleHandler(req: NextRequest, userId: string): Promise<Response> {
   try {
@@ -15,7 +16,7 @@ async function autoScheduleHandler(req: NextRequest, userId: string): Promise<Re
 
     // On timeout, cancel so a late result isn't saved after the user was told it failed
     const cancel = new AbortController();
-    const records = await withTimeout(
+    const records = await withCredits(userId, 'auto_schedule', priceOf('auto_schedule'), () => withTimeout(
       getSchedulerService().autoSchedule(input.strategy_id, userId, {
         setId: input.set_id,
         timezone: input.timezone,
@@ -24,7 +25,7 @@ async function autoScheduleHandler(req: NextRequest, userId: string): Promise<Re
       cfg.agentTimeoutSeconds,
       'Auto-scheduling timed out. Please try again.',
       () => cancel.abort()
-    );
+    ));
 
     console.info(`Auto-scheduled ${records.length} posts for strategy: ${input.strategy_id}`);
     return NextResponse.json(records, { status: 200 });

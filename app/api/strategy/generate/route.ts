@@ -4,6 +4,7 @@ import { getConfig } from '@/lib/config';
 import { getStrategyService } from '@/lib/services/container';
 import { StrategyInputSchema } from '@/lib/models/strategy';
 import { withTimeout, handleRouteError } from '@/lib/api/routeHelpers';
+import { priceOf, withCredits } from '@/lib/billing/charge';
 
 async function generateStrategyHandler(req: NextRequest, userId: string): Promise<Response> {
   try {
@@ -15,12 +16,12 @@ async function generateStrategyHandler(req: NextRequest, userId: string): Promis
 
     // If the request times out, cancel so the late result isn't saved
     const cancel = new AbortController();
-    const record = await withTimeout(
+    const record = await withCredits(userId, 'strategy', priceOf('strategy'), () => withTimeout(
       getStrategyService().generateAndStoreStrategy(strategyInput, userId, { signal: cancel.signal }),
       cfg.agentTimeoutSeconds,
       `Strategy generation timed out after ${cfg.agentTimeoutSeconds} seconds. Please try again.`,
       () => cancel.abort()
-    );
+    ));
 
     console.info(`Successfully generated and stored strategy for: ${strategyInput.brand_name} (ID: ${record.id})`);
     return NextResponse.json(record, { status: 200 });

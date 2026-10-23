@@ -171,7 +171,7 @@ export function ScheduledVisualActions({
               <Icon icon={k === 'template' ? 'lucide:type' : 'lucide:image'} className="w-3.5 h-3.5" aria-hidden />
             )}
             {k === 'template' ? 'Text design' : 'Stock photo'}
-            <span className="font-bold text-emerald-600">Free</span>
+            <span className="font-bold text-[#64748B]">1 credit</span>
           </button>
         ))}
       </div>
@@ -276,7 +276,7 @@ export function DesignerMediaPanel({
             )}
             <span className="min-w-0">
               <span className="block text-sm font-semibold text-on-surface">{k === 'template' ? 'Text design' : 'Stock photo + text'}</span>
-              <span className="block text-xs font-bold text-emerald-600">Free</span>
+              <span className="block text-xs font-bold text-[#64748B]">1 credit</span>
             </span>
           </button>
         ))}

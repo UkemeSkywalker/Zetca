@@ -4,8 +4,9 @@ import { getConfig } from '@/lib/config';
 import { getCopywriterAgent } from '@/lib/services/container';
 import { RefineTextRequestSchema } from '@/lib/models/copy';
 import { withTimeout, handleRouteError } from '@/lib/api/routeHelpers';
+import { priceOf, withCredits } from '@/lib/billing/charge';
 
-async function refineTextHandler(req: NextRequest, _userId: string): Promise<Response> {
+async function refineTextHandler(req: NextRequest, userId: string): Promise<Response> {
   try {
     const body = await req.json();
     const request = RefineTextRequestSchema.parse(body);
@@ -13,11 +14,11 @@ async function refineTextHandler(req: NextRequest, _userId: string): Promise<Res
 
     console.info(`Refining text for platform: ${request.platform}`);
 
-    const chatResponse = await withTimeout(
+    const chatResponse = await withCredits(userId, 'copy_rewrite', priceOf('copy_rewrite'), () => withTimeout(
       getCopywriterAgent().chatRefine(request.text, request.platform, request.hashtags, {}, request.message),
       cfg.agentTimeoutSeconds,
       'Text refinement timed out. Please try again.'
-    );
+    ));
 
     console.info('Successfully refined text');
     return NextResponse.json(chatResponse, { status: 200 });

@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { withAuth } from '@/lib/middleware/withAuth';
 import { getConfig } from '@/lib/config';
 import { getStrategyService } from '@/lib/services/container';
+import { charge, priceOf } from '@/lib/billing/charge';
 import { StrategyInputSchema } from '@/lib/models/strategy';
 import { withTimeout, handleRouteError } from '@/lib/api/routeHelpers';
 
@@ -27,6 +28,14 @@ async function generateStrategyStreamHandler(req: NextRequest, userId: string): 
   const cfg = getConfig();
   const encoder = new TextEncoder();
 
+  // Credits are taken up front (an empty balance gets a plain JSON error, not a stream)
+  let paid;
+  try {
+    paid = await charge(userId, 'strategy', priceOf('strategy'));
+  } catch (error) {
+    return handleRouteError(error, 'Couldn’t start the strategy. Please try again.');
+  }
+
   console.info(`Generating strategy (streamed) for brand: ${input.brand_name} (mock=${cfg.useMockAgent})`);
 
   const stream = new ReadableStream<Uint8Array>({
@@ -46,18 +55,22 @@ async function generateStrategyStreamHandler(req: NextRequest, userId: string): 
       // If the request times out, cancel so the late result isn't saved
       const cancel = new AbortController();
       try {
-        const record = await withTimeout(
-          getStrategyService().generateAndStoreStrategy(input, userId, {
-            signal: cancel.signal,
-            onProgress: (progress) => send('progress', progress),
-          }),
-          cfg.agentTimeoutSeconds,
-          `Strategy generation timed out after ${cfg.agentTimeoutSeconds} seconds. Please try again.`,
-          () => cancel.abort()
+        const record = await paid.run(() =>
+          withTimeout(
+            getStrategyService().generateAndStoreStrategy(input, userId, {
+              signal: cancel.signal,
+              onProgress: (progress) => send('progress', progress),
+            }),
+            cfg.agentTimeoutSeconds,
+            `Strategy generation timed out after ${cfg.agentTimeoutSeconds} seconds. Please try again.`,
+            () => cancel.abort()
+          )
         );
+        await paid.done();
         console.info(`Successfully generated and stored strategy for: ${input.brand_name} (ID: ${record.id})`);
         send('result', { id: record.id });
       } catch (error) {
+        await paid.fail();
         // Reuse the JSON route's error mapping for the message and status
         const response = handleRouteError(error, 'Strategy generation failed. Please try again.');
         const body = await response.json().catch(() => ({}));

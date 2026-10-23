@@ -132,7 +132,7 @@ export function ThumbnailDesigner({
             >
               <Icon icon={k === 'template' ? 'lucide:type' : k === 'stock' ? 'lucide:image' : 'lucide:sparkles'} className="w-4 h-4" aria-hidden />
               {k === 'template' ? 'Text design' : k === 'stock' ? 'Stock photo' : 'AI image'}
-              <CostBadge cost={k === 'ai_image' ? 1 : 'free'} />
+              <CostBadge cost={k === 'ai_image' ? 2 : 1} />
             </button>
           ))}
         </div>

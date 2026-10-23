@@ -39,7 +39,8 @@ export function formatForPlatform(platform: string): FormatId {
 export const MAKEABLE: VisualKind[] = ['template', 'stock', 'ai_image', 'ai_video'];
 
 /** AI credits each kind costs (the others are free) */
-export const AI_CREDIT_COST: Partial<Record<VisualKind, number>> = { ai_image: 1, ai_video: 5 };
+/** Credits each kind costs: the words for text and stock visuals, plus the AI image or video */
+export const AI_CREDIT_COST: Partial<Record<VisualKind, number>> = { template: 1, stock: 1, ai_image: 2, ai_video: 27 };
 
 export const VISUAL_LABELS: Record<VisualKind, string> = {
   none: 'None',

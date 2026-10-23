@@ -176,6 +176,7 @@ data "aws_iam_policy_document" "app_tables" {
         aws_dynamodb_table.post_media.arn,
         aws_dynamodb_table.youtube_videos.arn,
         aws_dynamodb_table.designs.arn,
+        aws_dynamodb_table.credit_ledger.arn,
       ] : [arn, "${arn}/index/*"]
     ])
   }
