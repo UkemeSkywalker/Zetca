@@ -49,8 +49,18 @@ export function layoutLayer(ctx: Ctx, layer: TextLayer, families: FontFamilies):
 
 const padding = (size: number) => Math.round(size * 0.55);
 
-function drawBackground(ctx: Ctx, doc: DesignDoc, w: number, h: number, photos: PhotoImages) {
+function drawBackground(ctx: Ctx, doc: DesignDoc, w: number, h: number, photos: PhotoImages, overlayOnly = false) {
   const bg = doc.background;
+  if (overlayOnly) {
+    // For a video: just the dark wash, so the video shows through it
+    if (doc.overlay && doc.overlay.opacity > 0) {
+      ctx.globalAlpha = doc.overlay.opacity;
+      ctx.fillStyle = doc.overlay.color;
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalAlpha = 1;
+    }
+    return;
+  }
   if (bg.kind === 'solid') {
     ctx.fillStyle = bg.color;
   } else if (bg.kind === 'photo') {
@@ -129,7 +139,9 @@ export function drawDesign(
   families: FontFamilies,
   photos: PhotoImages = {},
   /** Draw smaller than full size (thumbnails); 1 = 1080 wide */
-  resolution = 1
+  resolution = 1,
+  /** Leave out the background (to lay the words over a video) */
+  overlayOnly = false
 ): LaidOutLayer[] {
   const { width, height } = FORMATS[doc.format];
   const w = Math.round(width * resolution);
@@ -140,7 +152,7 @@ export function drawDesign(
   if (!ctx) return [];
   ctx.setTransform(resolution, 0, 0, resolution, 0, 0);
   ctx.clearRect(0, 0, width, height);
-  drawBackground(ctx, doc, width, height, photos);
+  drawBackground(ctx, doc, width, height, photos, overlayOnly);
   return doc.layers.map((layer) => {
     const fitted = layoutLayer(ctx, layer, families);
     drawLayer(ctx, layer, fitted, families);
@@ -156,5 +168,14 @@ export function designToBlob(doc: DesignDoc, families: FontFamilies, photos: Pho
   const [type, quality] = doc.background.kind === 'photo' ? ['image/jpeg', 0.9] : ['image/png', undefined];
   return new Promise((resolve, reject) =>
     canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Couldn’t make the image'))), type, quality)
+  );
+}
+
+/** The words (and the dark wash) on a see-through PNG, at full size, to lay over a video */
+export function overlayToBlob(doc: DesignDoc, families: FontFamilies): Promise<Blob> {
+  const canvas = document.createElement('canvas');
+  drawDesign(canvas, doc, families, {}, (EXPORT_WIDTH[doc.format] ?? FORMATS[doc.format].width) / FORMATS[doc.format].width, true);
+  return new Promise((resolve, reject) =>
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Couldn’t make the overlay'))), 'image/png')
   );
 }

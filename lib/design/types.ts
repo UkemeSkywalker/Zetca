@@ -44,7 +44,7 @@ export const PhotoBackgroundSchema = z.object({
   fit: z.enum(['fill', 'fit']),
   /** The photo's average and lightest tones, to check text contrast against */
   tones: z.array(hex).min(1).max(4),
-  credit: z.object({ name: z.string().max(80), url: z.string().url().max(300), source: z.enum(['pixabay', 'sample']) }),
+  credit: z.object({ name: z.string().max(80), url: z.string().url().max(300), source: z.enum(['pixabay', 'sample', 'ai']) }),
 });
 export type PhotoBackground = z.infer<typeof PhotoBackgroundSchema>;
 
@@ -89,6 +89,8 @@ export const DesignDocSchema = z.object({
   background: BackgroundSchema,
   overlay: z.object({ color: hex, opacity: z.number().min(0).max(0.9) }).optional(),
   layers: z.array(TextLayerSchema).max(12),
+  /** An AI video under the words (the photo background is its first frame) */
+  video: z.object({ mediaId: z.string().min(1).max(80), durationSeconds: z.number().positive().max(60) }).optional(),
 });
 export type DesignDoc = z.infer<typeof DesignDocSchema>;
 

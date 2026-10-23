@@ -12,6 +12,8 @@ import { FONT_FAMILIES, loadDesignFonts } from './fonts';
 import { photosFor } from './photos';
 import { CARD, Chip, INPUT, PrimaryButton, timeAgo } from './ui';
 
+const SOURCE_LABELS: Record<string, string> = { template: 'Text design', stock: 'Stock photo', ai_image: 'AI image', ai_video: 'AI video' };
+
 export function DesignLibrary() {
   const router = useRouter();
   const [designs, setDesigns] = useState<DesignRecord[] | null>(null);
@@ -132,7 +134,7 @@ export function DesignLibrary() {
                         {FORMATS[d.doc.format].label} · {timeAgo(d.updatedAt)}
                       </p>
                       <div className="mt-2 flex flex-wrap gap-1.5">
-                        <span className="inline-block rounded-md bg-[#F1F5F9] px-2 py-0.5 text-[11px] font-semibold text-[#464555]">{d.doc.background.kind === 'photo' ? 'Stock photo' : 'Text design'}</span>
+                        <span className="inline-block rounded-md bg-[#F1F5F9] px-2 py-0.5 text-[11px] font-semibold text-[#464555]">{SOURCE_LABELS[d.source] ?? 'Text design'}</span>
                         {d.attachedTo && (
                           <span className="inline-flex items-center gap-1 rounded-md bg-primary-50 px-2 py-0.5 text-[11px] font-semibold text-primary">
                             <Icon icon="lucide:link" className="w-3 h-3" aria-hidden />

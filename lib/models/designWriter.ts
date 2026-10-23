@@ -22,6 +22,9 @@ export const DesignWriterResponseSchema = z.object({
     .describe('The big words on the design: 2-7 words, on 2-3 short lines (a real line break between lines). No hashtags, emojis or quotation marks.'),
   kicker: z.string().optional().describe('A tiny label above the headline, 1-3 words (e.g. "Daily reminder"), or omit'),
   body: z.string().optional().describe('Only for headline-body: one supporting sentence of at most 18 words'),
+  imagePrompt: z
+    .string()
+    .describe('One sentence describing a striking photo for an AI image generator to make for this post: subject, setting, light, mood. No words or text in the image, no brand names, no real people by name.'),
   photoQuery: z
     .string()
     .describe('1-3 plain English words to search free stock photos for a background that fits the post (e.g. "gym workout", "coffee shop"). No brand names.'),
@@ -46,6 +49,7 @@ export function cleanDesignText(r: DesignWriterResponse): DesignWriterResponse {
     headline: tidy(r.headline, 80) ?? 'Your words here',
     kicker: tidy(r.kicker, 30),
     body: r.styleId === 'headline-body' ? tidy(r.body, 160) : undefined,
+    imagePrompt: (r.imagePrompt ?? '').replace(/\s+/g, ' ').trim().slice(0, 600),
     photoQuery: (r.photoQuery ?? '').replace(/[^\p{L}\p{N}\s-]/gu, ' ').replace(/\s+/g, ' ').trim().split(' ').slice(0, 3).join(' '),
   };
 }

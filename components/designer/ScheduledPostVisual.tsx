@@ -202,7 +202,7 @@ export function DesignerMediaPanel({
   mediaId: string | null;
   /** The scheduled post being edited, if it exists yet */
   postId?: string;
-  onMedia: (media: { mediaId: string; mediaType: 'image'; previewUrl: string }) => void;
+  onMedia: (media: { mediaId: string; mediaType: 'image' | 'video'; previewUrl: string }) => void;
   disabled?: boolean;
 }) {
   const design = useLinkedDesign(mediaId ?? undefined);

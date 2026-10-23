@@ -22,6 +22,7 @@ import { CopyEditor } from './CopyEditor';
 import { CopyChatPanel } from './CopyChatPanel';
 import { GeneratePicker } from './GeneratePicker';
 import { EditVisualModal, VisualsBanner } from './PostVisual';
+import { AI_CREDIT_COST } from '@/components/designer/postVisuals';
 import { needsVisual, usePostVisuals, visualOf } from './usePostVisuals';
 import { PLATFORM_STYLE, platformInfo } from './platforms';
 
@@ -233,6 +234,7 @@ export function CopywriterWorkspace() {
   const [editingVisualId, setEditingVisualId] = useState<string | null>(null);
   const [creatingAll, setCreatingAll] = useState(false);
   const visualsToMake = copies.filter(needsVisual).length;
+  const visualCredits = copies.filter(needsVisual).reduce((n, c) => n + (AI_CREDIT_COST[visualOf(c).kind] ?? 0), 0);
   const createAllVisuals = async () => {
     setCreatingAll(true);
     try {
@@ -452,7 +454,7 @@ export function CopywriterWorkspace() {
           />
         ) : (
           <>
-            <VisualsBanner count={visualsToMake} busy={creatingAll} onCreateAll={createAllVisuals} />
+            <VisualsBanner count={visualsToMake} busy={creatingAll} onCreateAll={createAllVisuals} aiCredits={visualCredits} />
 
             {/* Platform tabs */}
             <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4" role="tablist" aria-label="Platforms">

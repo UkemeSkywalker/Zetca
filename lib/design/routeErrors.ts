@@ -2,12 +2,24 @@ import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 import { DesignNotFoundError } from '@/lib/services/designService';
 import { StockPhotoError } from '@/lib/services/stockPhotoService';
+import { HiggsfieldError } from '@/lib/services/higgsfieldClient';
+import { OutOfCreditsError } from '@/lib/services/aiCredits';
+import { AiJobNotFoundError } from '@/lib/services/aiDesignService';
 import { StructuredOutputException } from '@/lib/agents/errors';
 import { ApiError, logError } from '@/lib/errors';
 
 /** Turns an error from a /api/designs route into a JSON response the page can show */
 export function designErrorResponse(error: unknown, context: { endpoint: string; userId: string }): Response {
   if (error instanceof DesignNotFoundError) {
+    return NextResponse.json({ error: error.message, code: 'NOT_FOUND' }, { status: 404 });
+  }
+  if (error instanceof OutOfCreditsError) {
+    return NextResponse.json({ error: error.message, code: 'OUT_OF_CREDITS', credits: error.balance }, { status: 402 });
+  }
+  if (error instanceof HiggsfieldError) {
+    return NextResponse.json({ error: error.message, code: 'AI_SERVICE' }, { status: error.statusCode });
+  }
+  if (error instanceof AiJobNotFoundError) {
     return NextResponse.json({ error: error.message, code: 'NOT_FOUND' }, { status: 404 });
   }
   if (error instanceof StockPhotoError) {
