@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '@iconify/react';
+import { DesignerMediaPanel } from '@/components/designer/ScheduledPostVisual';
 import MediaUploader from '@/components/dashboard/MediaUploader';
 import { Post } from '@/types/post';
 import { ScheduledPost } from '@/types/scheduler';
@@ -76,6 +77,8 @@ export function SchedulingModal({
   const [mediaId, setMediaId] = useState<string | null>(prefillMediaId ?? editingPost?.mediaId ?? null);
   const [mediaType, setMediaType] = useState<'image' | 'video' | null>(prefillMediaType ?? editingPost?.mediaType ?? null);
   const [isMediaUploading, setIsMediaUploading] = useState(false);
+  /** An image made with the Designer in this form (shown in the uploader) */
+  const [designerMedia, setDesignerMedia] = useState<{ mediaId: string; previewUrl: string } | null>(null);
   const [aiPrompt, setAiPrompt] = useState('');
   const [isRefining, setIsRefining] = useState(false);
   const [aiMessage, setAiMessage] = useState<string | null>(null);
@@ -332,12 +335,25 @@ export function SchedulingModal({
               <div>
                 <h3 className="text-lg font-semibold text-on-surface mb-3">Media Assets</h3>
                 <MediaUploader
+                  key={designerMedia?.mediaId ?? 'uploader'}
                   onMediaAttached={(id, type) => { setMediaId(id); setMediaType(type); setIsMediaUploading(false); }}
-                  onMediaRemoved={() => { setMediaId(null); setMediaType(null); setIsMediaUploading(false); }}
-                  initialMediaId={prefillMediaId ?? editingPost?.mediaId}
-                  initialMediaType={prefillMediaType ?? editingPost?.mediaType}
-                  initialMediaUrl={prefillMediaUrl}
+                  onMediaRemoved={() => { setMediaId(null); setMediaType(null); setIsMediaUploading(false); setDesignerMedia(null); }}
+                  initialMediaId={designerMedia?.mediaId ?? prefillMediaId ?? editingPost?.mediaId}
+                  initialMediaType={designerMedia ? 'image' : prefillMediaType ?? editingPost?.mediaType}
+                  initialMediaUrl={designerMedia ? designerMedia.previewUrl || undefined : prefillMediaUrl}
                   disabled={isSubmitting}
+                />
+                <DesignerMediaPanel
+                  content={formData.content}
+                  platform={formData.platform}
+                  mediaId={mediaId}
+                  postId={editingScheduledPost?.id ?? editingPost?.id}
+                  disabled={isSubmitting}
+                  onMedia={(m) => {
+                    setMediaId(m.mediaId);
+                    setMediaType(m.mediaType);
+                    setDesignerMedia(m);
+                  }}
                 />
               </div>
 

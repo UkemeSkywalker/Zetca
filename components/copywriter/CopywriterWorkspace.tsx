@@ -441,6 +441,14 @@ export function CopywriterWorkspace() {
               setWorkspace((prev) => (prev ? { ...prev, copies: prev.copies.map((c) => (c.id === saved.id ? saved : c)) } : prev))
             }
             onDelete={() => removeCopy(openCopy.id)}
+            visual={{
+              design: visuals.designFor(openCopy),
+              making: visuals.making.has(openCopy.id),
+              error: visuals.errors[openCopy.id],
+              onChoose: (kind) => void visuals.choose(openCopy, kind),
+              onCreate: () => void visuals.make(openCopy, visualOf(openCopy).kind),
+              onEdit: () => setEditingVisualId(openCopy.id),
+            }}
           />
         ) : (
           <>
@@ -507,10 +515,11 @@ export function CopywriterWorkspace() {
       {editingCopy && editingDesign && (
         <EditVisualModal
           key={editingDesign.updatedAt}
-          copy={editingCopy}
+          caption={editingCopy.text}
+          platform={editingCopy.platform}
           design={editingDesign}
           onClose={() => setEditingVisualId(null)}
-          onSaved={(copy, design) => {
+          onSaved={({ copy, design }) => {
             visuals.replaceDesign(design);
             if (copy) replaceCopy(copy);
             setEditingVisualId(null);

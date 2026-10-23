@@ -2,7 +2,7 @@ import { contrastRatio, bestTextColor, blend, passes, MIN_CONTRAST } from '@/lib
 import { fitText, wrapLines } from '@/lib/design/textFit';
 import { PALETTES, STYLES, restyle, textOf, variationPalettes, paletteById } from '@/lib/design/styles';
 import { cleanDesignText } from '@/lib/models/designWriter';
-import { backgroundColors, DesignDocSchema, FORMAT_IDS } from '@/lib/design/types';
+import { backgroundColors, DesignDocSchema, EXPORT_WIDTH, FORMATS, FORMAT_IDS } from '@/lib/design/types';
 
 // Every character is `size * 0.6` wide: enough to test wrapping and shrinking
 const measure = (text: string, size: number) => text.length * size * 0.6;
@@ -86,5 +86,13 @@ describe('design writer output', () => {
   });
   it('keeps the supporting line only for tip cards', () => {
     expect(cleanDesignText({ styleId: 'glow', headline: 'Hi', body: 'More', photoQuery: '' }).body).toBeUndefined();
+  });
+});
+
+describe('YouTube thumbnails', () => {
+  it('are saved at exactly 1280 × 720', () => {
+    const k = EXPORT_WIDTH.landscape! / FORMATS.landscape.width;
+    expect(Math.round(FORMATS.landscape.width * k)).toBe(1280);
+    expect(Math.round(FORMATS.landscape.height * k)).toBe(720);
   });
 });

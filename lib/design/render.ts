@@ -3,7 +3,7 @@
  * thumbnails and the downloaded PNG all use this, so what you see is what you get.
  */
 
-import { FORMATS, type DesignDoc, type FontId, type TextLayer } from './types';
+import { EXPORT_WIDTH, FORMATS, type DesignDoc, type FontId, type TextLayer } from './types';
 import { fitText, type FittedText } from './textFit';
 import { photoRect } from './photo';
 
@@ -151,7 +151,7 @@ export function drawDesign(
 /** The design as a PNG file */
 export function designToBlob(doc: DesignDoc, families: FontFamilies, photos: PhotoImages = {}): Promise<Blob> {
   const canvas = document.createElement('canvas');
-  drawDesign(canvas, doc, families, photos);
+  drawDesign(canvas, doc, families, photos, (EXPORT_WIDTH[doc.format] ?? FORMATS[doc.format].width) / FORMATS[doc.format].width);
   // Photos are much smaller as JPEG; flat colours and text stay crisp as PNG
   const [type, quality] = doc.background.kind === 'photo' ? ['image/jpeg', 0.9] : ['image/png', undefined];
   return new Promise((resolve, reject) =>

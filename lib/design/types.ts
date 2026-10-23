@@ -11,7 +11,12 @@ export const FORMATS = {
   square: { width: 1080, height: 1080, label: 'Square 1:1', short: '1:1' },
   portrait: { width: 1080, height: 1350, label: 'Portrait 4:5', short: '4:5' },
   story: { width: 1080, height: 1920, label: 'Story 9:16', short: '9:16' },
+  // A YouTube thumbnail; saved at 1280 × 720 (see EXPORT_WIDTH)
+  landscape: { width: 1080, height: 607.5, label: 'YouTube 16:9', short: '16:9' },
 } as const;
+
+/** The width each format is saved at (YouTube asks for 1280 × 720 thumbnails) */
+export const EXPORT_WIDTH: Partial<Record<keyof typeof FORMATS, number>> = { landscape: 1280 };
 
 export type FormatId = keyof typeof FORMATS;
 export const FORMAT_IDS = Object.keys(FORMATS) as FormatId[];
@@ -79,7 +84,7 @@ export const TextLayerSchema = z.object({
 export type TextLayer = z.infer<typeof TextLayerSchema>;
 
 export const DesignDocSchema = z.object({
-  format: z.enum(['square', 'portrait', 'story']),
+  format: z.enum(['square', 'portrait', 'story', 'landscape']),
   styleId: z.string().max(40),
   background: BackgroundSchema,
   overlay: z.object({ color: hex, opacity: z.number().min(0).max(0.9) }).optional(),
@@ -91,7 +96,13 @@ export const DESIGN_SOURCES = ['template', 'stock', 'ai_image', 'ai_video'] as c
 export type DesignSource = (typeof DESIGN_SOURCES)[number];
 
 /** The post a design is the visual for */
-export const AttachedToSchema = z.object({ copyId: z.string().min(1).max(80), platform: z.string().max(20) });
+export const AttachedToSchema = z.object({
+  /** The Copywriter post */
+  copyId: z.string().min(1).max(80).optional(),
+  /** The scheduled post */
+  postId: z.string().min(1).max(80).optional(),
+  platform: z.string().max(20),
+});
 export type AttachedTo = z.infer<typeof AttachedToSchema>;
 
 export interface DesignRecord {

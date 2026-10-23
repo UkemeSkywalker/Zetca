@@ -15,7 +15,13 @@ import type { CopyRecord, VisualKind } from '@/types/agent';
 import { platformInfo } from './platforms';
 import { VISUAL_REQUIRED, visualOf } from './usePostVisuals';
 
-const COSTS: Record<VisualKind, 'free' | number | 'soon'> = { none: 'free', template: 'free', stock: 'free', ai_image: 'soon', ai_video: 'soon' };
+const COSTS: Record<VisualKind, 'free' | number | 'soon'> = {
+  none: 'free',
+  template: 'free',
+  stock: 'free',
+  ai_image: 'soon',
+  ai_video: 'soon',
+};
 const KINDS: VisualKind[] = ['none', 'template', 'stock', 'ai_image', 'ai_video'];
 
 /** The visual row at the bottom of a post card */
@@ -27,6 +33,7 @@ export function VisualRow({
   onChoose,
   onCreate,
   onEdit,
+  size = 'sm',
 }: {
   copy: CopyRecord;
   design?: DesignRecord;
@@ -35,6 +42,8 @@ export function VisualRow({
   onChoose: (kind: VisualKind) => void;
   onCreate: () => void;
   onEdit: () => void;
+  /** "lg": the bigger version in the copy editor */
+  size?: 'sm' | 'lg';
 }) {
   const kind = visualOf(copy).kind;
   const required = VISUAL_REQUIRED.has(copy.platform);
@@ -52,13 +61,13 @@ export function VisualRow({
             : 'Coming soon';
 
   return (
-    <div className="relative z-10 pt-3 border-t border-[#e5eeff] flex items-start gap-3">
+    <div className={`relative z-10 flex items-start gap-3 ${size === 'lg' ? 'rounded-2xl bg-[#f8f9ff] border border-[#e5eeff] p-3' : 'pt-3 border-t border-[#e5eeff]'}`}>
       <button
         type="button"
         onClick={ready && design ? onEdit : undefined}
         disabled={!ready || !design}
         aria-label={ready && design ? 'Edit the visual' : 'No visual yet'}
-        className="group/thumb relative w-14 h-14 shrink-0 rounded-lg overflow-hidden"
+        className={`group/thumb relative shrink-0 rounded-lg overflow-hidden ${size === 'lg' ? 'w-24 h-24' : 'w-14 h-14'}`}
       >
         {making ? (
           <span className="flex w-full h-full items-center justify-center rounded-lg border-2 border-dashed border-[#c7c4d8] bg-[#f8f9ff]">
@@ -66,7 +75,7 @@ export function VisualRow({
           </span>
         ) : ready && design ? (
           <>
-            <DesignThumb doc={design.doc} frame="square" resolution={0.12} className="rounded-lg" />
+            <DesignThumb doc={design.doc} frame="square" resolution={size === 'lg' ? 0.2 : 0.12} className="rounded-lg" />
             <span className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 group-hover/thumb:bg-black/40 group-hover/thumb:opacity-100 transition">
               <Icon icon="material-symbols:edit-outline" width={18} height={18} className="text-white" />
             </span>
@@ -102,12 +111,22 @@ export function VisualRow({
             {KINDS.map((k) => (
               <option key={k} value={k} disabled={(k === 'none' && required) || COSTS[k] === 'soon'}>
                 {VISUAL_LABELS[k]}
-                {k === 'none' && required ? ` (${platformInfo(copy.platform).label} needs a visual)` : COSTS[k] === 'soon' ? ' (soon)' : k !== 'none' ? ' · Free' : ''}
+                {k === 'none' && required
+                  ? ` (${platformInfo(copy.platform).label} needs a visual)`
+                  : COSTS[k] === 'soon'
+                    ? ' (soon)'
+                    : k !== 'none'
+                      ? ' · Free'
+                      : ''}
               </option>
             ))}
           </select>
           {MAKEABLE.includes(kind) && !ready && !making ? (
-            <button type="button" onClick={onCreate} className="shrink-0 h-8 px-3 rounded-lg bg-[#4f46e5] text-white text-[12px] font-semibold hover:bg-[#4338ca]">
+            <button
+              type="button"
+              onClick={onCreate}
+              className="shrink-0 h-8 px-3 rounded-lg bg-[#4f46e5] text-white text-[12px] font-semibold hover:bg-[#4338ca]"
+            >
               Create
             </button>
           ) : null}
@@ -135,7 +154,11 @@ export function VisualsBanner({ count, busy, onCreateAll }: { count: number; bus
         disabled={busy || count === 0}
         className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-[#4f46e5] text-white text-[13px] font-semibold hover:bg-[#4338ca] disabled:opacity-60"
       >
-        {busy ? <Icon icon="material-symbols:progress-activity" width={15} height={15} className="animate-spin" /> : <Icon icon="material-symbols:auto-awesome-outline" width={15} height={15} />}
+        {busy ? (
+          <Icon icon="material-symbols:progress-activity" width={15} height={15} className="animate-spin" />
+        ) : (
+          <Icon icon="material-symbols:auto-awesome-outline" width={15} height={15} />
+        )}
         <span className="text-inherit">{busy ? 'Creating…' : 'Create all visuals'}</span>
       </button>
     </div>
@@ -149,22 +172,27 @@ function paletteOf(doc: DesignDoc): Palette {
 
 /** Quick edits to a post's visual, without leaving the Copywriter */
 export function EditVisualModal({
-  copy,
+  caption,
+  platform: platformId,
   design,
   onClose,
   onSaved,
   onChoose,
 }: {
-  copy: CopyRecord;
+  /** The post's text, shown beside the visual */
+  caption: string;
+  platform: string;
   design: DesignRecord;
   onClose: () => void;
-  onSaved: (copy: CopyRecord | null, design: DesignRecord) => void;
-  onChoose: (kind: VisualKind) => void;
+  /** After saving: the design, its new image, and the Copywriter post if it has one */
+  onSaved: (result: { copy: CopyRecord | null; design: DesignRecord; image: { mediaId: string; mediaType: 'image'; blob: Blob } }) => void;
+  /** Switching between a text design and a stock photo makes a new visual; left out, the choice isn't offered */
+  onChoose?: (kind: VisualKind) => void;
 }) {
   const [doc, setDoc] = useState<DesignDoc>(design.doc);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const platform = platformInfo(copy.platform);
+  const platform = platformInfo(platformId);
   const isPhoto = doc.background.kind === 'photo';
   const headline = doc.layers.find((l) => l.role === 'headline');
 
@@ -175,7 +203,15 @@ export function EditVisualModal({
   }, [onClose, saving]);
 
   const styleChoices = useMemo(() => STYLES.filter((s) => !!s.usesPhoto === isPhoto).slice(0, 6), [isPhoto]);
-  const previews = useMemo(() => styleChoices.map((s) => ({ id: s.id, name: s.name, doc: restyle(doc, s.id, paletteOf(doc)) })), [styleChoices, doc]);
+  const previews = useMemo(
+    () =>
+      styleChoices.map((s) => ({
+        id: s.id,
+        name: s.name,
+        doc: restyle(doc, s.id, paletteOf(doc)),
+      })),
+    [styleChoices, doc],
+  );
 
   const setHeadline = (text: string) => headline && setDoc((d) => readableOverlay(updateLayer(d, headline.id, { text } as Partial<TextLayer>)));
   const low = lowContrastLayers(doc);
@@ -185,7 +221,11 @@ export function EditVisualModal({
     setError('');
     try {
       const r = await updatePostVisual(design, doc, textOf(doc).headline.replace(/\n/g, ' ').slice(0, 60) || design.name);
-      onSaved(r.copy, r.design);
+      onSaved({
+        copy: r.copy,
+        design: r.design,
+        image: { mediaId: r.image.mediaId, mediaType: r.image.mediaType, blob: r.image.blob },
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Couldn’t save the visual');
       setSaving(false);
@@ -193,13 +233,22 @@ export function EditVisualModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0b1c30]/50 backdrop-blur-[2px]" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && !saving && onClose()}>
-      <div role="dialog" aria-modal="true" aria-labelledby="edit-visual-title" className="w-full max-w-[880px] max-h-[92vh] overflow-y-auto rounded-3xl bg-white shadow-2xl">
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-[#0b1c30]/50 backdrop-blur-[2px]"
+      role="presentation"
+      onMouseDown={(e) => e.target === e.currentTarget && !saving && onClose()}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-visual-title"
+        className="w-full max-w-[880px] max-h-[92vh] overflow-y-auto rounded-3xl bg-white shadow-2xl"
+      >
         <div className="grid md:grid-cols-[1fr_1.1fr]">
           <div className="p-6 bg-[#f8f9ff] md:rounded-l-3xl space-y-4">
             <div className="rounded-2xl bg-white border border-[#e5eeff] p-4">
               <p className="text-[11px] font-bold tracking-[0.08em] text-[#777587] uppercase">Caption preview</p>
-              <p className="mt-1.5 text-[13px] leading-[20px] text-[#0b1c30] line-clamp-4 whitespace-pre-line">{copy.text}</p>
+              <p className="mt-1.5 text-[13px] leading-[20px] text-[#0b1c30] line-clamp-4 whitespace-pre-line">{caption}</p>
             </div>
             <div className="mx-auto max-w-[320px] rounded-2xl overflow-hidden shadow-lg">
               <DesignCanvas doc={doc} resolution={0.5} />
@@ -213,7 +262,13 @@ export function EditVisualModal({
               <h2 id="edit-visual-title" className="text-[20px] font-bold text-[#0b1c30]">
                 Edit visual
               </h2>
-              <button type="button" onClick={onClose} disabled={saving} aria-label="Close" className="ml-auto w-9 h-9 rounded-lg flex items-center justify-center text-[#464555] hover:bg-[#eff4ff]">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={saving}
+                aria-label="Close"
+                className="ml-auto w-9 h-9 rounded-lg flex items-center justify-center text-[#464555] hover:bg-[#eff4ff]"
+              >
                 <Icon icon="material-symbols:close" width={20} height={20} />
               </button>
             </div>
@@ -275,28 +330,30 @@ export function EditVisualModal({
               </div>
             )}
 
-            <div className="space-y-2">
-              <p className="text-[11px] font-bold tracking-[0.08em] text-[#777587] uppercase">Source</p>
-              <div className="grid grid-cols-3 gap-1 rounded-xl bg-[#eff4ff] p-1">
-                {(['template', 'stock', 'ai_image'] as VisualKind[]).map((k) => {
-                  const active = (isPhoto ? 'stock' : 'template') === k;
-                  const soon = !MAKEABLE.includes(k);
-                  return (
-                    <button
-                      key={k}
-                      type="button"
-                      disabled={soon || saving}
-                      aria-pressed={active}
-                      onClick={() => !active && onChoose(k)}
-                      className={`h-9 rounded-lg text-[12px] font-semibold ${active ? 'bg-white text-[#0b1c30] shadow-sm' : 'text-[#464555] hover:bg-white/60'} disabled:opacity-50`}
-                    >
-                      {k === 'template' ? 'Text design' : k === 'stock' ? 'Stock photo' : 'AI image'} · {soon ? 'Soon' : 'Free'}
-                    </button>
-                  );
-                })}
+            {onChoose && (
+              <div className="space-y-2">
+                <p className="text-[11px] font-bold tracking-[0.08em] text-[#777587] uppercase">Source</p>
+                <div className="grid grid-cols-3 gap-1 rounded-xl bg-[#eff4ff] p-1">
+                  {(['template', 'stock', 'ai_image'] as VisualKind[]).map((k) => {
+                    const active = (isPhoto ? 'stock' : 'template') === k;
+                    const soon = !MAKEABLE.includes(k);
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        disabled={soon || saving}
+                        aria-pressed={active}
+                        onClick={() => !active && onChoose(k)}
+                        className={`h-9 rounded-lg text-[12px] font-semibold ${active ? 'bg-white text-[#0b1c30] shadow-sm' : 'text-[#464555] hover:bg-white/60'} disabled:opacity-50`}
+                      >
+                        {k === 'template' ? 'Text design' : k === 'stock' ? 'Stock photo' : 'AI image'} · {soon ? 'Soon' : 'Free'}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] text-[#777587]">Changing the source makes a new visual.</p>
               </div>
-              <p className="text-[11px] text-[#777587]">Changing the source makes a new visual.</p>
-            </div>
+            )}
 
             {error && (
               <p role="alert" className="text-[13px] font-medium text-[#ba1a1a]">
@@ -305,11 +362,19 @@ export function EditVisualModal({
             )}
 
             <div className="pt-2 flex flex-wrap items-center gap-2 border-t border-[#e5eeff]">
-              <Link href={designerPath(design.designId)} className="inline-flex items-center gap-1.5 pt-3 text-[13px] font-semibold text-[#4f46e5] hover:underline">
+              <Link
+                href={designerPath(design.designId)}
+                className="inline-flex items-center gap-1.5 pt-3 text-[13px] font-semibold text-[#4f46e5] hover:underline"
+              >
                 <Icon icon="material-symbols:open-in-new" width={15} height={15} /> Open in Designer
               </Link>
               <div className="ml-auto flex gap-2 pt-3">
-                <button type="button" onClick={onClose} disabled={saving} className="h-10 px-4 rounded-xl border border-[#c7c4d8]/60 text-[13px] font-semibold text-[#0b1c30] hover:bg-[#eff4ff]">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={saving}
+                  className="h-10 px-4 rounded-xl border border-[#c7c4d8]/60 text-[13px] font-semibold text-[#0b1c30] hover:bg-[#eff4ff]"
+                >
                   Cancel
                 </button>
                 <button
@@ -318,7 +383,11 @@ export function EditVisualModal({
                   disabled={saving}
                   className="inline-flex items-center gap-1.5 h-10 px-5 rounded-xl bg-[#4f46e5] text-white text-[13px] font-semibold hover:bg-[#4338ca] disabled:opacity-70"
                 >
-                  {saving ? <Icon icon="material-symbols:progress-activity" width={15} height={15} className="animate-spin" /> : <Icon icon="material-symbols:check" width={15} height={15} />}
+                  {saving ? (
+                    <Icon icon="material-symbols:progress-activity" width={15} height={15} className="animate-spin" />
+                  ) : (
+                    <Icon icon="material-symbols:check" width={15} height={15} />
+                  )}
                   <span className="text-inherit">{saving ? 'Saving…' : 'Save visual'}</span>
                 </button>
               </div>
@@ -329,4 +398,3 @@ export function EditVisualModal({
     </div>
   );
 }
-
