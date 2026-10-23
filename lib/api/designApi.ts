@@ -69,3 +69,15 @@ export function rememberHandle(handle: string) {
     // Private windows can block storage; the handle just isn't remembered
   }
 }
+
+export type { StockPhoto, SavedPhoto, Orientation } from '@/lib/services/stockPhotoService';
+import type { StockPhoto, SavedPhoto, Orientation } from '@/lib/services/stockPhotoService';
+
+export async function searchPhotos(q: string, orientation: Orientation = 'all', page = 1): Promise<StockPhoto[]> {
+  const params = new URLSearchParams({ q, orientation, page: String(page) });
+  return (await call<{ photos: StockPhoto[] }>(`/api/designs/photos/search?${params}`)).photos;
+}
+
+export async function savePhoto(pixabayId: number): Promise<SavedPhoto> {
+  return (await call<{ photo: SavedPhoto }>('/api/designs/photos', { method: 'POST', body: JSON.stringify({ pixabayId }) })).photo;
+}

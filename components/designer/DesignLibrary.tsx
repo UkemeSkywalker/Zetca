@@ -9,6 +9,7 @@ import { designToBlob } from '@/lib/design/render';
 import { createDesign, deleteDesign, designerPath, listDesigns } from '@/lib/api/designApi';
 import { DesignThumb } from './DesignCanvas';
 import { FONT_FAMILIES, loadDesignFonts } from './fonts';
+import { photosFor } from './photos';
 import { CARD, Chip, INPUT, PrimaryButton, timeAgo } from './ui';
 
 export function DesignLibrary() {
@@ -48,7 +49,7 @@ export function DesignLibrary() {
   const download = async (d: DesignRecord) => {
     setMenu(null);
     await loadDesignFonts();
-    const url = URL.createObjectURL(await designToBlob(d.doc, FONT_FAMILIES));
+    const url = URL.createObjectURL(await designToBlob(d.doc, FONT_FAMILIES, await photosFor(d.doc)));
     const a = document.createElement('a');
     a.href = url;
     a.download = `${d.name.replace(/[^\w-]+/g, '-').toLowerCase() || 'design'}.png`;
@@ -129,7 +130,7 @@ export function DesignLibrary() {
                       <p className="text-xs text-[#777587]">
                         {FORMATS[d.doc.format].label} · {timeAgo(d.updatedAt)}
                       </p>
-                      <span className="mt-2 inline-block rounded-md bg-[#F1F5F9] px-2 py-0.5 text-[11px] font-semibold text-[#464555]">Text design</span>
+                      <span className="mt-2 inline-block rounded-md bg-[#F1F5F9] px-2 py-0.5 text-[11px] font-semibold text-[#464555]">{d.doc.background.kind === 'photo' ? 'Stock photo' : 'Text design'}</span>
                     </div>
                     <div className="relative">
                       <button

@@ -24,6 +24,7 @@ Rules:
 3. Body: only for the headline-body style, one sentence of at most 18 words.
 4. Never invent prices, dates, statistics, names or claims the user didn't give.
 5. Write in the language of the user's description.
+6. photoQuery: 1-3 plain English words for a stock photo that would sit well behind the words. No brand names.
 
 ${STRUCTURED_OUTPUT_ONLY}`;
 
@@ -66,6 +67,6 @@ export class MockDesignWriterAgent {
     await new Promise((r) => setTimeout(r, 500));
     const words = input.prompt.replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter((w) => w.length > 2).slice(0, 5);
     const headline = words.length >= 2 ? `${words.slice(0, 2).join(' ')}\n${words.slice(2).join(' ')}` : 'Show up anyway';
-    return cleanDesignText({ styleId: input.styleId ?? 'bold-statement', headline, kicker: 'Daily reminder', body: words.join(' ') });
+    return cleanDesignText({ styleId: input.styleId ?? 'bold-statement', headline, kicker: 'Daily reminder', body: words.join(' '), photoQuery: words.slice(0, 2).join(' ') || 'fitness' });
   }
 }

@@ -4,7 +4,8 @@
  */
 
 import { bestTextColor, blend, luminance } from './contrast';
-import { FORMATS, type DesignDoc, type FormatId, type TextLayer } from './types';
+import { FORMATS, type DesignDoc, type FormatId, type PhotoBackground, type TextLayer } from './types';
+import { readableOverlay } from './photo';
 
 export interface Palette {
   id: string;
@@ -40,7 +41,7 @@ export interface DesignText {
   footer?: string;
 }
 
-export type StyleCategory = 'bold' | 'quote' | 'announcement' | 'tips';
+export type StyleCategory = 'bold' | 'quote' | 'announcement' | 'tips' | 'photo';
 
 export interface DesignStyle {
   id: string;
@@ -50,8 +51,38 @@ export interface DesignStyle {
   /** Palette used for the gallery example */
   palette: string;
   example: DesignText;
-  build(text: DesignText, format: FormatId, palette: Palette): DesignDoc;
+  /** Photo styles put the words over a photo (and use `photo`, or a sample) */
+  usesPhoto?: boolean;
+  build(text: DesignText, format: FormatId, palette: Palette, photo?: PhotoBackground): DesignDoc;
 }
+
+/** Photos that ship with Zetca, for the style examples (from Pixabay, free to use) */
+export const SAMPLE_PHOTOS: Record<string, PhotoBackground> = {
+  gym: {
+    kind: 'photo',
+    photoId: 'sample:gym',
+    width: 1014,
+    height: 1350,
+    focusX: 0.5,
+    focusY: 0.4,
+    fit: 'fill',
+    tones: ['#392112', '#905335'],
+    credit: { name: 'Pexels', url: 'https://pixabay.com/photos/man-1868632/', source: 'pixabay' },
+  },
+  coffee: {
+    kind: 'photo',
+    photoId: 'sample:coffee',
+    width: 897,
+    height: 1350,
+    focusX: 0.5,
+    focusY: 0.5,
+    fit: 'fill',
+    tones: ['#2A201E', '#A78369'],
+    credit: { name: 'RuslanSikunov', url: 'https://pixabay.com/photos/coffee-7830087/', source: 'pixabay' },
+  },
+};
+
+export const samplePhotoUrl = (photoId: string) => `/designer/samples/${photoId.replace(/^sample:/, '')}.jpg`;
 
 const M = 84; // margin
 
@@ -200,6 +231,57 @@ export const STYLES: DesignStyle[] = [
       };
     },
   },
+  {
+    id: 'photo-text',
+    name: 'Photo + text',
+    category: 'photo',
+    description: 'Big words over a free stock photo',
+    palette: 'black',
+    usesPhoto: true,
+    example: { kicker: 'HIIT workout', headline: '15-min full body', footer: '@yourbrand' },
+    build(text, format, _p, photo = SAMPLE_PHOTOS.gym) {
+      const h = FORMATS[format].height;
+      return readableOverlay({
+        format,
+        styleId: this.id,
+        background: photo,
+        overlay: { color: '#000000', opacity: 0.45 },
+        layers: [
+          ...kickerLayer(text.kicker, '#FFFFFF', 'center'),
+          layer({ id: 'headline', role: 'headline', text: text.headline, x: M, y: M + 90, width: 1080 - M * 2, height: h - M * 2 - 220, size: 190, font: 'archivo', color: '#FFFFFF', align: 'center', valign: 'middle', lineHeight: 0.98, uppercase: true, letterSpacing: -0.01 }),
+          ...footerLayer(text.footer, '#FFFFFF', h, 'center'),
+        ],
+      });
+    },
+  },
+  {
+    id: 'product',
+    name: 'Product spotlight',
+    category: 'photo',
+    description: 'Show a product with a call to action',
+    palette: 'yellow',
+    usesPhoto: true,
+    example: { kicker: 'Shop now', headline: 'Fresh roast, every morning', footer: '@yourbrand' },
+    build(text, format, p, photo = SAMPLE_PHOTOS.coffee) {
+      const h = FORMATS[format].height;
+      const pillText = bestTextColor([p.background], ['#0B0B0F', '#FFFFFF']);
+      return readableOverlay({
+        format,
+        styleId: this.id,
+        background: photo,
+        overlay: { color: '#000000', opacity: 0.4 },
+        layers: [
+          layer({ id: 'headline', role: 'headline', text: text.headline, x: M, y: h * 0.45, width: 1080 - M * 2, height: h * 0.33, size: 150, font: 'jakarta', weight: 800, color: '#FFFFFF', valign: 'bottom', lineHeight: 1.0, letterSpacing: -0.03 }),
+          ...(text.kicker
+            ? [layer({ id: 'kicker', role: 'pill', text: text.kicker, x: M, y: h * 0.8, width: 1080 - M * 2, height: 80, size: 34, color: pillText, fill: p.background, uppercase: true, letterSpacing: 0.06 })]
+            : []),
+          ...(text.footer
+            ? [layer({ id: 'footer', role: 'footer', text: text.footer, x: M, y: M, width: 1080 - M * 2, height: 50, size: 30, color: '#FFFFFF', uppercase: true, letterSpacing: 0.08 })]
+            : []),
+        ],
+      });
+    },
+  },
 ];
 
 export const styleById = (id: string) => STYLES.find((s) => s.id === id);
@@ -213,7 +295,9 @@ export function textOf(doc: DesignDoc): DesignText {
 /** Rebuilds a design in another style or palette, keeping its words */
 export function restyle(doc: DesignDoc, styleId: string, palette: Palette, format: FormatId = doc.format): DesignDoc {
   const style = styleById(styleId) ?? STYLES[0];
-  return style.build(textOf(doc), format, palette);
+  // A photo style keeps the design's photo
+  const photo = doc.background.kind === 'photo' ? doc.background : undefined;
+  return style.build(textOf(doc), format, palette, photo);
 }
 
 /** Palettes a style is shown in when picking from 4 results */
