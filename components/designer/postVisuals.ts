@@ -7,9 +7,10 @@
  */
 
 import { STYLES, styleById, variationPalettes, type DesignText } from '@/lib/design/styles';
-import { designToBlob } from '@/lib/design/render';
+import { designToBlob, overlayToBlob } from '@/lib/design/render';
+import { aiPhotoBackground, makeAi, type AiProgress } from './ai';
 import type { AttachedTo, DesignDoc, DesignRecord, FormatId, PhotoBackground } from '@/lib/design/types';
-import { createDesign, listDesigns, rememberedHandle, saveDesign, savePhoto, searchPhotos, writeDesignText, type StockPhoto } from '@/lib/api/designApi';
+import { createDesign, listDesigns, rememberedHandle, renderDesignVideo, saveDesign, savePhoto, searchPhotos, writeDesignText, type StockPhoto } from '@/lib/api/designApi';
 import { requestUploadUrl, uploadFileToS3 } from '@/lib/api/mediaClient';
 import { setCopyVisual } from '@/lib/api/copyClient';
 import { updatePost } from '@/lib/api/schedulerClient';
@@ -34,8 +35,11 @@ export function formatForPlatform(platform: string): FormatId {
   return 'square';
 }
 
-/** Kinds that can be made today (AI images and videos come later) */
-export const MAKEABLE: VisualKind[] = ['template', 'stock'];
+/** Kinds that can be made */
+export const MAKEABLE: VisualKind[] = ['template', 'stock', 'ai_image', 'ai_video'];
+
+/** AI credits each kind costs (the others are free) */
+export const AI_CREDIT_COST: Partial<Record<VisualKind, number>> = { ai_image: 1, ai_video: 5 };
 
 export const VISUAL_LABELS: Record<VisualKind, string> = {
   none: 'None',
@@ -94,7 +98,9 @@ export async function designOptions(
   target: VisualTarget,
   kind: VisualKind,
   count = 1,
-  format: FormatId = formatForPlatform(target.platform)
+  format: FormatId = formatForPlatform(target.platform),
+  /** AI images and videos take a while: how far along it is */
+  onProgress?: (p: AiProgress) => void
 ): Promise<{ docs: DesignDoc[]; name: string }> {
   // Thumbnails are seen small next to other videos: a few huge words work best
   const prompt = format === 'landscape' ? `A YouTube thumbnail, at most 5 big punchy words (not the full title). ${brief(target)}` : brief(target);
@@ -109,6 +115,14 @@ export async function designOptions(
   };
   const n = seed(target.id);
   const name = written.headline.replace(/\n/g, ' ').slice(0, 60);
+
+  if (kind === 'ai_image' || kind === 'ai_video') {
+    const job = await makeAi(kind === 'ai_video' ? 'video' : 'image', written.imagePrompt || brief(target), format, onProgress);
+    const bg = await aiPhotoBackground(job);
+    const style = styleById('photo-text')!;
+    const doc = style.build(text, format, variationPalettes(style)[0], bg);
+    return { docs: [job.mediaId ? { ...doc, video: { mediaId: job.mediaId, durationSeconds: 5 } } : doc], name };
+  }
 
   if (kind === 'stock') {
     const photos = await searchPhotos(written.photoQuery || target.angle || 'lifestyle', format === 'square' || format === 'landscape' ? 'horizontal' : 'vertical');
@@ -128,9 +142,20 @@ export async function designOptions(
   return { docs, name };
 }
 
-/** Turns a design into an image in the user's media */
-export async function exportDesign(doc: DesignDoc, name: string): Promise<{ mediaId: string; mediaType: 'image'; blob: Blob }> {
+/** Turns a design into an image (or, over an AI video, a video) in the user's media */
+export async function exportDesign(doc: DesignDoc, name: string): Promise<{ mediaId: string; mediaType: 'image' | 'video'; blob: Blob }> {
   await loadDesignFonts();
+  if (doc.video) {
+    // The words go on a see-through image, which the server lays over the video
+    const overlay = await overlayToBlob(doc, FONT_FAMILIES);
+    const file = new File([overlay], 'overlay.png', { type: 'image/png' });
+    const { uploadUrl, mediaId: overlayId } = await requestUploadUrl(file.type, file.name, file.size);
+    await uploadFileToS3(uploadUrl, file);
+    const { mediaId } = await renderDesignVideo(doc.video.mediaId, overlayId, doc.format);
+    // The first frame with the words stands in for the video in previews
+    const poster = await designToBlob(doc, FONT_FAMILIES, await photosFor(doc));
+    return { mediaId, mediaType: 'video', blob: poster };
+  }
   const blob = await designToBlob(doc, FONT_FAMILIES, await photosFor(doc));
   const ext = blob.type === 'image/jpeg' ? 'jpg' : 'png';
   const file = new File([blob], `${name.replace(/[^\w-]+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'design'}.${ext}`, { type: blob.type });
@@ -145,7 +170,7 @@ export async function saveAndExport(doc: DesignDoc, name: string, attachedTo?: A
   const image = await exportDesign(ready, name);
   const design = await createDesign({
     name,
-    source: ready.background.kind === 'photo' ? 'stock' : 'template',
+    source: sourceOf(ready),
     doc: ready,
     attachedTo,
     mediaId: image.mediaId,
@@ -154,16 +179,23 @@ export async function saveAndExport(doc: DesignDoc, name: string, attachedTo?: A
   return { design, image };
 }
 
+/** What made a design: a text design, a stock photo, or AI */
+export function sourceOf(doc: DesignDoc): 'template' | 'stock' | 'ai_image' | 'ai_video' {
+  if (doc.video) return 'ai_video';
+  if (doc.background.kind !== 'photo') return 'template';
+  return doc.background.credit.source === 'ai' ? 'ai_image' : 'stock';
+}
+
 /** Makes a visual of `kind` for a post and returns its design and image (not attached to anything yet) */
-export async function makeVisual(target: VisualTarget, kind: VisualKind, attachedTo?: AttachedTo) {
-  const { docs, name } = await designOptions(target, kind, 1);
+export async function makeVisual(target: VisualTarget, kind: VisualKind, attachedTo?: AttachedTo, onProgress?: (p: AiProgress) => void) {
+  const { docs, name } = await designOptions(target, kind, 1, formatForPlatform(target.platform), onProgress);
   return saveAndExport(docs[0], name, attachedTo);
 }
 
 /** Makes a visual of `kind` for a Copywriter post and attaches it */
 export async function makePostVisual(copy: CopyRecord, kind: VisualKind): Promise<{ copy: CopyRecord; design: DesignRecord }> {
   const { design, image } = await makeVisual(copy, kind, { copyId: copy.id, platform: copy.platform });
-  const updated = await setCopyVisual(copy.id, { kind: design.source === 'stock' ? 'stock' : 'template', designId: design.designId, mediaId: image.mediaId, mediaType: image.mediaType });
+  const updated = await setCopyVisual(copy.id, { kind: design.source === 'template' ? 'template' : design.source, designId: design.designId, mediaId: image.mediaId, mediaType: image.mediaType });
   return { copy: updated, design };
 }
 
@@ -174,7 +206,7 @@ export async function makePostVisual(copy: CopyRecord, kind: VisualKind): Promis
 export async function updatePostVisual(design: DesignRecord, doc: DesignDoc, name = design.name) {
   const ready = await savePreviewPhoto(doc);
   const image = await exportDesign(ready, name);
-  const source = ready.background.kind === 'photo' ? 'stock' : 'template';
+  const source = sourceOf(ready);
   const saved = await saveDesign(design.designId, { name, source, doc: ready, attachedTo: design.attachedTo, mediaId: image.mediaId });
   rememberDesign(saved);
   const to = design.attachedTo;

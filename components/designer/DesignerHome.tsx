@@ -9,6 +9,7 @@ import { FORMATS, FORMAT_IDS, type DesignRecord, type FormatId } from '@/lib/des
 import { createDesign, designerPath, listDesigns, rememberedHandle } from '@/lib/api/designApi';
 import { DesignCanvas, DesignThumb } from './DesignCanvas';
 import { CARD, Chip, CostBadge, timeAgo } from './ui';
+import { CreditsPill, useAiCredits } from './AiCredits';
 
 type Filter = 'all' | StyleCategory | 'ai_image' | 'ai_video';
 
@@ -24,9 +25,9 @@ const FILTERS: { id: Filter; label: string }[] = [
 ];
 
 /** Sources still being built, shown honestly as "Soon" */
-const COMING: { id: Filter; name: string; description: string; icon: string; cost: number | 'free' }[] = [
-  { id: 'ai_image', name: 'AI image', description: 'A new image made from your description', icon: 'lucide:sparkles', cost: 1 },
-  { id: 'ai_video', name: 'AI video', description: 'A short clip made from your description', icon: 'lucide:clapperboard', cost: 5 },
+const AI_CARDS: { id: 'ai_image' | 'ai_video'; name: string; description: string; icon: string; cost: number; gradient: string }[] = [
+  { id: 'ai_image', name: 'AI image', description: 'A new image made from your description', icon: 'lucide:sparkles', cost: 1, gradient: 'from-fuchsia-600 via-violet-600 to-indigo-700' },
+  { id: 'ai_video', name: 'AI video', description: 'A 5-second clip made from your description', icon: 'lucide:clapperboard', cost: 5, gradient: 'from-orange-500 via-rose-600 to-purple-700' },
 ];
 
 export function DesignerHome() {
@@ -43,7 +44,8 @@ export function DesignerHome() {
   }, []);
 
   const styles = useMemo(() => STYLES.filter((s) => filter === 'all' || s.category === filter), [filter]);
-  const coming = COMING.filter((c) => filter === 'all' || c.id === filter);
+  const aiCards = AI_CARDS.filter((c) => filter === 'all' || c.id === filter);
+  const { credits } = useAiCredits();
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +70,10 @@ export function DesignerHome() {
 
   return (
     <div className="space-y-10 max-w-[1200px]">
-      <h1 className="text-[28px] font-bold font-heading text-[#0B1C30]">Designer</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-[28px] font-bold font-heading text-[#0B1C30]">Designer</h1>
+        <CreditsPill credits={credits} />
+      </div>
 
       <section
         className="relative overflow-hidden rounded-3xl px-6 py-12 sm:px-12 sm:py-14 text-center"
@@ -133,17 +138,25 @@ export function DesignerHome() {
           {styles.map((style) => (
             <StyleCard key={style.id} style={style} busy={starting === style.id} disabled={!!starting} onUse={() => startFromStyle(style)} />
           ))}
-          {coming.map((c) => (
-            <div key={c.id} className={`${CARD} p-3 flex flex-col`}>
-              <div className="aspect-[4/5] rounded-xl bg-gradient-to-br from-slate-800 to-slate-950 flex flex-col items-center justify-center gap-3 text-center px-4">
-                <Icon icon={c.icon} className="w-9 h-9 text-white/70" aria-hidden />
-                <p className="text-sm font-semibold text-white/80">{c.description}</p>
+          {aiCards.map((c) => (
+            <Link
+              key={c.id}
+              href={`/dashboard/designer/new?source=${c.id}&format=${format}`}
+              className={`${CARD} p-3 flex flex-col group transition-transform hover:-translate-y-0.5 hover:shadow-lg`}
+            >
+              <div className={`relative aspect-[4/5] rounded-xl bg-gradient-to-br ${c.gradient} flex flex-col items-center justify-center gap-3 text-center px-4 overflow-hidden`}>
+                <div aria-hidden className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-white/20 blur-2xl" />
+                <Icon icon={c.icon} className="relative w-10 h-10 text-white" aria-hidden />
+                <p className="relative text-sm font-semibold text-white">{c.description}</p>
+                <span className="relative mt-1 inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-[#0B1C30]">
+                  Make one <Icon icon="lucide:arrow-right" className="w-3.5 h-3.5" aria-hidden />
+                </span>
               </div>
               <div className="flex items-center justify-between gap-2 pt-3 px-1">
                 <span className="font-bold text-[#0B1C30] text-sm">{c.name}</span>
-                <CostBadge cost="soon" />
+                <CostBadge cost={c.cost} />
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </section>

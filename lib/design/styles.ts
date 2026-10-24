@@ -304,7 +304,9 @@ export function restyle(doc: DesignDoc, styleId: string, palette: Palette, forma
   const style = styleById(styleId) ?? STYLES[0];
   // A photo style keeps the design's photo
   const photo = doc.background.kind === 'photo' ? doc.background : undefined;
-  return style.build(textOf(doc), format, palette, photo);
+  const next = style.build(textOf(doc), format, palette, photo);
+  // An AI video stays under the words as long as its frame is the background
+  return doc.video && photo && next.background === photo ? { ...next, video: doc.video } : next;
 }
 
 /** Palettes a style is shown in when picking from 4 results */

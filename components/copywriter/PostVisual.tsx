@@ -49,7 +49,11 @@ export function VisualRow({
   const required = VISUAL_REQUIRED.has(copy.platform);
   const ready = !!copy.visual?.mediaId;
   const status = making
-    ? 'Creating…'
+    ? kind === 'ai_video'
+      ? 'Making the AI video… about 2 minutes'
+      : kind === 'ai_image'
+        ? 'Making the AI image… under a minute'
+        : 'Creating…'
     : error
       ? error
       : kind === 'none'
@@ -137,7 +141,7 @@ export function VisualRow({
 }
 
 /** "7 posts need a visual · Create all visuals" */
-export function VisualsBanner({ count, busy, onCreateAll }: { count: number; busy: boolean; onCreateAll: () => void }) {
+export function VisualsBanner({ count, busy, onCreateAll, aiCredits = 0 }: { count: number; busy: boolean; onCreateAll: () => void; aiCredits?: number }) {
   if (count === 0 && !busy) return null;
   return (
     <div className="mb-4 rounded-2xl bg-[#eef2ff] border border-[#c7d2fe] px-4 py-3 flex flex-wrap items-center gap-3">
@@ -146,7 +150,7 @@ export function VisualsBanner({ count, busy, onCreateAll }: { count: number; bus
       </span>
       <p className="flex-1 min-w-[180px] text-[14px] text-[#0b1c30]">
         <span className="font-bold">{busy ? 'Creating visuals…' : `${count} ${count === 1 ? 'post needs' : 'posts need'} a visual`}</span>
-        <span className="text-[#464555]"> · Free: text designs and stock photos</span>
+        <span className="text-[#464555]"> · {aiCredits ? `Uses ${aiCredits} AI ${aiCredits === 1 ? 'credit' : 'credits'}` : 'Free: text designs and stock photos'}</span>
       </p>
       <button
         type="button"
@@ -185,7 +189,7 @@ export function EditVisualModal({
   design: DesignRecord;
   onClose: () => void;
   /** After saving: the design, its new image, and the Copywriter post if it has one */
-  onSaved: (result: { copy: CopyRecord | null; design: DesignRecord; image: { mediaId: string; mediaType: 'image'; blob: Blob } }) => void;
+  onSaved: (result: { copy: CopyRecord | null; design: DesignRecord; image: { mediaId: string; mediaType: 'image' | 'video'; blob: Blob } }) => void;
   /** Switching between a text design and a stock photo makes a new visual; left out, the choice isn't offered */
   onChoose?: (kind: VisualKind) => void;
 }) {
@@ -335,7 +339,7 @@ export function EditVisualModal({
                 <p className="text-[11px] font-bold tracking-[0.08em] text-[#777587] uppercase">Source</p>
                 <div className="grid grid-cols-3 gap-1 rounded-xl bg-[#eff4ff] p-1">
                   {(['template', 'stock', 'ai_image'] as VisualKind[]).map((k) => {
-                    const active = (isPhoto ? 'stock' : 'template') === k;
+                    const active = (doc.video ? 'ai_video' : !isPhoto ? 'template' : doc.background.kind === 'photo' && doc.background.credit.source === 'ai' ? 'ai_image' : 'stock') === k;
                     const soon = !MAKEABLE.includes(k);
                     return (
                       <button
@@ -346,7 +350,7 @@ export function EditVisualModal({
                         onClick={() => !active && onChoose(k)}
                         className={`h-9 rounded-lg text-[12px] font-semibold ${active ? 'bg-white text-[#0b1c30] shadow-sm' : 'text-[#464555] hover:bg-white/60'} disabled:opacity-50`}
                       >
-                        {k === 'template' ? 'Text design' : k === 'stock' ? 'Stock photo' : 'AI image'} · {soon ? 'Soon' : 'Free'}
+                        {k === 'template' ? 'Text design' : k === 'stock' ? 'Stock photo' : 'AI image'} · {soon ? 'Soon' : k === 'ai_image' ? '1 credit' : 'Free'}
                       </button>
                     );
                   })}

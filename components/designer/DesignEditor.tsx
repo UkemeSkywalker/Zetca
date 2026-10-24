@@ -10,7 +10,8 @@ import { getDesign, saveDesign } from '@/lib/api/designApi';
 import { DesignCanvas } from './DesignCanvas';
 import { FONT_FAMILIES, loadDesignFonts } from './fonts';
 import { photosFor, withSavedPhoto } from './photos';
-import { updatePostVisual } from './postVisuals';
+import { exportDesign, sourceOf, updatePostVisual } from './postVisuals';
+import { getDownloadUrl } from '@/lib/api/mediaClient';
 import { LeftPanel, RightPanel, type Tab } from './EditorPanels';
 import { SecondaryButton, PrimaryButton } from './ui';
 
@@ -100,7 +101,7 @@ export function DesignEditor({ designId }: { designId: string }) {
     if (toSave.background.kind === 'photo' && isUnsavedPhoto(toSave.background.photoId)) return;
     setSaveState('saving');
     try {
-      const source = toSave.background.kind === 'photo' ? 'stock' : 'template';
+      const source = sourceOf(toSave);
       const saved = await saveDesign(design.designId, { name: name.trim() || 'Untitled design', source, doc: toSave });
       setDesign(saved);
       setSaveState((s) => (s === 'saving' ? 'saved' : s));
@@ -155,6 +156,13 @@ export function DesignEditor({ designId }: { designId: string }) {
     if (!doc) return;
     setDownloading(true);
     try {
+      if (doc.video) {
+        // Videos are put together on the server, with the words on top
+        const { mediaId } = await exportDesign(withSavedPhoto(doc), name || 'design');
+        const { downloadUrl } = await getDownloadUrl(mediaId);
+        window.open(downloadUrl, '_blank', 'noopener');
+        return;
+      }
       await loadDesignFonts();
       const blob = await designToBlob(doc, FONT_FAMILIES, await photosFor(doc));
       const url = URL.createObjectURL(blob);
@@ -360,6 +368,11 @@ function Stage({
     >
       <div className="relative shadow-xl" style={{ width: W * scale, height: H * scale }}>
         <DesignCanvas doc={doc} />
+        {doc.video && (
+          <span className="pointer-events-none absolute top-3 right-3 z-10 inline-flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-xs font-semibold text-white">
+            <Icon icon="lucide:play" className="w-3.5 h-3.5" aria-hidden /> AI video · {doc.video.durationSeconds}s · words go on top
+          </span>
+        )}
         {doc.layers.map((l) => (
           <div
             key={l.id}

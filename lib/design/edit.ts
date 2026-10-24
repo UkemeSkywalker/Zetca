@@ -62,7 +62,8 @@ export function addText(doc: DesignDoc, kind: NewTextKind): { doc: DesignDoc; id
  */
 export function setBackground(doc: DesignDoc, background: Background): DesignDoc {
   // Overlays only darken photos; a plain colour or gradient doesn't need one
-  const next: DesignDoc = background.kind === 'photo' ? { ...doc, background } : { ...doc, background, overlay: undefined };
+  // A new background replaces an AI video too (its first frame was the background)
+  const next: DesignDoc = background.kind === 'photo' ? { ...doc, background, video: undefined } : { ...doc, background, overlay: undefined, video: undefined };
   const behind = backgroundColors(next);
   return {
     ...next,

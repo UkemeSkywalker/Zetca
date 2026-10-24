@@ -72,5 +72,6 @@ export function readableOverlay(doc: DesignDoc): DesignDoc {
 
 /** "Photo by stevepb on Pixabay" */
 export function photoCredit(bg: PhotoBackground): string {
+  if (bg.credit.source === 'ai') return 'Made with AI';
   return bg.credit.source === 'pixabay' ? `Photo by ${bg.credit.name} on Pixabay` : `Photo: ${bg.credit.name}`;
 }

@@ -81,3 +81,25 @@ export async function searchPhotos(q: string, orientation: Orientation = 'all', 
 export async function savePhoto(pixabayId: number): Promise<SavedPhoto> {
   return (await call<{ photo: SavedPhoto }>('/api/designs/photos', { method: 'POST', body: JSON.stringify({ pixabayId }) })).photo;
 }
+
+export type { CreditBalance } from '@/lib/services/aiCredits';
+export type { PublicAiJob } from '@/lib/services/aiDesignService';
+import type { CreditBalance } from '@/lib/services/aiCredits';
+import type { PublicAiJob } from '@/lib/services/aiDesignService';
+import type { FormatId } from '@/lib/design/types';
+
+export function getAiCredits() {
+  return call<{ credits: CreditBalance; available: boolean }>('/api/designs/ai');
+}
+
+export function startAiJob(kind: 'image' | 'video', prompt: string, format: FormatId) {
+  return call<{ job: PublicAiJob; credits: CreditBalance }>('/api/designs/ai', { method: 'POST', body: JSON.stringify({ kind, prompt, format }) });
+}
+
+export async function getAiJob(jobId: string): Promise<PublicAiJob> {
+  return (await call<{ job: PublicAiJob }>(`/api/designs/ai/${encodeURIComponent(jobId)}`)).job;
+}
+
+export function renderDesignVideo(videoMediaId: string, overlayMediaId: string, format: FormatId) {
+  return call<{ mediaId: string }>('/api/designs/videos', { method: 'POST', body: JSON.stringify({ videoMediaId, overlayMediaId, format }) });
+}

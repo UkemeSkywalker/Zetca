@@ -29,6 +29,7 @@ LINKEDIN_CLIENT_SECRET="$(local_env LINKEDIN_CLIENT_SECRET)"
 YOUTUBE_CLIENT_ID="$(local_env YOUTUBE_CLIENT_ID)"
 YOUTUBE_CLIENT_SECRET="$(local_env YOUTUBE_CLIENT_SECRET)"
 PIXABAY_API_KEY="$(local_env PIXABAY_API_KEY)"
+HIGGSFIELD_API_KEY="$(local_env HIGGSFIELD_API_KEY)"
 [ -n "$LINKEDIN_CLIENT_ID" ] || echo "Note: no LINKEDIN_CLIENT_ID in .env; LinkedIn sign-in will be off until you add it on the server."
 
 SSH=(ssh -i "$KEY" -o StrictHostKeyChecking=accept-new "ubuntu@$HOST")
@@ -74,6 +75,9 @@ TOKEN_ENCRYPTION_KEY=$(openssl rand -base64 32 | tr -d '\n')
 
 # Free stock photos in the Designer
 PIXABAY_API_KEY=$PIXABAY_API_KEY
+# AI images and videos in the Designer, and how many AI credits each user gets a month
+HIGGSFIELD_API_KEY=$HIGGSFIELD_API_KEY
+AI_CREDITS_PER_MONTH=20
 
 PUBLISHER_ENABLED=true
 PUBLISHER_SCAN_INTERVAL_SECONDS=60

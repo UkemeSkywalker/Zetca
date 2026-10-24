@@ -45,10 +45,11 @@ export function ThumbnailDesigner({
       setBusy(true);
       setError('');
       try {
+        // AI makes one image per credit; the free options show 4
         const r = await designOptions(
           { id: `${title}-${k}-${Date.now()}`, text: `YouTube video: ${title}${description ? `\n\n${description.slice(0, 400)}` : ''}`, platform: 'youtube' },
           k,
-          4,
+          k === 'ai_image' ? 1 : 4,
           'landscape'
         );
         setOptions(r.docs);
@@ -118,7 +119,7 @@ export function ThumbnailDesigner({
         </div>
 
         <div className="flex flex-wrap gap-2" role="group" aria-label="Make it with">
-          {(['template', 'stock'] as VisualKind[]).map((k) => (
+          {(['template', 'stock', 'ai_image'] as VisualKind[]).map((k) => (
             <button
               key={k}
               type="button"
@@ -129,14 +130,11 @@ export function ThumbnailDesigner({
                 kind === k ? 'border-primary bg-primary text-white' : 'border-[#E2E8F0] bg-white text-[#464555] hover:border-primary/40'
               }`}
             >
-              <Icon icon={k === 'template' ? 'lucide:type' : 'lucide:image'} className="w-4 h-4" aria-hidden />
-              {k === 'template' ? 'Text design' : 'Stock photo'}
-              <CostBadge cost="free" />
+              <Icon icon={k === 'template' ? 'lucide:type' : k === 'stock' ? 'lucide:image' : 'lucide:sparkles'} className="w-4 h-4" aria-hidden />
+              {k === 'template' ? 'Text design' : k === 'stock' ? 'Stock photo' : 'AI image'}
+              <CostBadge cost={k === 'ai_image' ? 1 : 'free'} />
             </button>
           ))}
-          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 h-9 text-sm font-semibold text-slate-500">
-            <Icon icon="lucide:sparkles" className="w-4 h-4" aria-hidden /> AI image · Soon
-          </span>
         </div>
 
         {error && (
@@ -147,7 +145,11 @@ export function ThumbnailDesigner({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" aria-busy={busy}>
           {busy || !options.length
-            ? [0, 1, 2, 3].map((i) => <div key={i} className="aspect-video rounded-2xl bg-[#F1F5F9] animate-pulse" />)
+            ? (kind === 'ai_image' ? [0] : [0, 1, 2, 3]).map((i) => (
+                <div key={i} className="aspect-video rounded-2xl bg-[#F1F5F9] animate-pulse flex items-center justify-center">
+                  {kind === 'ai_image' && busy && <span className="text-sm font-semibold text-[#64748B]">Making your AI image… under a minute</span>}
+                </div>
+              ))
             : options.map((doc, i) => (
                 <div key={i} className="group relative overflow-hidden rounded-2xl shadow-sm">
                   <DesignCanvas doc={doc} resolution={0.5} />
@@ -176,7 +178,7 @@ export function ThumbnailDesigner({
             disabled={busy || using !== null}
             className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-4 h-10 text-sm font-semibold text-[#0B1C30] hover:border-primary/40 disabled:opacity-50"
           >
-            <Icon icon="lucide:refresh-cw" className="w-4 h-4" aria-hidden /> Try 4 more
+            <Icon icon="lucide:refresh-cw" className="w-4 h-4" aria-hidden /> {kind === 'ai_image' ? 'Make another (1 credit)' : 'Try 4 more'}
           </button>
         </div>
       </div>
