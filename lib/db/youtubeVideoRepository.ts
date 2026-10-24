@@ -219,14 +219,16 @@ export class YouTubeVideoRepository {
             TableName: this.tableName,
             IndexName: 'StatusIndex',
             KeyConditionExpression: '#status = :status',
+            // status is the index's key, so it can't be in the filter: published
+            // videos get the "went up recently" condition, scheduled ones don't
             FilterExpression:
-              'attribute_exists(youtubeVideoId) AND (#status = :scheduled OR uploadedAt >= :after) AND ' +
+              'attribute_exists(youtubeVideoId) AND ' +
+              (status === 'published' ? 'uploadedAt >= :after AND ' : '') +
               '(attribute_not_exists(youtubeCheck) OR youtubeCheck.checkedAt < :before)',
             ExpressionAttributeNames: { '#status': 'status' },
             ExpressionAttributeValues: {
               ':status': status,
-              ':scheduled': 'scheduled',
-              ':after': uploadedAfter.toISOString(),
+              ...(status === 'published' ? { ':after': uploadedAfter.toISOString() } : {}),
               ':before': checkedBefore.toISOString(),
             },
             ExclusiveStartKey: lastKey,
