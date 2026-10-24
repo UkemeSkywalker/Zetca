@@ -11,17 +11,18 @@ import { getVideoWriterAgent } from '@/lib/services/container';
 import { VideoWriterRequestSchema } from '@/lib/models/videoWriter';
 import { withTimeout } from '@/lib/api/routeHelpers';
 import { youtubeErrorResponse } from '@/lib/youtube/routeErrors';
+import { priceOf, withCredits } from '@/lib/billing/charge';
 
 export async function POST(req: NextRequest) {
   const handler = await withAuth(async (request: NextRequest, userId: string) => {
     try {
       const input = VideoWriterRequestSchema.parse(await request.json().catch(() => ({})));
       const cfg = getConfig();
-      const copy = await withTimeout(
+      const copy = await withCredits(userId, 'video_write', priceOf('video_write'), () => withTimeout(
         getVideoWriterAgent().write(input),
         cfg.agentTimeoutSeconds,
         'The Copywriter took too long. Please try again.'
-      );
+      ));
       return NextResponse.json(copy);
     } catch (error) {
       return youtubeErrorResponse(error, { endpoint: '/api/youtube/write', userId });

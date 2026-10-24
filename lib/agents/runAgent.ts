@@ -3,6 +3,7 @@
  * so slow generations can be traced to their cause (long output, extra model calls).
  */
 
+import { recordTokens } from '../billing/usage';
 import type { Agent, AgentResult, AgentStreamEvent, ContentBlockDelta, InvokeArgs, InvokeOptions } from '@strands-agents/sdk';
 
 /**
@@ -37,6 +38,8 @@ export async function runAgent(
   }
   const result = next.value;
   logAgentMetrics(label, result, Date.now() - started, textChars);
+  const tokens = result.metrics?.accumulatedUsage;
+  if (tokens) recordTokens(tokens.inputTokens, tokens.outputTokens);
   return result;
 }
 

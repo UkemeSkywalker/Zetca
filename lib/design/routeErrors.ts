@@ -3,7 +3,7 @@ import { ZodError } from 'zod';
 import { DesignNotFoundError } from '@/lib/services/designService';
 import { StockPhotoError } from '@/lib/services/stockPhotoService';
 import { HiggsfieldError } from '@/lib/services/higgsfieldClient';
-import { OutOfCreditsError } from '@/lib/services/aiCredits';
+import { OutOfCreditsError } from '@/lib/billing/credits';
 import { AiJobNotFoundError } from '@/lib/services/aiDesignService';
 import { StructuredOutputException } from '@/lib/agents/errors';
 import { ApiError, logError } from '@/lib/errors';

@@ -13,13 +13,6 @@ import { request } from 'https';
 
 const BASE = 'https://api.higgsfield.ai';
 
-/** The image model, and the video model that animates an image */
-export const IMAGE_MODEL = 'higgsfield-ai/soul/standard';
-export const VIDEO_MODEL = 'kling-video/v2.5-turbo/standard/image-to-video';
-
-/** Shapes the image model makes (it has no 4:5; 3:4 is cropped to it) */
-export const AI_ASPECT = { square: '1:1', portrait: '3:4', story: '9:16', landscape: '16:9' } as const;
-
 export type HiggsfieldStatus = 'queued' | 'in_progress' | 'completed' | 'failed' | 'nsfw' | 'canceled';
 
 export interface HiggsfieldRequest {
@@ -112,24 +105,11 @@ export class HiggsfieldClient {
     return body as HiggsfieldRequest;
   }
 
-  /** Starts an image; `idempotencyKey` makes a retried submit safe */
-  async submitImage(prompt: string, aspect: string, idempotencyKey: string): Promise<HiggsfieldRequest> {
-    const res = await this.transport.post(
-      `${BASE}/${IMAGE_MODEL}`,
-      { prompt: prompt.slice(0, 1500), aspect_ratio: aspect, resolution: '1080p' },
-      { ...this.auth(), 'Idempotency-Key': idempotencyKey }
-    );
-    return this.parse(res, 'image submit');
-  }
-
-  /** Starts a 5-second video that animates an image */
-  async submitVideo(prompt: string, imageUrl: string, idempotencyKey: string): Promise<HiggsfieldRequest> {
-    const res = await this.transport.post(
-      `${BASE}/${VIDEO_MODEL}`,
-      { prompt: prompt.slice(0, 1500), image_url: imageUrl, duration: 5 },
-      { ...this.auth(), 'Idempotency-Key': idempotencyKey }
-    );
-    return this.parse(res, 'video submit');
+  /** Starts a request on a model's endpoint; `idempotencyKey` makes a retried submit safe */
+  async submit(endpoint: string, body: Record<string, unknown>, idempotencyKey: string): Promise<HiggsfieldRequest> {
+    const prompt = typeof body.prompt === 'string' ? body.prompt.slice(0, 1500) : body.prompt;
+    const res = await this.transport.post(`${BASE}/${endpoint}`, { ...body, prompt }, { ...this.auth(), 'Idempotency-Key': idempotencyKey });
+    return this.parse(res, `${endpoint} submit`);
   }
 
   async status(requestId: string): Promise<HiggsfieldRequest> {

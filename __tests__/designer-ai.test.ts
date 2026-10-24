@@ -1,70 +1,11 @@
 /**
  * @jest-environment node
  */
-import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
-import { AiCredits, OutOfCreditsError, monthOf } from '@/lib/services/aiCredits';
+import { monthOf } from '@/lib/billing/credits';
+import { memoryBilling } from '@/lib/billing/testing';
 import { AiDesignService, imagePrompt } from '@/lib/services/aiDesignService';
 import { HiggsfieldClient, HiggsfieldError } from '@/lib/services/higgsfieldClient';
 import { VideoDesignService } from '@/lib/services/videoDesignService';
-
-/** A tiny in-memory stand-in for the users table, enough for the credit updates */
-function fakeUsersTable(initial: Record<string, number | string> = {}) {
-  const row: Record<string, number | string> = { userId: 'u1', ...initial };
-  const send = jest.fn(async (cmd: { input: Record<string, unknown>; constructor: { name: string } }) => {
-    const input = cmd.input as { UpdateExpression?: string; ExpressionAttributeValues?: Record<string, number | string>; ConditionExpression?: string };
-    if (cmd.constructor.name === 'GetCommand') return { Item: { ...row } };
-    const v = input.ExpressionAttributeValues!;
-    const expr = input.UpdateExpression!;
-    if (expr.startsWith('ADD aiCreditsUsed :cost')) {
-      if (row.aiCreditsMonth !== v[':month'] || (row.aiCreditsUsed as number) > (v[':max'] as number)) throw new ConditionalCheckFailedException({ message: 'no', $metadata: {} });
-      row.aiCreditsUsed = (row.aiCreditsUsed as number) + (v[':cost'] as number);
-      return { Attributes: { ...row } };
-    }
-    if (expr.startsWith('SET aiCreditsMonth')) {
-      if (row.aiCreditsMonth === v[':month']) throw new ConditionalCheckFailedException({ message: 'no', $metadata: {} });
-      row.aiCreditsMonth = v[':month'];
-      row.aiCreditsUsed = v[':cost'];
-      return {};
-    }
-    if (expr.startsWith('ADD aiCreditsUsed :minus')) {
-      if (row.aiCreditsMonth !== v[':month'] || (row.aiCreditsUsed as number) < (v[':cost'] as number)) throw new ConditionalCheckFailedException({ message: 'no', $metadata: {} });
-      row.aiCreditsUsed = (row.aiCreditsUsed as number) + (v[':minus'] as number);
-      return {};
-    }
-    throw new Error(`unexpected ${expr}`);
-  });
-  return { row, doc: { send } as never };
-}
-
-describe('AI credits', () => {
-  beforeEach(() => {
-    process.env.AI_CREDITS_PER_MONTH = '10';
-  });
-
-  it('starts each month at zero, then counts up', async () => {
-    const t = fakeUsersTable({ aiCreditsMonth: '2000-01', aiCreditsUsed: 9 });
-    const credits = new AiCredits(t.doc);
-    expect((await credits.get('u1')).left).toBe(10);
-    expect((await credits.take('u1', 5)).left).toBe(5);
-    expect((await credits.take('u1', 1)).left).toBe(4);
-    expect(t.row).toMatchObject({ aiCreditsMonth: monthOf(), aiCreditsUsed: 6 });
-  });
-
-  it('refuses when there aren’t enough left', async () => {
-    const t = fakeUsersTable({ aiCreditsMonth: monthOf(), aiCreditsUsed: 8 });
-    await expect(new AiCredits(t.doc).take('u1', 5)).rejects.toBeInstanceOf(OutOfCreditsError);
-    expect(t.row.aiCreditsUsed).toBe(8);
-  });
-
-  it('gives credits back, but only in the month they were taken', async () => {
-    const t = fakeUsersTable({ aiCreditsMonth: monthOf(), aiCreditsUsed: 6 });
-    const credits = new AiCredits(t.doc);
-    await credits.refund('u1', 5, monthOf());
-    expect(t.row.aiCreditsUsed).toBe(1);
-    await credits.refund('u1', 1, '2000-01');
-    expect(t.row.aiCreditsUsed).toBe(1);
-  });
-});
 
 describe('Higgsfield client', () => {
   const ok = (body: unknown) => ({ status: 200, body: Buffer.from(JSON.stringify(body)) });
@@ -73,18 +14,18 @@ describe('Higgsfield client', () => {
     process.env.HIGGSFIELD_API_KEY = 'kid:secret';
   });
 
-  it('sends the key and asks for an image in the right shape', async () => {
+  it('sends the key and the model’s request to its endpoint', async () => {
     const post = jest.fn(async () => ok({ status: 'queued', request_id: 'r1' }));
-    await new HiggsfieldClient({ post, get: jest.fn() }).submitImage('A lake', '9:16', 'job-image');
+    await new HiggsfieldClient({ post, get: jest.fn() }).submit('higgsfield-ai/soul/v2/standard', { prompt: 'A lake', aspect_ratio: '9:16', resolution: '1080p' }, 'job-image');
     const [url, body, headers] = post.mock.calls[0] as unknown as [string, Record<string, string>, Record<string, string>];
-    expect(url).toBe('https://api.higgsfield.ai/higgsfield-ai/soul/standard');
+    expect(url).toBe('https://api.higgsfield.ai/higgsfield-ai/soul/v2/standard');
     expect(body).toMatchObject({ prompt: 'A lake', aspect_ratio: '9:16', resolution: '1080p' });
     expect(headers).toMatchObject({ Authorization: 'Key kid:secret', 'Idempotency-Key': 'job-image' });
   });
 
   it('explains an empty Higgsfield balance without blaming the user', async () => {
     const post = jest.fn(async () => ({ status: 403, body: Buffer.from(JSON.stringify({ detail: 'not_enough_credits' })) }));
-    await expect(new HiggsfieldClient({ post, get: jest.fn() }).submitImage('x', '1:1', 'k')).rejects.toThrow('AI images are paused right now');
+    await expect(new HiggsfieldClient({ post, get: jest.fn() }).submit('higgsfield-ai/soul/v2/standard', { prompt: 'x' }, 'k')).rejects.toThrow('AI images are paused right now');
   });
 
   it('says AI isn’t set up when there’s no key', async () => {
@@ -108,26 +49,29 @@ describe('AI jobs', () => {
       }),
     };
     const hf = {
-      submitImage: jest.fn(async () => ({ status: 'queued', request_id: 'img-req' })),
-      submitVideo: jest.fn(async () => ({ status: 'queued', request_id: 'vid-req' })),
+      submit: jest.fn(async (endpoint: string) => ({ status: 'queued', request_id: endpoint.includes('video') ? 'vid-req' : 'img-req' })),
       status: jest.fn(async () => statuses.shift()),
       download: jest.fn(async () => Buffer.from('file')),
     };
-    const credits = { take: jest.fn(async () => ({})), refund: jest.fn(async () => undefined) };
+    const billing = memoryBilling('agency');
+    const credits = { take: jest.fn(billing.credits.take), refund: jest.fn(billing.credits.refund) };
     const media = { createMedia: jest.fn(async (r: unknown) => r) };
-    const service = new AiDesignService(hf as never, credits as never, s3 as never, media as never);
-    return { service, hf, credits, media, files };
+    const checkPlan = jest.fn(async () => undefined);
+    const service = new AiDesignService(hf as never, credits as never, s3 as never, media as never, billing.ledger, checkPlan);
+    return { service, hf, credits, media, files, billing, checkPlan };
   }
 
   it('makes an image, copies it into storage and finishes', async () => {
     const t = setup([{ status: 'in_progress' }, { status: 'completed', images: [{ url: 'https://cdn.higgsfield.ai/a.jpg' }] }]);
     const job = await t.service.start('u1', { kind: 'image', prompt: 'A lake at dawn', format: 'portrait' });
     expect(t.credits.take).toHaveBeenCalledWith('u1', 1);
-    expect(t.hf.submitImage).toHaveBeenCalledWith(imagePrompt('A lake at dawn'), '3:4', `${job.jobId}-image`);
+    expect(job.model).toBe('soul-v2');
+    expect(t.hf.submit).toHaveBeenCalledWith('higgsfield-ai/soul/v2/standard', { prompt: imagePrompt('A lake at dawn'), aspect_ratio: '3:4', resolution: '1080p' }, `${job.jobId}-image`);
     expect((await t.service.advance('u1', job.jobId)).stage).toBe('image');
     const done = await t.service.advance('u1', job.jobId);
     expect(done.stage).toBe('done');
     expect([...t.files.keys()]).toContain(`designs/u1/photos/${done.photoId}.jpg`);
+    expect(t.billing.entries.at(-1)).toMatchObject({ action: 'ai_image', credits: 1, detail: 'soul-v2', costUsd: 0.006, status: 'charged' });
   });
 
   it('animates the image for a video and saves the clip to the user’s media', async () => {
@@ -135,11 +79,15 @@ describe('AI jobs', () => {
       { status: 'completed', images: [{ url: 'https://cdn.higgsfield.ai/a.jpg' }] },
       { status: 'completed', video: { url: 'https://cdn.higgsfield.ai/v.mp4' } },
     ]);
-    const job = await t.service.start('u1', { kind: 'video', prompt: 'A runner', format: 'story' });
-    expect(t.credits.take).toHaveBeenCalledWith('u1', 5);
+    const job = await t.service.start('u1', { kind: 'video', prompt: 'A runner', format: 'story', model: 'kling-2-5-turbo' });
+    expect(t.credits.take).toHaveBeenCalledWith('u1', 26);
     const mid = await t.service.advance('u1', job.jobId);
     expect(mid.stage).toBe('video');
-    expect(t.hf.submitVideo).toHaveBeenCalledWith(expect.stringContaining('A runner'), 'https://cdn.higgsfield.ai/a.jpg', `${job.jobId}-video`);
+    expect(t.hf.submit).toHaveBeenLastCalledWith(
+      'kling-video/v2.5-turbo/standard/image-to-video',
+      { prompt: expect.stringContaining('A runner'), image_url: 'https://cdn.higgsfield.ai/a.jpg', duration: 5 },
+      `${job.jobId}-video`
+    );
     const done = await t.service.advance('u1', job.jobId);
     expect(done).toMatchObject({ stage: 'done', mediaId: expect.any(String) });
     expect(t.media.createMedia).toHaveBeenCalledWith(expect.objectContaining({ userId: 'u1', mediaType: 'video', contentType: 'video/mp4' }));
@@ -150,14 +98,14 @@ describe('AI jobs', () => {
     const job = await t.service.start('u1', { kind: 'image', prompt: 'x', format: 'square' });
     const failed = await t.service.advance('u1', job.jobId);
     expect(failed).toMatchObject({ stage: 'failed', error: expect.stringContaining('safety check') });
-    expect(t.credits.refund).toHaveBeenCalledWith('u1', 1, monthOf());
+    expect(t.credits.refund).toHaveBeenCalledWith('u1', 1, 'monthly', monthOf());
   });
 
   it('gives the credits back when the request can’t be started', async () => {
     const t = setup([]);
-    t.hf.submitImage.mockRejectedValueOnce(new HiggsfieldError('busy', 429));
+    t.hf.submit.mockRejectedValueOnce(new HiggsfieldError('busy', 429));
     await expect(t.service.start('u1', { kind: 'video', prompt: 'x', format: 'story' })).rejects.toThrow('busy');
-    expect(t.credits.refund).toHaveBeenCalledWith('u1', 5, monthOf());
+    expect(t.credits.refund).toHaveBeenCalledWith('u1', 26, 'monthly', monthOf());
   });
 
   it('won’t show another user’s job', async () => {

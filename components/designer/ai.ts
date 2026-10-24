@@ -22,10 +22,12 @@ export async function makeAi(
   kind: 'image' | 'video',
   prompt: string,
   format: PublicAiJob['format'],
-  onProgress?: (p: AiProgress) => void
+  onProgress?: (p: AiProgress) => void,
+  /** The model picked; the default when left out */
+  model?: string
 ): Promise<PublicAiJob> {
   onProgress?.('starting');
-  let { job } = await startAiJob(kind, prompt, format);
+  let { job } = await startAiJob(kind, prompt, format, model);
   const until = Date.now() + WAIT_MS;
   while (job.stage === 'image' || job.stage === 'video') {
     onProgress?.(job.stage);

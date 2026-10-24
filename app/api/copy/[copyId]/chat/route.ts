@@ -4,6 +4,7 @@ import { getConfig } from '@/lib/config';
 import { getCopyService } from '@/lib/services/container';
 import { ChatRequestSchema } from '@/lib/models/copy';
 import { withTimeout, handleRouteError } from '@/lib/api/routeHelpers';
+import { priceOf, withCredits } from '@/lib/billing/charge';
 
 async function chatRefineHandler(req: NextRequest, userId: string, copyId: string): Promise<Response> {
   try {
@@ -13,11 +14,11 @@ async function chatRefineHandler(req: NextRequest, userId: string, copyId: strin
 
     console.info(`Chat refinement for copy ${copyId}`);
 
-    const [chatResponse] = await withTimeout(
+    const [chatResponse] = await withCredits(userId, 'copy_chat', priceOf('copy_chat'), () => withTimeout(
       getCopyService().chatRefineCopy(copyId, chatRequest.message, userId),
       cfg.agentTimeoutSeconds,
       'Chat refinement timed out. Please try again.'
-    );
+    ));
 
     console.info(`Successfully refined copy ${copyId}`);
     return NextResponse.json(chatResponse, { status: 200 });

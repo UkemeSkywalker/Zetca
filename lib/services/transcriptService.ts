@@ -32,6 +32,8 @@ import { getConfig } from '@/lib/config';
 import { MediaRepository } from '@/lib/db/mediaRepository';
 import { AUDIO_PIECE_SECONDS, NoAudioError, extractAudioPieces, type AudioPieces } from '@/lib/media/audio';
 import type { MediaRecord, Transcript, TranscriptState } from '@/types/media';
+import { charge, type Charge } from '../billing/charge';
+import { TRANSCRIBE_USD_PER_MINUTE, transcriptCredits } from '../billing/prices';
 
 /** A transcript stuck mid-way this long (server restarted) is started again */
 const STALE_MS = 20 * 60 * 1000;
@@ -139,11 +141,16 @@ export class TranscriptService {
     if (!claimed) return (await this.media.getMediaById(mediaId))?.transcript ?? extracting;
 
     let pieces: AudioPieces | null = null;
+    let paid: Charge | null = null;
     try {
       const videoUrl = await getSignedUrl(this.s3, new GetObjectCommand({ Bucket: this.bucket, Key: record.s3Key }), {
         expiresIn: 3600,
       });
       pieces = await this.extract(videoUrl);
+      // Transcribe is charged by the minute: 1 credit for up to about 2 minutes of video
+      const seconds = record.durationSeconds ?? pieces.files.length * AUDIO_PIECE_SECONDS;
+      paid = await charge(userId, 'transcript', transcriptCredits(seconds), `${Math.max(1, Math.round(seconds / 60))} min`);
+      paid.usage.costUsd = (seconds / 60) * TRANSCRIBE_USD_PER_MINUTE;
       const run = randomUUID().slice(0, 8);
       const jobs = await Promise.all(
         pieces.files.map(async (file, i) => {
@@ -166,8 +173,10 @@ export class TranscriptService {
       );
       const state: TranscriptState = { status: 'transcribing', jobs, startedAt: now, updatedAt: new Date().toISOString() };
       await this.media.setTranscript(mediaId, state);
+      await paid.done();
       return state;
     } catch (error) {
+      await paid?.fail();
       const state: TranscriptState =
         error instanceof NoAudioError
           ? { status: 'none', startedAt: now, updatedAt: new Date().toISOString() }

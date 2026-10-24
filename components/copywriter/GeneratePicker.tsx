@@ -136,7 +136,7 @@ function PickerPanel({
       <div className="mt-4 pt-3 border-t border-[#e5eeff] flex items-center justify-between gap-3">
         <p className="text-[12px] text-[#464555]">
           {picked.length
-            ? `${COPIES_PER_PLATFORM} each · ${picked.length * COPIES_PER_PLATFORM} copies`
+            ? `${COPIES_PER_PLATFORM} each · ${picked.length * COPIES_PER_PLATFORM} copies · ${picked.length * COPIES_PER_PLATFORM} credits`
             : 'Pick at least one platform'}
         </p>
         <button

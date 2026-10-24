@@ -35,6 +35,7 @@ import { StrategyRecord } from '../models/strategy';
 import { CopyRepository } from '../db/copyRepository';
 import { StrategyRepository } from '../db/strategyRepository';
 import { ApiError } from '../errors';
+import { charge, priceOf } from '../billing/charge';
 import { MediaRepository } from '../db/mediaRepository';
 import { closeFeed, laneCopySaved, laneDone, laneWriting, openFeed } from './copyJobFeed';
 
@@ -171,9 +172,15 @@ export class CopyService {
       started_at: now.toISOString(),
       updated_at: now.toISOString(),
     };
+    // 1 credit a post, taken now; posts that don't get written are given back when the job ends
+    const paid = await charge(userId, 'copy_post', job.total * priceOf('copy_post'), chosen.join(','));
     const staleBefore = new Date(now.getTime() - JOB_STALE_AFTER_MS).toISOString();
-    const started = await this.strategyRepository.startCopyJob(strategyId, job, staleBefore);
+    const started = await this.strategyRepository.startCopyJob(strategyId, job, staleBefore).catch(async (error) => {
+      await paid.fail();
+      throw error;
+    });
     if (!started) {
+      await paid.fail();
       const { job: running } = await this.strategyRepository.getCopyWorkspace(strategyId);
       if (running) return running;
       throw new ApiError('Could not start generating copies. Please try again.', 409);
@@ -193,16 +200,20 @@ export class CopyService {
       ]);
     }
     openFeed(job.id, chosen);
-    void this.runJob(strategy, userId, job)
-      .catch((error) => {
+    void paid
+      .run(() => this.runJob(strategy, userId, job))
+      .then((written) => paid.done(job.total - written))
+      .catch(async (error) => {
         console.error(`Copy job ${job.id} crashed:`, error);
+        await paid.fail();
       })
       .finally(() => closeFeed(job.id));
     return job;
   }
 
   /** Write every platform's copies in parallel, saving each copy as it arrives */
-  private async runJob(strategy: StrategyRecord, userId: string, job: CopyJob): Promise<void> {
+  /** Returns how many copies were written */
+  private async runJob(strategy: StrategyRecord, userId: string, job: CopyJob): Promise<number> {
     const strategyId = strategy.id;
     const strategyData = strategyToAgentData(strategy);
     const completed = { ...job.completed };
@@ -294,6 +305,7 @@ export class CopyService {
       updated_at: new Date().toISOString(),
       finished_at: new Date().toISOString(),
     });
+    return written;
   }
 
   /**

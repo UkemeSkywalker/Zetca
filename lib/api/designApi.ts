@@ -82,18 +82,29 @@ export async function savePhoto(pixabayId: number): Promise<SavedPhoto> {
   return (await call<{ photo: SavedPhoto }>('/api/designs/photos', { method: 'POST', body: JSON.stringify({ pixabayId }) })).photo;
 }
 
-export type { CreditBalance } from '@/lib/services/aiCredits';
+export type { CreditBalance } from '@/lib/billing/credits';
+export type { ModelOption } from '@/lib/billing/aiModels';
 export type { PublicAiJob } from '@/lib/services/aiDesignService';
-import type { CreditBalance } from '@/lib/services/aiCredits';
+import type { CreditBalance } from '@/lib/billing/credits';
+import type { ModelOption } from '@/lib/billing/aiModels';
 import type { PublicAiJob } from '@/lib/services/aiDesignService';
 import type { FormatId } from '@/lib/design/types';
 
-export function getAiCredits() {
-  return call<{ credits: CreditBalance; available: boolean }>('/api/designs/ai');
+export interface AiModels {
+  image: ModelOption[];
+  video: ModelOption[];
+  defaults: { image: string; video: string };
 }
 
-export function startAiJob(kind: 'image' | 'video', prompt: string, format: FormatId) {
-  return call<{ job: PublicAiJob; credits: CreditBalance }>('/api/designs/ai', { method: 'POST', body: JSON.stringify({ kind, prompt, format }) });
+export function getAiCredits() {
+  return call<{ credits: CreditBalance; available: boolean; tier: number; models: AiModels }>('/api/designs/ai');
+}
+
+export function startAiJob(kind: 'image' | 'video', prompt: string, format: FormatId, model?: string) {
+  return call<{ job: PublicAiJob; credits: CreditBalance }>('/api/designs/ai', {
+    method: 'POST',
+    body: JSON.stringify({ kind, prompt, format, ...(model ? { model } : {}) }),
+  });
 }
 
 export async function getAiJob(jobId: string): Promise<PublicAiJob> {

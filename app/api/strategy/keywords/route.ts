@@ -4,18 +4,19 @@ import { getConfig } from '@/lib/config';
 import { getKeywordAgent } from '@/lib/services/container';
 import { KeywordRequestSchema } from '@/lib/models/keywords';
 import { withTimeout, handleRouteError } from '@/lib/api/routeHelpers';
+import { priceOf, withCredits } from '@/lib/billing/charge';
 
-async function suggestKeywordsHandler(req: NextRequest): Promise<Response> {
+async function suggestKeywordsHandler(req: NextRequest, userId: string): Promise<Response> {
   try {
     const body = await req.json();
     const input = KeywordRequestSchema.parse(body);
     const cfg = getConfig();
 
-    const keywords = await withTimeout(
+    const keywords = await withCredits(userId, 'keywords', priceOf('keywords'), () => withTimeout(
       getKeywordAgent().suggestKeywords(input),
       cfg.agentTimeoutSeconds,
       `Keyword suggestions timed out after ${cfg.agentTimeoutSeconds} seconds. Please try again.`
-    );
+    ));
 
     return NextResponse.json({ keywords }, { status: 200 });
   } catch (error) {

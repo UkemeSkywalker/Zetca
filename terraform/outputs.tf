@@ -97,3 +97,8 @@ output "dynamodb_designs_table_name" {
   value       = aws_dynamodb_table.designs.name
   description = "Name of the DynamoDB designs table"
 }
+
+output "dynamodb_credit_ledger_table_name" {
+  value       = aws_dynamodb_table.credit_ledger.name
+  description = "Name of the DynamoDB credit ledger table"
+}

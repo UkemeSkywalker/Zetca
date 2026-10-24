@@ -13,6 +13,7 @@ import { MediaRepository } from '@/lib/db/mediaRepository';
 import { withTimeout } from '@/lib/api/routeHelpers';
 import { getConfig } from '@/lib/config';
 import { youtubeErrorResponse } from '@/lib/youtube/routeErrors';
+import { priceOf, withCredits } from '@/lib/billing/charge';
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ mediaId: string }> }) {
   const { mediaId } = await params;
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ med
       const transcript = await new TranscriptService().get(userId, mediaId);
       if (!transcript) return NextResponse.json({ error: 'The transcript isn’t ready yet' }, { status: 409 });
       const media = await new MediaRepository().getMediaById(mediaId);
-      const picks = await withTimeout(getChapterAgent().pick(transcript), getConfig().agentTimeoutSeconds, 'Chapters took too long. Try again.');
+      const picks = await withCredits(userId, 'chapters', priceOf('chapters'), () => withTimeout(getChapterAgent().pick(transcript), getConfig().agentTimeoutSeconds, 'Chapters took too long. Try again.'));
       return NextResponse.json({ chapters: chaptersFromPicks(picks, transcript, media?.durationSeconds) });
     } catch (error) {
       if (error instanceof TranscriptError) return NextResponse.json({ error: error.message }, { status: error.statusCode });

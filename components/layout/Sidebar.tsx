@@ -20,6 +20,7 @@ const navItems: NavItem[] = [
   { label: 'Designer', href: '/dashboard/designer', icon: 'lucide:image' },
   { label: 'Publisher', href: '/dashboard/publisher', icon: 'lucide:navigation-2' },
   { label: 'Analysis', href: '/dashboard/analysis', icon: 'lucide:chart-column' },
+  { label: 'Billing', href: '/dashboard/billing', icon: 'lucide:coins' },
   { label: 'Profile', href: '/dashboard/profile', icon: 'lucide:user' },
 ];
 

@@ -26,9 +26,9 @@ interface Config {
   dynamoDbPublishLogTableName: string;
   dynamoDbYouTubeVideosTableName: string;
   dynamoDbDesignsTableName: string;
+  dynamoDbCreditLedgerTableName: string;
   pixabayApiKey: string;
   higgsfieldApiKey: string;
-  aiCreditsPerMonth: number;
   bedrockModelId: string;
   useMockAgent: boolean;
   agentTimeoutSeconds: number;
@@ -68,10 +68,11 @@ export function getConfig(): Config {
     dynamoDbDesignsTableName:
       process.env.DYNAMODB_DESIGNS_TABLE_NAME ||
       (process.env.NODE_ENV === 'production' ? 'designs-prod' : 'designs-dev'),
+    dynamoDbCreditLedgerTableName:
+      process.env.DYNAMODB_CREDIT_LEDGER_TABLE_NAME ||
+      (process.env.NODE_ENV === 'production' ? 'credit-ledger-prod' : 'credit-ledger-dev'),
     pixabayApiKey: process.env.PIXABAY_API_KEY || '',
     higgsfieldApiKey: process.env.HIGGSFIELD_API_KEY || '',
-    // AI credits each user gets a month (an AI image costs 1, an AI video 5)
-    aiCreditsPerMonth: Number(process.env.AI_CREDITS_PER_MONTH || 20),
     bedrockModelId: process.env.BEDROCK_MODEL_ID || 'us.anthropic.claude-sonnet-4-6',
     useMockAgent: process.env.USE_MOCK_AGENT === 'true',
     agentTimeoutSeconds: Number(process.env.AGENT_TIMEOUT_SECONDS || 60),

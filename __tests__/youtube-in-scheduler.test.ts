@@ -22,12 +22,12 @@ const video = (patch: Partial<PublicYouTubeVideo> = {}): PublicYouTubeVideo => (
 
 describe('videoToPost', () => {
   it('places a scheduled video on its publish time, in UTC like posts', () => {
-    const post = videoToPost(video({ status: 'scheduled', publishAt: '2026-10-23T17:00:00.000Z', youtubeVideoId: 'yt1' }));
+    const post = videoToPost(video({ status: 'scheduled', publishAt: '2099-10-23T17:00:00.000Z', youtubeVideoId: 'yt1' }));
     expect(post).toMatchObject({
       id: 'youtube:v1',
       platform: 'youtube',
       content: 'Netflix Movies Update',
-      scheduledDate: '2026-10-23',
+      scheduledDate: '2099-10-23',
       scheduledTime: '17:00',
       status: 'scheduled',
       mediaId: 'm1',

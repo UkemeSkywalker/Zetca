@@ -4,6 +4,7 @@ import { getConfig } from '@/lib/config';
 import { getCopyService } from '@/lib/services/container';
 import { CopyGenerateInputSchema } from '@/lib/models/copy';
 import { withTimeout, handleRouteError } from '@/lib/api/routeHelpers';
+import { priceOf, withCredits } from '@/lib/billing/charge';
 
 async function generateCopiesHandler(req: NextRequest, userId: string): Promise<Response> {
   try {
@@ -13,11 +14,11 @@ async function generateCopiesHandler(req: NextRequest, userId: string): Promise<
 
     console.info(`Generating copies for strategy: ${input.strategy_id} (mock=${cfg.useMockAgent})`);
 
-    const records = await withTimeout(
+    const records = await withCredits(userId, 'copy_post', 28 * priceOf('copy_post'), () => withTimeout(
       getCopyService().generateCopies(input.strategy_id, userId),
       cfg.agentTimeoutSeconds,
       'Copy generation timed out. Please try again.'
-    );
+    ));
 
     console.info(`Generated ${records.length} copies for strategy: ${input.strategy_id}`);
     return NextResponse.json(records, { status: 200 });
