@@ -114,6 +114,7 @@ zetca-platform/
 - `npm run lint` — Run ESLint
 - `npm run type-check` — Run TypeScript type checking
 - `npm test` — Run Jest tests
+- `node --env-file=.env scripts/credits.mjs show|grant|plan <email>` — See or change a user's credits and plan (see [docs/credits.md](docs/credits.md))
 
 **Docker:**
 - `docker-compose up --build` — Build and start the stack
