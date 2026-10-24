@@ -90,7 +90,15 @@ export const DesignDocSchema = z.object({
   overlay: z.object({ color: hex, opacity: z.number().min(0).max(0.9) }).optional(),
   layers: z.array(TextLayerSchema).max(12),
   /** An AI video under the words (the photo background is its first frame) */
-  video: z.object({ mediaId: z.string().min(1).max(80), durationSeconds: z.number().positive().max(60) }).optional(),
+  video: z
+    .object({
+      mediaId: z.string().min(1).max(80),
+      durationSeconds: z.number().positive().max(60),
+      /** The AI job that made it, and its quality: a draft can be made in HD later */
+      jobId: z.string().max(40).optional(),
+      quality: z.enum(['draft', 'hd', 'full_hd']).optional(),
+    })
+    .optional(),
 });
 export type DesignDoc = z.infer<typeof DesignDocSchema>;
 

@@ -58,6 +58,7 @@ export function ModelPicker({
   onChange,
   tier,
   left,
+  free,
 }: {
   label: string;
   options: ModelOption[];
@@ -65,11 +66,16 @@ export function ModelPicker({
   onChange: (id: string) => void;
   tier: number;
   left: number | null;
+  /** The model the free AI uses cover, and how many are left */
+  free?: { id: string; left: number };
 }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const picked = options.find((m) => m.id === value);
   const listId = useId();
+  const isFree = (id: string) => !!free && free.id === id && free.left > 0;
+  /** A model with drafts is shown at its draft price */
+  const creditsOf = (m: ModelOption) => m.qualities?.[0]?.credits ?? m.credits;
 
   useEffect(() => {
     if (!open) return;
@@ -101,7 +107,7 @@ export function ModelPicker({
         {picked && (
           <span className="truncate text-[#0B1C30]">
             {picked.name}
-            <span className="text-[#777587]"> · {picked.credits} {picked.credits === 1 ? 'credit' : 'credits'}</span>
+            <span className="text-[#777587]"> · {isFree(picked.id) ? 'free' : `${picked.qualities ? 'from ' : ''}${creditsOf(picked)} ${creditsOf(picked) === 1 ? 'credit' : 'credits'}`}</span>
           </span>
         )}
         <Icon icon="lucide:chevron-down" className={`w-3.5 h-3.5 text-[#777587] shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
@@ -114,8 +120,9 @@ export function ModelPicker({
           className="absolute left-0 z-30 mt-1.5 w-80 max-w-[calc(100vw-2rem)] max-h-80 overflow-y-auto rounded-xl border border-[#E2E8F0] bg-white p-1.5 shadow-lg"
         >
           {options.map((m) => {
-            const locked = m.tier > tier;
-            const tooDear = left !== null && m.credits > left;
+            const freeHere = isFree(m.id);
+            const locked = m.tier > tier && !freeHere;
+            const tooDear = !freeHere && left !== null && creditsOf(m) > left;
             const selected = value === m.id;
             return (
               <button
@@ -141,13 +148,16 @@ export function ModelPicker({
                     {m.maker} · {m.bestFor}
                   </span>
                 </span>
-                {locked ? (
+                {freeHere ? (
+                  <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">Free · {free!.left} left</span>
+                ) : locked ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-500">
-                    <Icon icon="lucide:lock" className="w-3 h-3" aria-hidden /> {PLAN_FOR_TIER[m.tier]}
+                    <Icon icon="lucide:lock" className="w-3 h-3" aria-hidden /> {PLAN_FOR_TIER[Math.max(1, m.tier)]}
                   </span>
                 ) : (
                   <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${tooDear ? 'bg-amber-50 text-amber-700' : 'bg-primary-50 text-primary'}`}>
-                    {m.credits} {m.credits === 1 ? 'credit' : 'credits'}
+                    {m.qualities ? 'from ' : ''}
+                    {creditsOf(m)} {creditsOf(m) === 1 ? 'credit' : 'credits'}
                   </span>
                 )}
                 {selected && <Icon icon="lucide:check" className="w-4 h-4 text-primary shrink-0" aria-hidden />}

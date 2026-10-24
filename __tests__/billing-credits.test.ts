@@ -7,7 +7,7 @@ import { charge, requireAiMedia, setBillingBackends, withCredits } from '@/lib/b
 import { memoryBilling } from '@/lib/billing/testing';
 import { recordTokens } from '@/lib/billing/usage';
 import { ACTIONS, creditsFor, transcriptCredits } from '@/lib/billing/prices';
-import { AI_IMAGE_MODELS, AI_VIDEO_MODELS, imageCredits, videoCredits } from '@/lib/billing/aiModels';
+import { AI_IMAGE_MODELS, AI_VIDEO_MODELS, hdCredits, imageCredits, videoCredits } from '@/lib/billing/aiModels';
 import { PLANS } from '@/lib/billing/plans';
 
 /** A tiny stand-in for the users table: enough for the credit updates */
@@ -32,6 +32,14 @@ function usersTable(row: Record<string, number | string>) {
     } else if (expr === 'ADD creditsUsed :minus') {
       if (row.creditsMonth !== v[':month'] || (row.creditsUsed as number) < (v[':cost'] as number)) fail();
       row.creditsUsed = (row.creditsUsed as number) + (v[':minus'] as number);
+    } else if (/^ADD free\w+ :one$/.test(expr)) {
+      const field = expr.split(' ')[1];
+      if (((row[field] as number) ?? 0) >= (v[':max'] as number)) fail();
+      row[field] = ((row[field] as number) ?? 0) + 1;
+    } else if (/^ADD free\w+ :minus$/.test(expr)) {
+      const field = expr.split(' ')[1];
+      if (!((row[field] as number) > 0)) fail();
+      row[field] = (row[field] as number) - 1;
     } else if (expr === 'ADD creditsBonus :cost' || expr === 'ADD creditsBonus :n') {
       row.creditsBonus = ((row.creditsBonus as number) ?? 0) + ((v[':cost'] ?? v[':n']) as number);
     } else throw new Error(`unexpected ${expr}`);
@@ -73,6 +81,17 @@ describe('credit balance', () => {
     expect(error.statusCode).toBe(402);
     expect(error.message).toContain('needs 4 credits and you have 3 left');
     expect(t.row).toMatchObject({ creditsUsed: 98, creditsBonus: 1 });
+  });
+
+  it('gives every account 5 free AI images and 2 free AI videos, once', async () => {
+    const t = usersTable({ userId: 'u1', plan: 'free' });
+    const credits = new Credits(t.doc);
+    expect((await credits.get('u1')).freeAi).toEqual({ image: 5, video: 2 });
+    expect(await credits.takeFree('u1', 'video')).toBe(true);
+    expect(await credits.takeFree('u1', 'video')).toBe(true);
+    expect(await credits.takeFree('u1', 'video')).toBe(false);
+    await credits.refundFree('u1', 'video');
+    expect((await credits.get('u1')).freeAi).toEqual({ image: 5, video: 1 });
   });
 
   it('only refunds monthly credits within their month', async () => {
@@ -139,6 +158,9 @@ describe('prices', () => {
     const video = Object.fromEntries(AI_VIDEO_MODELS.map((m) => [m.id, videoCredits(m)]));
     expect(video).toMatchObject({ 'kling-2-5-turbo': 26, 'hailuo-2-3': 34, 'kling-3': 76, 'kling-3-4k': 251 });
     expect(ACTIONS.ai_video.credits).toBe(video['kling-2-5-turbo']);
+    // Wan 3.0: a 480p draft (with its frame), and HD versions made from it
+    const wan = AI_VIDEO_MODELS.find((m) => m.id === 'wan-3')!;
+    expect([videoCredits(wan, 'draft'), hdCredits(wan, 'hd'), hdCredits(wan, 'full_hd')]).toEqual([36, 70, 140]);
   });
 
   it('charge transcripts by the minute', () => {

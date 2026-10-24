@@ -16,6 +16,7 @@ const PRICE_ROWS: { id: string; label: string; unit?: string }[] = [
   { id: 'design_words', label: 'Design words (“Write it for me”)' },
   { id: 'ai_image', label: 'AI image', unit: 'from (by model)' },
   { id: 'ai_video', label: 'AI video, 5 seconds', unit: 'from (by model)' },
+  { id: 'ai_video_draft', label: 'AI video draft, 480p (Wan 3.0)', unit: 'then HD from' },
   { id: 'video_write', label: 'YouTube title and description' },
   { id: 'video_topics', label: 'YouTube keyword research' },
   { id: 'video_suggestions', label: 'YouTube suggested titles and description' },
@@ -84,6 +85,13 @@ export function BillingPage() {
             <span className="tabular-nums text-[#464555]">{credits.bonus.toLocaleString('en-US')}</span>
           </div>
           <p className="text-xs text-[#777587]">Top-up credits are used once the month’s credits run out, and last 12 months.</p>
+          <div className="flex justify-between text-sm">
+            <span className="font-semibold text-[#0B1C30]">Free AI to try</span>
+            <span className="tabular-nums text-[#464555]">
+              {credits.freeAi.image} {credits.freeAi.image === 1 ? 'image' : 'images'} · {credits.freeAi.video} {credits.freeAi.video === 1 ? 'video' : 'videos'} left
+            </span>
+          </div>
+          <p className="text-xs text-[#777587]">Every account gets 5 AI images and 2 AI videos free, once, on the default models.</p>
         </div>
       </section>
 
@@ -151,7 +159,11 @@ export function BillingPage() {
               <tr key={r.id} className="border-t border-[#EEF2F7]">
                 <td className="py-2.5 text-[#0B1C30]">{r.label}</td>
                 <td className="py-2.5 text-right tabular-nums text-[#0B1C30]">
-                  {data.prices[r.id] ?? '—'} <span className="text-xs text-[#94A3B8]">{r.unit ?? ''}</span>
+                  {data.prices[r.id] ?? '—'}{' '}
+                  <span className="text-xs text-[#94A3B8]">
+                    {r.unit ?? ''}
+                    {r.id === 'ai_video_draft' && data.prices.ai_video_hd ? ` ${data.prices.ai_video_hd}` : ''}
+                  </span>
                 </td>
               </tr>
             ))}

@@ -4,7 +4,8 @@
  * credits. `tier` is the lowest plan that can use it: 1 Starter, 2 Pro, 3 Agency.
  *
  * Videos animate a first frame made with the frame model, so a video's cost is
- * the frame plus the video step.
+ * the frame plus the video step. Models with `qualities` can make a cheap
+ * 480p draft first, then an HD version from the same frame, prompt and seed.
  */
 
 import type { FormatId } from '../design/types';
@@ -32,8 +33,15 @@ export interface AiVideoModel {
   /** The video step alone; add the first frame for the full cost */
   costUsd: number;
   tier: number;
-  body: (prompt: string, imageUrl: string) => Record<string, unknown>;
+  /** Draft and HD versions, for models that take a resolution */
+  qualities?: Partial<Record<VideoQuality, { resolution: string; costUsd: number; tier: number }>>;
+  body: (prompt: string, imageUrl: string, opts?: { resolution?: string; seed?: number }) => Record<string, unknown>;
 }
+
+/** A draft to check the idea, then HD versions */
+export type VideoQuality = 'draft' | 'hd' | 'full_hd';
+export const VIDEO_QUALITIES: VideoQuality[] = ['draft', 'hd', 'full_hd'];
+export const QUALITY_LABEL: Record<VideoQuality, string> = { draft: 'Draft 480p', hd: 'HD 720p', full_hd: 'Full HD 1080p' };
 
 /** Shapes every image model accepts; 4:5 where the model has it */
 const ASPECT: Record<FormatId, string> = { square: '1:1', portrait: '3:4', story: '9:16', landscape: '16:9' };
@@ -55,12 +63,33 @@ export const AI_IMAGE_MODELS: AiImageModel[] = [
 ];
 
 const i2v = (seconds: number) => (prompt: string, imageUrl: string) => ({ prompt, image_url: imageUrl, duration: seconds });
+/** Wan 3.0 takes a resolution and a seed, so an HD version follows its draft closely */
+const wan3 = (prompt: string, imageUrl: string, opts: { resolution?: string; seed?: number } = {}) => ({
+  prompt,
+  image_url: imageUrl,
+  duration: 5,
+  resolution: opts.resolution ?? '720p',
+  ...(opts.seed !== undefined ? { seed: opts.seed } : {}),
+});
 
 export const AI_VIDEO_MODELS: AiVideoModel[] = [
   { id: 'kling-2-5-turbo', name: 'Kling 2.5 Turbo', maker: 'Kling', bestFor: 'Low-cost clips', endpoint: 'kling-video/v2.5-turbo/standard/image-to-video', seconds: 5, costUsd: 0.179, tier: 1, body: i2v(5) },
   { id: 'hailuo-2-3', name: 'Hailuo 2.3', maker: 'MiniMax', bestFor: 'Natural motion, 6 seconds', endpoint: 'minimax/hailuo-2.3/standard/image-to-video', seconds: 6, costUsd: 0.238, tier: 1, body: i2v(6) },
   { id: 'pixverse-v6', name: 'PixVerse V6', maker: 'PixVerse', bestFor: 'Clips with sound', endpoint: 'pixverse/v6/image-to-video', seconds: 5, costUsd: 0.255, tier: 1, body: i2v(5) },
   { id: 'kling-2-5-turbo-pro', name: 'Kling 2.5 Turbo Pro', maker: 'Kling', bestFor: 'Sharper Kling 2.5', endpoint: 'kling-video/v2.5-turbo/pro/image-to-video', seconds: 5, costUsd: 0.298, tier: 1, body: i2v(5) },
+  {
+    id: 'wan-3',
+    name: 'Wan 3.0',
+    maker: 'Alibaba',
+    bestFor: 'Draft first, then HD',
+    endpoint: 'alibaba/wan-3.0/image-to-video',
+    seconds: 5,
+    costUsd: 0.5,
+    tier: 1,
+    // $0.05, $0.10 and $0.20 a second
+    qualities: { draft: { resolution: '480p', costUsd: 0.25, tier: 1 }, hd: { resolution: '720p', costUsd: 0.5, tier: 1 }, full_hd: { resolution: '1080p', costUsd: 1.0, tier: 2 } },
+    body: wan3,
+  },
   { id: 'wan-2-6', name: 'Wan 2.6', maker: 'Alibaba', bestFor: 'Smooth everyday scenes', endpoint: 'wan/v2.6/image-to-video', seconds: 5, costUsd: 0.425, tier: 2, body: i2v(5) },
   { id: 'kling-3-turbo', name: 'Kling 3.0 Turbo', maker: 'Kling', bestFor: 'Fast Kling 3.0', endpoint: 'kling-video/v3.0-turbo/image-to-video', seconds: 5, costUsd: 0.476, tier: 2, body: i2v(5) },
   { id: 'kling-3', name: 'Kling 3.0', maker: 'Kling', bestFor: 'High-quality motion, with sound', endpoint: 'kling-video/v3.0/std/image-to-video', seconds: 5, costUsd: 0.536, tier: 2, body: i2v(5) },
@@ -79,8 +108,14 @@ export const imageModel = (id?: string) => AI_IMAGE_MODELS.find((m) => m.id === 
 export const videoModel = (id?: string) => AI_VIDEO_MODELS.find((m) => m.id === id) ?? AI_VIDEO_MODELS.find((m) => m.id === DEFAULT_VIDEO_MODEL)!;
 
 export const imageCredits = (m: AiImageModel) => creditsFor(m.costUsd);
-export const videoCostUsd = (m: AiVideoModel) => m.costUsd + imageModel(FRAME_MODEL).costUsd;
-export const videoCredits = (m: AiVideoModel) => creditsFor(videoCostUsd(m));
+/** The video step at a quality (the model's own price when it has no qualities) */
+export const videoStepUsd = (m: AiVideoModel, quality?: VideoQuality) => (quality && m.qualities?.[quality]?.costUsd) || m.costUsd;
+/** A new video: its first frame plus the video step */
+export const videoCostUsd = (m: AiVideoModel, quality?: VideoQuality) => videoStepUsd(m, quality) + imageModel(FRAME_MODEL).costUsd;
+export const videoCredits = (m: AiVideoModel, quality?: VideoQuality) => creditsFor(videoCostUsd(m, quality));
+/** An HD version of a draft: the frame already exists */
+export const hdCredits = (m: AiVideoModel, quality: VideoQuality) => creditsFor(videoStepUsd(m, quality));
+export const videoTier = (m: AiVideoModel, quality?: VideoQuality) => Math.max(m.tier, (quality && m.qualities?.[quality]?.tier) || 0);
 
 /** What the page shows in a model picker */
 export interface ModelOption {
@@ -91,9 +126,33 @@ export interface ModelOption {
   credits: number;
   tier: number;
   seconds?: number;
+  /** For models that make drafts: each quality's credits (a new video) and plan */
+  qualities?: { id: VideoQuality; label: string; credits: number; hdCredits: number; tier: number }[];
 }
 
 export const imageOptions = (): ModelOption[] =>
   AI_IMAGE_MODELS.map(({ id, name, maker, bestFor, tier }) => ({ id, name, maker, bestFor, tier, credits: imageCredits(imageModel(id)) }));
 export const videoOptions = (): ModelOption[] =>
-  AI_VIDEO_MODELS.map((m) => ({ id: m.id, name: m.name, maker: m.maker, bestFor: m.bestFor, tier: m.tier, seconds: m.seconds, credits: videoCredits(m) }));
+  AI_VIDEO_MODELS.map((m) => ({
+    id: m.id,
+    name: m.name,
+    maker: m.maker,
+    bestFor: m.bestFor,
+    tier: m.tier,
+    seconds: m.seconds,
+    credits: videoCredits(m),
+    ...(m.qualities
+      ? {
+          qualities: VIDEO_QUALITIES.filter((q) => m.qualities![q]).map((q) => ({
+            id: q,
+            label: QUALITY_LABEL[q],
+            credits: videoCredits(m, q),
+            hdCredits: hdCredits(m, q),
+            tier: videoTier(m, q),
+          })),
+        }
+      : {}),
+  }));
+
+/** Everyone's one-off free AI uses, on the default models */
+export const FREE_AI = { image: 5, video: 2 } as const;

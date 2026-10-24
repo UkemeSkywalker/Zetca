@@ -18,12 +18,13 @@ import { VISUAL_REQUIRED, visualOf } from './usePostVisuals';
 
 const COSTS: Record<VisualKind, 'free' | number | 'soon'> = {
   none: 'free',
-  // Text and stock visuals cost 1 credit for the words the AI writes for them
+  // 1 credit for the words the AI writes, plus the AI image or video
   template: 1,
   stock: 1,
-  ai_image: 1,
-  ai_video: 26,
+  ai_image: 2,
+  ai_video: 27,
 };
+const isAiKind = (k: VisualKind): k is 'ai_image' | 'ai_video' => k === 'ai_image' || k === 'ai_video';
 const KINDS: VisualKind[] = ['none', 'template', 'stock', 'ai_image', 'ai_video'];
 
 /** The visual row at the bottom of a post card */
@@ -49,7 +50,11 @@ export function VisualRow({
 }) {
   const kind = visualOf(copy).kind;
   const { credits } = useCredits();
-  const aiLocked = credits !== null && !credits.aiMedia;
+  const freeLeft = (k: 'ai_image' | 'ai_video') => (credits ? credits.freeAi[k === 'ai_video' ? 'video' : 'image'] : 0);
+  /** Not on the plan, and no free AI uses left for it */
+  const locked = (k: VisualKind) => isAiKind(k) && credits !== null && !credits.aiMedia && freeLeft(k) === 0;
+  /** A free AI use covers the image or video; the words still cost 1 credit */
+  const costOf = (k: VisualKind) => (isAiKind(k) && freeLeft(k) > 0 ? 1 : COSTS[k]);
   const required = VISUAL_REQUIRED.has(copy.platform);
   const ready = !!copy.visual?.mediaId;
   const status = making
@@ -98,7 +103,7 @@ export function VisualRow({
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-[13px] font-bold text-[#0b1c30]">
             <span className="truncate">{VISUAL_LABELS[kind]}</span>
-            {kind !== 'none' && <CostBadge cost={COSTS[kind]} />}
+            {kind !== 'none' && <CostBadge cost={costOf(kind)} />}
           </p>
           <p className={`text-[11px] leading-[14px] line-clamp-2 ${error ? 'text-[#ba1a1a]' : 'text-[#777587]'}`} role={error ? 'alert' : undefined}>
             {required && kind !== 'none' && !ready && !making ? 'Visual required · ' : ''}
@@ -117,15 +122,19 @@ export function VisualRow({
             className="min-w-0 flex-1 h-8 pl-2 pr-6 rounded-lg border border-[#c7c4d8]/60 bg-white text-[12px] font-semibold text-[#0b1c30] disabled:opacity-50"
           >
             {KINDS.map((k) => (
-              <option key={k} value={k} disabled={(k === 'none' && required) || COSTS[k] === 'soon' || (aiLocked && (k === 'ai_image' || k === 'ai_video'))}>
+              <option key={k} value={k} disabled={(k === 'none' && required) || COSTS[k] === 'soon' || locked(k)}>
                 {VISUAL_LABELS[k]}
                 {k === 'none' && required
                   ? ` (${platformInfo(copy.platform).label} needs a visual)`
                   : COSTS[k] === 'soon'
                     ? ' (soon)'
-                    : k !== 'none'
-                      ? ' · Free'
-                      : ''}
+                    : locked(k)
+                      ? ' (paid plans)'
+                      : isAiKind(k) && freeLeft(k) > 0
+                        ? ` · ${freeLeft(k)} free left`
+                        : k !== 'none'
+                          ? ` · ${COSTS[k]} ${COSTS[k] === 1 ? 'credit' : 'credits'}`
+                          : ''}
               </option>
             ))}
           </select>

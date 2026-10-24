@@ -1,6 +1,6 @@
 /**
  * GET /api/designs/ai: the AI image and video models, their prices, and the user's credits
- * POST /api/designs/ai: starts an AI image or video. Body: { kind, prompt, format, model? }
+ * POST /api/designs/ai: starts an AI image or video. Body: { kind, prompt, format, model?, quality? }
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -18,6 +18,8 @@ const StartSchema = z.object({
   prompt: z.string().trim().min(3, 'Describe what the AI should make').max(1200),
   format: z.enum(['square', 'portrait', 'story', 'landscape']),
   model: z.string().max(40).optional(),
+  /** For video models with drafts: 'draft' (480p), 'hd' (720p) or 'full_hd' (1080p) */
+  quality: z.enum(['draft', 'hd', 'full_hd']).optional(),
 });
 
 export async function GET(req: NextRequest) {

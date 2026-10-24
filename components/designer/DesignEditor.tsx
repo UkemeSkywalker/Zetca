@@ -14,6 +14,7 @@ import { exportDesign, sourceOf, updatePostVisual } from './postVisuals';
 import { getDownloadUrl } from '@/lib/api/mediaClient';
 import { LeftPanel, RightPanel, type Tab } from './EditorPanels';
 import { SecondaryButton, PrimaryButton } from './ui';
+import { VideoBar } from './VideoBar';
 
 type SaveState = 'saved' | 'saving' | 'unsaved' | 'error';
 
@@ -276,6 +277,8 @@ export function DesignEditor({ designId }: { designId: string }) {
           )}
         </div>
       </div>
+
+      {doc.video && <VideoBar video={doc.video} onVideo={(video) => change((d) => ({ ...d, video }))} />}
 
       <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[300px_1fr_280px] gap-4">
         <LeftPanel tab={tab} onTab={setTab} doc={doc} onChange={change} onSelect={setSelected} selected={selected} />

@@ -11,6 +11,7 @@ import { ModelPicker, resetDate, useAiCredits } from './AiCredits';
 import { sourceOf } from './postVisuals';
 import { FORMATS, FORMAT_IDS, backgroundColors, isUnsavedPhoto, type DesignDoc, type FormatId, type PhotoBackground } from '@/lib/design/types';
 import { worstContrast } from '@/lib/design/contrast';
+import type { VideoQuality } from '@/lib/api/designApi';
 import { createDesign, designerPath, rememberHandle, rememberedHandle, savePhoto, searchPhotos, writeDesignText } from '@/lib/api/designApi';
 import { DESIGN_STYLE_IDS } from '@/lib/models/designWriter';
 import { DesignCanvas } from './DesignCanvas';
@@ -44,9 +45,28 @@ export function CreateDesign() {
   const [videoModelId, setVideoModelId] = useState('');
   const pickedImage = models?.image.find((m) => m.id === (imageModelId || models.defaults.image));
   const pickedVideo = models?.video.find((m) => m.id === (videoModelId || models.defaults.video));
-  /** What an AI source costs with the model picked */
-  const aiCost = (id: string) => (id === 'ai_image' ? pickedImage?.credits ?? 1 : id === 'ai_video' ? pickedVideo?.credits ?? 26 : 0);
+  const [videoQuality, setVideoQuality] = useState<VideoQuality>('draft');
+  /** For video models with drafts: the quality picked (a draft unless HD is picked) */
+  const pickedQuality = pickedVideo?.qualities?.find((q) => q.id === videoQuality) ?? pickedVideo?.qualities?.[0];
+  const kindOf = (id: string) => (id === 'ai_video' ? 'video' : 'image');
+  /** Free AI uses left for a source (everyone's few, on the default model) */
+  const freeLeft = (id: string) => (credits ? credits.freeAi[kindOf(id)] : 0);
+  const usesFree = (id: string) =>
+    !!models && freeLeft(id) > 0 && (id === 'ai_video' ? pickedVideo?.id === models.defaults.video : pickedImage?.id === models.defaults.image);
+  /** What an AI source costs with the model (and quality) picked */
+  const aiCost = (id: string) =>
+    usesFree(id) ? 0 : id === 'ai_image' ? pickedImage?.credits ?? 1 : id === 'ai_video' ? pickedQuality?.credits ?? pickedVideo?.credits ?? 26 : 0;
   const aiLocked = credits !== null && !credits.aiMedia;
+  /** An AI source the user can't use: not on their plan and no free uses that cover it */
+  const sourceLocked = (id: string) => aiLocked && !usesFree(id);
+  const costText = (id: string) => {
+    if (usesFree(id)) {
+      const n = freeLeft(id);
+      return `Free · ${n} free AI ${kindOf(id)}${n === 1 ? '' : 's'} left`;
+    }
+    const c = aiCost(id);
+    return `Uses ${c} ${c === 1 ? 'credit' : 'credits'}${credits ? ` · ${Math.max(0, credits.left - c).toLocaleString('en-US')} left after this` : ''}`;
+  };
   const [aiProgress, setAiProgress] = useState<AiProgress | null>(null);
   const [imagePrompt, setImagePrompt] = useState('');
   const [style, setStyle] = useState<StyleChoice>(params.get('style') ?? 'auto');
@@ -72,10 +92,11 @@ export function CreateDesign() {
     setStyle((st) => (st !== 'auto' && !!styleById(st)?.usesPhoto !== (next === 'stock') ? 'auto' : st));
   };
 
-  // AI isn't on the Free plan: fall back to a text design
+  // AI the user can't use (Free plan, free uses gone): fall back to a text design
   useEffect(() => {
-    if (aiLocked && isAi(source)) pickSource('template');
-  }, [aiLocked, source]);
+    if (isAi(source) && credits && models && sourceLocked(source)) pickSource('template');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [credits, models, source, pickedImage?.id, pickedVideo?.id]);
 
   /** Asks the writer for the words (and a style, if none is picked) */
   const write = async (): Promise<{ text: DesignText; styleId: string; photoQuery: string; imagePrompt: string } | null> => {
@@ -105,11 +126,12 @@ export function CreateDesign() {
         description || prompt,
         format,
         setAiProgress,
-        source === 'ai_video' ? pickedVideo?.id : pickedImage?.id
+        source === 'ai_video' ? pickedVideo?.id : pickedImage?.id,
+        source === 'ai_video' && !usesFree('ai_video') ? pickedQuality?.id : undefined
       );
       const s = chosenStyle?.usesPhoto ? chosenStyle : styleById('photo-text')!;
       const doc = s.build(clean(words), format, variationPalettes(s)[0], await aiPhotoBackground(job));
-      setResults([job.mediaId ? { ...doc, video: { mediaId: job.mediaId, durationSeconds: 5 } } : doc]);
+      setResults([job.mediaId ? { ...doc, video: { mediaId: job.mediaId, durationSeconds: 5, jobId: job.jobId, ...(job.quality ? { quality: job.quality } : {}) } } : doc]);
     } finally {
       setAiProgress(null);
       refreshCredits();
@@ -301,7 +323,9 @@ export function CreateDesign() {
             </div>
             {aiLocked && (
               <p className="mb-3 rounded-xl bg-primary-50 border border-primary/20 px-3 py-2 text-xs font-medium text-primary">
-                AI images and videos are on paid plans.{' '}
+                {credits && credits.freeAi.image + credits.freeAi.video > 0
+                  ? `Try AI for free: ${credits.freeAi.image} AI ${credits.freeAi.image === 1 ? 'image' : 'images'} and ${credits.freeAi.video} AI ${credits.freeAi.video === 1 ? 'video' : 'videos'} left. More are on paid plans.`
+                  : 'You’ve used your free AI images and videos. More are on paid plans.'}{' '}
                 <a href="/dashboard/billing" className="font-semibold underline">
                   See plans
                 </a>
@@ -314,9 +338,11 @@ export function CreateDesign() {
             )}
             <div className="grid grid-cols-2 gap-3">
               {SOURCES.map((s) => {
-                const cost = typeof s.cost === 'number' ? aiCost(s.id) : 0;
-                const locked = cost > 0 && aiLocked;
-                const outOfCredits = cost > 0 && (!aiAvailable || locked || (credits !== null && credits.left < cost));
+                const ai = typeof s.cost === 'number';
+                const free = ai && usesFree(s.id);
+                const cost = ai ? aiCost(s.id) : 0;
+                const locked = ai && sourceLocked(s.id);
+                const outOfCredits = ai && (!aiAvailable || locked || (credits !== null && credits.left < cost));
                 const usable = s.ready && !outOfCredits;
                 return (
                   <button
@@ -340,7 +366,7 @@ export function CreateDesign() {
                           <Icon icon="lucide:lock" className="w-3 h-3" aria-hidden /> {!aiAvailable ? 'Unavailable' : locked ? 'Paid plans' : 'Not enough credits'}
                         </span>
                       ) : (
-                        <CostBadge cost={s.ready ? (typeof s.cost === 'number' ? cost : s.cost) : 'soon'} />
+                        <CostBadge cost={s.ready ? (ai ? (free ? 'free' : cost) : (s.cost as 'free')) : 'soon'} />
                       )}
                     </div>
                     <p className="mt-2 text-sm font-bold text-[#0B1C30]">{s.name}</p>
@@ -359,7 +385,26 @@ export function CreateDesign() {
               onChange={(id) => (source === 'ai_video' ? setVideoModelId(id) : setImageModelId(id))}
               tier={tier}
               left={credits?.left ?? null}
+              free={{ id: source === 'ai_video' ? models.defaults.video : models.defaults.image, left: freeLeft(source) }}
             />
+          )}
+          {source === 'ai_video' && pickedVideo?.qualities && !usesFree('ai_video') && (
+            <fieldset>
+              <legend className={LABEL}>Quality</legend>
+              <div className="flex flex-wrap gap-2">
+                {pickedVideo.qualities.map((q) => (
+                  <Chip key={q.id} selected={pickedQuality?.id === q.id} disabled={q.tier > tier} onClick={() => setVideoQuality(q.id)}>
+                    {q.label} · {q.credits}
+                    {q.tier > tier ? ' · Pro' : ''}
+                  </Chip>
+                ))}
+              </div>
+              {pickedQuality?.id === 'draft' && (
+                <p className="mt-2 text-xs text-[#777587]">
+                  Check the idea cheaply. If you like it, make it in HD from the editor: the same scene and motion, in sharper detail.
+                </p>
+              )}
+            </fieldset>
           )}
           <fieldset>
             <legend className={LABEL}>Style</legend>
@@ -415,7 +460,7 @@ export function CreateDesign() {
             </PrimaryButton>
             <p className="mt-2 text-center text-xs text-[#777587]">
               {isAi(source)
-                ? `Uses ${aiCost(source)} ${aiCost(source) === 1 ? 'credit' : 'credits'}${credits ? ` · ${Math.max(0, credits.left - aiCost(source)).toLocaleString('en-US')} left after this` : ''}`
+                ? costText(source)
                 : text.headline.trim()
                   ? 'Free · uses no credits'
                   : '1 credit for the words · free when you write them'}
@@ -457,7 +502,11 @@ export function CreateDesign() {
               <div className="mt-5 flex justify-center">
                 <SecondaryButton type="button" onClick={tryMore} disabled={!!busy}>
                   <Icon icon="lucide:refresh-cw" className="w-4 h-4" aria-hidden />{' '}
-                  {isAi(source) ? `Make another (${aiCost(source)} ${aiCost(source) === 1 ? 'credit' : 'credits'})` : source === 'stock' ? 'Try other photos' : 'Try another style'}
+                  {isAi(source)
+                    ? `Make another (${usesFree(source) ? 'free' : `${aiCost(source)} ${aiCost(source) === 1 ? 'credit' : 'credits'}`})`
+                    : source === 'stock'
+                      ? 'Try other photos'
+                      : 'Try another style'}
                 </SecondaryButton>
               </div>
             </>
