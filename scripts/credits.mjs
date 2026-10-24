@@ -85,7 +85,7 @@ async function main() {
         }),
       )
       .catch((error) => console.warn(`Couldn't record it in ${LEDGER}: ${error.message}`));
-    console.log(`Added ${credits} credits.`);
+    console.log(`Added ${credits} ${credits === 1 ? 'credit' : 'credits'}.`);
   } else if (command === 'plan') {
     if (!PLANS[value]) usage(`Plan must be one of ${Object.keys(PLANS).join(', ')}`);
     await doc.send(
