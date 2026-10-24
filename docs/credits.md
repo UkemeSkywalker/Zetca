@@ -9,6 +9,10 @@ Every AI action in Zetca costs credits. 1 credit = $0.01. Each price is what the
 | Pro | $39 | 4,000 | Yes, plus the more expensive models |
 | Agency | $99 | 10,000 | Every model |
 
+Every account, Free included, also gets **5 AI images and 2 AI videos free, once**, on the default models (Soul V2 and Kling 2.5 Turbo). They're used before credits, and a failed one is given back. The counts are `freeImagesUsed` and `freeVideosUsed` on the user record.
+
+**Draft videos:** Wan 3.0 can make a 480p draft (36 credits). If the user likes it, the editor's **Make it sharper** makes an HD 720p (70 credits) or Full HD 1080p (140 credits, Pro) version from the draft's first frame, prompt and seed. AI video isn't exact, so the HD version is very close to the draft but not identical.
+
 Monthly credits reset on the 1st of each month (UTC). Top-up credits don't reset, and they're spent once the month's credits run out. If an action fails, its credits are given back.
 
 Plans and prices live in `lib/billing/plans.ts`, `lib/billing/prices.ts` and `lib/billing/aiModels.ts`.

@@ -7,6 +7,7 @@ import { withAuth } from '@/lib/middleware/withAuth';
 import { getCredits, getLedger } from '@/lib/billing/charge';
 import { PLANS, TOP_UPS } from '@/lib/billing/plans';
 import { ACTIONS } from '@/lib/billing/prices';
+import { hdCredits, videoCredits, videoModel } from '@/lib/billing/aiModels';
 import { handleRouteError } from '@/lib/api/routeHelpers';
 
 export async function GET(req: NextRequest) {
@@ -17,7 +18,11 @@ export async function GET(req: NextRequest) {
         credits,
         plans: Object.values(PLANS),
         topUps: TOP_UPS,
-        prices: Object.fromEntries(Object.entries(ACTIONS).map(([id, a]) => [id, a.credits])),
+        prices: {
+          ...Object.fromEntries(Object.entries(ACTIONS).map(([id, a]) => [id, a.credits])),
+          ai_video_draft: videoCredits(videoModel('wan-3'), 'draft'),
+          ai_video_hd: hdCredits(videoModel('wan-3'), 'hd'),
+        },
         // What the user sees of each entry: no Zetca costs or token counts
         usage: usage.map(({ entryId, action, credits: c, detail, status, createdAt }) => ({
           id: entryId,

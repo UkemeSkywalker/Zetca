@@ -12,6 +12,7 @@ import { DynamoDBDocumentClient, GetCommand, UpdateCommand } from '@aws-sdk/lib-
 import { getConfig } from '../config';
 import { ApiError } from '../errors';
 import { planOf, type PlanId } from './plans';
+import { FREE_AI } from './aiModels';
 
 export interface CreditBalance {
   plan: PlanId;
@@ -25,10 +26,15 @@ export interface CreditBalance {
   resetsAt: string;
   /** AI images and videos are on this plan */
   aiMedia: boolean;
+  /** Free AI images and videos left (everyone's one-off allowance, on the default models) */
+  freeAi: { image: number; video: number };
 }
 
-/** Where a charge came from, so a refund goes back to the same place */
-export type CreditSource = 'monthly' | 'bonus';
+export type FreeAiKind = 'image' | 'video';
+const FREE_FIELD: Record<FreeAiKind, string> = { image: 'freeImagesUsed', video: 'freeVideosUsed' };
+
+/** Where a charge came from, so a refund goes back to the same place ('free': one of the free AI uses) */
+export type CreditSource = 'monthly' | 'bonus' | 'free';
 
 export class OutOfCreditsError extends ApiError {
   constructor(public balance: CreditBalance, public needed: number) {
@@ -57,6 +63,8 @@ interface CreditFields {
   creditsMonth?: string;
   creditsUsed?: number;
   creditsBonus?: number;
+  freeImagesUsed?: number;
+  freeVideosUsed?: number;
 }
 
 export class Credits {
@@ -75,7 +83,7 @@ export class Credits {
 
   private async fields(userId: string): Promise<CreditFields> {
     const r = await this.doc.send(
-      new GetCommand({ TableName: this.table, Key: { userId }, ProjectionExpression: '#plan, creditsMonth, creditsUsed, creditsBonus', ExpressionAttributeNames: { '#plan': 'plan' } })
+      new GetCommand({ TableName: this.table, Key: { userId }, ProjectionExpression: '#plan, creditsMonth, creditsUsed, creditsBonus, freeImagesUsed, freeVideosUsed', ExpressionAttributeNames: { '#plan': 'plan' } })
     );
     return (r.Item as CreditFields) ?? {};
   }
@@ -92,6 +100,10 @@ export class Credits {
       left: left + bonus,
       resetsAt: nextMonth(),
       aiMedia: plan.aiMedia,
+      freeAi: {
+        image: Math.max(0, FREE_AI.image - (f.freeImagesUsed ?? 0)),
+        video: Math.max(0, FREE_AI.video - (f.freeVideosUsed ?? 0)),
+      },
     };
   }
 
@@ -161,7 +173,7 @@ export class Credits {
 
   /** Gives credits back to where they came from (monthly ones only within their month) */
   async refund(userId: string, cost: number, source: CreditSource, month: string): Promise<void> {
-    if (cost <= 0) return;
+    if (cost <= 0 || source === 'free') return;
     try {
       if (source === 'bonus') {
         await this.doc.send(
@@ -177,6 +189,44 @@ export class Credits {
           UpdateExpression: 'ADD creditsUsed :minus',
           ConditionExpression: 'creditsMonth = :month AND creditsUsed >= :cost',
           ExpressionAttributeValues: { ':minus': -cost, ':cost': cost, ':month': month },
+        })
+      );
+    } catch (error) {
+      if (!(error instanceof ConditionalCheckFailedException)) throw error;
+    }
+  }
+
+  /** Uses one of the user's free AI images or videos; false when none are left */
+  async takeFree(userId: string, kind: FreeAiKind): Promise<boolean> {
+    const field = FREE_FIELD[kind];
+    try {
+      await this.doc.send(
+        new UpdateCommand({
+          TableName: this.table,
+          Key: { userId },
+          UpdateExpression: `ADD ${field} :one`,
+          ConditionExpression: `attribute_exists(userId) AND (attribute_not_exists(${field}) OR ${field} < :max)`,
+          ExpressionAttributeValues: { ':one': 1, ':max': FREE_AI[kind] },
+        })
+      );
+      return true;
+    } catch (error) {
+      if (error instanceof ConditionalCheckFailedException) return false;
+      throw error;
+    }
+  }
+
+  /** Gives a free AI use back (the AI couldn't make it) */
+  async refundFree(userId: string, kind: FreeAiKind): Promise<void> {
+    const field = FREE_FIELD[kind];
+    try {
+      await this.doc.send(
+        new UpdateCommand({
+          TableName: this.table,
+          Key: { userId },
+          UpdateExpression: `ADD ${field} :minus`,
+          ConditionExpression: `${field} > :zero`,
+          ExpressionAttributeValues: { ':minus': -1, ':zero': 0 },
         })
       );
     } catch (error) {

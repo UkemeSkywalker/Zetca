@@ -7,12 +7,18 @@
  * storage (Higgsfield keeps them only for about a week). A job that fails or
  * is blocked by the safety check gives its credits back.
  *
+ * Everyone has a few free AI images and videos on the default models; those
+ * use no credits. Models with draft quality make a cheap 480p video first;
+ * `makeHd` then makes an HD version from the same frame, prompt and seed.
+ *
  * Jobs are small JSON files next to the user's design photos.
  */
 
 import { randomUUID } from 'crypto';
 import { GetObjectCommand, PutObjectCommand, S3Client, type S3ClientConfig } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getConfig } from '../config';
+import { ApiError } from '../errors';
 import type { FormatId } from '../design/types';
 import { MediaRepository } from '../db/mediaRepository';
 import { generateS3Key } from '../media/validation';
@@ -21,7 +27,21 @@ import { HiggsfieldClient, HiggsfieldError, type HiggsfieldRequest } from './hig
 import { Credits, type CreditSource } from '../billing/credits';
 import { Ledger } from '../billing/ledger';
 import { requireAiMedia } from '../billing/charge';
-import { FRAME_MODEL, imageCredits, imageModel, videoCostUsd, videoCredits, videoModel } from '../billing/aiModels';
+import {
+  DEFAULT_IMAGE_MODEL,
+  DEFAULT_VIDEO_MODEL,
+  FRAME_MODEL,
+  QUALITY_LABEL,
+  hdCredits,
+  imageCredits,
+  imageModel,
+  videoCostUsd,
+  videoCredits,
+  videoModel,
+  videoStepUsd,
+  videoTier,
+  type VideoQuality,
+} from '../billing/aiModels';
 
 export type AiKind = 'image' | 'video';
 
@@ -34,6 +54,12 @@ export interface AiJob {
   stage: 'image' | 'video' | 'done' | 'failed';
   /** The model picked (an image model, or a video model; videos' first frame uses the frame model) */
   model: string;
+  /** For video models with drafts: the quality made */
+  quality?: VideoQuality;
+  /** Kept so an HD version follows its draft */
+  seed?: number;
+  /** For an HD version: the draft it was made from */
+  draftOf?: string;
   imageRequestId: string;
   videoRequestId?: string;
   /** Credits taken, where from, and the month (refunds go back to the same place) */
@@ -52,13 +78,16 @@ export interface AiJob {
 }
 
 /** What the page sees */
-export type PublicAiJob = Pick<AiJob, 'jobId' | 'kind' | 'format' | 'model' | 'stage' | 'error' | 'photoId' | 'mediaId' | 'createdAt' | 'cost'>;
+export type PublicAiJob = Pick<AiJob, 'jobId' | 'kind' | 'format' | 'model' | 'quality' | 'draftOf' | 'source' | 'stage' | 'error' | 'photoId' | 'mediaId' | 'createdAt' | 'cost'>;
 
-export const toPublicJob = ({ jobId, kind, format, model, stage, error, photoId, mediaId, createdAt, cost }: AiJob): PublicAiJob => ({
+export const toPublicJob = ({ jobId, kind, format, model, quality, draftOf, source, stage, error, photoId, mediaId, createdAt, cost }: AiJob): PublicAiJob => ({
   jobId,
   kind,
   format,
   model,
+  quality,
+  draftOf,
+  source,
   stage,
   error,
   photoId,
@@ -89,7 +118,8 @@ export class AiDesignService {
     s3?: S3Client,
     private media = new MediaRepository(),
     private ledger = new Ledger(),
-    private checkPlan: (userId: string, what: string, tier: number) => Promise<void> = requireAiMedia
+    private checkPlan: (userId: string, what: string, tier: number) => Promise<void> = requireAiMedia,
+    private frameUrl?: (key: string) => Promise<string>
   ) {
     const cfg = getConfig();
     const s3Config: S3ClientConfig = { region: cfg.awsRegion };
@@ -119,15 +149,28 @@ export class AiDesignService {
     }
   }
 
-  /** Checks the plan, takes the credits and starts the image (a video's first frame) */
-  async start(userId: string, input: { kind: AiKind; prompt: string; format: FormatId; model?: string }): Promise<AiJob> {
+  /**
+   * Starts the image (a video's first frame): uses a free AI use when the
+   * default model is picked and one is left, otherwise checks the plan and
+   * takes the credits.
+   */
+  async start(userId: string, input: { kind: AiKind; prompt: string; format: FormatId; model?: string; quality?: VideoQuality }): Promise<AiJob> {
     const video = input.kind === 'video' ? videoModel(input.model) : null;
     const image = video ? imageModel(FRAME_MODEL) : imageModel(input.model);
     const model = video ?? image;
-    await this.checkPlan(userId, video ? `${video.name} videos` : `${image.name} images`, model.tier);
-    const cost = video ? videoCredits(video) : imageCredits(image);
-    const costUsd = video ? videoCostUsd(video) : image.costUsd;
-    const taken = await this.credits.take(userId, cost);
+    // Only models with qualities make drafts; their default is HD 720p
+    const quality = video?.qualities ? (input.quality && video.qualities[input.quality] ? input.quality : 'hd') : undefined;
+    const isDefault = model.id === (video ? DEFAULT_VIDEO_MODEL : DEFAULT_IMAGE_MODEL);
+    const free = isDefault && (await this.credits.takeFree(userId, input.kind));
+    let cost = 0;
+    let taken: { source: CreditSource; month: string } = { source: 'free', month: '' };
+    if (!free) {
+      const what = video ? `${video.name}${quality ? ` ${QUALITY_LABEL[quality]}` : ''} videos` : `${image.name} images`;
+      await this.checkPlan(userId, what, video ? videoTier(video, quality) : image.tier);
+      cost = video ? videoCredits(video, quality) : imageCredits(image);
+      taken = await this.credits.take(userId, cost);
+    }
+    const costUsd = video ? videoCostUsd(video, quality) : image.costUsd;
     const jobId = randomUUID();
     try {
       const req = await this.hf.submit(image.endpoint, image.body(imagePrompt(input.prompt), input.format), `${jobId}-image`);
@@ -138,6 +181,7 @@ export class AiDesignService {
         kind: input.kind,
         format: input.format,
         model: model.id,
+        ...(quality ? { quality, seed: Math.floor(Math.random() * 2 ** 31) } : {}),
         prompt: input.prompt,
         stage: 'image',
         imageRequestId: req.request_id,
@@ -149,9 +193,64 @@ export class AiDesignService {
         updatedAt: now,
       });
     } catch (error) {
+      await this.giveBack(userId, input.kind, cost, taken.source, taken.month);
+      throw error;
+    }
+  }
+
+  /** An HD version of a finished draft: the same frame, prompt and seed, at a higher resolution */
+  async makeHd(userId: string, draftJobId: string, quality: VideoQuality): Promise<AiJob> {
+    const draft = await this.get(userId, draftJobId);
+    if (draft.kind !== 'video' || draft.quality !== 'draft' || draft.stage !== 'done' || !draft.photoId) {
+      throw new ApiError('Only a finished draft video can be made in HD', 400);
+    }
+    const vm = videoModel(draft.model);
+    const q = vm.qualities?.[quality];
+    if (!q || quality === 'draft') throw new ApiError('That model doesn’t make that quality', 400);
+    await this.checkPlan(userId, `${vm.name} ${QUALITY_LABEL[quality]} videos`, videoTier(vm, quality));
+    const cost = hdCredits(vm, quality);
+    const taken = await this.credits.take(userId, cost);
+    const jobId = randomUUID();
+    try {
+      const frame = await this.signedFrame(photoKey(userId, draft.photoId));
+      const req = await this.hf.submit(vm.endpoint, vm.body(videoPrompt(draft.prompt), frame, { resolution: q.resolution, seed: draft.seed }), `${jobId}-video`);
+      const now = new Date().toISOString();
+      return await this.save({
+        jobId,
+        userId,
+        kind: 'video',
+        format: draft.format,
+        model: vm.id,
+        quality,
+        seed: draft.seed,
+        draftOf: draft.jobId,
+        prompt: draft.prompt,
+        stage: 'video',
+        imageRequestId: draft.imageRequestId,
+        videoRequestId: req.request_id,
+        photoId: draft.photoId,
+        cost,
+        source: taken.source,
+        month: taken.month,
+        costUsd: videoStepUsd(vm, quality),
+        createdAt: now,
+        updatedAt: now,
+      });
+    } catch (error) {
       await this.credits.refund(userId, cost, taken.source, taken.month);
       throw error;
     }
+  }
+
+  /** A short-lived link Higgsfield can fetch the saved first frame from */
+  private signedFrame(key: string): Promise<string> {
+    if (this.frameUrl) return this.frameUrl(key);
+    return getSignedUrl(this.s3, new GetObjectCommand({ Bucket: this.bucket, Key: key }), { expiresIn: 3600 });
+  }
+
+  private async giveBack(userId: string, kind: AiKind, cost: number, source: CreditSource, month: string): Promise<void> {
+    if (source === 'free') await this.credits.refundFree(userId, kind);
+    else await this.credits.refund(userId, cost, source, month);
   }
 
   /** Checks on a job and moves it on; returns it as it is now */
@@ -171,7 +270,8 @@ export class AiDesignService {
         );
         if (job.kind === 'image') return this.finish({ ...job, photoId, stage: 'done' });
         const vm = videoModel(job.model);
-        const video = await this.hf.submit(vm.endpoint, vm.body(videoPrompt(job.prompt), url), `${job.jobId}-video`);
+        const resolution = job.quality ? vm.qualities?.[job.quality]?.resolution : undefined;
+        const video = await this.hf.submit(vm.endpoint, vm.body(videoPrompt(job.prompt), url, { resolution, seed: job.seed }), `${job.jobId}-video`);
         job = await this.save({ ...job, photoId, stage: 'video', videoRequestId: video.request_id });
         return job;
       }
@@ -209,17 +309,18 @@ export class AiDesignService {
   private async finish(job: AiJob): Promise<AiJob> {
     const saved = await this.save(job);
     await this.ledger
-      .add({ userId: job.userId, action: job.kind === 'video' ? 'ai_video' : 'ai_image', credits: job.cost, source: job.source, detail: job.model, costUsd: job.costUsd, status: 'charged' })
+      .add({ userId: job.userId, action: job.kind === 'video' ? 'ai_video' : 'ai_image', credits: job.cost, source: job.source, detail: [job.model, job.quality, job.source === 'free' ? 'free' : ''].filter(Boolean).join(' · '), costUsd: job.costUsd, status: 'charged' })
       .catch((e) => console.error('Credit ledger: couldn’t record an AI job:', (e as Error).message));
     return saved;
   }
 
   private async fail(job: AiJob, req: HiggsfieldRequest): Promise<AiJob> {
-    await this.credits.refund(job.userId, job.cost, job.source, job.month);
+    await this.giveBack(job.userId, job.kind, job.cost, job.source, job.month);
     await this.ledger
       .add({ userId: job.userId, action: job.kind === 'video' ? 'ai_video' : 'ai_image', credits: 0, source: job.source, detail: job.model, status: 'refunded' })
       .catch(() => undefined);
-    const error = req.status === 'nsfw' ? BLOCKED : req.status === 'canceled' ? 'The AI request was cancelled.' : 'The AI couldn’t make that. Your credits were given back.';
+    const back = job.source === 'free' ? 'Your free use was given back.' : 'Your credits were given back.';
+    const error = req.status === 'nsfw' ? BLOCKED : req.status === 'canceled' ? 'The AI request was cancelled.' : `The AI couldn’t make that. ${back}`;
     return this.save({ ...job, stage: 'failed', error });
   }
 }

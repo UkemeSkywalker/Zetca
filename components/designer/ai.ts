@@ -6,7 +6,7 @@
  */
 
 import type { PhotoBackground } from '@/lib/design/types';
-import { getAiJob, startAiJob, type PublicAiJob } from '@/lib/api/designApi';
+import { getAiJob, startAiJob, startHdJob, type PublicAiJob, type VideoQuality } from '@/lib/api/designApi';
 import { loadPhoto, tonesOf } from './photos';
 
 export type AiProgress = 'starting' | 'image' | 'video' | 'done';
@@ -24,10 +24,24 @@ export async function makeAi(
   format: PublicAiJob['format'],
   onProgress?: (p: AiProgress) => void,
   /** The model picked; the default when left out */
-  model?: string
+  model?: string,
+  /** For video models with drafts */
+  quality?: VideoQuality
 ): Promise<PublicAiJob> {
   onProgress?.('starting');
-  let { job } = await startAiJob(kind, prompt, format, model);
+  const { job } = await startAiJob(kind, prompt, format, model, quality);
+  return waitFor(job, onProgress);
+}
+
+/** Makes an HD version of a finished draft video and resolves when it's done */
+export async function makeHd(draftJobId: string, quality: Exclude<VideoQuality, 'draft'>, onProgress?: (p: AiProgress) => void): Promise<PublicAiJob> {
+  onProgress?.('starting');
+  const { job } = await startHdJob(draftJobId, quality);
+  return waitFor(job, onProgress);
+}
+
+async function waitFor(started: PublicAiJob, onProgress?: (p: AiProgress) => void): Promise<PublicAiJob> {
+  let job = started;
   const until = Date.now() + WAIT_MS;
   while (job.stage === 'image' || job.stage === 'video') {
     onProgress?.(job.stage);

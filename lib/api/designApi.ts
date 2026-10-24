@@ -100,10 +100,21 @@ export function getAiCredits() {
   return call<{ credits: CreditBalance; available: boolean; tier: number; models: AiModels }>('/api/designs/ai');
 }
 
-export function startAiJob(kind: 'image' | 'video', prompt: string, format: FormatId, model?: string) {
+export type { VideoQuality } from '@/lib/billing/aiModels';
+import type { VideoQuality } from '@/lib/billing/aiModels';
+
+export function startAiJob(kind: 'image' | 'video', prompt: string, format: FormatId, model?: string, quality?: VideoQuality) {
   return call<{ job: PublicAiJob; credits: CreditBalance }>('/api/designs/ai', {
     method: 'POST',
-    body: JSON.stringify({ kind, prompt, format, ...(model ? { model } : {}) }),
+    body: JSON.stringify({ kind, prompt, format, ...(model ? { model } : {}), ...(quality ? { quality } : {}) }),
+  });
+}
+
+/** Makes an HD version of a finished draft video */
+export function startHdJob(draftJobId: string, quality: Exclude<VideoQuality, 'draft'>) {
+  return call<{ job: PublicAiJob; credits: CreditBalance }>(`/api/designs/ai/${encodeURIComponent(draftJobId)}/hd`, {
+    method: 'POST',
+    body: JSON.stringify({ quality }),
   });
 }
 
