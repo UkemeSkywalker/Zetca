@@ -209,13 +209,13 @@ export function StrategyListView({ strategies: initialStrategies }: { strategies
             <Icon icon="material-symbols:auto-awesome" width={22} height={22} className="text-[#4f46e5]" />
           </span>
           <p className="text-[16px] font-bold text-[#0b1c30]">No strategies yet</p>
-          <p className="text-[14px] text-[#464555]">Answer a few quick questions and we’ll build your first one.</p>
+          <p className="text-[14px] text-[#464555]">Tell Zetca about your business above, or answer a few quick questions step by step.</p>
           <Link
             href="/dashboard/strategist/new"
             className={`inline-flex items-center gap-1.5 px-5 py-2.5 mt-1 bg-[#4f46e5] text-white rounded-xl shadow-sm hover:opacity-95 ${LABEL_MD}`}
           >
             <Icon icon="material-symbols:add" width={18} height={18} />
-            <span className="text-inherit">Create new strategy</span>
+            <span className="text-inherit">Answer the questions</span>
           </Link>
         </div>
       )}
