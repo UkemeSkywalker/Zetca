@@ -20,6 +20,18 @@ export const SOCIAL_HOSTS = {
 } as const;
 export type SocialPlatform = keyof typeof SOCIAL_HOSTS;
 
+export interface PageImage {
+  url: string;
+  alt?: string;
+}
+
+export interface PageVideo {
+  url: string;
+  platform: 'youtube' | 'vimeo' | 'tiktok' | 'instagram' | 'file';
+  /** A still to show before it plays, when there is one */
+  thumbnail?: string;
+}
+
 export interface PageRead {
   url: string;
   title: string;
@@ -30,6 +42,10 @@ export interface PageRead {
   text: string;
   /** Possible logos, best first */
   logos: string[];
+  /** Photos on the page (products, places, people), biggest-looking first */
+  images: PageImage[];
+  /** Videos on the page or linked from it */
+  videos: PageVideo[];
   /** Hex colours used on the page, most used first */
   colors: string[];
   /** Font families named on the page or its stylesheets */
@@ -169,8 +185,11 @@ export async function readPage(
 
   // Links and logos first: removing the nav and footer for the text takes them out of the page
   const logos = logosOf(root, abs, meta('og:image'));
+  const videos = videosOf(root, abs);
   const socials = socialsOf(root, abs);
   const morePages = morePagesOf(root, abs, base);
+
+  const images = imagesOf(root, abs, meta('og:image'), new Set(logos), cssImages(css, abs, base.hostname));
 
   const textRoot = root.querySelector('main') ?? root.querySelector('body') ?? root;
   for (const junk of textRoot.querySelectorAll('script, style, noscript, svg, nav, footer, form, iframe')) junk.remove();
@@ -186,6 +205,8 @@ export async function readPage(
       .slice(0, 20),
     text: clean(textRoot.structuredText).slice(0, MAX_TEXT),
     logos,
+    images,
+    videos,
     colors: colorsOf(css, meta('theme-color')),
     fonts: fontsOf(css, sheets),
     socials,
@@ -202,8 +223,88 @@ function logosOf(root: HTMLElement, abs: (h?: string) => string, ogImage: string
   for (const rel of ['apple-touch-icon', 'icon', 'shortcut icon']) {
     for (const l of root.querySelectorAll(`link[rel="${rel}"]`)) found.push(abs(l.getAttribute('href')));
   }
-  if (ogImage) found.push(abs(ogImage));
+  // The share image (og:image) is usually a photo, not the logo: it goes with the photos instead
+  void ogImage;
   return [...new Set(found.filter((u) => /^https?:/.test(u)))].slice(0, 6);
+}
+
+/** The largest candidate in a srcset ("a.jpg 300w, b.jpg 1200w") */
+const largestInSrcset = (srcset: string | undefined) =>
+  srcset
+    ?.split(',')
+    .map((part) => part.trim().split(/\s+/))
+    .map(([u, w]) => ({ u, w: parseInt(w ?? '0', 10) || 0 }))
+    .sort((a, b) => b.w - a.w)[0]?.u;
+
+const NOT_A_PHOTO = /logo|icon|favicon|sprite|avatar|placeholder|pixel|badge|flag|emoji|spinner|loader|blank|spacer|arrow|payment|visa|mastercard|paypal|\.svg(\?|$)|\.gif(\?|$)|^data:/i;
+
+/** WordPress-style small sizes ("photo-150x150.jpg") */
+const SMALL_SIZE = /-(\d{2,3})x(\d{2,3})\.(jpe?g|png|webp)/i;
+const tooSmall = (url: string) => {
+  const m = SMALL_SIZE.exec(url);
+  return !!m && Math.max(Number(m[1]), Number(m[2])) < 400;
+};
+
+/** Background photos set in the page's styles (page builders put photos there), from the brand's own site */
+function cssImages(css: string, abs: (h?: string) => string, host: string): string[] {
+  const out: string[] = [];
+  for (const m of css.matchAll(/url\((['"]?)([^'")]+\.(?:jpe?g|png|webp)(?:\?[^'")]*)?)\1\)/gi)) {
+    const url = abs(m[2]).replace(/([^:])\/\/+/g, '$1/');
+    try {
+      if (new URL(url).hostname.replace(/^www\./, '') === host.replace(/^www\./, '')) out.push(url);
+    } catch {
+      // ignore
+    }
+  }
+  return out;
+}
+
+function imagesOf(root: HTMLElement, abs: (h?: string) => string, ogImage: string, logos: Set<string>, fromCss: string[] = []): PageImage[] {
+  const out = new Map<string, PageImage>();
+  const add = (url: string, alt?: string) => {
+    if (!/^https?:/.test(url) || NOT_A_PHOTO.test(url) || tooSmall(url) || logos.has(url) || out.has(url)) return;
+    out.set(url, { url, alt: alt?.trim() || undefined });
+  };
+  if (ogImage) add(abs(ogImage));
+  for (const img of root.querySelectorAll('img')) {
+    const w = parseInt(img.getAttribute('width') ?? '0', 10);
+    const h = parseInt(img.getAttribute('height') ?? '0', 10);
+    if ((w && w < 160) || (h && h < 160)) continue;
+    const hint = `${img.getAttribute('alt') ?? ''} ${img.getAttribute('class') ?? ''}`;
+    if (/logo|icon|avatar/i.test(hint)) continue;
+    const src = largestInSrcset(img.getAttribute('srcset') ?? img.getAttribute('data-srcset')) ?? img.getAttribute('data-src') ?? img.getAttribute('data-lazy-src') ?? img.getAttribute('src');
+    add(abs(src ?? undefined), img.getAttribute('alt') ?? undefined);
+  }
+  for (const url of fromCss) add(url);
+  return [...out.values()].slice(0, 12);
+}
+
+const youtubeId = (url: string) => /(?:youtube(?:-nocookie)?\.com\/(?:embed\/|watch\?v=|shorts\/)|youtu\.be\/)([\w-]{11})/.exec(url)?.[1];
+
+/** A video from its address: platform, a link to watch it, and a still when easy to get */
+export function videoFrom(url: string): PageVideo | null {
+  const yt = youtubeId(url);
+  if (yt) return { url: `https://www.youtube.com/watch?v=${yt}`, platform: 'youtube', thumbnail: `https://i.ytimg.com/vi/${yt}/hqdefault.jpg` };
+  const vimeo = /vimeo\.com\/(?:video\/)?(\d+)/.exec(url)?.[1];
+  if (vimeo) return { url: `https://vimeo.com/${vimeo}`, platform: 'vimeo' };
+  if (/tiktok\.com\/@[^/]+\/video\/\d+/.test(url)) return { url, platform: 'tiktok' };
+  if (/instagram\.com\/(reel|p)\/[\w-]+/.test(url)) return { url, platform: 'instagram' };
+  if (/\.(mp4|webm|mov)(\?|$)/i.test(url)) return { url, platform: 'file' };
+  return null;
+}
+
+function videosOf(root: HTMLElement, abs: (h?: string) => string): PageVideo[] {
+  const out = new Map<string, PageVideo>();
+  const add = (raw: string | undefined, poster?: string) => {
+    const v = raw ? videoFrom(abs(raw)) : null;
+    if (v && !out.has(v.url)) out.set(v.url, poster && !v.thumbnail ? { ...v, thumbnail: abs(poster) } : v);
+  };
+  for (const f of root.querySelectorAll('iframe')) add(f.getAttribute('src') ?? f.getAttribute('data-src') ?? undefined);
+  for (const v of root.querySelectorAll('video')) {
+    add(v.getAttribute('src') ?? v.querySelector('source')?.getAttribute('src') ?? undefined, v.getAttribute('poster') ?? undefined);
+  }
+  for (const a of root.querySelectorAll('a[href]')) add(a.getAttribute('href') ?? undefined);
+  return [...out.values()].slice(0, 6);
 }
 
 const NEUTRAL = /^#(f{3}|f{6}|0{3}|0{6}|fefefe|fafafa|f5f5f5|eeeeee|e5e5e5|dddddd|cccccc|333333|222222|111111)$/i;

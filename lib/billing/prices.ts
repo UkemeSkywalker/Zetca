@@ -23,8 +23,8 @@ export const ACTIONS = {
   video_topics: { label: 'YouTube topics from the transcript', credits: 2 },
   chapters: { label: 'YouTube chapters', credits: 2 },
   auto_schedule: { label: 'Auto-schedule', credits: 3 },
-  // About 12k tokens in and 2k out (website pages, search results, the brand profile); web search is free
-  brand_research: { label: 'Brand research', credits: 10 },
+  // About 30k tokens in and 4k out over 3 AI calls (brand profile, picking competitors, comparing); web search is free
+  brand_research: { label: 'Brand research', credits: 20 },
   transcript: { label: 'Video transcript', credits: 1 },
   ai_image: { label: 'AI image', credits: 1 },
   ai_video: { label: 'AI video', credits: 26 },

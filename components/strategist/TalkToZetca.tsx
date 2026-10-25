@@ -1,35 +1,21 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { useSpeech } from './useSpeech';
-
-const VIDEO =
-  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_065045_c44942da-53c6-4804-b734-f9e07fc22e08.mp4';
-const DISPLAY_FONT = 'https://db.onlinewebfonts.com/c/8cb707a9b8a73f8a7403336b861c3074?family=BubbledotICG-FinePos';
+import { TalkBackground } from './TalkBackground';
 
 const PLATFORMS = ['simple-icons:instagram', 'simple-icons:tiktok', 'simple-icons:linkedin', 'simple-icons:youtube'];
 
 const EXAMPLES = ['Grow my bakery’s Instagram', 'Get more leads for my agency', 'Launch my new clothing line'];
 
 const STATS = [
-  { glyph: '<', target: 1, decimals: 0, prefix: '~', suffix: ' min', label: 'To study your brand' },
+  { glyph: '<', target: 2, decimals: 0, prefix: '~', suffix: ' min', label: 'To study your brand' },
   { glyph: '#', target: 3, decimals: 0, prefix: '', suffix: '', label: 'Competitors compared' },
   { glyph: '%', target: 6, decimals: 0, prefix: '', suffix: '', label: 'Platforms planned' },
   { glyph: '*', target: 24, decimals: 0, prefix: '', suffix: '/7', label: 'Posting on schedule' },
 ];
-
-/**
- * The video streams from CloudFront (about 13 MB), so it's skipped for people
- * on data saver or a slow connection and for those who turned off motion.
- */
-function videoWanted(): boolean {
-  const c = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
-  if (c?.saveData || (c?.effectiveType && /(^|-)2g$/.test(c.effectiveType))) return false;
-  return !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-const noSubscribe = () => () => {};
 
 /** Keeps what the user typed so the chat page can pick it up */
 export const PENDING_PROMPT_KEY = 'zetca:talk:prompt';
@@ -45,8 +31,6 @@ export function TalkToZetca() {
   const [linkOpen, setLinkOpen] = useState(false);
   const [link, setLink] = useState('');
   const box = useRef<HTMLTextAreaElement>(null);
-  const showVideo = useSyncExternalStore(noSubscribe, videoWanted, () => false);
-  const [videoReady, setVideoReady] = useState(false);
   const speech = useSpeech((heard) => setText((t) => (t ? `${t.trimEnd()} ${heard}` : heard)));
 
   const addLink = () => {
@@ -72,23 +56,7 @@ export function TalkToZetca() {
 
   return (
     <section aria-labelledby="talk-title" className="talk relative isolate overflow-hidden rounded-[28px] bg-black text-white">
-      <link rel="stylesheet" href={DISPLAY_FONT} precedence="default" />
-      {/* While the video loads (or when it's skipped): a dark glow in its colours */}
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_50%_70%,#3b2a4a_0%,#14101c_55%,#000_100%)]" aria-hidden />
-      {showVideo && (
-        <video
-          className={`pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover transition-opacity duration-700 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          onCanPlay={() => setVideoReady(true)}
-          aria-hidden
-        >
-          <source src={VIDEO} type="video/mp4" />
-        </video>
-      )}
+      <TalkBackground />
       {/* Keeps the words readable over the brightest parts of the video */}
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_50%_45%,rgba(0,0,0,0.15),rgba(0,0,0,0.55)_70%)]" aria-hidden />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-2/5 bg-gradient-to-t from-black via-black/70 to-transparent" aria-hidden />
@@ -223,7 +191,7 @@ export function TalkToZetca() {
                 </button>
               </div>
             </div>
-            <p className="mt-2 text-xs text-white/60">Uses 10 credits · about a minute</p>
+            <p className="mt-2 text-xs text-white/60">Uses 20 credits · about 2 minutes</p>
             {speech.error && (
               <p role="alert" className="mt-2 text-sm text-amber-200">
                 {speech.error}
