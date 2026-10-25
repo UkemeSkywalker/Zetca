@@ -9,6 +9,7 @@ const CARD = 'bg-white rounded-2xl border border-[#E2E8F0]';
 
 /** What the price list shows, in the order people use things */
 const PRICE_ROWS: { id: string; label: string; unit?: string }[] = [
+  { id: 'brand_research', label: 'Talk to Zetca: brand research' },
   { id: 'strategy', label: 'Strategy' },
   { id: 'copy_post', label: 'Copywriter post', unit: 'a post' },
   { id: 'copy_chat', label: 'Copywriter chat message' },
