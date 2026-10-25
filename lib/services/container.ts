@@ -31,6 +31,8 @@ import { CopywriterAgent } from '../agents/copywriterAgent';
 import { MockCopywriterAgent } from '../agents/mockCopywriterAgent';
 import { SchedulerAgent } from '../agents/schedulerAgent';
 import { DesignWriterAgent, MockDesignWriterAgent } from '../agents/designWriterAgent';
+import { BrandResearchAgent, MockBrandResearchAgent } from '../agents/brandResearchAgent';
+import { BrandResearchService } from './brandResearchService';
 import { DesignRepository } from '../db/designRepository';
 import { MockSchedulerAgent } from '../agents/mockSchedulerAgent';
 
@@ -178,6 +180,19 @@ export const getDesignWriterAgent = memo(() => {
     awsSecretAccessKey: cfg.awsSecretAccessKey,
   });
 });
+
+export const getBrandResearchAgent = memo(() => {
+  const cfg = getConfig();
+  if (cfg.useMockAgent) return new MockBrandResearchAgent();
+  return new BrandResearchAgent({
+    awsRegion: cfg.awsRegion,
+    modelId: cfg.bedrockModelId,
+    awsAccessKeyId: cfg.awsAccessKeyId,
+    awsSecretAccessKey: cfg.awsSecretAccessKey,
+  });
+});
+
+export const getBrandResearchService = memo(() => new BrandResearchService(getBrandResearchAgent()));
 
 export const getDesignRepository = memo(() => new DesignRepository());
 

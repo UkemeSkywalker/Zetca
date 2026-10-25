@@ -223,6 +223,7 @@ export function TalkToZetca() {
                 </button>
               </div>
             </div>
+            <p className="mt-2 text-xs text-white/60">Uses 10 credits · about a minute</p>
             {speech.error && (
               <p role="alert" className="mt-2 text-sm text-amber-200">
                 {speech.error}

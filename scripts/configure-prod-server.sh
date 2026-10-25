@@ -30,6 +30,7 @@ YOUTUBE_CLIENT_ID="$(local_env YOUTUBE_CLIENT_ID)"
 YOUTUBE_CLIENT_SECRET="$(local_env YOUTUBE_CLIENT_SECRET)"
 PIXABAY_API_KEY="$(local_env PIXABAY_API_KEY)"
 HIGGSFIELD_API_KEY="$(local_env HIGGSFIELD_API_KEY)"
+TAVILY_API_KEY="$(local_env TAVILY_API_KEY)"
 [ -n "$LINKEDIN_CLIENT_ID" ] || echo "Note: no LINKEDIN_CLIENT_ID in .env; LinkedIn sign-in will be off until you add it on the server."
 
 SSH=(ssh -i "$KEY" -o StrictHostKeyChecking=accept-new "ubuntu@$HOST")
@@ -78,6 +79,8 @@ TOKEN_ENCRYPTION_KEY=$(openssl rand -base64 32 | tr -d '\n')
 PIXABAY_API_KEY=$PIXABAY_API_KEY
 # AI images and videos in the Designer (credits per plan are in lib/billing/plans.ts)
 HIGGSFIELD_API_KEY=$HIGGSFIELD_API_KEY
+# Web search for brand and competitor research in Talk to Zetca
+TAVILY_API_KEY=$TAVILY_API_KEY
 
 PUBLISHER_ENABLED=true
 PUBLISHER_SCAN_INTERVAL_SECONDS=60
