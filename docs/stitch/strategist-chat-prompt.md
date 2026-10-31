@@ -56,13 +56,15 @@ Example competitors: "Butter Lane Bakery" (butterlane.ng), "The Daily Loaf" (the
 ```
 Rules for every screen in this project. Follow them strictly:
 
-1. Show ONLY the sections, controls and labels listed in each screen prompt. Do not invent extra features, analytics dashboards, scores, tips, banners, team features or footers.
-2. Plain, friendly words a small business owner would use. Never use: asset, pipeline, workflow, scrape, crawl, payload, optimise, AI-powered, leverage, synergy, KPI.
-3. Every finding Zetca shows says where it came from, as a small grey source line or link chip (e.g. "From crumbandco.ng", "From 30 public posts on Instagram").
-4. Use the Crumb & Co. example content from the master prompt, and realistic numbers (e.g. "Posts 3 times a week", "Best times: Tue and Fri, 7–9 am", "Reels get 4× more likes than photos").
-5. Every screen uses the same app shell: dark navy sidebar with Strategist active (Scheduler active on Screen 9), white top header. No second header, no breadcrumbs.
-6. One primary indigo button per screen or panel.
-7. Where something costs credits, show it in small muted text next to the button (e.g. "Uses about 20 credits").
+1. SHOW, DON'T TELL. Every finding is visual first: real photos from the brand's website and posts, video thumbnails with a play icon, logo, colour swatches, font samples, platform icons, small numbers. Words are labels and short tags, never paragraphs.
+2. Text limits: a card title of 2-4 words; at most ONE sentence of 15 words or fewer per card; everything else is chips/tags of 1-3 words. No bullet lists longer than 3 items. No walls of text anywhere.
+3. Show ONLY the sections, controls and labels listed in each screen prompt. Do not invent extra features, analytics dashboards, scores, tips, banners, team features or footers.
+4. Plain, friendly words a small business owner would use. Never use: asset, pipeline, workflow, scrape, crawl, payload, optimise, AI-powered, leverage, synergy, KPI.
+5. Every finding says where it came from as a tiny grey source chip with the site's favicon (e.g. "crumbandco.ng", "Instagram").
+6. Use the Crumb & Co. example content from the master prompt and realistic numbers (e.g. "3× a week", "Tue & Fri, 7–9 am", "Reels: 4× more likes").
+7. Every screen uses the same app shell: dark navy sidebar with Strategist active (Scheduler active on Screen 9), white top header. No second header, no breadcrumbs.
+8. Screens 2-8 use the SAME dark style as the Screen 1 hero: the dark looping purple video behind everything (darkened), the white dot-matrix pixel font for page and section titles, dark glass cards (6% white fill, 10% white border, background blur, 24px corners), white text with 60% white for secondary text, white pill chips with a faint border. The user's chat bubbles are white with dark text; Zetca's are translucent white with white text. No light cards on these screens.
+9. One primary button per screen or panel. Where something costs credits, show it in small muted text next to the button (e.g. "Uses 20 credits").
 ```
 
 ---
@@ -70,21 +72,20 @@ Rules for every screen in this project. Follow them strictly:
 ## Screen 1: Strategist home with Talk to Zetca
 
 ```
-The Strategist page, where users start. The new chat entry sits at the top; the existing ways to build a strategy stay below it.
+The Strategist page. At the top, a full-width dark hero card (28px corners) with a looping dark background video (abstract purple and black shapes) and a soft black fade at the bottom.
 
-Top: a large white hero card, centred, max 860px wide.
-- A small indigo-tint pill: "New".
-- Heading: "Tell Zetca about your business".
-- Subtext: "Say what you're trying to do and paste a link to your website or social profile. Zetca does the research and builds your plan."
-- A large rounded message box (3 lines tall) with placeholder "I run a bakery in Lagos and want more people to order cakes online…". Inside it, bottom row: a link icon button "Add a link", a large round indigo microphone button, and an indigo send arrow button.
-- Under the box, three small example chips the user can tap: "Grow my bakery's Instagram", "Get more leads for my agency", "Launch my new clothing line".
+Inside the hero, centred:
+- A row of 4 overlapping small white circles inside dark rings (Instagram, TikTok, LinkedIn, YouTube icons in black), joined to a dark pill: "Studies your brand and competitors".
+- A huge two-line headline in a white retro dot-matrix pixel font: "Tell Zetca / What You're Building".
+- One light-grey line under it: "Say what you're trying to do and paste a link. Zetca does the research."
+- A large white rounded chat box with a soft white glow: placeholder "I run a bakery in Lagos and want more cake orders online…", and in its bottom row an "Add a link" pill, a round grey microphone button and a round black send arrow. Muted text under it: "Uses 20 credits · about 2 minutes".
+- Three translucent example chips: "Grow my bakery's Instagram", "Get more leads for my agency", "Launch my new clothing line".
+- At the bottom of the hero, 4 small stats in white with dot-matrix symbols above them: "~2 min · To study your brand", "3 · Competitors compared", "6 · Platforms planned", "24/7 · Posting on schedule".
 
-Below, a section titled "Or build it step by step" with two smaller white cards side by side:
-- "Answer a few questions": a short quiz, about 3 minutes. Button: secondary "Start the quiz".
-- "Fill in the form": for when you know exactly what you want. Button: secondary "Open the form".
-
-Below that, "Your strategies": a short list of 2 saved strategy cards (name, platforms as small icons, date), exactly like a simple list.
+Below the hero, on the light page: "Your strategies" with 2 saved strategy cards and a secondary "Answer the questions" button for the step-by-step quiz.
 ```
+
+---
 
 ## Screen 2: Speaking to Zetca
 
@@ -106,33 +107,36 @@ Everything else on the page is dimmed slightly.
 ```
 The chat view after the user sends their message. Two columns.
 
-Right column (420px): the chat.
-- The user's message in an indigo bubble, with a link chip "crumbandco.ng".
-- Zetca's reply: "Got it. I'll look at your website and what's public about Crumb & Co., then find a few bakeries like yours to compare. This takes about a minute."
-- The message box at the bottom.
+Right column (400px): the chat. The user's indigo bubble with a link chip "crumbandco.ng". Zetca's short reply: "On it. Give me about two minutes."
 
-Left column (wide): a white card titled "What Zetca found so far", filling in live. Each row has a small icon, a short finding, and a source line:
-- ✓ "Your business": "Artisan bakery in Lekki, Lagos. Custom cakes, pastries and bread. Orders on WhatsApp and the website." Source: "From crumbandco.ng".
-- ✓ "Your customers": "Mostly young families and couples planning birthdays and weddings." Source: "From your website and reviews".
-- A row in progress with a small spinner: "Looking at your Instagram…".
-- Two greyed rows still to come: "Your brand kit", "Bakeries like yours".
-
-A slim progress bar at the top of the card: "Step 2 of 4".
+Left column (wide): "What Zetca found", filling in live as a visual board, not text:
+- A thin 4-step progress bar across the top with tiny labels: "Website", "Online", "Brand kit", "Competitors" (first two done with green checks, third in progress).
+- A photo mosaic appearing tile by tile: 6 real-looking photos from the bakery's website and Instagram (cakes, pastries, the shop), each with a tiny source chip in the corner; one tile is a video thumbnail with a white play button.
+- Under the mosaic, a row of small chips appearing: "Custom cakes", "Pastries", "Lekki, Lagos", "Weddings", "Birthdays".
+- A shimmering placeholder where the brand kit will appear.
 ```
 
-## Screen 4: Your brand kit
+---
+
+## Screen 4: Your brand at a glance
 
 ```
-The same two-column chat view. The left card is now "Your brand kit".
+The same two-column view. The left board is now "Your brand at a glance", a visual summary with almost no sentences.
 
-- Your logo: the round brown Crumb & Co. badge on a light checkerboard, with a small "From crumbandco.ng" line.
-- Your colours: four large rounded swatches with their hex codes under them: cream #FFF4E0, cocoa #4A2C1D, mustard #E0A526, white #FFFFFF.
-- Your fonts: "Fraunces" shown as a big sample word "Fresh", and "Inter" shown as a sample sentence.
-- How your posts look: a row of 3 example post designs made in this brand kit (a cream square with a big cocoa headline "Weekend cake drop", a photo of a cake under a dark overlay with mustard text, a cocoa square with a cream quote). Label: "New posts will look like this".
-- A secondary button: "Change something".
+Top: a wide header card showing the brand like a mini profile: the round logo (left), the name "Crumb & Co." in its own chunky serif font, one line "Celebration cakes, baked in Lekki", and the platform icons where they were found (website, Instagram, TikTok).
 
-Right column chat: Zetca says "Here's your brand kit. I'll use it for every visual. Next I'm looking at bakeries like yours." The message box at the bottom.
+Then a bento grid of cards:
+- "Colours": a full-width strip of 4 tall swatches (cream #FFF4E0, cocoa #4A2C1D, mustard #E0A526, white) with the hex code tiny at the bottom of each.
+- "Fonts": "Fraunces" shown large as "Aa Fresh", and "Inter" small, side by side.
+- "Your look": 3 example photos from their site in a row, with tags under them: "Warm light", "Close-ups", "Cream backgrounds".
+- "Your customers": 3 tag chips with tiny icons: "Young families", "Couples", "Party planners".
+- "How you sound": 3 word chips: "Warm", "Playful", "Proud".
+- "Videos": 2 video thumbnails with play buttons and their source chip (YouTube, Instagram).
+
+Right column chat: Zetca: "Here's your brand. Anything I got wrong?" with two small reply chips: "Looks right" and "Fix something".
 ```
+
+---
 
 ## Screen 5: Connect your accounts
 
@@ -152,37 +156,39 @@ The left column still shows the brand kit from Screen 4, slightly dimmed.
 ## Screen 6: Bakeries like yours
 
 ```
-The same two-column chat view. The left card is now "Bakeries like yours", comparing Crumb & Co. with 3 competitors.
+The same two-column view. The left board is "Bakeries like yours": Crumb & Co. next to 3 competitors, compared visually.
 
-A row of 4 compact cards (Crumb & Co. first, highlighted with an indigo border and a "You" pill):
-- Each card: small round logo, name, link chip, then 4 short lines: "Posts 3× a week", "Best times: Tue & Fri, 7–9 am", "Mostly: photos" or "Mostly: Reels", "Avg. 120 likes a post".
-- Competitor values: Butter Lane Bakery "Posts 6× a week · Reels · 940 likes"; The Daily Loaf "Posts daily · photos + offers · 410 likes"; Kneaded Lagos "Posts 4× a week · behind-the-scenes Reels · 1.3k likes".
+A row of 4 tall cards (Crumb & Co. first, with an indigo border and a small "You" pill). Each card:
+- A cover photo from that brand's website or posts.
+- Round logo overlapping the cover, the name, and a site chip.
+- Their colour palette as 4 tiny dots.
+- 3 small stat rows with icons: "📅 6× a week", "🎬 Mostly Reels", "❤ 940 avg likes". If a number isn't known, show a grey dash, never a guess.
+- A row of 3 tiny thumbnails of their posts.
 
-Below the cards, a box titled "What works for them":
-- "Behind-the-scenes videos of cakes being made get the most likes (Kneaded Lagos, Butter Lane)."
-- "Posting before 9 am on weekdays, when people plan orders."
-- "Clear prices and a 'Order on WhatsApp' line in every post."
-Each line has a small source line: "From 90 public posts".
+Below, "What works for them": 3 compact cards, each with a small photo from the competitor that shows it, a 3-5 word title ("Behind-the-scenes videos", "Early-morning posts", "Clear prices"), and one short line. Each has a tiny source chip.
 
-Right column chat: Zetca says "Your cakes look better than theirs, but you post half as often and almost no videos. That's the gap I'd close first."
+Right column chat: Zetca: "You post half as often and almost no videos. That's the gap to close."
 ```
+
+---
 
 ## Screen 7: Zetca's recommended plan
 
 ```
-The same two-column chat view. The left card is now "Your plan", the strategy Zetca recommends.
+The same two-column view. The left board is "Your plan", visual and scannable.
 
-- Heading: "Be Lagos's go-to bakery for celebration cakes".
-- "Where you stand": a short paragraph comparing Crumb & Co. to the 3 bakeries.
-- "What to post": 4 content pillar chips with a short line each: "Cakes being made", "Real celebrations", "This week's menu & prices", "Baking tips".
-- "Where and how often": 3 rows with platform icons: Instagram "5 posts a week, 3 of them Reels"; TikTok "3 videos a week"; Facebook "3 posts a week".
-- "Best times to post": a small week grid (Mon–Sun columns, morning/afternoon/evening rows) with the best slots filled indigo.
-- "Your goal": "More cake orders on WhatsApp: from about 20 to 40 a month."
+- A bold one-line positioning statement in a large card with the brand's cream background and cocoa text: "Lagos's go-to bakery for celebration cakes".
+- "What to post": 4 tiles, each a photo from their site with a short label over a dark overlay: "Cakes being made", "Real celebrations", "This week's menu", "Baking tips".
+- "Where and how often": 3 platform rows, each with the platform icon and a row of filled/empty dots for posts per week (Instagram ●●●●●, TikTok ●●●, Facebook ●●●).
+- "Best times": a compact heatmap (Mon–Sun × morning/afternoon/evening) with the best slots in indigo.
+- "Your goal": a big number card: "20 → 40 cake orders a month".
 
-Under the card: primary button "Make my posts and visuals", with muted text "Uses about 60 credits · 2 weeks of posts". A text link: "Change the plan in the form".
+Under the board: primary button "Make my posts and visuals" with muted text "Uses about 60 credits · 2 weeks of posts", and a text link "Change the plan in the form".
 
-Right column chat: Zetca says "Here's what I'd do. Want me to make the first two weeks?" The message box at the bottom, with the user typing "Add more posts about weddings".
+Right column chat: Zetca: "Want me to make the first two weeks?" The message box at the bottom.
 ```
+
+---
 
 ## Screen 8: Making everything
 

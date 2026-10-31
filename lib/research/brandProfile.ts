@@ -6,6 +6,7 @@
 import type { BrandProfile } from '../models/brandResearch';
 import type { PageRead } from './webReader';
 import type { SearchResult } from './webSearch';
+export type { SearchResult };
 
 export interface BrandResearchInput {
   message: string;
@@ -70,3 +71,41 @@ export function keepCandidates(profile: BrandProfile, { pages }: BrandResearchIn
   };
 }
 
+
+/** The brand, briefly, for the competitor prompts */
+const brandLine = (p: BrandProfile) =>
+  `${p.brandName}: ${p.tagline}. Category: ${p.category}.${p.location ? ` Location: ${p.location}.` : ''} Sells: ${p.offerings.join(', ')}. Customers: ${p.audience.join(', ')}.`;
+
+export function picksPrompt(profile: BrandProfile, results: SearchResult[], ownSite?: string): string {
+  return `The user's brand:
+${brandLine(profile)}${ownSite ? `\nTheir website (not a competitor): ${ownSite}` : ''}
+
+Search results for similar businesses:
+${results.map((r) => `- ${r.title} (${r.url}): ${r.content}`).join('\n') || 'None.'}
+
+Pick up to 3 comparable businesses from these results.`;
+}
+
+export interface CompetitorMaterial {
+  name: string;
+  why: string;
+  pages: PageRead[];
+  search: SearchResult[];
+}
+
+export function comparePrompt(profile: BrandProfile, competitors: CompetitorMaterial[]): string {
+  const block = (c: CompetitorMaterial) =>
+    [
+      `## ${c.name} (${c.why})`,
+      ...c.pages.map((p) => `Website ${p.url}\nTitle: ${p.title}\nDescription: ${p.description}\nHeadings: ${p.headings.slice(0, 10).join(' | ')}\nText: ${p.text.slice(0, 1800)}`),
+      ...c.search.map((r) => `- ${r.title} (${r.url}): ${r.content}`),
+    ].join('\n');
+  return `The user's brand:
+${brandLine(profile)}
+Strengths: ${profile.strengths.join(', ') || 'unknown'}. Goals: ${profile.goals.join('; ') || 'unknown'}.
+
+Similar brands and what is public about them:
+${competitors.map(block).join('\n\n')}
+
+Compare them with the user's brand.`;
+}

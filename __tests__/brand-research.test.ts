@@ -1,9 +1,9 @@
 /**
  * @jest-environment node
  */
-import { colorsOf, fontsOf, isPrivateAddress, linksIn, readPage, WebReadError } from '@/lib/research/webReader';
+import { colorsOf, fontsOf, isPrivateAddress, linksIn, readPage, videoFrom, WebReadError } from '@/lib/research/webReader';
 import { keepCandidates } from '@/lib/research/brandProfile';
-import { BrandResearchService, platformOf } from '@/lib/services/brandResearchService';
+import { BrandResearchService, imagesOfBrand, platformOf, STEPS } from '@/lib/services/brandResearchService';
 import type { BrandProfile, BrandResearch } from '@/lib/models/brandResearch';
 import type { PageRead } from '@/lib/research/webReader';
 
@@ -15,7 +15,9 @@ const html = (body: string) => new Response(body, { status: 200, headers: { 'con
 const SITE = `<!doctype html><html><head><title>Crumb &amp; Co. - Lagos bakery</title>
 <meta name="description" content="Custom cakes in Lekki"><meta name="theme-color" content="#4A2C1D">
 <link rel="icon" href="/favicon.png"><style>h1{font-family:"Fraunces",serif;color:#E0A526} body{font-family:Inter,sans-serif;background:#FFF4E0}</style></head>
-<body><nav><a href="/about">About us</a></nav><main><img src="/img/logo.png" alt="Crumb logo"><h1>Cakes for<br>every celebration</h1><p>Order on WhatsApp.</p></main>
+<body><nav><a href="/about">About us</a></nav><main><img src="/img/logo.png" alt="Crumb logo"><h1>Cakes for<br>every celebration</h1><p>Order on WhatsApp.</p>
+<img src="/img/cake-150x150.jpg"><img srcset="/img/cake-400.jpg 400w, /img/cake-1200.jpg 1200w" alt="Wedding cake"><div style="background-image:url('/img/shop.jpg')"></div>
+<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe></main>
 <footer><a href="https://instagram.com/crumbandco.lagos">IG</a><a href="https://www.facebook.com/sharer/sharer.php?u=x">share</a></footer></body></html>`;
 
 describe('reading a website', () => {
@@ -30,6 +32,31 @@ describe('reading a website', () => {
     // The footer link is found; share buttons aren't
     expect(p.socials).toEqual({ instagram: 'https://instagram.com/crumbandco.lagos' });
     expect(p.morePages).toEqual(['https://crumbandco.ng/about']);
+    // Photos: the largest from a srcset and a background photo; small thumbnails and logos skipped
+    expect(p.images.map((i) => i.url)).toEqual(['https://crumbandco.ng/img/cake-1200.jpg', 'https://crumbandco.ng/img/shop.jpg']);
+    expect(p.videos).toEqual([{ url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', platform: 'youtube', thumbnail: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg' }]);
+  });
+
+  it('knows videos by their address', () => {
+    expect(videoFrom('https://youtu.be/dQw4w9WgXcQ')?.platform).toBe('youtube');
+    expect(videoFrom('https://www.tiktok.com/@crumb/video/123456')?.platform).toBe('tiktok');
+    expect(videoFrom('https://www.instagram.com/reel/AbC123/')?.platform).toBe('instagram');
+    expect(videoFrom('https://crumbandco.ng/about')).toBeNull();
+  });
+
+  it('keeps only search images that are clearly the brand’s', () => {
+    const kept = imagesOfBrand(
+      [
+        { url: 'https://crumbandco.ng/uploads/cake.jpg' },
+        { url: 'https://lookaside.instagram.com/seo/x?media_id=1', title: 'Wedding cake by Crumb & Co. Lagos' },
+        { url: 'https://lookaside.instagram.com/seo/x?media_id=2', title: 'Another bakery’s cake' },
+        { url: 'https://static.othersite.com/crumb-cake.jpg', title: 'Crumb & Co. cake' },
+      ],
+      'Crumb & Co.',
+      'https://crumbandco.ng/'
+    );
+    expect(kept.map((k) => k.url)).toEqual(['https://crumbandco.ng/uploads/cake.jpg', 'https://lookaside.instagram.com/seo/x?media_id=1']);
+    expect(kept[1].source).toBe('https://www.instagram.com');
   });
 
   it('never fetches private or local addresses, even through a redirect', async () => {
@@ -66,6 +93,8 @@ const page = (over: Partial<PageRead> = {}): PageRead => ({
   headings: [],
   text: '',
   logos: ['https://crumbandco.ng/logo.png'],
+  images: [{ url: 'https://crumbandco.ng/cake.jpg' }],
+  videos: [],
   colors: ['#4a2c1d', '#e0a526'],
   fonts: ['Fraunces'],
   socials: { tiktok: 'https://tiktok.com/@crumb' },
@@ -75,10 +104,12 @@ const page = (over: Partial<PageRead> = {}): PageRead => ({
 
 const profile: BrandProfile = {
   brandName: 'Crumb & Co.',
-  summary: 'A bakery',
-  offerings: [],
-  audience: 'Families',
-  voice: 'Warm',
+  tagline: 'Celebration cakes in Lekki',
+  category: 'custom cake bakery',
+  location: 'Lagos, Nigeria',
+  offerings: ['Custom cakes'],
+  audience: ['Families'],
+  voice: ['Warm'],
   goals: [],
   strengths: [],
   facts: [],
@@ -90,7 +121,7 @@ const profile: BrandProfile = {
     ],
     headingFont: 'Fraunces',
     bodyFont: 'Comic Sans',
-    look: 'Warm',
+    look: ['Warm light'],
   },
   missing: [],
 };
@@ -113,9 +144,39 @@ describe('the research', () => {
         return { Body: { transformToString: async () => files.get(cmd.input.Key)! } };
       }),
     };
-    const read = jest.fn(async (url: string) => (url.includes('about') ? page({ url, logos: [], socials: {} }) : page()));
-    const search = { available: true, search: jest.fn(async () => [{ title: 'Crumb & Co. on Instagram', url: 'https://www.instagram.com/crumbandco', content: 'Cakes' }]) };
-    const writer = { profile: jest.fn(async (input: { pages: PageRead[] }) => (void input, profile)) };
+    const read = jest.fn(async (url: string) =>
+      url.includes('butterlane')
+        ? page({ url, title: 'Butter Lane Bakery', logos: [], images: [], colors: ['#111111'], socials: {}, morePages: [] })
+        : url.includes('about')
+          ? page({ url, logos: [], images: [], socials: {} })
+          : page()
+    );
+    const search = {
+      available: true,
+      find: jest.fn(async (q: string) =>
+        /bakery/.test(q)
+          ? { results: [{ title: 'Butter Lane Bakery', url: 'https://butterlane.ng', content: 'Cakes in Lagos' }], images: [] }
+          : /Butter Lane/.test(q)
+            ? { results: [{ title: 'Butter Lane on Instagram', url: 'https://www.instagram.com/butterlane', content: 'Cakes' }], images: [{ url: 'https://butterlane.ng/cake.jpg' }] }
+            : {
+                results: [
+                  { title: 'Crumb & Co. on Instagram', url: 'https://www.instagram.com/crumbandco', content: 'Cakes' },
+                  { title: 'Crumb & Co. cake video', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', content: 'Making a cake' },
+                ],
+                images: [{ url: 'https://lookaside.instagram.com/seo/x?media_id=1', title: 'Wedding cake by Crumb & Co.' }],
+              }
+      ),
+    };
+    const writer = {
+      profile: jest.fn(async (input: { pages: PageRead[] }) => (void input, profile)),
+      pickCompetitors: jest.fn(async () => ({ competitors: [{ name: 'Butter Lane Bakery', website: 'https://butterlane.ng', why: 'Cakes in Lagos' }] })),
+      compare: jest.fn(async () => ({
+        competitors: [{ name: 'Butter Lane Bakery', positioning: 'Luxury cakes', contentStyle: ['Reels'], offers: ['Same-day'] }],
+        whatWorks: [{ title: 'Behind the scenes', detail: 'People love the process', competitor: 'Butter Lane Bakery', source: 'https://butterlane.ng' }],
+        gap: 'Nobody posts prices',
+        positioning: 'Lekki’s celebration cake bakery',
+      })),
+    };
     const service = new BrandResearchService(writer, search as never, s3 as never, read as never);
     return { service, read, search, writer, files };
   }
@@ -125,22 +186,33 @@ describe('the research', () => {
     userId: 'u1',
     message,
     status: 'working',
-    steps: (['links', 'website', 'web', 'profile'] as const).map((id) => ({ id, label: id, status: 'waiting' })),
-    findings: [],
+    steps: STEPS.map((s) => ({ ...s, status: 'waiting' as const })),
     socials: {},
+    media: { images: [], videos: [] },
+    chips: [],
+    competitors: [],
     cost: 10,
     createdAt: '',
     updatedAt: '',
   });
 
-  it('reads the site and its about page, searches by brand name, and saves the profile', async () => {
+  it('reads the site, searches with photos, builds the brand, then finds and compares similar brands', async () => {
     const t = setup();
     const done = await t.service.run(start('I run a bakery. crumbandco.ng'));
     expect(t.read).toHaveBeenCalledWith('https://crumbandco.ng/');
     expect(t.read).toHaveBeenCalledWith('https://crumbandco.ng/about', { withStyles: false });
-    expect(t.search.search).toHaveBeenCalledWith('"Crumb & Co."', expect.objectContaining({ excludeDomains: ['crumbandco.ng'] }));
+    expect(t.search.find).toHaveBeenCalledWith('"Crumb & Co."', expect.objectContaining({ excludeDomains: ['crumbandco.ng'], images: true }));
+    expect(t.search.find).toHaveBeenCalledWith('custom cake bakery in Lagos, Nigeria', expect.anything());
     expect(done.status).toBe('done');
-    expect(done.steps.map((s) => s.status)).toEqual(['done', 'done', 'done', 'done']);
+    expect(done.steps.map((s) => s.status)).toEqual(['done', 'done', 'done', 'done', 'done']);
+    // Photos from the site and the brand's Instagram images; a video from search
+    expect(done.media.images.map((i) => i.url)).toEqual(['https://crumbandco.ng/cake.jpg', 'https://lookaside.instagram.com/seo/x?media_id=1']);
+    expect(done.media.videos[0]).toMatchObject({ platform: 'youtube' });
+    // The competitor, with what the comparison says about them
+    expect(done.competitors).toEqual([
+      expect.objectContaining({ name: 'Butter Lane Bakery', positioning: 'Luxury cakes', socials: { instagram: 'https://www.instagram.com/butterlane' } }),
+    ]);
+    expect(done.comparison).toMatchObject({ gap: 'Nobody posts prices', positioning: 'Lekki’s celebration cake bakery' });
     expect(done.socials).toMatchObject({ tiktok: 'https://tiktok.com/@crumb', instagram: 'https://www.instagram.com/crumbandco' });
     // The writer got the site pages and search results; Instagram's login page wasn't read
     const input = t.writer.profile.mock.calls[0][0];
@@ -152,9 +224,9 @@ describe('the research', () => {
   it('carries on without a website', async () => {
     const t = setup();
     const done = await t.service.run(start('I run a small bakery in Lagos and want more orders'));
-    expect(t.read).not.toHaveBeenCalled();
+    expect(t.read).not.toHaveBeenCalledWith('https://crumbandco.ng/');
     expect(done.steps.find((s) => s.id === 'website')?.status).toBe('skipped');
-    expect(t.search.search).toHaveBeenCalledWith('I run a small bakery in Lagos and want more orders', expect.anything());
+    expect(t.search.find).toHaveBeenCalledWith('I run a small bakery in Lagos and want more orders', expect.anything());
     expect(done.status).toBe('done');
   });
 });
