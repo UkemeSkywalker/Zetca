@@ -3,7 +3,7 @@
  */
 
 import { bestTextColor, luminance, passes } from './contrast';
-import { FORMATS, backgroundColors, type Background, type DesignDoc, type FormatId, type PhotoBackground, type TextLayer } from './types';
+import { FORMATS, backgroundColors, type Background, type DesignDoc, type FormatId, type ImageLayer, type PhotoBackground, type TextLayer } from './types';
 import { readableOverlay } from './photo';
 
 export function updateLayer(doc: DesignDoc, id: string, patch: Partial<TextLayer>): DesignDoc {
@@ -12,6 +12,24 @@ export function updateLayer(doc: DesignDoc, id: string, patch: Partial<TextLayer
 
 export function removeLayer(doc: DesignDoc, id: string): DesignDoc {
   return { ...doc, layers: doc.layers.filter((l) => l.id !== id) };
+}
+
+/** A picture layer moved, resized or changed */
+export function updateImage(doc: DesignDoc, id: string, patch: Partial<ImageLayer>): DesignDoc {
+  return { ...doc, images: (doc.images ?? []).map((i) => (i.id === id ? { ...i, ...patch } : i)) };
+}
+
+/** Takes a picture off the design; words that were behind it come back to the front */
+export function removeImage(doc: DesignDoc, id: string): DesignDoc {
+  const images = (doc.images ?? []).filter((i) => i.id !== id);
+  return { ...doc, images, layers: images.length ? doc.layers : doc.layers.map((l) => (l.behind ? { ...l, behind: undefined } : l)) };
+}
+
+/** A picture resized around its bottom centre (where a cut-out person stands), keeping its shape */
+export function scaleImage(img: ImageLayer, factor: number): Pick<ImageLayer, 'x' | 'y' | 'w' | 'h'> {
+  const w = Math.max(40, img.w * factor);
+  const h = Math.max(40, img.h * factor);
+  return { x: Math.round(img.x + (img.w - w) / 2), y: Math.round(img.y + img.h - h), w: Math.round(w), h: Math.round(h) };
 }
 
 export const newLayerId = () => `t${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;

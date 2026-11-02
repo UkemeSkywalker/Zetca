@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { FORMATS, FORMAT_IDS, isUnsavedPhoto, type DesignDoc, type DesignRecord, type FormatId } from '@/lib/design/types';
-import { changeFormat, clampBox, duplicateLayer, removeLayer, updateLayer } from '@/lib/design/edit';
+import { changeFormat, clampBox, duplicateLayer, removeLayer, scaleImage, updateImage, updateLayer } from '@/lib/design/edit';
 import { designToBlob } from '@/lib/design/render';
 import { getDesign, saveDesign } from '@/lib/api/designApi';
 import { DesignCanvas } from './DesignCanvas';
@@ -210,6 +210,7 @@ export function DesignEditor({ designId }: { designId: string }) {
   }
 
   const layer = doc.layers.find((l) => l.id === selected) ?? null;
+  const picture = doc.images?.find((i) => i.id === selected) ?? null;
 
   return (
     <div className="flex flex-col gap-4 lg:h-[calc(100vh-78px-60px)] min-h-[640px]">
@@ -283,7 +284,7 @@ export function DesignEditor({ designId }: { designId: string }) {
       <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[300px_1fr_280px] gap-4">
         <LeftPanel tab={tab} onTab={setTab} doc={doc} onChange={change} onSelect={setSelected} selected={selected} />
         <Stage doc={doc} selected={selected} onSelect={setSelected} onChange={change} />
-        <RightPanel doc={doc} layer={layer} onChange={change} />
+        <RightPanel doc={doc} layer={layer} picture={picture} onChange={change} onSelect={setSelected} />
       </div>
     </div>
   );
@@ -320,7 +321,14 @@ function Stage({
 }) {
   const areaRef = useRef<HTMLDivElement>(null);
   const [area, setArea] = useState({ w: 600, h: 600 });
-  const drag = useRef<{ id: string; mode: 'move' | 'resize'; startX: number; startY: number; box: { x: number; y: number; width: number; height: number } } | null>(null);
+  const drag = useRef<{
+    id: string;
+    kind: 'text' | 'image';
+    mode: 'move' | 'resize';
+    startX: number;
+    startY: number;
+    box: { x: number; y: number; width: number; height: number };
+  } | null>(null);
 
   useEffect(() => {
     const el = areaRef.current;
@@ -338,9 +346,11 @@ function Stage({
     e.preventDefault();
     onSelect(id);
     const l = doc.layers.find((x) => x.id === id);
-    if (!l) return;
+    const img = doc.images?.find((x) => x.id === id);
+    if (!l && !img) return;
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
-    drag.current = { id, mode, startX: e.clientX, startY: e.clientY, box: { x: l.x, y: l.y, width: l.width, height: l.height } };
+    const box = l ? { x: l.x, y: l.y, width: l.width, height: l.height } : { x: img!.x, y: img!.y, width: img!.w, height: img!.h };
+    drag.current = { id, kind: l ? 'text' : 'image', mode, startX: e.clientX, startY: e.clientY, box };
   };
 
   const move = (e: React.PointerEvent) => {
@@ -348,6 +358,17 @@ function Stage({
     if (!d) return;
     const dx = (e.clientX - d.startX) / scale;
     const dy = (e.clientY - d.startY) / scale;
+    if (d.kind === 'image') {
+      onChange((docNow) => {
+        const img = docNow.images?.find((x) => x.id === d.id);
+        if (!img) return docNow;
+        if (d.mode === 'move') return updateImage(docNow, d.id, { x: Math.round(d.box.x + dx), y: Math.round(d.box.y + dy) });
+        // Resize keeps the picture's shape
+        const factor = Math.max(0.2, (d.box.width + dx) / d.box.width);
+        return updateImage(docNow, d.id, scaleImage({ ...img, x: d.box.x, y: d.box.y, w: d.box.width, h: d.box.height }, factor));
+      }, { coalesce: true });
+      return;
+    }
     onChange((docNow) => {
       let box = d.mode === 'move' ? { ...d.box, x: d.box.x + dx, y: d.box.y + dy } : { ...d.box, width: d.box.width + dx, height: d.box.height + dy };
       // Snap to the middle when close
@@ -376,6 +397,33 @@ function Stage({
             <Icon icon="lucide:play" className="w-3.5 h-3.5" aria-hidden /> AI video · {doc.video.durationSeconds}s · words go on top
           </span>
         )}
+        {(doc.images ?? []).map((img) => (
+          <div
+            key={img.id}
+            role="button"
+            tabIndex={0}
+            aria-label={img.cutout ? 'Cut-out picture' : 'Picture'}
+            aria-pressed={selected === img.id}
+            onPointerDown={(e) => start(e, img.id, 'move')}
+            onPointerMove={move}
+            onPointerUp={end}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') onSelect(img.id);
+            }}
+            className={`absolute cursor-move touch-none outline-none ${selected === img.id ? 'ring-2 ring-primary' : 'focus-visible:ring-2 focus-visible:ring-primary/60'}`}
+            style={{ left: img.x * scale, top: img.y * scale, width: img.w * scale, height: img.h * scale }}
+          >
+            {selected === img.id && (
+              <span
+                role="presentation"
+                onPointerDown={(e) => start(e, img.id, 'resize')}
+                onPointerMove={move}
+                onPointerUp={end}
+                className="absolute -right-2 -bottom-2 h-4 w-4 rounded-full border-2 border-primary bg-white cursor-nwse-resize"
+              />
+            )}
+          </div>
+        ))}
         {doc.layers.map((l) => (
           <div
             key={l.id}

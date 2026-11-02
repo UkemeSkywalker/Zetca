@@ -3,9 +3,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Icon } from '@iconify/react';
 import { PALETTES, STYLES, restyle, type Palette } from '@/lib/design/styles';
-import { backgroundColors, type Background, type DesignDoc, type TextLayer } from '@/lib/design/types';
+import { backgroundColors, type Background, type DesignDoc, type ImageLayer, type TextLayer } from '@/lib/design/types';
 import { worstContrast, bestTextColor } from '@/lib/design/contrast';
-import { addText, fixContrast, lowContrastLayers, setBackground, setHandle, setOverlay, setPhotoBackground, updateLayer, type NewTextKind } from '@/lib/design/edit';
+import { addText, fixContrast, lowContrastLayers, removeImage, scaleImage, setBackground, setHandle, setOverlay, setPhotoBackground, updateImage, updateLayer, type NewTextKind } from '@/lib/design/edit';
 import { photoCredit, readableOverlay } from '@/lib/design/photo';
 import { textOf } from '@/lib/design/styles';
 import { FORMATS, type PhotoBackground } from '@/lib/design/types';
@@ -16,12 +16,13 @@ import { DesignCanvas } from './DesignCanvas';
 import { FONT_FAMILIES, FONT_OPTIONS } from './fonts';
 import { ContrastBadge, INPUT } from './ui';
 
-export type Tab = 'styles' | 'text' | 'background' | 'photos' | 'brand';
+export type Tab = 'styles' | 'layers' | 'text' | 'background' | 'photos' | 'brand';
 
 type Change = (next: (d: DesignDoc) => DesignDoc, opts?: { coalesce?: boolean }) => void;
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'styles', label: 'Styles', icon: 'lucide:layout-template' },
+  { id: 'layers', label: 'Layers', icon: 'lucide:layers' },
   { id: 'text', label: 'Text', icon: 'lucide:type' },
   { id: 'background', label: 'Background', icon: 'lucide:paint-bucket' },
   { id: 'photos', label: 'Photos', icon: 'lucide:image' },
@@ -82,6 +83,7 @@ export function LeftPanel({
       </div>
       <div role="tabpanel" className="flex-1 min-w-0 overflow-y-auto p-4 space-y-5">
         {tab === 'styles' && <StylesTab doc={doc} onChange={onChange} />}
+        {tab === 'layers' && <LayersTab doc={doc} onChange={onChange} onSelect={onSelect} selected={selected} />}
         {tab === 'text' && <TextTab doc={doc} onChange={onChange} onSelect={onSelect} selected={selected} />}
         {tab === 'background' && <BackgroundTab doc={doc} onChange={onChange} />}
         {tab === 'photos' && <PhotosTab doc={doc} onChange={onChange} />}
@@ -133,6 +135,69 @@ function StylesTab({ doc, onChange }: { doc: DesignDoc; onChange: Change }) {
         </div>
       </div>
     </>
+  );
+}
+
+/** Everything on the design, front to back: words, pictures, words behind them, the background */
+function LayersTab({ doc, onChange, onSelect, selected }: { doc: DesignDoc; onChange: Change; onSelect: (id: string | null) => void; selected: string | null }) {
+  const images = doc.images ?? [];
+  const front = doc.layers.filter((l) => !l.behind);
+  const behind = doc.layers.filter((l) => l.behind);
+  const row = (id: string, icon: string, label: string, hint: string, extra?: React.ReactNode, font?: string) => (
+    <div
+      key={id}
+      className={`flex items-center gap-2 rounded-xl border px-3 py-2 ${selected === id ? 'border-primary bg-primary-50/50' : 'border-[#E2E8F0]'}`}
+    >
+      <button type="button" onClick={() => onSelect(id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+        <Icon icon={icon} className="w-4 h-4 text-[#777587] shrink-0" aria-hidden />
+        <span className="min-w-0">
+          <span className="block truncate text-sm text-[#0B1C30]" style={font ? { fontFamily: font } : undefined}>
+            {label}
+          </span>
+          <span className="block text-[11px] text-[#94A3B8]">{hint}</span>
+        </span>
+      </button>
+      {extra}
+    </div>
+  );
+  const behindToggle = (l: TextLayer) =>
+    images.length > 0 ? (
+      <button
+        type="button"
+        onClick={() => onChange((d) => updateLayer(d, l.id, { behind: l.behind ? undefined : true }))}
+        aria-pressed={!!l.behind}
+        title={l.behind ? 'Bring in front of the picture' : 'Put behind the picture'}
+        className={`shrink-0 rounded-lg p-1.5 ${l.behind ? 'bg-primary-50 text-primary' : 'text-[#777587] hover:bg-[#F1F5F9]'}`}
+      >
+        <Icon icon={l.behind ? 'lucide:bring-to-front' : 'lucide:send-to-back'} className="w-4 h-4" aria-hidden />
+        <span className="sr-only">{l.behind ? 'Bring in front of the picture' : 'Put behind the picture'}</span>
+      </button>
+    ) : null;
+  const textLabel = (l: TextLayer) => l.text.replace(/\n/g, ' ') || 'Empty text';
+  return (
+    <div className="space-y-2">
+      <p className={HEADING}>Front to back</p>
+      {front.map((l) => row(l.id, 'lucide:type', textLabel(l), 'Text', behindToggle(l), FONT_FAMILIES[l.font]))}
+      {images.map((i) =>
+        row(i.id, i.cutout ? 'lucide:user-round' : 'lucide:image', i.cutout ? 'Cut-out' : 'Picture', i.cutout ? 'Picture, background removed' : 'Picture', (
+          <button
+            type="button"
+            onClick={() => {
+              onChange((d) => removeImage(d, i.id));
+              onSelect(null);
+            }}
+            title="Remove the picture"
+            className="shrink-0 rounded-lg p-1.5 text-[#777587] hover:bg-red-50 hover:text-red-600"
+          >
+            <Icon icon="lucide:trash-2" className="w-4 h-4" aria-hidden />
+            <span className="sr-only">Remove the picture</span>
+          </button>
+        ))
+      )}
+      {behind.map((l) => row(l.id, 'lucide:type', textLabel(l), 'Text behind the picture', behindToggle(l), FONT_FAMILIES[l.font]))}
+      {row('__background', doc.background.kind === 'photo' ? 'lucide:image' : 'lucide:paint-bucket', 'Background', doc.background.kind === 'photo' ? 'Photo' : 'Colour')}
+      {images.length > 0 && <p className="pt-1 text-xs text-[#777587]">Use the arrows on a line of text to put it behind or in front of the picture.</p>}
+    </div>
   );
 }
 
@@ -475,7 +540,20 @@ function BrandTab({ doc, onChange }: { doc: DesignDoc; onChange: Change }) {
   );
 }
 
-export function RightPanel({ doc, layer, onChange }: { doc: DesignDoc; layer: TextLayer | null; onChange: Change }) {
+export function RightPanel({
+  doc,
+  layer,
+  picture = null,
+  onChange,
+  onSelect,
+}: {
+  doc: DesignDoc;
+  layer: TextLayer | null;
+  picture?: ImageLayer | null;
+  onChange: Change;
+  onSelect?: (id: string | null) => void;
+}) {
+  if (picture) return <PicturePanel doc={doc} picture={picture} onChange={onChange} onSelect={onSelect} />;
   if (!layer) return <DesignSummary doc={doc} onChange={onChange} />;
   const set = (patch: Partial<TextLayer>, coalesce = false) => onChange((d) => updateLayer(d, layer.id, patch), { coalesce });
   const behind = layer.fill ? [layer.fill] : backgroundColors(doc);
@@ -609,6 +687,65 @@ function Slider({ label, min, max, step, value, onChange, format }: { label: str
         <span className="text-xs font-semibold tabular-nums text-[#0B1C30]">{format(value)}</span>
       </div>
       <input id={id} type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-primary" />
+    </div>
+  );
+}
+
+/** A picture layer: its size, which words sit behind it, and removing it */
+function PicturePanel({ doc, picture, onChange, onSelect }: { doc: DesignDoc; picture: ImageLayer; onChange: Change; onSelect?: (id: string | null) => void }) {
+  const H = FORMATS[doc.format].height;
+  // Size as a share of the design's height (a full-height cut-out is 100%)
+  const pct = Math.round((picture.h / H) * 100);
+  const setPct = (next: number) => onChange((d) => updateImage(d, picture.id, scaleImage(picture, next / pct)), { coalesce: true });
+  const behind = doc.layers.filter((l) => l.behind);
+  return (
+    <div className={`${PANEL} min-h-0 overflow-y-auto p-4 space-y-5`}>
+      <div>
+        <h2 className="text-lg font-bold text-[#0B1C30]">{picture.cutout ? 'Cut-out' : 'Picture'}</h2>
+        <p className="text-xs text-[#777587]">{picture.cutout ? 'Background removed. Drag it on the design to move it.' : 'Drag it on the design to move it.'}</p>
+      </div>
+      <div className="space-y-2">
+        <div className="flex justify-between">
+          <label htmlFor="pic-size" className={HEADING}>
+            Size
+          </label>
+          <span className="text-xs font-semibold tabular-nums text-[#464555]">{pct}%</span>
+        </div>
+        <input id="pic-size" type="range" min={20} max={200} value={pct} onChange={(e) => setPct(Number(e.target.value))} className="w-full accent-[#4F46E5]" />
+      </div>
+      <div className="space-y-2">
+        <p className={HEADING}>Words behind it</p>
+        {behind.length ? (
+          <ul className="space-y-1 text-sm text-[#0B1C30]">
+            {behind.map((l) => (
+              <li key={l.id} className="truncate" style={{ fontFamily: FONT_FAMILIES[l.font] }}>
+                {l.text.replace(/\n/g, ' ')}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-[#777587]">None. Put words behind it from the Layers tab.</p>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => onChange((d) => updateImage(d, picture.id, { x: 0, y: 0, w: 1080, h: H }))}
+          className="rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm font-semibold text-[#0B1C30] hover:bg-[#F8F9FF]"
+        >
+          Reset size and place
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            onChange((d) => removeImage(d, picture.id));
+            onSelect?.(null);
+          }}
+          className="rounded-xl border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
+        >
+          Remove
+        </button>
+      </div>
     </div>
   );
 }
