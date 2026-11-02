@@ -20,6 +20,10 @@ const StartSchema = z.object({
   model: z.string().max(40).optional(),
   /** For video models with drafts: 'draft' (480p), 'hd' (720p) or 'full_hd' (1080p) */
   quality: z.enum(['draft', 'hd', 'full_hd']).optional(),
+  /** Images: also cut out the subject (the AI repaints the background in this colour, then it's made see-through) */
+  cutout: z.enum(['green', 'magenta', 'blue']).optional(),
+  /** Style recipes send the whole image prompt; Zetca doesn't add to it */
+  rawPrompt: z.boolean().optional(),
 });
 
 export async function GET(req: NextRequest) {

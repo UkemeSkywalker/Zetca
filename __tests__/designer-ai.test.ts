@@ -6,6 +6,7 @@ import { memoryBilling } from '@/lib/billing/testing';
 import { AiDesignService, imagePrompt } from '@/lib/services/aiDesignService';
 import { HiggsfieldClient, HiggsfieldError } from '@/lib/services/higgsfieldClient';
 import { VideoDesignService } from '@/lib/services/videoDesignService';
+import sharp from 'sharp';
 
 describe('Higgsfield client', () => {
   const ok = (body: unknown) => ({ status: 200, body: Buffer.from(JSON.stringify(body)) });
@@ -46,13 +47,13 @@ describe('AI jobs', () => {
         }
         const body = files.get(cmd.input.Key);
         if (body === undefined) throw Object.assign(new Error('missing'), { name: 'NoSuchKey' });
-        return { Body: { transformToString: async () => String(body) } };
+        return { Body: { transformToString: async () => String(body), transformToByteArray: async () => new Uint8Array(body as Buffer) } };
       }),
     };
     const hf = {
       submit: jest.fn(async (endpoint: string) => ({ status: 'queued', request_id: endpoint.includes('video') ? 'vid-req' : 'img-req' })),
       status: jest.fn(async () => statuses.shift()),
-      download: jest.fn(async () => Buffer.from('file')),
+      download: jest.fn(async (_url: string): Promise<Buffer> => (void _url, Buffer.from('file'))),
     };
     const billing = memoryBilling('agency');
     billing.free.set('u1', { image: 5 - freeLeft.image, video: 2 - freeLeft.video });
@@ -71,14 +72,15 @@ describe('AI jobs', () => {
   it('makes an image, copies it into storage and finishes', async () => {
     const t = setup([{ status: 'in_progress' }, { status: 'completed', images: [{ url: 'https://cdn.higgsfield.ai/a.jpg' }] }]);
     const job = await t.service.start('u1', { kind: 'image', prompt: 'A lake at dawn', format: 'portrait' });
-    expect(t.credits.take).toHaveBeenCalledWith('u1', 1);
-    expect(job.model).toBe('soul-v2');
-    expect(t.hf.submit).toHaveBeenCalledWith('higgsfield-ai/soul/v2/standard', { prompt: imagePrompt('A lake at dawn'), aspect_ratio: '3:4', resolution: '1080p' }, `${job.jobId}-image`);
+    // Qwen Image 3 is the default: closest to the style references
+    expect(t.credits.take).toHaveBeenCalledWith('u1', 6);
+    expect(job.model).toBe('qwen-image-3');
+    expect(t.hf.submit).toHaveBeenCalledWith('alibaba/qwen-image-3/text-to-image', { prompt: imagePrompt('A lake at dawn'), aspect_ratio: '3:4', resolution: '1k' }, `${job.jobId}-image`);
     expect((await t.service.advance('u1', job.jobId)).stage).toBe('image');
     const done = await t.service.advance('u1', job.jobId);
     expect(done.stage).toBe('done');
     expect([...t.files.keys()]).toContain(`designs/u1/photos/${done.photoId}.jpg`);
-    expect(t.billing.entries.at(-1)).toMatchObject({ action: 'ai_image', credits: 1, detail: 'soul-v2', costUsd: 0.006, status: 'charged' });
+    expect(t.billing.entries.at(-1)).toMatchObject({ action: 'ai_image', credits: 6, detail: 'qwen-image-3', costUsd: 0.04, status: 'charged' });
   });
 
   it('animates the image for a video and saves the clip to the user’s media', async () => {
@@ -105,7 +107,7 @@ describe('AI jobs', () => {
     const job = await t.service.start('u1', { kind: 'image', prompt: 'x', format: 'square' });
     const failed = await t.service.advance('u1', job.jobId);
     expect(failed).toMatchObject({ stage: 'failed', error: expect.stringContaining('safety check') });
-    expect(t.credits.refund).toHaveBeenCalledWith('u1', 1, 'monthly', monthOf());
+    expect(t.credits.refund).toHaveBeenCalledWith('u1', 6, 'monthly', monthOf());
   });
 
   it('gives the credits back when the request can’t be started', async () => {
@@ -156,6 +158,40 @@ describe('AI jobs', () => {
     expect((await t.service.advance('u1', hd.jobId)).mediaId).toEqual(expect.any(String));
     // Only drafts can be made in HD
     await expect(t.service.makeHd('u1', hd.jobId, 'hd')).rejects.toThrow('Only a finished draft');
+  });
+
+  it('cuts out the subject for a style that needs it, lined up with the photo', async () => {
+    // The photo: 40×40; the edit: the same subject (a red square) on flat green
+    const photo = await sharp({ create: { width: 40, height: 40, channels: 3, background: '#808080' } }).jpeg().toBuffer();
+    const keyed = await sharp({ create: { width: 20, height: 20, channels: 3, background: '#00FF00' } })
+      .composite([{ input: await sharp({ create: { width: 10, height: 10, channels: 3, background: '#CC2222' } }).png().toBuffer(), left: 5, top: 5 }])
+      .png()
+      .toBuffer();
+    const t = setup([
+      { status: 'completed', images: [{ url: 'https://cdn.higgsfield.ai/photo.jpg' }] },
+      { status: 'completed', images: [{ url: 'https://cdn.higgsfield.ai/green.png' }] },
+    ]);
+    t.hf.download.mockImplementation(async (url: string) => (url.includes('green') ? keyed : photo));
+    const job = await t.service.start('u1', { kind: 'image', prompt: 'A whole prompt from a recipe', format: 'square', cutout: 'green', rawPrompt: true });
+    // The image (6) plus the cut-out edit (6), and the recipe's prompt untouched
+    expect(t.credits.take).toHaveBeenCalledWith('u1', 12);
+    expect(t.hf.submit).toHaveBeenCalledWith('alibaba/qwen-image-3/text-to-image', expect.objectContaining({ prompt: 'A whole prompt from a recipe' }), `${job.jobId}-image`);
+    const mid = await t.service.advance('u1', job.jobId);
+    expect(mid.stage).toBe('cutout');
+    expect(t.hf.submit).toHaveBeenLastCalledWith(
+      'alibaba/qwen-image-3/edit',
+      expect.objectContaining({ image_urls: ['https://cdn.higgsfield.ai/photo.jpg'], prompt: expect.stringContaining('#00FF00') }),
+      `${job.jobId}-cutout`
+    );
+    const done = await t.service.advance('u1', job.jobId);
+    expect(done).toMatchObject({ stage: 'done', cutoutPhotoId: expect.any(String) });
+    const png = t.files.get(`designs/u1/photos/${done.cutoutPhotoId}.jpg`) as Buffer;
+    const { data, info } = await sharp(png).raw().toBuffer({ resolveWithObject: true });
+    // Sized to the photo, with the green gone and the subject kept
+    expect([info.width, info.height, info.channels]).toEqual([40, 40, 4]);
+    const alphaAt = (x: number, y: number) => data[(y * 40 + x) * 4 + 3];
+    expect(alphaAt(2, 2)).toBe(0);
+    expect(alphaAt(20, 20)).toBe(255);
   });
 
   it('won’t show another user’s job', async () => {

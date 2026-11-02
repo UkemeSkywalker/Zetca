@@ -15,6 +15,8 @@ import type { VideoQuality } from '@/lib/api/designApi';
 import { createDesign, designerPath, rememberHandle, rememberedHandle, savePhoto, searchPhotos, writeDesignText } from '@/lib/api/designApi';
 import { DESIGN_STYLE_IDS } from '@/lib/models/designWriter';
 import { DesignCanvas } from './DesignCanvas';
+import { RECIPES, recipeById } from '@/lib/design/recipes';
+import { creditsFor } from '@/lib/billing/prices';
 import { CARD, Chip, CostBadge, INPUT, LABEL, PrimaryButton, SecondaryButton } from './ui';
 
 type StyleChoice = 'auto' | string;
@@ -49,13 +51,26 @@ export function CreateDesign() {
   /** For video models with drafts: the quality picked (a draft unless HD is picked) */
   const pickedQuality = pickedVideo?.qualities?.find((q) => q.id === videoQuality) ?? pickedVideo?.qualities?.[0];
   const kindOf = (id: string) => (id === 'ai_video' ? 'video' : 'image');
+  /** A style recipe for the AI image (Marble Thinker, Word Behind…), or free-form */
+  const [recipeId, setRecipeId] = useState(params.get('recipe') ?? '');
+  const recipe = source === 'ai_image' ? recipeById(recipeId) : undefined;
+  /** Cut-outs are a second AI step (Qwen edit, $0.04) */
+  const cutoutCredits = recipe?.cutout ? creditsFor(0.04) : 0;
   /** Free AI uses left for a source (everyone's few, on the default model) */
   const freeLeft = (id: string) => (credits ? credits.freeAi[kindOf(id)] : 0);
   const usesFree = (id: string) =>
-    !!models && freeLeft(id) > 0 && (id === 'ai_video' ? pickedVideo?.id === models.defaults.video : pickedImage?.id === models.defaults.image);
+    !!models &&
+    freeLeft(id) > 0 &&
+    (id === 'ai_video' ? pickedVideo?.id === models.defaults.video : pickedImage?.id === models.defaults.image && !(id === 'ai_image' && recipe?.cutout));
   /** What an AI source costs with the model (and quality) picked */
   const aiCost = (id: string) =>
-    usesFree(id) ? 0 : id === 'ai_image' ? pickedImage?.credits ?? 1 : id === 'ai_video' ? pickedQuality?.credits ?? pickedVideo?.credits ?? 26 : 0;
+    usesFree(id)
+      ? 0
+      : id === 'ai_image'
+        ? (pickedImage?.credits ?? 1) + cutoutCredits
+        : id === 'ai_video'
+          ? pickedQuality?.credits ?? pickedVideo?.credits ?? 26
+          : 0;
   const aiLocked = credits !== null && !credits.aiMedia;
   /** An AI source the user can't use: not on their plan and no free uses that cover it */
   const sourceLocked = (id: string) => aiLocked && !usesFree(id);
@@ -120,6 +135,31 @@ export function CreateDesign() {
   /** One design over a new AI image (or video) */
   const makeAiDesign = async (words: DesignText, description: string) => {
     setResults([]);
+    if (recipe) {
+      try {
+        const colors = recipe.colors;
+        const job = await makeAi('image', recipe.imagePrompt(description || prompt, colors), format, setAiProgress, pickedImage?.id, undefined, {
+          rawPrompt: true,
+          cutout: recipe.cutout,
+        });
+        const photo = await aiPhotoBackground(job);
+        const cut = job.cutoutPhotoId ? await loadPhoto({ photoId: job.cutoutPhotoId }) : null;
+        const t = clean(words);
+        setResults([
+          recipe.build({
+            text: { headline: t.headline, kicker: t.kicker, body: t.body, footer: t.footer },
+            format,
+            photo,
+            cutout: cut && job.cutoutPhotoId ? { photoId: job.cutoutPhotoId, width: cut.width, height: cut.height } : undefined,
+            colors,
+          }),
+        ]);
+      } finally {
+        setAiProgress(null);
+        refreshCredits();
+      }
+      return;
+    }
     try {
       const job = await makeAi(
         source === 'ai_video' ? 'video' : 'image',
@@ -385,7 +425,7 @@ export function CreateDesign() {
               onChange={(id) => (source === 'ai_video' ? setVideoModelId(id) : setImageModelId(id))}
               tier={tier}
               left={credits?.left ?? null}
-              free={{ id: source === 'ai_video' ? models.defaults.video : models.defaults.image, left: freeLeft(source) }}
+              free={{ id: source === 'ai_video' ? models.defaults.video : models.defaults.image, left: recipe?.cutout ? 0 : freeLeft(source) }}
             />
           )}
           {source === 'ai_video' && pickedVideo?.qualities && !usesFree('ai_video') && (
@@ -406,6 +446,28 @@ export function CreateDesign() {
               )}
             </fieldset>
           )}
+          {source === 'ai_image' && (
+            <fieldset>
+              <legend className={LABEL}>Look</legend>
+              <div className="flex flex-wrap gap-2">
+                <Chip selected={!recipe} onClick={() => setRecipeId('')}>
+                  Free-form
+                </Chip>
+                {RECIPES.map((r) => (
+                  <Chip key={r.id} selected={recipe?.id === r.id} onClick={() => setRecipeId(r.id)}>
+                    <span className="inline-block h-3 w-3 rounded-full border border-black/10 align-middle mr-1.5" style={{ background: r.colors.main }} aria-hidden />
+                    {r.name}
+                  </Chip>
+                ))}
+              </div>
+              {recipe && (
+                <p className="mt-2 text-xs text-[#777587]">
+                  {recipe.description}.{recipe.cutout ? ` Includes a cut-out of the subject (+${cutoutCredits} credits).` : ''}
+                </p>
+              )}
+            </fieldset>
+          )}
+          {!recipe && (
           <fieldset>
             <legend className={LABEL}>Style</legend>
             <div className="flex flex-wrap gap-2">
@@ -419,6 +481,7 @@ export function CreateDesign() {
               ))}
             </div>
           </fieldset>
+          )}
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -473,7 +536,13 @@ export function CreateDesign() {
             Pick one
           </h2>
           {aiProgress ? (
-            <AiMaking kind={source === 'ai_video' ? 'video' : 'image'} progress={aiProgress} description={imagePrompt || prompt} onUseStock={() => pickSource('stock')} />
+            <AiMaking
+              kind={source === 'ai_video' ? 'video' : 'image'}
+              cutout={!!recipe?.cutout}
+              progress={aiProgress}
+              description={imagePrompt || prompt}
+              onUseStock={() => pickSource('stock')}
+            />
           ) : results.length === 0 ? (
             <div className="mt-5 grid grid-cols-2 gap-4">
               {[0, 1, 2, 3].map((i) => (
@@ -557,13 +626,30 @@ function clean(t: DesignText): DesignText {
 }
 
 /** The "Making your AI image" card while Higgsfield works */
-function AiMaking({ kind, progress, description, onUseStock }: { kind: 'image' | 'video'; progress: AiProgress; description: string; onUseStock: () => void }) {
+function AiMaking({
+  kind,
+  cutout = false,
+  progress,
+  description,
+  onUseStock,
+}: {
+  kind: 'image' | 'video';
+  cutout?: boolean;
+  progress: AiProgress;
+  description: string;
+  onUseStock: () => void;
+}) {
   const steps: { label: string; done: boolean; active: boolean }[] = [
     { label: 'Description read', done: progress !== 'starting', active: progress === 'starting' },
-    { label: kind === 'video' ? 'First frame being made' : 'Image being made', done: progress === 'video' || progress === 'done', active: progress === 'image' },
+    {
+      label: kind === 'video' ? 'First frame being made' : 'Image being made',
+      done: progress === 'video' || progress === 'cutout' || progress === 'done',
+      active: progress === 'image',
+    },
+    ...(cutout ? [{ label: 'Cutting out the subject', done: progress === 'done', active: progress === 'cutout' }] : []),
     ...(kind === 'video' ? [{ label: 'Video being made', done: progress === 'done', active: progress === 'video' }] : []),
   ];
-  const pct = progress === 'starting' ? 10 : progress === 'image' ? (kind === 'video' ? 35 : 60) : progress === 'video' ? 70 : 100;
+  const pct = progress === 'starting' ? 10 : progress === 'image' ? (kind === 'video' || cutout ? 35 : 60) : progress === 'cutout' || progress === 'video' ? 70 : 100;
   return (
     <div className="mt-5 space-y-4" role="status" aria-live="polite">
       <div className="flex flex-col sm:flex-row gap-5 rounded-2xl border border-[#E2E8F0] p-5">

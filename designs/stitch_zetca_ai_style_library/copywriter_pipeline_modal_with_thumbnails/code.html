@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Zetca Content OS - Today's Pipeline Modal</title>
+<!-- Tailwind CSS CDN with Forms & Container Queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Plus Jakarta Sans & Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;family=Playfair+Display:ital,wght@1,600&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+            serif: ['"Playfair Display"', 'Georgia', 'serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            },
+            zetca: {
+              dark: '#0B1220',
+              sidebar: '#0d1527',
+              card: '#162033',
+            }
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Custom Styles -->
+<style data-purpose="custom-styling">
+    /* Custom scrollbar for pipeline list */
+    .pipeline-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .pipeline-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .pipeline-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    .pipeline-scroll::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+<!-- END: Custom Styles -->
+</head>
+<body class="bg-[#0B1220] font-sans text-slate-800 antialiased h-screen overflow-hidden select-none">
+<!-- BEGIN: Background Application Shell (Zetca Content OS) -->
+<div aria-hidden="true" class="relative w-full h-full flex opacity-40 blur-[3px] pointer-events-none" data-purpose="background-shell">
+<!-- Sidebar -->
+<aside class="w-64 bg-[#0d1527] border-r border-slate-800 flex flex-col justify-between p-5 text-slate-400">
+<div class="space-y-6">
+<!-- Logo -->
+<div class="flex items-center space-x-3 text-white">
+<div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-lg shadow-lg shadow-indigo-500/30">
+            Z
+          </div>
+<div>
+<div class="font-bold text-sm text-white tracking-wide flex items-center gap-1.5">
+              Zetca
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+</div>
+<div class="text-[10px] tracking-wider text-slate-400 uppercase font-semibold">CONTENT OS</div>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="space-y-1">
+<div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2 px-3">Platform Suite</div>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-300" href="#">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-300" href="#">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<span>Strategist</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-300" href="#">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<span>Copywriter</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-600/30" href="#">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<span>Scheduler</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-300" href="#">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<span>Designer</span>
+</a>
+</nav>
+</div>
+<!-- User footer indicator in background -->
+<div class="p-3 bg-slate-900/60 rounded-xl border border-slate-800 text-xs flex items-center justify-between">
+<span class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Pro Engine
+        </span>
+<span class="text-slate-500">v2.4</span>
+</div>
+</aside>
+<!-- Main Dummy Content -->
+<div class="flex-1 bg-slate-100 flex flex-col">
+<header class="h-16 border-b border-slate-200 bg-white px-8 flex items-center justify-between">
+<div class="w-80 h-9 bg-slate-100 rounded-lg"></div>
+<div class="flex items-center space-x-4">
+<div class="w-28 h-8 bg-indigo-50 rounded-full"></div>
+<div class="w-8 h-8 rounded-full bg-slate-200"></div>
+</div>
+</header>
+<div class="p-8 space-y-4">
+<div class="h-28 bg-white rounded-2xl shadow-sm"></div>
+<div class="h-28 bg-white rounded-2xl shadow-sm"></div>
+</div>
+</div>
+</div>
+<!-- END: Background Application Shell -->
+<!-- BEGIN: Modal Backdrop Container -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-slate-950/60 backdrop-blur-md" data-purpose="modal-overlay">
+<!-- BEGIN: Pipeline Details Dialog -->
+<div class="relative w-full max-w-[1240px] h-[92vh] max-h-[880px] bg-white rounded-[26px] shadow-2xl flex overflow-hidden border border-slate-200/80 animate-in fade-in duration-200" data-purpose="pipeline-modal">
+<!-- BEGIN: Modal Left Meta Sidebar -->
+<aside class="w-72 md:w-80 bg-[#f8fafc] border-r border-slate-200/90 p-7 flex flex-col justify-between shrink-0" data-purpose="modal-meta-sidebar">
+<div>
+<!-- Subtitle Tag -->
+<div class="text-[11px] font-bold tracking-wider text-indigo-600 uppercase mb-2">
+            SCHEDULED FOR
+          </div>
+<!-- Main Date Display -->
+<div class="text-[44px] leading-tight font-extrabold text-slate-900 tracking-tight">
+            Nov 11
+          </div>
+<div class="text-sm font-medium text-slate-500 mt-0.5">
+            Wednesday, 2026
+          </div>
+<!-- Divider -->
+<div class="h-px bg-slate-200/80 my-7"></div>
+<!-- Pipeline Key Metrics -->
+<div class="space-y-5">
+<!-- Metric 1: Posts Count -->
+<div class="flex items-center space-x-3.5">
+<div class="w-11 h-11 rounded-2xl bg-indigo-100/70 text-indigo-600 flex items-center justify-center shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<div class="text-sm font-bold text-slate-900">4 Posts</div>
+<div class="text-xs text-slate-500 font-medium">Across 4 platforms</div>
+</div>
+</div>
+<!-- Metric 2: Time Range -->
+<div class="flex items-center space-x-3.5">
+<div class="w-11 h-11 rounded-2xl bg-indigo-100/70 text-indigo-600 flex items-center justify-center shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<div class="text-sm font-bold text-slate-900">Time Range</div>
+<div class="text-xs text-slate-500 font-medium">7:00 AM — 11:30 AM</div>
+</div>
+</div>
+<!-- Metric 3: Active Campaign Style -->
+<div class="flex items-center space-x-3.5">
+<div class="w-11 h-11 rounded-2xl bg-amber-100/70 text-amber-700 flex items-center justify-center shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<div class="text-sm font-bold text-slate-900">Style Profile</div>
+<div class="text-xs text-slate-500 font-medium">Marble Thinker</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sidebar Bottom Action -->
+<button class="group flex items-center space-x-2.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition py-2 px-1" type="button">
+<span class="w-5 h-5 rounded-full bg-slate-200/90 text-slate-500 group-hover:bg-slate-300 group-hover:text-slate-800 flex items-center justify-center transition">
+<svg class="w-3 h-3" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+</span>
+<span>Close Details</span>
+</button>
+</aside>
+<!-- END: Modal Left Meta Sidebar -->
+<!-- BEGIN: Modal Main Pipeline Content -->
+<main class="flex-1 flex flex-col min-w-0 bg-[#fcfdfe]" data-purpose="modal-main-content">
+<!-- Modal Top Bar Header -->
+<header class="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+<div class="flex items-center space-x-3">
+<h1 class="text-2xl font-bold text-slate-900 tracking-tight">Today's Pipeline</h1>
+<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">Ready to publish</span>
+</div>
+<!-- Close Modal Circle Button -->
+<button aria-label="Close dialog" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</header>
+<!-- Pipeline Posts Cards List (Scrollable Area) -->
+<div class="flex-1 overflow-y-auto px-8 py-6 space-y-5 pipeline-scroll">
+<!-- BEGIN: Card 1 - X (Morning Sourdough Release) -->
+<article class="p-5 bg-white rounded-2xl border border-slate-200/90 hover:border-slate-300 shadow-sm transition duration-200" data-purpose="pipeline-card">
+<div class="flex flex-col sm:flex-row gap-5">
+<!-- Required Visual Thumbnail Preview (Marble Thinker Style) -->
+<div class="relative w-full sm:w-44 md:w-48 h-40 sm:h-auto rounded-xl overflow-hidden shrink-0 bg-[#faf5ee] border border-amber-900/10 flex flex-col justify-between p-3 select-none">
+<!-- Watermark / Tag -->
+<div class="flex items-center justify-between text-[9px] font-bold text-amber-900/60 tracking-wider">
+<span>#CRUMBANDCO</span>
+<span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+</div>
+<!-- Text Layout Preview with Statue Collage aesthetic -->
+<div class="my-auto">
+<div class="text-xs font-extrabold text-[#2a1e17] leading-tight font-serif italic">
+                    Good bread<br/><span class="font-sans not-italic font-bold tracking-tight text-slate-900 text-[13px]">takes time.</span>
+</div>
+</div>
+<!-- Subtle Mini Graphic Accent & Platform Pill Badge -->
+<div class="flex items-end justify-between pt-1">
+<!-- Abstract classic art cutout representation -->
+<div class="w-9 h-7 rounded bg-gradient-to-tr from-amber-200 via-stone-300 to-amber-100 border border-amber-300/40 flex items-center justify-center shadow-xs">
+<span class="text-[8px] font-serif font-bold text-stone-700">IKOYI</span>
+</div>
+<!-- Social Badge -->
+<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-black text-white shadow-xs">
+<svg class="w-2.5 h-2.5 mr-1 fill-current" viewbox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 24.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+                    X post
+                  </span>
+</div>
+</div>
+<!-- Card Content Area -->
+<div class="flex-1 flex flex-col justify-between space-y-2.5">
+<!-- Timing Header & Scheduled Pill -->
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-2 text-xs font-semibold text-slate-700">
+<span>7:00 AM</span>
+<span class="text-slate-300">•</span>
+<span class="text-slate-900 font-bold">X</span>
+</div>
+<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-600 border border-indigo-100">
+                    Scheduled
+                  </span>
+</div>
+<!-- Post Copy / Headline & Body -->
+<div>
+<h3 class="text-sm md:text-[15px] font-bold text-slate-900 leading-snug">
+                    Morning sourdough release
+                  </h3>
+<p class="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
+                    Our 36-hour loaves hit the counter at 7:00 AM. Flour, Lagos water, wild yeast, and patience. Most people don't know airlines release discounted business class seats 3-7 days before departure.
+                  </p>
+</div>
+<!-- Info Hint -->
+<div class="flex items-center text-[11px] text-slate-500 space-x-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+<svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="9" stroke-width="2"></circle>
+<path d="M12 8v.01M12 11v5" stroke-linecap="round" stroke-width="2"></path>
+</svg>
+<span class="truncate">Won't post automatically — only LinkedIn is supported so far. Post it yourself at this time.</span>
+</div>
+<!-- Campaign & Action Row -->
+<div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100">
+<div class="flex items-center space-x-4">
+<!-- Brand Dot Indicator -->
+<div class="flex items-center space-x-1.5 text-xs font-medium text-slate-700">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+<span>Crumb &amp; Co.</span>
+</div>
+<!-- Edit Content Link -->
+<button class="flex items-center space-x-1 text-xs font-semibold text-slate-700 hover:text-indigo-600 transition" type="button">
+<svg class="w-3.5 h-3.5" fill="currentColor" viewbox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 24.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+<span>Edit Content</span>
+</button>
+</div>
+<!-- Visual Generation Actions -->
+<div class="flex items-center space-x-2 text-xs">
+<span class="text-slate-400 text-[11px] font-medium hidden lg:inline">Create a visual:</span>
+<button class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition" type="button">
+<span class="mr-1 text-slate-500">T</span> Text design <span class="ml-1 text-slate-400 text-[10px]">1 credit</span>
+</button>
+<button class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition" type="button">
+<svg class="w-3 h-3 mr-1 text-slate-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                      Stock photo <span class="ml-1 text-slate-400 text-[10px]">1 credit</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</article>
+<!-- END: Card 1 -->
+<!-- BEGIN: Card 2 - TikTok (Slow Fermentation Craft) -->
+<article class="p-5 bg-white rounded-2xl border border-slate-200/90 hover:border-slate-300 shadow-sm transition duration-200" data-purpose="pipeline-card">
+<div class="flex flex-col sm:flex-row gap-5">
+<!-- Required Visual Thumbnail Preview (Marble Thinker Style) -->
+<div class="relative w-full sm:w-44 md:w-48 h-40 sm:h-auto rounded-xl overflow-hidden shrink-0 bg-[#faf6ee] border border-amber-900/10 flex flex-col justify-between p-3 select-none">
+<!-- Tag -->
+<div class="flex items-center justify-between text-[9px] font-bold text-amber-900/60 tracking-wider">
+<span>#LAGOSSOURDOUGH</span>
+<span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+</div>
+<!-- Text Layout -->
+<div class="my-auto">
+<div class="text-[13px] font-extrabold text-[#2a1e17] leading-tight">
+                    Sourdough<br/><span class="font-serif italic font-medium text-amber-800">takes patience.</span>
+</div>
+</div>
+<!-- Thumbnail bottom with TikTok Badge -->
+<div class="flex items-end justify-between pt-1">
+<!-- Abstract Mini Art block -->
+<div class="w-9 h-7 rounded bg-[#eee3d1] border border-stone-300 flex items-center justify-center overflow-hidden">
+<div class="w-full h-full bg-gradient-to-b from-stone-200 to-amber-200/60 flex items-center justify-center text-[7px] font-mono text-stone-600">BATCH</div>
+</div>
+<!-- TikTok Pill -->
+<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-neutral-900 text-white shadow-xs">
+<svg class="w-2.5 h-2.5 mr-1 fill-current" viewbox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.24 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.86 1.47-.04 2.76-.98 3.22-2.35.28-.71.3-1.49.3-2.28V.02h-.01z"></path></svg>
+                    TikTok
+                  </span>
+</div>
+</div>
+<!-- Card Content Area -->
+<div class="flex-1 flex flex-col justify-between space-y-2.5">
+<!-- Timing Header & Scheduled Pill -->
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-2 text-xs font-semibold text-slate-700">
+<span>8:30 AM</span>
+<span class="text-slate-300">•</span>
+<span class="text-slate-900 font-bold">TikTok</span>
+</div>
+<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-600 border border-indigo-100">
+                    Scheduled
+                  </span>
+</div>
+<!-- Post Copy / Headline & Body -->
+<div>
+<h3 class="text-sm md:text-[15px] font-bold text-slate-900 leading-snug">
+                    Slow fermentation craft
+                  </h3>
+<p class="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
+                    Good bread takes time. We never rush the sourdough culture or the morning bake. Most people book travel completely backwards. Here's the right order: Set your total budget FIRST, before you pick a...
+                  </p>
+</div>
+<!-- Info Hint -->
+<div class="flex items-center text-[11px] text-slate-500 space-x-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+<svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="9" stroke-width="2"></circle>
+<path d="M12 8v.01M12 11v5" stroke-linecap="round" stroke-width="2"></path>
+</svg>
+<span class="truncate">Won't post automatically — only LinkedIn is supported so far. Post it yourself at this time.</span>
+</div>
+<!-- Campaign & Action Row with 'Needs a visual' alert -->
+<div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100">
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-1.5 text-xs font-medium text-slate-700">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+<span>Crumb &amp; Co.</span>
+</div>
+<button class="flex items-center space-x-1 text-xs font-semibold text-slate-700 hover:text-indigo-600 transition" type="button">
+<svg class="w-3.5 h-3.5" fill="currentColor" viewbox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.24 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.86 1.47-.04 2.76-.98 3.22-2.35.28-.71.3-1.49.3-2.28V.02h-.01z"></path></svg>
+<span>Edit Content</span>
+</button>
+</div>
+<!-- Visual Generation Actions with warning badge -->
+<div class="flex items-center space-x-2 text-xs">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200">
+<svg class="w-3 h-3 mr-1 text-amber-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                      Needs a visual
+                    </span>
+<button class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition" type="button">
+<span class="mr-1 text-slate-500">T</span> Text design <span class="ml-1 text-slate-400 text-[10px]">1 credit</span>
+</button>
+<button class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition" type="button">
+<svg class="w-3 h-3 mr-1 text-slate-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                      Stock photo <span class="ml-1 text-slate-400 text-[10px]">1 credit</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</article>
+<!-- END: Card 2 -->
+<!-- BEGIN: Card 3 - Instagram (Weekend Brioche Batch / Shimmer In-Progress) -->
+<article class="p-5 bg-white rounded-2xl border border-slate-200/90 hover:border-slate-300 shadow-sm transition duration-200" data-purpose="pipeline-card">
+<div class="flex flex-col sm:flex-row gap-5">
+<!-- Required Visual Thumbnail Preview: In-progress Generating State -->
+<div class="relative w-full sm:w-44 md:w-48 h-40 sm:h-auto rounded-xl overflow-hidden shrink-0 bg-[#fdf9f2] border border-amber-900/10 flex flex-col justify-between items-center p-3 select-none">
+<div class="w-full flex justify-between items-center text-[9px] font-bold text-amber-900/40 tracking-wider">
+<span>#WEEKENDSPECIAL</span>
+<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+</div>
+<!-- Shimmer / Spinner Center -->
+<div class="flex flex-col items-center justify-center my-auto space-y-2">
+<div class="w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+<span class="text-[11px] font-semibold text-amber-900/80">Making the image...</span>
+</div>
+<!-- Instagram Badge at bottom -->
+<div class="w-full flex items-center justify-between pt-1">
+<span class="text-[9px] font-medium text-amber-700/60">Processing style</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white shadow-xs">
+<svg class="w-2.5 h-2.5 mr-1 fill-current" viewbox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"></path></svg>
+                    Instagram
+                  </span>
+</div>
+</div>
+<!-- Card Content Area -->
+<div class="flex-1 flex flex-col justify-between space-y-2.5">
+<!-- Timing Header & Scheduled Pill -->
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-2 text-xs font-semibold text-slate-700">
+<span>10:00 AM</span>
+<span class="text-slate-300">•</span>
+<span class="text-slate-900 font-bold">Instagram</span>
+</div>
+<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-600 border border-indigo-100">
+                    Scheduled
+                  </span>
+</div>
+<!-- Post Copy / Headline & Body -->
+<div>
+<h3 class="text-sm md:text-[15px] font-bold text-slate-900 leading-snug">
+                    Weekend brioche batch
+                  </h3>
+<p class="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
+                    Hand-laminated butter croissants and golden brioche, warm from the hearth oven. 5 budget travel hacks that actually moved the needle 🧠✈️ Not the obvious stuff. Not "cook your own meals"...
+                  </p>
+</div>
+<!-- Info Hint -->
+<div class="flex items-center text-[11px] text-slate-500 space-x-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+<svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="9" stroke-width="2"></circle>
+<path d="M12 8v.01M12 11v5" stroke-linecap="round" stroke-width="2"></path>
+</svg>
+<span class="truncate">Won't post automatically — only LinkedIn is supported so far. Post it yourself at this time.</span>
+</div>
+<!-- Campaign & Action Row -->
+<div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100">
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-1.5 text-xs font-medium text-slate-700">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+<span>Crumb &amp; Co.</span>
+</div>
+<button class="flex items-center space-x-1 text-xs font-semibold text-slate-700 hover:text-indigo-600 transition" type="button">
+<svg class="w-3.5 h-3.5 text-pink-600" fill="currentColor" viewbox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069z"></path></svg>
+<span>Edit Content</span>
+</button>
+</div>
+<!-- Visual Generation Actions -->
+<div class="flex items-center space-x-2 text-xs">
+<span class="text-indigo-600 text-xs font-medium hover:underline cursor-pointer">Use a different style</span>
+<button class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition" type="button">
+<span class="mr-1 text-slate-500">T</span> Text design <span class="ml-1 text-slate-400 text-[10px]">1 credit</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</article>
+<!-- END: Card 3 -->
+<!-- BEGIN: Card 4 - LinkedIn (Flour & Hearth Story) -->
+<article class="p-5 bg-white rounded-2xl border border-slate-200/90 hover:border-slate-300 shadow-sm transition duration-200" data-purpose="pipeline-card">
+<div class="flex flex-col sm:flex-row gap-5">
+<!-- Required Visual Thumbnail Preview (Marble Thinker Style) -->
+<div class="relative w-full sm:w-44 md:w-48 h-40 sm:h-auto rounded-xl overflow-hidden shrink-0 bg-[#faf6ef] border border-amber-900/10 flex flex-col justify-between p-3 select-none">
+<!-- Tag -->
+<div class="flex items-center justify-between text-[9px] font-bold text-amber-900/60 tracking-wider">
+<span>#HEARTHANDFLOUR</span>
+<span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+</div>
+<!-- Text Layout -->
+<div class="my-auto">
+<div class="text-[14px] font-extrabold text-slate-900 leading-tight">
+                    Post less.<br/><span class="font-serif italic font-bold text-amber-900">Mean it.</span>
+</div>
+</div>
+<!-- Bottom with Statue collage accent + LinkedIn Badge -->
+<div class="flex items-end justify-between pt-1">
+<!-- Abstract statue classical bust accent -->
+<div class="w-9 h-7 rounded bg-[#ebe2cf] border border-amber-300/40 flex items-center justify-center shadow-xs overflow-hidden">
+<div class="w-full h-full bg-gradient-to-t from-stone-400/50 to-stone-100 flex items-end justify-center">
+<div class="w-3 h-4 bg-stone-500/30 rounded-t-full"></div>
+</div>
+</div>
+<!-- LinkedIn Pill Badge -->
+<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#0077B5] text-white shadow-xs">
+<svg class="w-2.5 h-2.5 mr-1 fill-current" viewbox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"></path></svg>
+                    LinkedIn
+                  </span>
+</div>
+</div>
+<!-- Card Content Area -->
+<div class="flex-1 flex flex-col justify-between space-y-2.5">
+<!-- Timing Header & Auto-Posting Pill -->
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-2 text-xs font-semibold text-slate-700">
+<span>11:30 AM</span>
+<span class="text-slate-300">•</span>
+<span class="text-[#0077B5] font-bold">LinkedIn</span>
+</div>
+<div class="flex items-center space-x-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Auto-Publish Active
+                    </span>
+</div>
+</div>
+<!-- Post Copy / Headline & Body -->
+<div>
+<h3 class="text-sm md:text-[15px] font-bold text-slate-900 leading-snug">
+                    Flour &amp; hearth story
+                  </h3>
+<p class="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
+                    Simplicity on the shelf. Just whole grains, sea salt, water, and warm wood fire. Authentic culinary heritage created daily for Ikoyi and Victoria Island food enthusiasts.
+                  </p>
+</div>
+<!-- LinkedIn Auto-Publish note -->
+<div class="flex items-center text-[11px] text-emerald-800 space-x-1.5 bg-emerald-50/70 px-2.5 py-1.5 rounded-lg border border-emerald-100">
+<svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="truncate">Scheduled for automated direct publishing through official LinkedIn Content API.</span>
+</div>
+<!-- Campaign & Action Row -->
+<div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100">
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-1.5 text-xs font-medium text-slate-700">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+<span>Crumb &amp; Co.</span>
+</div>
+<button class="flex items-center space-x-1 text-xs font-semibold text-slate-700 hover:text-indigo-600 transition" type="button">
+<svg class="w-3.5 h-3.5 text-[#0077B5]" fill="currentColor" viewbox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"></path></svg>
+<span>Edit Content</span>
+</button>
+</div>
+<!-- Visual Generation Actions -->
+<div class="flex items-center space-x-2 text-xs">
+<span class="text-slate-400 text-[11px] font-medium hidden lg:inline">Create a visual:</span>
+<button class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition" type="button">
+<span class="mr-1 text-slate-500">T</span> Text design <span class="ml-1 text-slate-400 text-[10px]">1 credit</span>
+</button>
+<button class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition" type="button">
+<svg class="w-3 h-3 mr-1 text-slate-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                      Stock photo <span class="ml-1 text-slate-400 text-[10px]">1 credit</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</article>
+<!-- END: Card 4 -->
+</div>
+<!-- END: Pipeline Posts Cards List -->
+</main>
+<!-- END: Modal Main Pipeline Content -->
+</div>
+<!-- END: Pipeline Details Dialog -->
+</div>
+<!-- END: Modal Backdrop Container -->
+</body></html>

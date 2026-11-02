@@ -67,30 +67,38 @@ export function tonesOf(img: Img): [string, string] {
   return photoTones(ctx.getImageData(0, 0, 24, 24).data);
 }
 
+/** Every picture a design uses: its photo background and its picture layers */
+const picturesOf = (doc: DesignDoc): Pick<PhotoBackground, 'photoId' | 'previewUrl'>[] => [
+  ...(doc.background.kind === 'photo' ? [doc.background] : []),
+  ...(doc.images ?? []).map((i) => ({ photoId: i.photoId })),
+];
+
 /** The loaded photos a design needs (empty until they arrive) */
 export function usePhotoImages(doc: DesignDoc): PhotoImages {
-  const bg = doc.background.kind === 'photo' ? doc.background : null;
-  const photoId = bg?.photoId;
-  const previewUrl = bg?.previewUrl;
+  const pictures = picturesOf(doc);
+  const key = pictures.map((p) => `${p.photoId}|${p.previewUrl ?? ''}`).join(',');
   const [images, setImages] = useState<PhotoImages>({});
   useEffect(() => {
-    if (!photoId) return;
     let live = true;
-    loadPhoto({ photoId, previewUrl }).then(
-      (img) => live && setImages((m) => (m[photoId] === img ? m : { ...m, [photoId]: img })),
-      () => undefined
-    );
+    for (const part of key ? key.split(',') : []) {
+      const [photoId, previewUrl] = part.split('|');
+      loadPhoto({ photoId, previewUrl: previewUrl || undefined }).then(
+        (img) => live && setImages((m) => (m[photoId] === img ? m : { ...m, [photoId]: img })),
+        () => undefined
+      );
+    }
     return () => {
       live = false;
     };
-  }, [photoId, previewUrl]);
+  }, [key]);
   return images;
 }
 
 /** Every photo a design needs, loaded, for making the final image */
 export async function photosFor(doc: DesignDoc): Promise<PhotoImages> {
-  if (doc.background.kind !== 'photo') return {};
-  return { [doc.background.photoId]: await loadPhoto(doc.background) };
+  const out: PhotoImages = {};
+  for (const p of picturesOf(doc)) out[p.photoId] = await loadPhoto(p);
+  return out;
 }
 
 /** Pixabay results that have been copied to the user's storage, by their preview id */
