@@ -21,7 +21,7 @@ export const EXPORT_WIDTH: Partial<Record<keyof typeof FORMATS, number>> = { lan
 export type FormatId = keyof typeof FORMATS;
 export const FORMAT_IDS = Object.keys(FORMATS) as FormatId[];
 
-export const FONT_IDS = ['anton', 'bebas', 'archivo', 'jakarta', 'serif'] as const;
+export const FONT_IDS = ['anton', 'bebas', 'archivo', 'jakarta', 'serif', 'script'] as const;
 export type FontId = (typeof FONT_IDS)[number];
 
 const hex = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Use a colour like #16A34A');

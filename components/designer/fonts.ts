@@ -1,4 +1,4 @@
-import { Anton, Archivo_Black, Bebas_Neue, DM_Serif_Display, Plus_Jakarta_Sans } from 'next/font/google';
+import { Anton, Archivo_Black, Bebas_Neue, DM_Serif_Display, Plus_Jakarta_Sans, Yellowtail } from 'next/font/google';
 import type { FontFamilies } from '@/lib/design/render';
 import type { FontId } from '@/lib/design/types';
 
@@ -6,6 +6,8 @@ const anton = Anton({ subsets: ['latin'], weight: '400' });
 const bebas = Bebas_Neue({ subsets: ['latin'], weight: '400' });
 const archivo = Archivo_Black({ subsets: ['latin'], weight: '400' });
 const serif = DM_Serif_Display({ subsets: ['latin'], weight: '400' });
+// A brush script for the word written over bold type ("parabéns", "they")
+const script = Yellowtail({ subsets: ['latin'], weight: '400' });
 const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], weight: ['400', '600', '700', '800'] });
 
 export const FONT_FAMILIES: FontFamilies = {
@@ -14,6 +16,7 @@ export const FONT_FAMILIES: FontFamilies = {
   archivo: archivo.style.fontFamily,
   jakarta: jakarta.style.fontFamily,
   serif: serif.style.fontFamily,
+  script: script.style.fontFamily,
 };
 
 export const FONT_OPTIONS: { id: FontId; name: string }[] = [
@@ -22,6 +25,7 @@ export const FONT_OPTIONS: { id: FontId; name: string }[] = [
   { id: 'archivo', name: 'Archivo Black' },
   { id: 'jakarta', name: 'Plus Jakarta Sans' },
   { id: 'serif', name: 'DM Serif' },
+  { id: 'script', name: 'Yellowtail (script)' },
 ];
 
 let ready: Promise<void> | null = null;

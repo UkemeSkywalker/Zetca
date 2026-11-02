@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { giantWord, recipeById, recipeColors, RECIPES } from '@/lib/design/recipes';
+import { FAMILY_NAMES, giantWord, recipeById, recipeColors, RECIPES } from '@/lib/design/recipes';
 import { DesignDocSchema, type PhotoBackground } from '@/lib/design/types';
 import { contrastRatio } from '@/lib/design/contrast';
 
@@ -25,6 +25,20 @@ describe('style recipes', () => {
         expect(DesignDocSchema.safeParse(doc).success).toBe(true);
         expect(doc.styleId).toBe(r.id);
       }
+    }
+  });
+
+  it('has all 19 styles from the reference set, each with its own id and a known family', () => {
+    expect(RECIPES).toHaveLength(19);
+    expect(new Set(RECIPES.map((r) => r.id)).size).toBe(19);
+    for (const r of RECIPES) expect(FAMILY_NAMES[r.family]).toBeTruthy();
+  });
+
+  it('puts words behind a cut-out in every giant-word style', () => {
+    for (const r of RECIPES.filter((x) => x.cutout)) {
+      const doc = r.build({ text: r.example, format: 'portrait', photo, colors: r.colors, cutout: { photoId: 'cut', width: 864, height: 1152 } });
+      expect(doc.layers.some((l) => l.behind)).toBe(true);
+      expect(doc.images).toHaveLength(1);
     }
   });
 
