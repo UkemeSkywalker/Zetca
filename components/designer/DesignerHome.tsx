@@ -161,6 +161,25 @@ export function DesignerHome() {
         </div>
       </section>
 
+      <Link
+        href="/dashboard/designer/styles"
+        className="group flex flex-col sm:flex-row sm:items-center gap-4 rounded-2xl bg-[#0B0B0F] p-5 text-white hover:ring-2 hover:ring-primary transition"
+      >
+        <div className="flex -space-x-6 shrink-0" aria-hidden>
+          {['marble-thinker', 'word-behind', 'mono-studio', 'celebration-script'].map((id, i) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={id} src={`/designer/styles/${id}.jpg`} alt="" className="h-20 w-16 rounded-lg object-cover ring-2 ring-[#0B0B0F]" style={{ transform: `rotate(${(i - 1.5) * 4}deg)` }} />
+          ))}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-lg font-bold">Style library</p>
+          <p className="text-sm text-white/70">19 ready-made looks. Pick one and every post follows it, with new words and a new image each time.</p>
+        </div>
+        <span className="inline-flex items-center gap-1 text-sm font-semibold text-white">
+          See the styles <Icon icon="lucide:arrow-right" className="w-4 h-4 transition group-hover:translate-x-0.5" aria-hidden />
+        </span>
+      </Link>
+
       <section aria-labelledby="mine-title" className="space-y-5">
         <div className="flex items-center justify-between">
           <h2 id="mine-title" className="text-xl font-bold font-heading text-[#0B1C30]">

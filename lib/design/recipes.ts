@@ -542,9 +542,10 @@ export const RECIPES: StyleRecipe[] = [
         background: photoBg(photo),
         layers: [
           ...corner('footer', 'footer', t.footer, 'tl', h, colors.accent, 24),
-          text({ id: 'headline', role: 'headline', text: t.headline, x: M, y: h * 0.12, width: 1080 - M * 2, height: h * 0.16, size: 110, font: 'jakarta', weight: 800, color: colors.ink, align: 'center', lineHeight: 0.98, letterSpacing: -0.03 }),
-          ...(t.kicker ? [text({ id: 'kicker', role: 'kicker', text: t.kicker, x: M, y: h * 0.16, width: 1080 * 0.4, height: 130, size: 120, font: 'script', weight: 400, color: colors.accent })] : []),
-          ...(t.body ? [text({ id: 'body', role: 'body', text: t.body, x: 1080 * 0.6, y: h * 0.36, width: 1080 * 0.4 - M, height: 90, size: 30, weight: 700, color: colors.ink, lineHeight: 1.15 })] : []),
+          // The script word sits just above the headline's first line, overlapping it a little
+          ...(t.kicker ? [text({ id: 'kicker', role: 'kicker', text: t.kicker, x: M + 20, y: h * 0.07, width: 1080 * 0.4, height: 120, size: 100, font: 'script', weight: 400, color: colors.accent })] : []),
+          text({ id: 'headline', role: 'headline', text: t.headline, x: M, y: h * 0.14, width: 1080 - M * 2, height: h * 0.16, size: 110, font: 'jakarta', weight: 800, color: colors.ink, align: 'center', lineHeight: 0.98, letterSpacing: -0.03 }),
+          ...corner('body', 'body', t.body, 'tr', h, colors.ink, 24),
         ],
       };
     },
