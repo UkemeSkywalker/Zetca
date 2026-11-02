@@ -103,10 +103,16 @@ export function getAiCredits() {
 export type { VideoQuality } from '@/lib/billing/aiModels';
 import type { VideoQuality } from '@/lib/billing/aiModels';
 
-export function startAiJob(kind: 'image' | 'video', prompt: string, format: FormatId, model?: string, quality?: VideoQuality) {
+/** For style recipes: cut the subject out, and send the recipe's own image prompt as is */
+export interface AiJobOptions {
+  cutout?: 'green' | 'magenta' | 'blue';
+  rawPrompt?: boolean;
+}
+
+export function startAiJob(kind: 'image' | 'video', prompt: string, format: FormatId, model?: string, quality?: VideoQuality, options: AiJobOptions = {}) {
   return call<{ job: PublicAiJob; credits: CreditBalance }>('/api/designs/ai', {
     method: 'POST',
-    body: JSON.stringify({ kind, prompt, format, ...(model ? { model } : {}), ...(quality ? { quality } : {}) }),
+    body: JSON.stringify({ kind, prompt, format, ...(model ? { model } : {}), ...(quality ? { quality } : {}), ...options }),
   });
 }
 

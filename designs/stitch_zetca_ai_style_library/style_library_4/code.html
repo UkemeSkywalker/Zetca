@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"on-tertiary-container":"#67f4b7","primary-fixed-dim":"#c3c0ff","on-primary-fixed":"#0f0069","surface-container-lowest":"#ffffff","inverse-primary":"#c3c0ff","inverse-on-surface":"#edf1f6","secondary-fixed":"#dce2f6","primary-fixed":"#e2dfff","tertiary-container":"#006e4b","secondary-container":"#d9dff4","primary":"#3525cd","surface-container-high":"#e4e9ed","error-container":"#ffdad6","surface-bright":"#f6faff","on-secondary-fixed":"#151b2a","on-tertiary-fixed-variant":"#005236","primary-container":"#4f46e5","surface-dim":"#d6dadf","surface-variant":"#dfe3e8","surface-container":"#eaeef3","on-secondary-container":"#5c6274","background":"#f6faff","outline":"#777587","surface":"#f6faff","on-primary":"#ffffff","inverse-surface":"#2c3135","secondary":"#585e6f","on-secondary":"#ffffff","on-tertiary":"#ffffff","on-primary-fixed-variant":"#3323cc","surface-container-low":"#f0f4f9","on-background":"#171c20","surface-tint":"#4d44e3","on-error":"#ffffff","on-surface-variant":"#464555","on-error-container":"#93000a","error":"#ba1a1a","secondary-fixed-dim":"#c0c6da","outline-variant":"#c7c4d8","on-surface":"#171c20","tertiary-fixed-dim":"#4edea3","surface-container-highest":"#dfe3e8","tertiary-fixed":"#6ffbbe","tertiary":"#005338","on-tertiary-fixed":"#002113","on-secondary-fixed-variant":"#404757","on-primary-container":"#dad7ff"},borderRadius:{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},spacing:{"space-md":"1rem","gutter":"1.5rem","margin":"2rem","gutter-mobile":"1rem","space-sm":"0.5rem","space-lg":"1.5rem","space-xl":"2rem","margin-mobile":"1rem","space-xs":"0.25rem"},fontFamily:{"label-sm":["Plus Jakarta Sans"],"headline-xl":["Plus Jakarta Sans"],"headline-lg":["Plus Jakarta Sans"],"body-md":["Plus Jakarta Sans"],"label-lg":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"],"body-lg":["Plus Jakarta Sans"],"headline-lg-mobile":["Plus Jakarta Sans"],"headline-xl-mobile":["Plus Jakarta Sans"],"headline-sm":["Plus Jakarta Sans"],"body-sm":["Plus Jakarta Sans"],"label-md":["Plus Jakarta Sans"]},fontSize:{"label-sm":["11px",{lineHeight:"14px",letterSpacing:"0.04em",fontWeight:"700"}],"headline-xl":["36px",{lineHeight:"44px",letterSpacing:"-0.02em",fontWeight:"700"}],"headline-lg":["28px",{lineHeight:"36px",letterSpacing:"-0.02em",fontWeight:"700"}],"body-md":["14px",{lineHeight:"20px",fontWeight:"400"}],"label-lg":["14px",{lineHeight:"20px",fontWeight:"600"}],"headline-md":["20px",{lineHeight:"28px",letterSpacing:"-0.01em",fontWeight:"600"}],"body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],"headline-lg-mobile":["22px",{lineHeight:"30px",letterSpacing:"-0.01em",fontWeight:"600"}],"headline-xl-mobile":["28px",{lineHeight:"36px",letterSpacing:"-0.01em",fontWeight:"700"}],"headline-sm":["16px",{lineHeight:"24px",fontWeight:"600"}],"body-sm":["13px",{lineHeight:"18px",fontWeight:"400"}],"label-md":["12px",{lineHeight:"16px",letterSpacing:"0.02em",fontWeight:"600"}]}}}};</script></head><body class="bg-surface text-on-surface font-body-md text-body-md antialiased"><aside class="fixed left-0 top-0 h-screen w-[248px] bg-[#0B1220] z-50 flex flex-col justify-between select-none"><div class="flex flex-col"><div class="h-[78px] px-space-lg flex items-center gap-3"><div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#4F46E5] to-[#2563EB] flex items-center justify-center shadow-md shrink-0"><span class="material-symbols-outlined text-white text-[20px]">layers</span></div><div class="flex flex-col justify-center min-w-0"><div class="flex items-center gap-1 leading-none"><span class="font-headline-sm text-headline-sm font-bold tracking-tight text-white">Zetca</span><span class="w-1.5 h-1.5 rounded-full bg-primary-container inline-block"></span></div><span class="text-[10px] uppercase font-bold tracking-widest text-[#64748B] mt-1">CONTENT OS</span></div></div><div class="px-space-md pt-space-xs pb-space-sm"><div class="px-space-sm py-space-xs text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Platform Suite</div><nav class="mt-space-xs flex flex-col gap-1" data-active-classes="bg-primary-container text-white font-semibold rounded-[10px]"><a class="flex items-center gap-3 px-space-sm py-2 rounded-[10px] text-[#94A3B8] hover:text-white hover:bg-white/5 transition-all" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span class="font-body-md text-body-md">Dashboard</span></a><a class="flex items-center gap-3 px-space-sm py-2 rounded-[10px] text-[#94A3B8] hover:text-white hover:bg-white/5 transition-all" data-path="strategist" href="#"><span class="material-symbols-outlined text-[18px]">psychology</span><span class="font-body-md text-body-md">Strategist</span></a><a class="flex items-center gap-3 px-space-sm py-2 rounded-[10px] text-[#94A3B8] hover:text-white hover:bg-white/5 transition-all" data-path="copywriter" href="#"><span class="material-symbols-outlined text-[18px]">edit_note</span><span class="font-body-md text-body-md">Copywriter</span></a><a class="flex items-center gap-3 px-space-sm py-2 rounded-[10px] text-[#94A3B8] hover:text-white hover:bg-white/5 transition-all" data-path="scheduler" href="#"><span class="material-symbols-outlined text-[18px]">calendar_today</span><span class="font-body-md text-body-md">Scheduler</span></a><a aria-current="page" class="flex items-center gap-3 px-space-sm py-2 transition-all bg-primary-container text-white font-semibold rounded-[10px]" data-path="designer" href="#"><span class="material-symbols-outlined text-[18px]">palette</span><span class="font-body-md text-body-md">Designer</span></a><a class="flex items-center gap-3 px-space-sm py-2 rounded-[10px] text-[#94A3B8] hover:text-white hover:bg-white/5 transition-all" data-path="publisher" href="#"><span class="material-symbols-outlined text-[18px]">send</span><span class="font-body-md text-body-md">Publisher</span></a><a class="flex items-center gap-3 px-space-sm py-2 rounded-[10px] text-[#94A3B8] hover:text-white hover:bg-white/5 transition-all" data-path="analysis" href="#"><span class="material-symbols-outlined text-[18px]">analytics</span><span class="font-body-md text-body-md">Analysis</span></a></nav></div></div><div class="px-space-md pb-space-lg"><nav class="flex flex-col gap-1 border-t border-[#1E293B] pt-space-md" data-active-classes="bg-primary-container text-white font-semibold rounded-[10px]"><a class="flex items-center gap-3 px-space-sm py-2 rounded-[10px] text-[#94A3B8] hover:text-white hover:bg-white/5 transition-all" data-path="billing" href="#"><span class="material-symbols-outlined text-[18px]">credit_card</span><span class="font-body-md text-body-md">Billing</span></a><a class="flex items-center gap-3 px-space-sm py-2 rounded-[10px] text-[#94A3B8] hover:text-white hover:bg-white/5 transition-all" data-path="profile" href="#"><span class="material-symbols-outlined text-[18px]">tune</span><span class="font-body-md text-body-md">Profile</span></a></nav></div></aside><div class="pl-[248px]"><header class="fixed top-0 left-[248px] right-0 h-[78px] bg-surface-container-lowest border-b border-[#E2E8F0] z-40 flex items-center justify-between px-margin"><div class="flex items-center w-full max-w-[360px]"><div class="relative w-full"><span class="material-symbols-outlined text-[#777587] text-[20px] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none">search</span><input class="w-full h-11 pl-11 pr-4 bg-surface rounded-xl border border-[#E2E8F0] text-body-sm font-body-sm text-[#0B1C30] placeholder-[#777587] focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-[#EEF2FF] transition-all" placeholder="Search styles, templates, creators..." type="text"/></div></div><div class="flex items-center gap-space-md"><div class="h-8 px-3 rounded-full bg-[#EEF2FF] flex items-center gap-1.5 border border-[#E0E7FF]"><span class="material-symbols-outlined text-primary-container text-[16px]">monetization_on</span><span class="font-label-md text-label-md text-primary-container">1,450 credits</span></div><button class="w-10 h-10 rounded-xl flex items-center justify-center text-[#464555] hover:bg-[#EEF2FF] hover:text-primary-container transition-all" type="button"><span class="material-symbols-outlined text-[20px]">mail</span></button><button class="relative w-10 h-10 rounded-xl flex items-center justify-center text-[#464555] hover:bg-[#EEF2FF] hover:text-primary-container transition-all" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-error border-2 border-surface-container-lowest"></span></button><div class="h-7 w-px bg-[#E2E8F0] mx-0.5"></div><div class="flex items-center gap-3 pl-1"><div class="w-9 h-9 rounded-full bg-primary-container text-white flex items-center justify-center font-label-lg text-label-lg shadow-sm">AO</div><div class="flex flex-col text-left"><span class="font-label-lg text-label-lg leading-tight text-[#0B1C30]">Adaeze Okafor</span><span class="text-[11px] leading-tight text-[#777587] font-medium">Founder</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center hidden"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-[78px] min-h-screen bg-[#EEF2F7] px-margin py-margin"><div class="flex flex-col w-full">
+<!-- Top Heading Section -->
+<div class="flex flex-col gap-1 mb-8">
+<h1 class="font-headline-xl text-headline-xl text-[#0B1C30] tracking-tight">Pick a style</h1>
+<p class="font-body-md text-body-md text-outline">Every post follows it, with new words and a new image each time.</p>
+</div>
+<!-- Filter Toolbar Row -->
+<div class="flex items-center justify-between gap-4 flex-wrap pb-6 border-b border-surface-variant/60 mb-8">
+<!-- Family Filter Chips -->
+<div class="flex items-center gap-2 flex-wrap" id="family-filters">
+<button class="family-filter-btn px-4 py-1.5 rounded-full font-label-md text-label-md bg-primary-container text-on-primary shadow-sm transition-all" data-family="all" type="button">
+        All
+      </button>
+<button class="family-filter-btn px-4 py-1.5 rounded-full font-label-md text-label-md bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container transition-all" data-family="cutout" type="button">
+        Cutout on colour
+      </button>
+<button class="family-filter-btn px-4 py-1.5 rounded-full font-label-md text-label-md bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container transition-all" data-family="hero" type="button">
+        One-colour hero
+      </button>
+<button class="family-filter-btn px-4 py-1.5 rounded-full font-label-md text-label-md bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container transition-all" data-family="giant" type="button">
+        Giant word
+      </button>
+<button class="family-filter-btn px-4 py-1.5 rounded-full font-label-md text-label-md bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container transition-all" data-family="product" type="button">
+        Premium product
+      </button>
+<button class="family-filter-btn px-4 py-1.5 rounded-full font-label-md text-label-md bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container transition-all" data-family="celebration" type="button">
+        Campaign and celebration
+      </button>
+<button class="family-filter-btn px-4 py-1.5 rounded-full font-label-md text-label-md bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container transition-all" data-family="idea" type="button">
+        Big idea
+      </button>
+<button class="family-filter-btn px-4 py-1.5 rounded-full font-label-md text-label-md bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container transition-all" data-family="flyer" type="button">
+        Highlight and flyer
+      </button>
+</div>
+<!-- Brand Colours Toggle (Active state for Crumb & Co.) -->
+<div class="flex items-center gap-3 select-none ml-auto">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-[#0B1C30] font-semibold">Show in my brand colours</span>
+<!-- Crumb & Co. Active Badge Indicator -->
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FFF4E0] border border-[#E0A526]/40 shadow-xs">
+<div class="flex -space-x-1 items-center">
+<span class="w-2.5 h-2.5 rounded-full bg-[#FFF4E0] border border-[#4A2C1D]/20"></span>
+<span class="w-2.5 h-2.5 rounded-full bg-[#4A2C1D]"></span>
+<span class="w-2.5 h-2.5 rounded-full bg-[#E0A526]"></span>
+</div>
+<span class="font-label-sm text-[11px] text-[#4A2C1D] font-bold">Crumb &amp; Co. Active</span>
+</div>
+</div>
+<button aria-checked="true" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full bg-primary-container transition-colors duration-200 ease-in-out focus:outline-none shadow-sm" id="brand-toggle" role="switch" type="button">
+<span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface-container-lowest shadow-md transition duration-200 ease-in-out translate-x-5 mt-0.5" id="toggle-knob"></span>
+</button>
+</div>
+</div>
+<!-- Style Gallery Grid: 4 Columns -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 w-full">
+<!-- 1. Marble Thinker (Recolored to Crumb & Co.: #FFF4E0 background, #4A2C1D cocoa text & accents, #E0A526 mustard details) -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-300" data-category="cutout">
+<div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between p-4 bg-[#FFF4E0] text-[#4A2C1D] border border-[#E0A526]/20">
+<div class="flex items-start justify-between z-10">
+<p class="font-headline-sm text-headline-sm font-extrabold max-w-[140px] leading-tight text-[#4A2C1D]">Marketing is not advertising.</p>
+<div class="w-6 h-6 bg-[#4A2C1D] flex items-center justify-center rounded shadow-xs">
+<span class="material-symbols-outlined text-[#E0A526] text-[15px]">diamond</span>
+</div>
+</div>
+<!-- Center/Bottom Marble Thinker with Laptop graphic -->
+<div class="relative w-full h-44 mt-auto flex items-end justify-end">
+<div class="relative z-10 flex flex-col items-center">
+<!-- Marble Bust Motif (Bespoke Vector) -->
+<svg class="w-32 h-36 drop-shadow-xl" fill="none" viewbox="0 0 100 120">
+<path d="M50 15 C35 15 28 28 28 42 C28 58 35 68 45 74 L42 88 L58 88 L55 74 C65 68 72 58 72 42 C72 28 65 15 50 15 Z" fill="#FFFFFF"></path>
+<path d="M35 32 C38 25 46 22 55 22 C64 22 70 28 70 36 C68 42 62 44 58 45 C52 46 44 48 38 54 C35 48 33 40 35 32 Z" fill="#F1ECE1"></path>
+<circle cx="43" cy="45" fill="#4A2C1D" r="2.5"></circle>
+<circle cx="57" cy="45" fill="#4A2C1D" r="2.5"></circle>
+<path d="M47 52 Q50 56 53 52" stroke="#4A2C1D" stroke-linecap="round" stroke-width="2"></path>
+<path d="M38 62 Q50 70 62 62" stroke="#4A2C1D" stroke-linecap="round" stroke-width="3"></path>
+<!-- Laptop -->
+<path d="M25 90 L75 90 L85 105 L15 105 Z" fill="#4A2C1D"></path>
+<rect fill="#FDFBF7" height="24" rx="2" stroke="#4A2C1D" stroke-width="2" width="48" x="26" y="68"></rect>
+<circle cx="50" cy="80" fill="#E0A526" r="3"></circle>
+</svg>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1 z-10">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#E0A526] text-[#4A2C1D] font-bold tracking-wider uppercase">#ThinkDifferent</span>
+<span class="font-label-sm text-label-sm text-[#4A2C1D]/70 font-bold">01</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 px-1">
+<span class="font-label-lg text-label-lg text-[#0B1C30] truncate">Marble Thinker</span>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#EEF2FF] text-[#4F46E5]">
+<span class="material-symbols-outlined text-[12px]">auto_awesome</span> Needs AI image
+        </span>
+</div>
+</div>
+<!-- 2. Blueprint Thinker -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-300" data-category="cutout">
+<div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between p-4 bg-[#090D14] text-white">
+<!-- Blueprint Grid Pattern Overlay -->
+<div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: linear-gradient(to right, #38BDF8 1px, transparent 1px), linear-gradient(to bottom, #38BDF8 1px, transparent 1px); background-size: 20px 20px;"></div>
+<!-- Architectural Marks in corners -->
+<div class="absolute top-2 left-2 text-[#38BDF8] text-[9px] font-mono tracking-widest">+ 00.12.89</div>
+<div class="absolute top-2 right-2 text-[#38BDF8] text-[9px] font-mono">GRID//REV.A</div>
+<div class="mt-4 z-10">
+<p class="font-headline-sm text-headline-sm font-normal text-slate-100">Your brand deserves</p>
+<div class="inline-flex items-center mt-1 relative px-2.5 py-0.5 bg-[#00E5FF]/20 border border-[#00E5FF] rounded">
+<span class="absolute -top-1 -left-1 w-2 h-2 bg-[#00E5FF] rounded-xs"></span>
+<span class="absolute -top-1 -right-1 w-2 h-2 bg-[#00E5FF] rounded-xs"></span>
+<span class="absolute -bottom-1 -left-1 w-2 h-2 bg-[#00E5FF] rounded-xs"></span>
+<span class="absolute -bottom-1 -right-1 w-2 h-2 bg-[#00E5FF] rounded-xs"></span>
+<span class="italic font-headline-sm text-headline-sm text-white font-semibold">better content</span>
+</div>
+</div>
+<div class="relative w-full h-40 flex items-center justify-center z-10">
+<!-- Bust with die cut outline -->
+<div class="relative p-1 rounded-2xl ring-4 ring-white bg-slate-900/80 shadow-2xl">
+<svg class="w-28 h-32" fill="none" viewbox="0 0 100 120">
+<path d="M50 15 C35 15 28 28 28 42 C28 58 35 68 45 74 L42 88 L58 88 L55 74 C65 68 72 58 72 42 C72 28 65 15 50 15 Z" fill="#F1F5F9"></path>
+<path d="M35 32 C38 25 46 22 55 22 C64 22 70 28 70 36 C68 42 62 44 58 45 C52 46 44 48 38 54 C35 48 33 40 35 32 Z" fill="#94A3B8"></path>
+<circle cx="43" cy="45" fill="#475569" r="3"></circle>
+<circle cx="57" cy="45" fill="#475569" r="3"></circle>
+<path d="M44 65 Q50 68 56 65" stroke="#334155" stroke-width="3"></path>
+</svg>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] font-mono text-[#38BDF8] z-10">
+<span>SPEC: 1080x1350</span>
+<span>SCALE: 1:1</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 px-1">
+<span class="font-label-lg text-label-lg text-[#0B1C30] truncate">Blueprint Thinker</span>
+<span class="inline-flex items-center font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#10B981]">
+          Free
+        </span>
+</div>
+</div>
+<!-- 3. Sticker Portrait -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-300" data-category="cutout">
+<div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between p-4 bg-[#0F172A] text-white">
+<div class="text-center z-10">
+<span class="font-label-sm text-label-sm tracking-widest text-slate-400 uppercase">CREATOR SUITE</span>
+<h3 class="font-headline-sm text-headline-sm font-extrabold tracking-wider text-white">SOCIAL MEDIA MANAGER</h3>
+</div>
+<div class="relative my-auto flex items-center justify-center">
+<!-- Caricature woman sticker -->
+<div class="relative p-2 rounded-full border-4 border-dashed border-white bg-slate-800 shadow-2xl">
+<svg class="w-24 h-28" fill="none" viewbox="0 0 100 110">
+<circle cx="50" cy="45" fill="#FDE047" r="30"></circle>
+<!-- Red Retro Sunglasses -->
+<rect fill="#EF4444" height="14" rx="4" width="22" x="25" y="38"></rect>
+<rect fill="#EF4444" height="14" rx="4" width="22" x="53" y="38"></rect>
+<line stroke="#B91C1C" stroke-width="4" x1="47" x2="53" y1="45" y2="45"></line>
+<!-- Smile -->
+<path d="M40 60 Q50 68 60 60" stroke="#0F172A" stroke-linecap="round" stroke-width="3"></path>
+<!-- Camera in hand -->
+<rect fill="#3B82F6" height="20" rx="3" width="30" x="58" y="70"></rect>
+<circle cx="73" cy="80" fill="#1E293B" r="5"></circle>
+</svg>
+</div>
+<!-- Callout tags with arrows -->
+<div class="absolute -top-2 left-0 bg-yellow-400 text-slate-900 font-label-sm text-label-sm px-2 py-0.5 rounded-full shadow-md transform -rotate-6">
+            10x reach ↗
+          </div>
+<div class="absolute bottom-2 -left-2 bg-emerald-400 text-slate-900 font-label-sm text-label-sm px-2 py-0.5 rounded-full shadow-md transform rotate-3">
+            Viral hooks ★
+          </div>
+<div class="absolute top-8 -right-2 bg-pink-500 text-white font-label-sm text-label-sm px-2 py-0.5 rounded-full shadow-md transform 6">
+            Story master
+          </div>
+</div>
+<div class="text-center z-10">
+<span class="inline-block px-3 py-1 bg-white/10 rounded-full font-label-sm text-label-sm text-slate-300">#ContentStrategy</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 px-1">
+<span class="font-label-lg text-label-lg text-[#0B1C30] truncate">Sticker Portrait</span>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#EEF2FF] text-[#4F46E5]">
+<span class="material-symbols-outlined text-[12px]">auto_awesome</span> Needs AI image
+        </span>
+</div>
+</div>
+<!-- 4. Collage Zine -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-300" data-category="cutout">
+<div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between p-4 bg-[#FDFBF7] text-slate-900">
+<!-- Paper Noise simulation -->
+<div class="flex items-center justify-between border-b border-slate-300/70 pb-2">
+<span class="font-label-sm text-label-sm font-mono tracking-tight text-slate-500">ISSUE #42 // ZINE</span>
+<span class="font-label-sm text-label-sm font-serif italic text-red-600">authentic</span>
+</div>
+<div class="relative my-auto flex flex-col items-center">
+<div class="relative z-10">
+<!-- Chunky TV head on vintage body -->
+<div class="w-28 h-22 bg-[#2E1065] rounded-xl p-2 shadow-xl border-4 border-slate-800 flex flex-col items-center justify-center">
+<div class="w-full h-full bg-[#10B981] rounded flex items-center justify-center">
+<span class="font-headline-sm text-headline-sm font-extrabold text-[#064E3B] tracking-wider animate-pulse">IS A GENZ…</span>
+</div>
+</div>
+<!-- Vintage collar motif -->
+<div class="w-16 h-12 mx-auto bg-amber-100 rounded-b-xl border border-slate-300 shadow flex items-center justify-center">
+<span class="text-xs">👔</span>
+</div>
+</div>
+<h2 class="font-headline-sm text-headline-sm font-extrabold uppercase tracking-tight text-[#1E1B4B] text-center mt-3">
+            Social Media Manager
+          </h2>
+<svg class="w-12 h-6 text-red-500 mt-1" fill="none" viewbox="0 0 50 25">
+<path d="M10 5 Q25 20 40 10" stroke="currentColor" stroke-dasharray="2 2" stroke-width="2"></path>
+<polyline points="35,15 40,10 35,5" stroke="currentColor" stroke-width="2"></polyline>
+</svg>
+</div>
+<div class="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-2 border-t border-slate-200">
+<span>PARIS / NYC</span>
+<span>EST. 2024</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 px-1">
+<span class="font-label-lg text-label-lg text-[#0B1C30] truncate">Collage Zine</span>
+<span class="inline-flex items-center font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#10B981]">
+          Free
+        </span>
+</div>
+</div>
+<!-- 5. Mono Studio (Recolored to Crumb & Co. Deep Cocoa #4A2C1D with warm cream #FFF4E0 & mustard #E0A526 accents) -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-2xl p-3 shadow-xl -translate-y-1 ring-2 ring-primary-container/40 transition-all duration-300" data-category="hero">
+<div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between p-4 bg-[#4A2C1D] text-[#FFF4E0]">
+<!-- Top Right Bold Typography -->
+<div class="flex justify-between items-start">
+<span class="w-2 h-2 rounded-full bg-[#E0A526]"></span>
+<span class="font-headline-sm text-headline-sm font-black tracking-tight text-[#FFF4E0] uppercase">NOVA 7 PRO MAX</span>
+</div>
+<!-- Studio Graphic Motif in Crumb & Co tones -->
+<div class="relative my-auto flex flex-col items-center justify-center">
+<div class="w-28 h-40 bg-[#361E13] rounded-2xl shadow-2xl border-4 border-[#E0A526]/30 p-2 flex flex-col items-center justify-between">
+<div class="w-8 h-1 bg-[#FFF4E0]/40 rounded-full"></div>
+<!-- Hand holding cream phone with mustard icon -->
+<div class="w-16 h-24 bg-[#FFF4E0] rounded-xl shadow-lg p-1.5 flex flex-col items-center justify-center text-[#4A2C1D]">
+<span class="material-symbols-outlined text-[32px] text-[#E0A526]">smartphone</span>
+<span class="text-[8px] font-bold mt-1 text-[#4A2C1D]">5G SPEED</span>
+</div>
+<div class="w-4 h-4 rounded-full bg-[#E0A526]/30"></div>
+</div>
+</div>
+<div class="flex justify-between items-end">
+<span class="text-[11px] font-bold tracking-wider uppercase text-[#E0A526]">Special Edition</span>
+<span class="text-[10px] font-mono text-[#FFF4E0]/70">COCOA_2025</span>
+</div>
+<!-- ACTIVE HOVER STATE OVERLAY -->
+<div class="absolute inset-0 bg-[#25150E]/65 backdrop-blur-xs flex items-center justify-center z-30 transition-all">
+<button class="bg-[#FFF4E0] text-[#4A2C1D] font-headline-sm text-headline-sm font-bold text-xs px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-2 hover:scale-105 active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[#E0A526] text-[18px]">brush</span>
+            Use this style
+          </button>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 px-1">
+<span class="font-label-lg text-label-lg text-[#0B1C30] truncate">Mono Studio</span>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#EEF2FF] text-[#4F46E5]">
+<span class="material-symbols-outlined text-[12px]">auto_awesome</span> Needs AI image
+        </span>
+</div>
+</div>
+<!-- 6. Neon Lime Set -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-300" data-category="hero">
+<div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between p-4 bg-[#CCFF00] text-emerald-950">
+<div>
+<span class="font-label-sm text-label-sm tracking-wider uppercase text-emerald-900 font-bold">TECH ESSENTIALS</span>
+<h3 class="font-headline-sm text-headline-sm font-black text-emerald-950 leading-tight mt-1">Level up your gadgets</h3>
+</div>
+<!-- Floating metallic smartphone and cubes -->
+<div class="relative my-auto flex items-center justify-center">
+<div class="w-24 h-36 bg-gradient-to-tr from-slate-200 to-white rounded-2xl shadow-xl border border-white/60 p-2 flex flex-col items-center justify-between transform -rotate-6">
+<div class="w-6 h-1 bg-slate-400 rounded-full"></div>
+<span class="material-symbols-outlined text-[36px] text-emerald-600">bolt</span>
+<div class="w-2 h-2 rounded-full bg-slate-300"></div>
+</div>
+<!-- 3D translucent cube accent -->
+<div class="absolute -right-1 top-2 w-10 h-10 bg-white/40 backdrop-blur-sm rounded-lg border border-white/80 shadow-md transform rotate-12"></div>
+<div class="absolute -left-2 bottom-4 w-8 h-8 bg-emerald-900/10 rounded-full border border-emerald-900/20"></div>
+</div>
+<div class="flex items-center justify-between">
+<button class="bg-surface-container-lowest text-emerald-950 font-label-md text-label-md px-4 py-1.5 rounded-full shadow-sm hover:bg-slate-50 transition-all font-semibold" type="button">
+            Shop Now
+          </button>
+<span class="font-label-sm text-label-sm font-bold text-emerald-900">LIMITED</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 px-1">
+<span class="font-label-lg text-label-lg text-[#0B1C30] truncate">Neon Lime Set</span>
+<span class="inline-flex items-center font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#10B981]">
+          Free
+        </span>
+</div>
+</div>
+<!-- 7. Electric Blue Retail (Recolored to Crumb & Co. Deep Cocoa #4A2C1D, Warm Cream #FFF4E0 & Mustard #E0A526 highlights) -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-300" data-category="hero">
+<div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between p-4 bg-[#3E2316] text-[#FFF4E0]">
+<div>
+<div class="inline-block px-2 py-0.5 bg-[#FFF4E0]/15 rounded font-label-sm text-label-sm uppercase mb-1 text-[#FFF4E0]/90">Performance</div>
+<h2 class="font-headline-md text-headline-md font-black tracking-tight leading-tight text-[#FFF4E0]">Hold Greatness</h2>
+<span class="inline-block bg-[#E0A526] text-[#4A2C1D] font-headline-sm text-headline-sm font-black px-2 py-0.5 rounded mt-1">Everywhere</span>
+</div>
+<!-- Minimal 3D device visual with Crumb & Co tones -->
+<div class="relative my-auto flex items-center justify-center">
+<div class="w-32 h-28 rounded-2xl bg-[#FFF4E0]/10 backdrop-blur-md border border-[#FFF4E0]/20 shadow-2xl flex items-center justify-center relative">
+<span class="material-symbols-outlined text-[48px] text-[#FFF4E0]">memory</span>
+<div class="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-[#E0A526] text-[#4A2C1D] flex items-center justify-center text-[10px] font-bold shadow-lg">
+              NEW
+            </div>
+</div>
+</div>
+<!-- Curved cream footer bar -->
+<div class="bg-[#FFF4E0] text-[#4A2C1D] rounded-xl p-2.5 shadow-lg flex items-center justify-between">
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md font-bold truncate">Crumb &amp; Co. Bakery</span>
+<span class="text-[10px] text-[#4A2C1D]/70 font-medium">Fresh artisanal daily</span>
+</div>
+<div class="w-7 h-7 rounded-full bg-[#E0A526] text-[#4A2C1D] flex items-center justify-center shadow">
+<span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 px-1">
+<span class="font-label-lg text-label-lg text-[#0B1C30] truncate">Electric Blue Retail</span>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#EEF2FF] text-[#4F46E5]">
+<span class="material-symbols-outlined text-[12px]">auto_awesome</span> Needs AI image
+        </span>
+</div>
+</div>
+<!-- 8. Brand Red Offers (Recolored to Crumb & Co. Warm Mustard #E0A526 background, rich cocoa #4A2C1D details and cream #FFF4E0 accents) -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-300" data-category="hero">
+<div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between p-4 bg-[#E0A526] text-[#4A2C1D]">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-headline-sm font-extrabold uppercase text-[#4A2C1D]">ARTISAN CRUMB</span>
+<span class="material-symbols-outlined text-[20px] text-[#4A2C1D]">bakery_dining</span>
+</div>
+<!-- 3D Fluid Ribbon & Isometric Figure Motif in Cocoa & Cream -->
+<div class="relative my-auto flex flex-col items-center justify-center">
+<svg class="w-36 h-32 drop-shadow-xl" fill="none" viewbox="0 0 120 100">
+<path d="M10 70 C30 10 90 20 110 50 C120 70 80 90 40 80 C20 75 10 70 10 70 Z" fill="#D97706" stroke="#4A2C1D" stroke-width="3"></path>
+<path d="M25 60 C40 25 85 30 95 55" stroke="#FFF4E0" stroke-linecap="round" stroke-width="4"></path>
+<!-- Miniature figures on the ribbon -->
+<circle cx="50" cy="30" fill="#FFF4E0" r="4"></circle>
+<rect fill="#4A2C1D" height="8" rx="2" width="4" x="48" y="34"></rect>
+<circle cx="85" cy="50" fill="#FFF4E0" r="4"></circle>
+<rect fill="#4A2C1D" height="8" rx="2" width="4" x="83" y="54"></rect>
+</svg>
+<p class="font-headline-sm text-headline-sm font-bold text-center mt-2 text-[#4A2C1D]">
+            Fresh sourdough, baked every morning
+          </p>
+</div>
+<div class="flex items-center justify-between text-[10px] text-[#4A2C1D]/80 font-semibold">
+<span>SLOW FERMENTED</span>
+<span>Order online</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 px-1">
+<span class="font-label-lg text-label-lg text-[#0B1C30] truncate">Brand Red Offers</span>
+<span class="inline-flex items-center font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#10B981]">
+          Free
+        </span>
+</div>
+</div>
+<!-- 9. Word Behind -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-300" data-category="giant">
+<div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between p-4 bg-[#14261C] text-white">
+<!-- 4 Corner Editorial Markers -->
+<div class="flex justify-between text-[9px] font-mono text-[#FACC15] tracking-widest uppercase">
+<span>VOL. 04</span>
+<span>PARIS 24</span>
+</div>
+<!-- 3D Layering: Word Behind Head -->
+<div class="relative my-auto flex items-center justify-center w-full h-40">
+<!-- Huge yellow serif typography behind -->
+<span class="absolute font-serif text-[72px] font-black text-[#FACC15] select-none tracking-wider opacity-90 -top-2">
+            OOPS
+          </span>
+<!-- Seated figure with armchair & yellow tape in front -->
+<div class="relative z-10 w-28 h-32 bg-[#064E3B] rounded-2xl border border-emerald-700/60 shadow-2xl flex flex-col items-center justify-center p-2">
+<div class="w-10 h-10 rounded-full bg-[#F5D0C5] shadow-md border-2 border-emerald-950"></div>
+<div class="w-20 h-12 bg-emerald-900 rounded-t-xl mt-1 border-t-2 border-yellow-400"></div>
+<!-- Caution tape angle -->
+<div class="absolute inset-x-0 h-4 bg-[#FACC15] text-slate-900 text-[8px] font-bold font-mono uppercase flex items-center justify-center transform -rotate-12 shadow-lg">
+              CAUTION // LIVE POST
+            </div>
+</div>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="bg-white/10 backdrop-blur-md border border-white/20 px-3 py-1 rounded-full text-[11px] font-label-md text-white">
+            Read the caption ↗
+          </div>
+<div class="flex justify-between w-full text-[9px] font-mono text-[#FACC15] tracking-widest uppercase">
+<span>AUTUMN</span>
+<span>REF #902</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 px-1">
+<span class="font-label-lg text-label-lg text-[#0B1C30] truncate">Word Behind</span>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#EEF2FF] text-[#4F46E5]">
+<span class="material-symbols-outlined text-[12px]">auto_awesome</span> Needs AI image
+        </span>
+</div>
+</div>
+<!-- 10. Glow Numeral -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-300" data-category="giant">
+<div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between p-4 bg-gradient-to-b from-[#0B1229] via-[#0E1B38] to-[#050B1A] text-white">
+<div class="flex justify-between items-center text-xs text-blue-300">
+<span class="font-mono">SERIES XII</span>
+<span class="material-symbols-outlined text-[16px] text-blue-400">watch</span>
+</div>
+<!-- Immense Glowing 11 Numeral -->
+<div class="relative my-auto flex items-center justify-center w-full h-44">
+<div class="absolute text-[100px] font-black tracking-tight text-white/95 drop-shadow-[0_0_25px_rgba(59,130,246,0.8)] select-none">
+            11
+          </div>
+<!-- Confident woman figure holding smartwatch in front -->
+<div class="relative z-10 flex flex-col items-center">
+<div class="w-14 h-14 rounded-full bg-gradient-to-br from-amber-200 to-amber-400 border border-white/40 shadow-xl"></div>
+<div class="w-20 h-16 bg-slate-900/90 rounded-t-2xl mt-1 border-t border-blue-400/40 flex items-center justify-center">
+<div class="w-8 h-8 rounded-lg bg-blue-500 shadow-[0_0_12px_#3B82F6] flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[16px]">sensors</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Minimal glass feature icons -->
+<div class="grid grid-cols-3 gap-1 bg-white/5 backdrop-blur-md rounded-xl p-2 border border-white/10 text-center">
+<div class="flex flex-col items-center">
+<span class="material-symbols-outlined text-[14px] text-blue-400">ecg_heart</span>
+<span class="text-[9px] text-slate-300 mt-0.5">Cardio</span>
+</div>
+<div class="flex flex-col items-center border-x border-white/10">
+<span class="material-symbols-outlined text-[14px] text-blue-400">battery_charging_full</span>
+<span class="text-[9px] text-slate-300 mt-0.5">7 Days</span>
+</div>
+<div class="flex flex-col items-center">
+<span class="material-symbols-outlined text-[14px] text-blue-400">water_drop</span>
+<span class="text-[9px] text-slate-300 mt-0.5">50m</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 px-1">
+<span class="font-label-lg text-label-lg text-[#0B1C30] truncate">Glow Numeral</span>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#EEF2FF] text-[#4F46E5]">
+<span class="material-symbols-outlined text-[12px]">auto_awesome</span> Needs AI image
+        </span>
+</div>
+</div>
+<!-- 11. While Others Blur -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-300" data-category="giant">
+<div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between p-4 bg-slate-950 text-white">
+<!-- Street blur visual lines -->
+<div class="absolute inset-0 opacity-30 flex flex-col justify-around pointer-events-none">
+<div class="h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent w-full"></div>
+<div class="h-2 bg-gradient-to-r from-transparent via-yellow-500 to-transparent w-full"></div>
+<div class="h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent w-full"></div>
+</div>
+<div>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-slate-400">PERSPECTIVE</span>
+<h3 class="font-headline-sm text-headline-sm font-light text-slate-200">While others</h3>
+</div>
+<div class="relative my-auto flex flex-col items-center justify-center">
+<!-- Giant slanted BLUR with motion trail -->
+<div class="relative w-full flex items-center justify-center">
+<span class="absolute font-black italic text-5xl tracking-tighter text-[#FACC15]/20 transform -skew-x-12 -translate-x-4">BLUR</span>
+<span class="font-black italic text-5xl tracking-tighter text-[#FACC15] transform -skew-x-12">BLUR</span>
+</div>
+<!-- Razor sharp woman with red carton motif -->
+<div class="relative z-10 w-20 h-24 bg-slate-900 rounded-full border-2 border-white shadow-2xl flex flex-col items-center justify-center mt-2">
+<div class="w-8 h-8 rounded-full bg-amber-200 border border-white"></div>
+<!-- Red fry carton -->
+<div class="w-6 h-7 bg-red-600 rounded-b mt-1 flex items-center justify-center text-[10px] text-yellow-300 font-bold">
+              🍟
+            </div>
+</div>
+</div>
+<div class="border-t border-slate-800 pt-2 flex justify-between items-center">
+<span class="font-headline-sm text-headline-sm font-bold text-white">We make you clear</span>
+<span class="font-label-sm text-label-sm text-[#FACC15]">2025</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 px-1">
+<span class="font-label-lg text-label-lg text-[#0B1C30] truncate">While Others Blur</span>
+<span class="inline-flex items-center font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#10B981]">
+          Free
+        </span>
+</div>
+</div>
+<!-- 12. Sky Product -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-300" data-category="product">
+<div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between p-4 bg-gradient-to-b from-[#BAE6FD] via-[#E0F2FE] to-[#F0F9FF] text-sky-950">
+<div>
+<span class="font-label-sm text-label-sm font-bold uppercase tracking-widest text-sky-700">STUDIO DISPLAY</span>
+<div class="flex items-baseline gap-1 mt-0.5">
+<span class="font-headline-md text-headline-md font-light text-sky-900">Tablet</span>
+<span class="font-headline-md text-headline-md font-extrabold text-sky-950">11th Gen</span>
+</div>
+</div>
+<!-- Glass tablet reflecting sky reaching up from bottom -->
+<div class="relative my-auto flex flex-col items-center justify-end h-40">
+<div class="w-36 h-24 rounded-xl bg-white/70 backdrop-blur-md border border-white shadow-xl transform -rotate-3 p-1 flex flex-col justify-between">
+<div class="flex justify-between items-center px-1">
+<span class="text-[7px] text-sky-800 font-mono">RETINA PRO</span>
+<div class="w-1.5 h-1.5 rounded-full bg-sky-500"></div>
+</div>
+<div class="flex items-center justify-center">
+<span class="material-symbols-outlined text-[32px] text-sky-500">cloud</span>
+</div>
+<div class="h-1 w-12 bg-sky-200 rounded-full mx-auto"></div>
+</div>
+<!-- Stylized hand reaching up -->
+<div class="w-10 h-12 bg-amber-100 rounded-t-xl shadow-md border-t border-white mt-1"></div>
+</div>
+<!-- Three floating circular badges -->
+<div class="flex items-center justify-around pt-2 border-t border-sky-200/60">
+<div class="w-8 h-8 rounded-full bg-surface-container-lowest shadow-sm flex items-center justify-center text-sky-700">
+<span class="material-symbols-outlined text-[16px]">clock_loader_40</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-lowest shadow-sm flex items-center justify-center text-sky-700">
+<span class="material-symbols-outlined text-[16px]">speed</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-lowest shadow-sm flex items-center justify-center text-sky-700">
+<span class="material-symbols-outlined text-[16px]">stylus_note</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 px-1">
+<span class="font-label-lg text-label-lg text-[#0B1C30] truncate">Sky Product</span>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#EEF2FF] text-[#4F46E5]">
+<span class="material-symbols-outlined text-[12px]">auto_awesome</span> Needs AI image
+        </span>
+</div>
+</div>
+<!-- 13. Dark Luxe -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-300" data-category="product">
+<div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between p-4 bg-[#0D0F12] text-white">
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-label-sm tracking-widest text-slate-400 uppercase">TITANIUM LUXE</span>
+<div class="px-2 py-0.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-mono">
+            256 GB
+          </div>
+</div>
+<!-- Titanium phone edge reflection motif -->
+<div class="relative my-auto flex flex-col items-center justify-center">
+<div class="w-28 h-40 rounded-2xl bg-gradient-to-b from-slate-800 to-slate-950 border border-slate-700 shadow-2xl p-2 relative flex flex-col justify-between">
+<!-- Rim highlight -->
+<div class="absolute inset-0 rounded-2xl border-t border-l border-white/40 pointer-events-none"></div>
+<div class="w-8 h-1 bg-slate-600 rounded-full mx-auto"></div>
+<div class="flex items-center justify-center">
+<span class="material-symbols-outlined text-[40px] text-slate-400">lens_blur</span>
+</div>
+<div class="w-full text-center">
+<span class="text-[9px] font-mono text-slate-400 tracking-wider">A17 BIONIC</span>
+</div>
+</div>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-semibold text-slate-100 tracking-tight">Nova 15 Plus</h3>
+<p class="text-[11px] text-slate-400 font-normal">Aerospace-grade titanium alloy</p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 px-1">
+<span class="font-label-lg text-label-lg text-[#0B1C30] truncate">Dark Luxe</span>
+<span class="inline-flex items-center font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#10B981]">
+          Free
+        </span>
+</div>
+</div>
+<!-- 14. Celebration Script -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-300" data-category="celebration">
+<div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between p-4 bg-gradient-to-tr from-[#FF6B6B] via-[#4F46E5] to-[#A855F7] text-white">
+<div class="flex justify-between items-center z-10">
+<span class="font-label-sm text-label-sm font-bold uppercase tracking-wider text-yellow-300">SPECIAL EDITION</span>
+<div class="w-8 h-8 rounded-full bg-yellow-400 text-slate-950 flex flex-col items-center justify-center font-bold text-[8px] leading-tight shadow-md">
+<span>JUNE</span>
+<span>16</span>
+</div>
+</div>
+<!-- Block letters PAPA with red cursive script Super -->
+<div class="relative my-auto flex flex-col items-center justify-center z-10">
+<div class="relative flex items-center justify-center">
+<span class="font-headline-xl text-headline-xl text-[54px] font-black tracking-tight text-white leading-none">
+              PAPA
+            </span>
+<span class="absolute font-serif italic text-3xl font-extrabold text-[#EF4444] bg-white px-2 py-0.5 rounded-md shadow-xl transform -rotate-12 border-2 border-red-500">
+              Super
+            </span>
+</div>
+<!-- Confetti swirl motif -->
+<div class="flex gap-2 mt-4 text-yellow-300 text-sm">
+<span>✨</span>
+<span>🎉</span>
+<span>⭐</span>
+<span>✨</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest/90 backdrop-blur-sm rounded-lg px-2.5 py-1.5 text-slate-900 flex items-center justify-between z-10">
+<span class="font-label-sm text-label-sm font-bold">@familycampaigns</span>
+<span class="text-[10px] text-slate-500">Share love</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 px-1">
+<span class="font-label-lg text-label-lg text-[#0B1C30] truncate">Celebration Script</span>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#EEF2FF] text-[#4F46E5]">
+<span class="material-symbols-outlined text-[12px]">auto_awesome</span> Needs AI image
+        </span>
+</div>
+</div>
+<!-- 15. Reach Out -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-300" data-category="idea">
+<div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between p-4 bg-[#F8FAFC] text-slate-900">
+<div class="flex justify-between items-center">
+<span class="font-mono text-[10px] text-slate-400">CASE // 098</span>
+<div class="w-2 h-2 rounded-full bg-orange-500"></div>
+</div>
+<!-- Exaggerated perspective: orange ticket floating -->
+<div class="relative my-auto flex flex-col items-center justify-center">
+<!-- Floating tilted orange embossed ticket -->
+<div class="w-full bg-[#FF5500] text-white p-3 rounded-xl shadow-2xl transform -rotate-3 border-2 border-orange-400">
+<p class="font-headline-sm text-headline-sm font-extrabold leading-snug">
+              We make your brand impossible to ignore.
+            </p>
+</div>
+<!-- Casual handwritten annotation -->
+<div class="mt-4 font-serif italic text-xs text-slate-600 text-center">
+            "Let's build your growth story." ✍️
+          </div>
+</div>
+<div class="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-200">
+<span>CREATIVE ENGINE</span>
+<span>zetca.io</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 px-1">
+<span class="font-label-lg text-label-lg text-[#0B1C30] truncate">Reach Out</span>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#EEF2FF] text-[#4F46E5]">
+<span class="material-symbols-outlined text-[12px]">auto_awesome</span> Needs AI image
+        </span>
+</div>
+</div>
+<!-- 16. Sharp in the Crowd -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-300" data-category="idea">
+<div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between p-4 bg-[#111827] text-white">
+<!-- Street crowd monochrome silhouette backdrop -->
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-slate-400">DISTINCTION</span>
+<span class="material-symbols-outlined text-[18px] text-cyan-400">flare</span>
+</div>
+<div class="relative my-auto flex flex-col items-center">
+<!-- Figure with iridescent sunglasses -->
+<div class="relative w-24 h-24 rounded-full bg-slate-800 border-2 border-slate-600 shadow-2xl flex items-center justify-center">
+<!-- Sunglasses: one normal, one glowing cyan -->
+<div class="flex gap-1.5 items-center">
+<div class="w-6 h-4 bg-slate-900 rounded"></div>
+<div class="w-6 h-4 bg-gradient-to-r from-cyan-400 to-fuchsia-500 rounded shadow-[0_0_12px_#22D3EE]"></div>
+</div>
+</div>
+<!-- Headline with blue script word -->
+<div class="text-center mt-3">
+<h3 class="font-headline-sm text-headline-sm font-black text-white leading-tight">
+              Be the brand <br/>
+<span class="font-serif italic text-blue-400 text-lg">they</span> all notice
+            </h3>
+</div>
+</div>
+<div class="flex justify-between items-center text-[10px] text-slate-400">
+<span>ATTENTION OS</span>
+<span>100% STANDOUT</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 px-1">
+<span class="font-label-lg text-label-lg text-[#0B1C30] truncate">Sharp in the Crowd</span>
+<span class="inline-flex items-center font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#10B981]">
+          Free
+        </span>
+</div>
+</div>
+<!-- 17. 3D Crew -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-300" data-category="idea">
+<div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between p-4 bg-white text-slate-900 border border-slate-100">
+<div>
+<span class="font-label-sm text-label-sm font-bold uppercase tracking-wider text-indigo-600">COMMUNITY DROP</span>
+<h3 class="font-headline-sm text-headline-sm font-extrabold text-slate-950 leading-tight mt-0.5">
+            Find your tribe, build your network
+          </h3>
+</div>
+<!-- Stylized 3D Creators Selfie Motif -->
+<div class="relative my-auto flex items-center justify-center">
+<div class="flex -space-x-3 items-center">
+<div class="w-12 h-12 rounded-full bg-amber-400 border-2 border-white shadow-md flex items-center justify-center text-xl">😊</div>
+<div class="w-14 h-14 rounded-full bg-indigo-500 border-2 border-white shadow-xl flex items-center justify-center text-2xl z-10">😎</div>
+<div class="w-12 h-12 rounded-full bg-emerald-400 border-2 border-white shadow-md flex items-center justify-center text-xl">🚀</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2">
+<button class="bg-slate-900 text-white font-label-md text-label-md px-4 py-1.5 rounded-full hover:bg-slate-800 transition-all font-semibold" type="button">
+            Explore Community
+          </button>
+<span class="text-[10px] text-slate-400 font-mono">14K MEMBERS</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 px-1">
+<span class="font-label-lg text-label-lg text-[#0B1C30] truncate">3D Crew</span>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#EEF2FF] text-[#4F46E5]">
+<span class="material-symbols-outlined text-[12px]">auto_awesome</span> Needs AI image
+        </span>
+</div>
+</div>
+<!-- 18. Marker Highlight -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-300" data-category="flyer">
+<div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between p-4 bg-[#F8FAFC] text-slate-900">
+<!-- Subtle grid lines -->
+<div class="absolute inset-0 opacity-40 pointer-events-none" style="background-image: linear-gradient(to right, #CBD5E1 1px, transparent 1px), linear-gradient(to bottom, #CBD5E1 1px, transparent 1px); background-size: 16px 16px;"></div>
+<div class="z-10">
+<p class="font-headline-sm text-headline-sm font-black text-slate-950 leading-tight">
+            What great <span class="bg-[#FEF08A] px-1.5 py-0.5 rounded">founders</span> know about marketing
+          </p>
+</div>
+<!-- Geometric portrait & jar motif -->
+<div class="relative my-auto flex items-center justify-around z-10">
+<div class="w-16 h-20 bg-indigo-50 rounded-lg border border-indigo-200 shadow flex items-center justify-center">
+<span class="material-symbols-outlined text-indigo-600 text-[32px]">lightbulb</span>
+</div>
+<div class="flex flex-col items-center">
+<div class="w-10 h-12 bg-amber-100 rounded-b-xl border border-amber-300 flex items-center justify-center text-sm shadow">
+              💰
+            </div>
+<span class="text-[9px] font-bold text-slate-500 mt-1">ROI SECRETS</span>
+</div>
+</div>
+<div class="flex items-center justify-between z-10 pt-2 border-t border-slate-200">
+<div class="flex items-center gap-1 text-[11px] font-bold text-slate-700">
+<span>Share it</span>
+<span>↗</span>
+</div>
+<span class="text-[10px] font-mono text-slate-400">SLIDE 01/10</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 px-1">
+<span class="font-label-lg text-label-lg text-[#0B1C30] truncate">Marker Highlight</span>
+<span class="inline-flex items-center font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#10B981]">
+          Free
+        </span>
+</div>
+</div>
+<!-- 19. Street Flyer -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-300" data-category="flyer">
+<div class="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-inner flex flex-col justify-between p-4 bg-gradient-to-br from-[#FED7AA] via-[#FDBA74] to-[#FB923C] text-slate-900">
+<!-- Street poster typography flanking sides -->
+<div class="flex justify-between items-center text-[10px] font-mono font-black text-red-700 tracking-wider">
+<span>DROP // 01</span>
+<span>LIMITED EDITION</span>
+</div>
+<div class="relative my-auto flex items-center justify-center">
+<!-- Dynamic sneaker & tumbler athlete motif -->
+<div class="relative flex flex-col items-center">
+<div class="w-20 h-28 bg-white/40 backdrop-blur-sm rounded-2xl border-2 border-white/80 p-2 shadow-2xl flex flex-col items-center justify-between">
+<span class="text-2xl">👟</span>
+<div class="w-6 h-10 bg-red-600 rounded-md shadow flex items-center justify-center text-white text-[9px] font-bold">
+                CUP
+              </div>
+</div>
+<!-- Search-bar style pill link floating -->
+<div class="mt-2 bg-surface-container-lowest px-3 py-1 rounded-full shadow text-[10px] font-bold text-slate-800 flex items-center gap-1">
+<span>zetca.com/drop01</span>
+<span>🔍</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest/95 backdrop-blur-sm rounded-lg p-2 text-slate-900 flex items-center justify-between text-[9px]">
+<div class="flex gap-2 font-bold">
+<span>NIKE</span>
+<span>ZETCA</span>
+</div>
+<span class="font-mono text-slate-500">2025 ALL RIGHTS</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 px-1">
+<span class="font-label-lg text-label-lg text-[#0B1C30] truncate">Street Flyer</span>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-[#EEF2FF] text-[#4F46E5]">
+<span class="material-symbols-outlined text-[12px]">auto_awesome</span> Needs AI image
+        </span>
+</div>
+</div>
+</div>
+</div>
+<script>
+  // Filter chips interaction
+  const filterButtons = document.querySelectorAll('.family-filter-btn');
+  const cards = document.querySelectorAll('[data-category]');
+
+  filterButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Toggle styles
+      filterButtons.forEach(b => {
+        b.classList.remove('bg-primary-container', 'text-on-primary', 'shadow-sm');
+        b.classList.add('bg-surface-container-lowest', 'text-on-surface-variant');
+      });
+      btn.classList.add('bg-primary-container', 'text-on-primary', 'shadow-sm');
+      btn.classList.remove('bg-surface-container-lowest', 'text-on-surface-variant');
+
+      const family = btn.getAttribute('data-family');
+      cards.forEach(card => {
+        if (family === 'all' || card.getAttribute('data-category') === family) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  });
+
+  // Brand Colours Toggle interaction
+  const brandToggle = document.getElementById('brand-toggle');
+  const toggleKnob = document.getElementById('toggle-knob');
+  let isToggled = true;
+
+  brandToggle.addEventListener('click', () => {
+    isToggled = !isToggled;
+    if (isToggled) {
+      brandToggle.classList.remove('bg-slate-300');
+      brandToggle.classList.add('bg-primary-container');
+      toggleKnob.classList.remove('translate-x-0.5');
+      toggleKnob.classList.add('translate-x-5');
+      brandToggle.setAttribute('aria-checked', 'true');
+    } else {
+      brandToggle.classList.add('bg-slate-300');
+      brandToggle.classList.remove('bg-primary-container');
+      toggleKnob.classList.add('translate-x-0.5');
+      toggleKnob.classList.remove('translate-x-5');
+      brandToggle.setAttribute('aria-checked', 'false');
+    }
+  });
+</script></main></div></body></html>

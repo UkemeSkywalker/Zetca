@@ -99,7 +99,8 @@ export const AI_VIDEO_MODELS: AiVideoModel[] = [
   { id: 'kling-3-4k', name: 'Kling 3.0 4K', maker: 'Kling', bestFor: '4K output', endpoint: 'kling-video/v3.0/4k/image-to-video', seconds: 5, costUsd: 1.785, tier: 3, body: i2v(5) },
 ];
 
-export const DEFAULT_IMAGE_MODEL = 'soul-v2';
+// Qwen was closest to the style references in the model test (designs/design-styles/model-test)
+export const DEFAULT_IMAGE_MODEL = 'qwen-image-3';
 export const DEFAULT_VIDEO_MODEL = 'kling-2-5-turbo';
 /** The model that makes a video's first frame */
 export const FRAME_MODEL = 'soul-v2';

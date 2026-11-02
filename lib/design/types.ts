@@ -80,8 +80,32 @@ export const TextLayerSchema = z.object({
   letterSpacing: z.number().min(-0.1).max(0.5),
   /** Pills: the fill drawn behind the text */
   fill: hex.optional(),
+  /** Drawn under the image layers (the giant word behind a person) */
+  behind: z.boolean().optional(),
 });
 export type TextLayer = z.infer<typeof TextLayerSchema>;
+
+/**
+ * A picture placed on the design, above the background: a cut-out person or
+ * product (a see-through PNG), or a photo in a frame. Saved photos only.
+ */
+export const ImageLayerSchema = z.object({
+  id: z.string().min(1).max(40),
+  photoId: z.string().min(1).max(80),
+  /** The picture's own size, to keep its shape */
+  width: z.number().positive(),
+  height: z.number().positive(),
+  /** Where it sits in the design (1080 wide), and how big */
+  x: z.number(),
+  y: z.number(),
+  w: z.number().min(20),
+  h: z.number().min(20),
+  /** A see-through cut-out (true), or a photo with a background (false) */
+  cutout: z.boolean(),
+  /** Fill the box, cropped exactly like a photo background (keeps a cut-out lined up with its photo) */
+  cover: z.boolean().optional(),
+});
+export type ImageLayer = z.infer<typeof ImageLayerSchema>;
 
 export const DesignDocSchema = z.object({
   format: z.enum(['square', 'portrait', 'story', 'landscape']),
@@ -89,6 +113,8 @@ export const DesignDocSchema = z.object({
   background: BackgroundSchema,
   overlay: z.object({ color: hex, opacity: z.number().min(0).max(0.9) }).optional(),
   layers: z.array(TextLayerSchema).max(12),
+  /** Pictures above the background; text with `behind` goes under them */
+  images: z.array(ImageLayerSchema).max(4).optional(),
   /** An AI video under the words (the photo background is its first frame) */
   video: z
     .object({

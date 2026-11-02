@@ -17,6 +17,9 @@
 import { randomUUID } from 'crypto';
 import { GetObjectCommand, PutObjectCommand, S3Client, type S3ClientConfig } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import sharp from 'sharp';
+import { cutoutPrompt, keyOut, type KeyColor } from '../media/chromaKey';
+import { creditsFor } from '../billing/prices';
 import { getConfig } from '../config';
 import { ApiError } from '../errors';
 import type { FormatId } from '../design/types';
@@ -45,13 +48,17 @@ import {
 
 export type AiKind = 'image' | 'video';
 
+/** Higgsfield's Qwen Image 3 edit, which repaints the background in one flat colour for a cut-out */
+export const CUTOUT_ENDPOINT = 'alibaba/qwen-image-3/edit';
+export const CUTOUT_USD = 0.04;
+
 export interface AiJob {
   jobId: string;
   userId: string;
   kind: AiKind;
   format: FormatId;
   prompt: string;
-  stage: 'image' | 'video' | 'done' | 'failed';
+  stage: 'image' | 'cutout' | 'video' | 'done' | 'failed';
   /** The model picked (an image model, or a video model; videos' first frame uses the frame model) */
   model: string;
   /** For video models with drafts: the quality made */
@@ -62,6 +69,11 @@ export interface AiJob {
   draftOf?: string;
   imageRequestId: string;
   videoRequestId?: string;
+  /** Images only: also make a see-through cut-out of the subject, keyed out of this colour */
+  cutout?: KeyColor;
+  cutoutRequestId?: string;
+  /** The cut-out (a see-through PNG saved as a design photo, the same size as the image) */
+  cutoutPhotoId?: string;
   /** Credits taken, where from, and the month (refunds go back to the same place) */
   cost: number;
   source: CreditSource;
@@ -78,9 +90,13 @@ export interface AiJob {
 }
 
 /** What the page sees */
-export type PublicAiJob = Pick<AiJob, 'jobId' | 'kind' | 'format' | 'model' | 'quality' | 'draftOf' | 'source' | 'stage' | 'error' | 'photoId' | 'mediaId' | 'createdAt' | 'cost'>;
+export type PublicAiJob = Pick<
+  AiJob,
+  'jobId' | 'kind' | 'format' | 'model' | 'quality' | 'draftOf' | 'source' | 'stage' | 'error' | 'photoId' | 'cutoutPhotoId' | 'mediaId' | 'createdAt' | 'cost'
+>;
 
-export const toPublicJob = ({ jobId, kind, format, model, quality, draftOf, source, stage, error, photoId, mediaId, createdAt, cost }: AiJob): PublicAiJob => ({
+export const toPublicJob = ({ jobId, kind, format, model, quality, draftOf, source, stage, error, photoId, cutoutPhotoId, mediaId, createdAt, cost }: AiJob): PublicAiJob => ({
+  cutoutPhotoId,
   jobId,
   kind,
   format,
@@ -154,26 +170,33 @@ export class AiDesignService {
    * default model is picked and one is left, otherwise checks the plan and
    * takes the credits.
    */
-  async start(userId: string, input: { kind: AiKind; prompt: string; format: FormatId; model?: string; quality?: VideoQuality }): Promise<AiJob> {
+  async start(
+    userId: string,
+    input: { kind: AiKind; prompt: string; format: FormatId; model?: string; quality?: VideoQuality; cutout?: KeyColor; rawPrompt?: boolean }
+  ): Promise<AiJob> {
     const video = input.kind === 'video' ? videoModel(input.model) : null;
     const image = video ? imageModel(FRAME_MODEL) : imageModel(input.model);
     const model = video ?? image;
     // Only models with qualities make drafts; their default is HD 720p
     const quality = video?.qualities ? (input.quality && video.qualities[input.quality] ? input.quality : 'hd') : undefined;
+    const cutout = !video ? input.cutout : undefined;
     const isDefault = model.id === (video ? DEFAULT_VIDEO_MODEL : DEFAULT_IMAGE_MODEL);
-    const free = isDefault && (await this.credits.takeFree(userId, input.kind));
+    // A free use covers a plain image; a cut-out is a second AI step, so it's paid
+    const free = isDefault && !cutout && (await this.credits.takeFree(userId, input.kind));
     let cost = 0;
     let taken: { source: CreditSource; month: string } = { source: 'free', month: '' };
     if (!free) {
       const what = video ? `${video.name}${quality ? ` ${QUALITY_LABEL[quality]}` : ''} videos` : `${image.name} images`;
       await this.checkPlan(userId, what, video ? videoTier(video, quality) : image.tier);
-      cost = video ? videoCredits(video, quality) : imageCredits(image);
+      cost = video ? videoCredits(video, quality) : cutout ? imageCredits(image) + creditsFor(CUTOUT_USD) : imageCredits(image);
       taken = await this.credits.take(userId, cost);
     }
-    const costUsd = video ? videoCostUsd(video, quality) : image.costUsd;
+    const costUsd = video ? videoCostUsd(video, quality) : image.costUsd + (cutout ? CUTOUT_USD : 0);
     const jobId = randomUUID();
     try {
-      const req = await this.hf.submit(image.endpoint, image.body(imagePrompt(input.prompt), input.format), `${jobId}-image`);
+      // Style recipes write the whole image prompt themselves
+      const prompt = input.rawPrompt ? input.prompt : imagePrompt(input.prompt);
+      const req = await this.hf.submit(image.endpoint, image.body(prompt, input.format), `${jobId}-image`);
       const now = new Date().toISOString();
       return await this.save({
         jobId,
@@ -182,6 +205,7 @@ export class AiDesignService {
         format: input.format,
         model: model.id,
         ...(quality ? { quality, seed: Math.floor(Math.random() * 2 ** 31) } : {}),
+        ...(cutout ? { cutout } : {}),
         prompt: input.prompt,
         stage: 'image',
         imageRequestId: req.request_id,
@@ -268,12 +292,34 @@ export class AiDesignService {
         await this.s3.send(
           new PutObjectCommand({ Bucket: this.bucket, Key: photoKey(userId, photoId), Body: await this.hf.download(url), ContentType: contentTypeOf(url) })
         );
+        if (job.kind === 'image' && job.cutout) {
+          const edit = await this.hf.submit(
+            CUTOUT_ENDPOINT,
+            { prompt: cutoutPrompt(job.cutout), image_urls: [url], aspect_ratio: aspectOf(job.format), resolution: '1k', enable_thinking: false, prompt_extend: false },
+            `${job.jobId}-cutout`
+          );
+          return this.save({ ...job, photoId, stage: 'cutout', cutoutRequestId: edit.request_id });
+        }
         if (job.kind === 'image') return this.finish({ ...job, photoId, stage: 'done' });
         const vm = videoModel(job.model);
         const resolution = job.quality ? vm.qualities?.[job.quality]?.resolution : undefined;
         const video = await this.hf.submit(vm.endpoint, vm.body(videoPrompt(job.prompt), url, { resolution, seed: job.seed }), `${job.jobId}-video`);
         job = await this.save({ ...job, photoId, stage: 'video', videoRequestId: video.request_id });
         return job;
+      }
+      if (job.stage === 'cutout') {
+        const req = await this.hf.status(job.cutoutRequestId!);
+        if (isFinished(req) && req.status !== 'completed') return this.fail(job, req);
+        if (req.status !== 'completed') return job;
+        const url = req.images?.[0]?.url;
+        if (!url) return this.fail(job, { ...req, status: 'failed', error: 'No cut-out came back' });
+        // Line it up with the original: same size as the saved image
+        const original = await this.s3.send(new GetObjectCommand({ Bucket: this.bucket, Key: photoKey(userId, job.photoId!) }));
+        const meta = await sharp(Buffer.from(await original.Body!.transformToByteArray())).metadata();
+        const { png } = await keyOut(await this.hf.download(url), job.cutout!, meta.width && meta.height ? { width: meta.width, height: meta.height } : undefined);
+        const cutoutPhotoId = randomUUID();
+        await this.s3.send(new PutObjectCommand({ Bucket: this.bucket, Key: photoKey(userId, cutoutPhotoId), Body: png, ContentType: 'image/png' }));
+        return this.finish({ ...job, cutoutPhotoId, stage: 'done' });
       }
       // The video step
       const req = await this.hf.status(job.videoRequestId!);
@@ -324,6 +370,9 @@ export class AiDesignService {
     return this.save({ ...job, stage: 'failed', error });
   }
 }
+
+/** The edit model's aspect for a design shape */
+const aspectOf = (format: FormatId) => ({ square: '1:1', portrait: '3:4', story: '9:16', landscape: '16:9' })[format];
 
 const isFinished = (r: HiggsfieldRequest) => ['completed', 'failed', 'nsfw', 'canceled'].includes(r.status);
 

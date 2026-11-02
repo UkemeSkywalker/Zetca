@@ -6,10 +6,10 @@
  */
 
 import type { PhotoBackground } from '@/lib/design/types';
-import { getAiJob, startAiJob, startHdJob, type PublicAiJob, type VideoQuality } from '@/lib/api/designApi';
+import { getAiJob, startAiJob, startHdJob, type AiJobOptions, type PublicAiJob, type VideoQuality } from '@/lib/api/designApi';
 import { loadPhoto, tonesOf } from './photos';
 
-export type AiProgress = 'starting' | 'image' | 'video' | 'done';
+export type AiProgress = 'starting' | 'image' | 'cutout' | 'video' | 'done';
 
 const POLL_MS = 3000;
 /** Videos take a couple of minutes; give up waiting after this (the job keeps going) */
@@ -26,10 +26,12 @@ export async function makeAi(
   /** The model picked; the default when left out */
   model?: string,
   /** For video models with drafts */
-  quality?: VideoQuality
+  quality?: VideoQuality,
+  /** Style recipes: a cut-out, and their own prompt */
+  options?: AiJobOptions
 ): Promise<PublicAiJob> {
   onProgress?.('starting');
-  const { job } = await startAiJob(kind, prompt, format, model, quality);
+  const { job } = await startAiJob(kind, prompt, format, model, quality, options);
   return waitFor(job, onProgress);
 }
 
@@ -43,7 +45,7 @@ export async function makeHd(draftJobId: string, quality: Exclude<VideoQuality, 
 async function waitFor(started: PublicAiJob, onProgress?: (p: AiProgress) => void): Promise<PublicAiJob> {
   let job = started;
   const until = Date.now() + WAIT_MS;
-  while (job.stage === 'image' || job.stage === 'video') {
+  while (job.stage === 'image' || job.stage === 'cutout' || job.stage === 'video') {
     onProgress?.(job.stage);
     if (Date.now() > until) throw new Error('This is taking longer than usual. It will keep going; check My designs in a few minutes.');
     await sleep(POLL_MS);

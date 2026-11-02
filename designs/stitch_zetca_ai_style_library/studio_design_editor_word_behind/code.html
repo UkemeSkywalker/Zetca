@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><title>Zetca Studio Editor</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"primary-fixed":"#e2dfff","on-background":"#171c20","on-secondary-container":"#5c6274","on-tertiary-fixed":"#002113","tertiary-container":"#006e4b","surface":"#f6faff","on-surface":"#171c20","surface-container-highest":"#dfe3e8","inverse-primary":"#c3c0ff","on-tertiary":"#ffffff","tertiary-fixed-dim":"#4edea3","secondary-fixed-dim":"#c0c6da","on-tertiary-container":"#67f4b7","error":"#ba1a1a","surface-container-low":"#f0f4f9","tertiary-fixed":"#6ffbbe","secondary-fixed":"#dce2f6","surface-dim":"#d6dadf","tertiary":"#005338","surface-variant":"#dfe3e8","on-tertiary-fixed-variant":"#005236","error-container":"#ffdad6","on-secondary-fixed":"#151b2a","on-primary":"#ffffff","surface-tint":"#4d44e3","outline":"#777587","on-secondary-fixed-variant":"#404757","inverse-surface":"#2c3135","on-primary-container":"#dad7ff","surface-bright":"#f6faff","background":"#f6faff","inverse-on-surface":"#edf1f6","outline-variant":"#c7c4d8","surface-container-lowest":"#ffffff","surface-container-high":"#e4e9ed","primary":"#3525cd","secondary-container":"#d9dff4","on-primary-fixed-variant":"#3323cc","on-primary-fixed":"#0f0069","on-surface-variant":"#464555","on-secondary":"#ffffff","primary-container":"#4f46e5","on-error":"#ffffff","surface-container":"#eaeef3","on-error-container":"#93000a","primary-fixed-dim":"#c3c0ff","secondary":"#585e6f"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin":"2rem","space-xl":"2rem","space-md":"1rem","space-xs":"0.25rem","space-lg":"1.5rem","gutter-mobile":"1rem","space-sm":"0.5rem","margin-mobile":"1rem","gutter":"1.5rem"},"fontFamily":{"headline-xl":["Plus Jakarta Sans"],"body-md":["Plus Jakarta Sans"],"headline-lg":["Plus Jakarta Sans"],"headline-sm":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"],"label-md":["Plus Jakarta Sans"],"body-sm":["Plus Jakarta Sans"],"label-sm":["Plus Jakarta Sans"],"headline-lg-mobile":["Plus Jakarta Sans"],"body-lg":["Plus Jakarta Sans"],"label-lg":["Plus Jakarta Sans"],"headline-xl-mobile":["Plus Jakarta Sans"]},"fontSize":{"headline-xl":["36px",{"lineHeight":"44px","letterSpacing":"-0.02em","fontWeight":"700"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-lg":["28px",{"lineHeight":"36px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-sm":["16px",{"lineHeight":"24px","fontWeight":"600"}],"headline-md":["20px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-md":["12px",{"lineHeight":"16px","letterSpacing":"0.02em","fontWeight":"600"}],"body-sm":["13px",{"lineHeight":"18px","fontWeight":"400"}],"label-sm":["11px",{"lineHeight":"14px","letterSpacing":"0.04em","fontWeight":"700"}],"headline-lg-mobile":["22px",{"lineHeight":"30px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"label-lg":["14px",{"lineHeight":"20px","fontWeight":"600"}],"headline-xl-mobile":["28px",{"lineHeight":"36px","letterSpacing":"-0.01em","fontWeight":"700"}]}}}};</script></head><body class="bg-background font-body-md text-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 h-20 z-50 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-md"><a class="w-10 h-10 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" data-path="posts-library" href="#" title="Back to posts"><span class="material-symbols-outlined text-[20px]">arrow_back</span></a><div class="flex flex-col"><div class="flex items-center gap-space-sm"><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">Crumb &amp; Co. - RISE (Word Behind)</span><span class="px-space-sm py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm uppercase flex items-center gap-1"><span class="material-symbols-outlined text-[13px] text-tertiary">cloud_done</span>Saved</span></div><span class="font-body-sm text-body-sm text-on-surface-variant">Draft • Auto-saved moments ago</span></div></div><div class="flex items-center gap-space-md"><div class="flex items-center bg-surface-container rounded-xl px-space-md py-space-xs gap-space-sm"><span class="material-symbols-outlined text-on-surface-variant text-[18px]">aspect_ratio</span><span class="font-label-md text-label-md text-on-surface">Instagram Story (9:16) / 1080x1920</span><span class="material-symbols-outlined text-on-surface-variant text-[18px]">expand_more</span></div><div class="flex items-center bg-surface-container rounded-xl p-1 gap-1"><button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" title="Undo" type="button"><span class="material-symbols-outlined text-[18px]">undo</span></button><button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" title="Redo" type="button"><span class="material-symbols-outlined text-[18px]">redo</span></button></div></div><div class="flex items-center gap-space-md"><button class="h-11 px-space-lg rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-lg text-label-lg flex items-center gap-space-xs transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">download</span><span>Download</span></button><button class="h-11 px-space-lg rounded-xl bg-primary-container hover:bg-primary text-on-primary font-label-lg text-label-lg flex items-center gap-space-xs shadow-[0_1px_3px_rgba(11,28,48,0.08)] transition-all active:scale-[0.98]" type="button"><span class="material-symbols-outlined text-[18px]">publish</span><span>Update post</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="w-full pt-20 bg-background"><div class="flex flex-col w-full">
+<div class="flex h-[calc(100vh-5rem)] w-full overflow-hidden bg-surface-container-low">
+<!-- 1. LEFT PANEL: TOOLS & LAYERS (~280px) -->
+<aside class="w-[280px] shrink-0 h-full flex flex-col bg-surface-container-lowest shadow-sm z-20">
+<!-- Tabs -->
+<div class="p-space-sm bg-surface-container-lowest flex items-center gap-1">
+<button class="flex-1 py-space-xs px-space-sm rounded-lg bg-primary-container text-on-primary font-label-md text-label-md flex items-center justify-center gap-1.5 shadow-sm transition-all" id="tab-layers">
+<span class="material-symbols-outlined text-[16px]">layers</span>
+<span>Layers</span>
+</button>
+<button class="flex-1 py-space-xs px-space-sm rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-on-surface font-label-md text-label-md flex items-center justify-center gap-1.5 transition-colors" id="tab-assets">
+<span class="material-symbols-outlined text-[16px]">perm_media</span>
+<span>Assets</span>
+</button>
+<button class="flex-1 py-space-xs px-space-sm rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-on-surface font-label-md text-label-md flex items-center justify-center gap-1.5 transition-colors" id="tab-styles">
+<span class="material-symbols-outlined text-[16px]">palette</span>
+<span>Styles</span>
+</button>
+</div>
+<!-- Layer Stack Header / Filter -->
+<div class="px-space-md py-space-sm flex items-center justify-between bg-surface-container-lowest">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">Stack hierarchy</span>
+<span class="px-1.5 py-0.5 rounded-full bg-surface-container text-on-surface font-label-sm text-[10px]">4</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="w-6 h-6 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Collapse All" type="button">
+<span class="material-symbols-outlined text-[16px]">unfold_less</span>
+</button>
+</div>
+</div>
+<!-- Stacked Layer List -->
+<div class="flex-1 overflow-y-auto px-space-sm space-y-1.5 py-space-xs" id="layer-list">
+<!-- Layer 1: Top Accent Text -->
+<div class="group relative flex items-center gap-2 p-2 rounded-xl bg-surface-container-lowest hover:bg-surface-container-low transition-colors cursor-pointer" data-layer="layer-1">
+<span class="material-symbols-outlined text-[16px] text-outline cursor-grab opacity-50 group-hover:opacity-100">drag_indicator</span>
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant shrink-0">
+<span class="material-symbols-outlined text-[18px]">text_fields</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-label-md text-label-md text-on-surface truncate">Rise and shine</p>
+<span class="font-label-sm text-[10px] text-on-surface-variant">Display Text</span>
+</div>
+<button class="w-7 h-7 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Toggle visibility" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+</div>
+<!-- Layer 2: Artisan Baker (Active / Selected) -->
+<div class="relative flex items-center gap-2 p-2 rounded-xl bg-primary-fixed/30 shadow-sm ring-2 ring-primary-container cursor-pointer transition-all" data-layer="layer-baker">
+<span class="material-symbols-outlined text-[16px] text-primary cursor-grab">drag_indicator</span>
+<div class="w-8 h-8 rounded-lg overflow-hidden bg-secondary-container relative shrink-0 shadow-inner">
+<img class="w-full h-full object-cover" data-alt="Close up profile cutout portrait of an artisan African woman baker smiling dusted with organic flour wearing linen apron studio lighting soft contrast" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBP2qjXJ7SFnzdHYidkhOhAkIcOAknmFKNXUZpEjk0Wz9xLotSiP6-rf37s357gstv2pnsuDOjJTRG5tBQ3BdgQJrQtL7pa0jNtL1lQVYgnxrJ3-qL3zN5HpfxqwYPmJ_kTJ6Xm-y9Xy7qoEaamHJedttkjB-hnShAS0IrN-X0tC4BwbUMmUiN6cQs6OjqDw9eK7kVpaBxAghYPypVKudHmsVn62gHN5-kAgNpF0pmA"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-1.5">
+<p class="font-label-md text-label-md text-on-surface font-semibold truncate">Baker Cutout</p>
+<span class="px-1 py-0.2 bg-primary-container text-on-primary rounded font-label-sm text-[9px] uppercase tracking-wider">Active</span>
+</div>
+<span class="font-label-sm text-[10px] text-primary font-medium">Cutout Subject</span>
+</div>
+<div class="flex items-center gap-0.5">
+<button class="w-7 h-7 rounded-lg flex items-center justify-center text-primary hover:bg-primary-fixed transition-colors" title="Cutout options" type="button">
+<span class="material-symbols-outlined text-[16px]">auto_fix_high</span>
+</button>
+<button class="w-7 h-7 rounded-lg flex items-center justify-center text-primary hover:bg-primary-fixed transition-colors" title="Toggle visibility" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+</div>
+</div>
+<!-- Layer 3: Word Behind ('RISE') -->
+<div class="group relative flex items-center gap-2 p-2 rounded-xl bg-surface-container-lowest hover:bg-surface-container-low transition-colors cursor-pointer" data-layer="layer-word">
+<span class="material-symbols-outlined text-[16px] text-outline cursor-grab opacity-50 group-hover:opacity-100">drag_indicator</span>
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center shrink-0">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">R</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-1">
+<p class="font-label-md text-label-md text-on-surface truncate">RISE (Word Behind)</p>
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+</div>
+<span class="font-label-sm text-[10px] text-on-surface-variant">Editorial Serif</span>
+</div>
+<button class="w-7 h-7 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Toggle visibility" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+</div>
+<!-- Layer 4: Background Artboard -->
+<div class="group relative flex items-center gap-2 p-2 rounded-xl bg-surface-container-lowest hover:bg-surface-container-low transition-colors cursor-pointer opacity-90" data-layer="layer-bg">
+<span class="material-symbols-outlined text-[16px] text-outline opacity-30">drag_indicator</span>
+<div class="w-8 h-8 rounded-lg bg-[#EAD7C0] flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">wallpaper</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-label-md text-label-md text-on-surface truncate">Bakery Ambience</p>
+<span class="font-label-sm text-[10px] text-on-surface-variant">Texture &amp; Tint</span>
+</div>
+<div class="flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[15px] text-outline">lock</span>
+<button class="w-7 h-7 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Toggle visibility" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Left Panel Bottom Utilities -->
+<div class="p-space-sm bg-surface-container-lowest flex items-center justify-between">
+<button class="h-9 px-3 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>Add Layer</span>
+</button>
+<div class="flex items-center gap-1">
+<button class="w-9 h-9 rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title="Lock Layer" type="button">
+<span class="material-symbols-outlined text-[18px]">lock_open</span>
+</button>
+<button class="w-9 h-9 rounded-lg hover:bg-error-container text-on-surface-variant hover:text-error flex items-center justify-center transition-colors" title="Delete Layer" type="button">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+</aside>
+<!-- 2. CENTRE CANVAS WORKBENCH -->
+<main class="flex-1 h-full relative overflow-hidden flex flex-col items-center justify-center p-space-md select-none bg-surface-container-low" style="background-image: radial-gradient(circle, #cbd5e1 1.2px, transparent 1.2px); background-size: 24px 24px;">
+<!-- Canvas Overhead Notice / Indicator -->
+<div class="absolute top-4 left-6 z-10 flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-lowest/90 backdrop-blur shadow-sm">
+<span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-on-surface font-medium">Depth Segmentation: Fore/Back Plane Active</span>
+</div>
+<!-- The 4:5 Artboard Wrapper (Calculated 432px × 540px for comfortable high-fidelity workbench view) -->
+<div class="relative w-[432px] h-[540px] rounded-2xl overflow-hidden shadow-2xl bg-[#EFE4D6] transition-transform duration-200 ease-out" id="main-artboard">
+<!-- Ambient Bakery Base Tone Texture -->
+<div class="absolute inset-0 bg-cover bg-center pointer-events-none opacity-85" data-alt="Rustic artisan sourdough bakery ambient wall with warm morning sun shafts flour dust particles soft terracotta tones minimal serene composition" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCEiMmuW-j0aU3MQZCCpZD1kBOOmOb5cqtrb9LJB76f_pg8irV-peItbW3P1cDNUgp5tM_hAEI8Rrk6ToxO8ueuHaYsTC4w6yW_KR902VxxIiZ4EvAsmgttNAle6RP1-1gbJ-4uj1M0Mozo25YiVsdCWizuuKNbqHHmHwfwx-Se3_aJsRXuXheks7HsGmeBh9iIKcfNwQ3MzQ58w4ZdLJNZ6W6hisSPb27qqgKy9U18')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-[#261B12]/80 via-transparent to-[#261B12]/40 pointer-events-none"></div>
+<!-- Top Accent Typography -->
+<div class="absolute top-8 left-8 right-8 flex items-center justify-between z-10">
+<span class="font-label-sm text-[11px] tracking-[0.25em] text-[#FFF7ED] uppercase font-bold drop-shadow-sm">#CRUMBANDCO</span>
+<span class="font-label-sm text-[11px] tracking-widest text-[#FED7AA] font-semibold drop-shadow-sm">06:00 AM • LAGOS</span>
+</div>
+<div class="absolute top-16 left-0 right-0 text-center z-10">
+<p class="font-headline-sm text-headline-sm italic font-serif text-[#FFFBF5] tracking-wide drop-shadow">Rise and shine</p>
+</div>
+<!-- LAYER 3: Word Behind ('RISE') -->
+<!-- Extremely bold monumental cream serif typography spanning wide across canvas -->
+<div class="absolute top-1/2 left-0 right-0 -translate-y-[45%] flex items-center justify-center pointer-events-none z-10 px-2">
+<h1 class="font-headline-xl text-[144px] leading-none tracking-[-0.04em] font-serif font-black text-[#FDF8EE] opacity-95 select-none drop-shadow-[0_4px_18px_rgba(40,24,10,0.35)]" style="font-family: serif;">
+            RISE
+          </h1>
+</div>
+<!-- LAYER 2: Artisan Baker Cutout (Positioned IN FRONT of the word RISE to achieve Word Behind effect) -->
+<div class="absolute bottom-0 left-1/2 -translate-x-[48%] w-[330px] h-[440px] z-20 pointer-events-auto cursor-move group/subject" id="subject-baker">
+<!-- Subject Cutout Image -->
+<img class="w-full h-full object-contain filter drop-shadow-[0_12px_24px_rgba(15,10,5,0.45)]" data-alt="Precise isolated cutout photo of a cheerful West African female baker smiling broadly with flour dusting on her dark skin wearing a beige natural linen apron and baker hat facing directly forward warm golden morning sidelighting professional editorial photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRiuRzoIxp50evbCH7wkLlIMm-5VAZTa9F6Tidr7zjTZXGA4NGKFdNL_05WxZrn_04x1EQFkTl1vRAs4v40F3LpmjISdq85rs4EzhsckzURHPJwT-kLH66xDDQzKAF6c0rIZ_04s0VbMRbvPCdw9YfMI4lFcVPJ_dgPj9R_0ASZkLXGcUC7s-snrIW6MbHS4D0N_dyRwYAnCyd3Q6hXclXHNfKC3Nb8QMIuQHkTp-v"/>
+<!-- Bounding Box Selection Ring & Transformation Handles -->
+<div class="absolute -inset-1 border-2 border-primary rounded-lg pointer-events-none">
+<!-- Corner Handles -->
+<div class="absolute -top-1.5 -left-1.5 w-3 h-3 bg-surface-container-lowest border-2 border-primary rounded-sm shadow-sm pointer-events-auto cursor-nwse-resize"></div>
+<div class="absolute -top-1.5 -right-1.5 w-3 h-3 bg-surface-container-lowest border-2 border-primary rounded-sm shadow-sm pointer-events-auto cursor-nesw-resize"></div>
+<div class="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-surface-container-lowest border-2 border-primary rounded-sm shadow-sm pointer-events-auto cursor-nesw-resize"></div>
+<div class="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-surface-container-lowest border-2 border-primary rounded-sm shadow-sm pointer-events-auto cursor-nwse-resize"></div>
+<!-- Edge Handles -->
+<div class="absolute top-1/2 -left-1.5 -translate-y-1/2 w-2.5 h-2.5 bg-surface-container-lowest border border-primary rounded-sm pointer-events-auto cursor-ew-resize"></div>
+<div class="absolute top-1/2 -right-1.5 -translate-y-1/2 w-2.5 h-2.5 bg-surface-container-lowest border border-primary rounded-sm pointer-events-auto cursor-ew-resize"></div>
+<div class="absolute -top-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-surface-container-lowest border border-primary rounded-sm pointer-events-auto cursor-ns-resize"></div>
+<!-- Floating Dimension HUD -->
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded bg-on-background text-on-primary text-[10px] font-mono tracking-tight font-medium shadow-md whitespace-nowrap">
+              330 × 440 px • 108%
+            </div>
+</div>
+</div>
+<!-- Editorial Subtitle Tagline Bottom Plate -->
+<div class="absolute bottom-6 left-8 right-8 z-30 flex items-center justify-between text-[#FDF8EE]/90">
+<div class="flex flex-col">
+<span class="font-label-sm text-[10px] tracking-wider uppercase opacity-75">Daily Harvest</span>
+<span class="font-label-md text-label-md font-semibold">Slow Fermented Sourdough</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-lowest/20 backdrop-blur-md flex items-center justify-center text-[#FFF]">
+<span class="material-symbols-outlined text-[16px]">bakery_dining</span>
+</div>
+</div>
+</div>
+<!-- Canvas Float Controls (Zoom & Fit Bar) -->
+<div class="absolute bottom-5 z-20 flex items-center gap-2 p-1.5 rounded-full bg-surface-container-lowest shadow-md">
+<button class="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors" id="zoom-out" title="Zoom Out">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</button>
+<span class="font-label-md text-label-md text-on-surface px-2 min-w-[48px] text-center font-medium" id="zoom-val">100%</span>
+<button class="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors" id="zoom-in" title="Zoom In">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+<div class="w-[1px] h-4 bg-surface-container-highest mx-0.5"></div>
+<button class="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors" title="Fit to Screen">
+<span class="material-symbols-outlined text-[18px]">fit_screen</span>
+</button>
+<button class="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors" title="Center Workbench">
+<span class="material-symbols-outlined text-[18px]">filter_center_focus</span>
+</button>
+</div>
+</main>
+<!-- 3. RIGHT PANEL: PROPERTIES INSPECTOR (~300px) -->
+<aside class="w-[300px] shrink-0 h-full flex flex-col bg-surface-container-lowest shadow-sm z-20 overflow-y-auto">
+<!-- Selected Layer Header -->
+<div class="p-space-md bg-surface-container-lowest flex items-center justify-between">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-9 h-9 rounded-xl bg-primary-fixed flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[20px]">person_apron</span>
+</div>
+<div class="min-w-0">
+<h2 class="font-headline-sm text-headline-sm text-on-surface truncate">Baker Cutout</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+              Subject Cutout Layer
+            </p>
+</div>
+</div>
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</div>
+<!-- Quick Action Buttons -->
+<div class="p-space-md space-y-2.5">
+<button class="w-full h-10 px-3 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center justify-between group transition-colors" type="button">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-primary">auto_awesome</span>
+<span>New AI image</span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-lowest text-on-surface-variant font-label-sm text-[11px] group-hover:bg-primary-fixed group-hover:text-primary transition-colors">1 credit</span>
+</button>
+<button class="w-full h-10 px-3 rounded-xl bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md flex items-center justify-between transition-colors" type="button">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-tertiary">content_cut</span>
+<span>Remove background</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-outline">done</span>
+</button>
+</div>
+<!-- Size & Transform Section -->
+<div class="p-space-md space-y-3 bg-surface-container-lowest">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Transform</span>
+<button class="text-on-surface-variant hover:text-primary text-[11px] font-label-sm font-medium">Reset</button>
+</div>
+<!-- Size Slider -->
+<div class="space-y-1.5">
+<div class="flex justify-between items-center text-body-sm font-body-sm text-on-surface">
+<span class="text-on-surface-variant">Scale size</span>
+<span class="font-mono text-label-md text-on-surface font-medium" id="size-readout">108%</span>
+</div>
+<input class="w-full accent-primary-container h-1.5 bg-surface-container rounded-lg appearance-none cursor-pointer" id="size-slider" max="200" min="50" type="range" value="108"/>
+</div>
+<!-- Position / Alignment Quick Icons -->
+<div class="pt-1">
+<span class="font-label-sm text-[11px] text-on-surface-variant block mb-1.5">Align to canvas</span>
+<div class="grid grid-cols-6 gap-1 bg-surface-container-low p-1 rounded-xl">
+<button class="h-8 rounded-lg hover:bg-surface-container-lowest text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title="Align Left" type="button">
+<span class="material-symbols-outlined text-[18px]">align_horizontal_left</span>
+</button>
+<button class="h-8 rounded-lg bg-surface-container-lowest text-primary shadow-xs flex items-center justify-center transition-colors" title="Align Center" type="button">
+<span class="material-symbols-outlined text-[18px]">align_horizontal_center</span>
+</button>
+<button class="h-8 rounded-lg hover:bg-surface-container-lowest text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title="Align Right" type="button">
+<span class="material-symbols-outlined text-[18px]">align_horizontal_right</span>
+</button>
+<button class="h-8 rounded-lg hover:bg-surface-container-lowest text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title="Align Top" type="button">
+<span class="material-symbols-outlined text-[18px]">align_vertical_top</span>
+</button>
+<button class="h-8 rounded-lg hover:bg-surface-container-lowest text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title="Align Middle" type="button">
+<span class="material-symbols-outlined text-[18px]">align_vertical_center</span>
+</button>
+<button class="h-8 rounded-lg bg-surface-container-lowest text-primary shadow-xs flex items-center justify-center transition-colors" title="Align Bottom" type="button">
+<span class="material-symbols-outlined text-[18px]">align_vertical_bottom</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Layer Arrangement Section -->
+<div class="p-space-md space-y-2.5 bg-surface-container-lowest">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Arrangement</span>
+<div class="grid grid-cols-2 gap-2">
+<button class="h-9 px-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center justify-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">flip_to_front</span>
+<span>Bring forward</span>
+</button>
+<button class="h-9 px-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center justify-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">flip_to_back</span>
+<span>Send back</span>
+</button>
+</div>
+<div class="p-2.5 rounded-xl bg-secondary-container/40 flex items-center gap-2.5">
+<span class="material-symbols-outlined text-primary text-[18px]">info</span>
+<p class="font-body-sm text-[12px] leading-snug text-on-surface-variant">
+            Positioned in front of <strong class="text-on-surface font-medium">"RISE"</strong> to create 3D depth overlap.
+          </p>
+</div>
+</div>
+<!-- Media Source Section -->
+<div class="p-space-md space-y-2.5 bg-surface-container-lowest">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Source asset</span>
+<button class="font-label-sm text-[12px] text-primary hover:underline flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[14px]">cached</span>
+<span>Replace</span>
+</button>
+</div>
+<div class="flex items-center gap-3 p-2 rounded-xl bg-surface-container-low">
+<div class="w-12 h-12 rounded-lg bg-surface-container overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="Baker photo asset miniature thumbnail clean lighting natural linen apron" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCp1mIx8bUt--mUWMxTW3blhgCL8X_xKFmsEDwO_AoTQWwWdPpCd3Nnrt3RpFRSClR-3wpglDjCeBCw1klmztePJGL_SjbNvHskogvss8eLxCWqG0f16n0KIhKN0N-QlR7K0eZq5xrrVxs9ZvMSItZuOQ96PDJnZNvohkgxtGcrfyoHIW0q6imFIQOe9Z2K8_A6JFToddOiK2cOBvdNz8Gr6fzFg9VfTm-6sIOltmMd"/>
+</div>
+<div class="min-w-0 flex-1">
+<p class="font-label-md text-label-md text-on-surface truncate">baker_cutout_v2.png</p>
+<p class="font-body-sm text-[11px] text-on-surface-variant">1080 × 1440 • PNG Transparent</p>
+</div>
+</div>
+</div>
+<!-- Blending & Adjustments Sliders -->
+<div class="p-space-md space-y-3.5 bg-surface-container-lowest">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Tonal &amp; Blending</span>
+<!-- Opacity Slider -->
+<div class="space-y-1">
+<div class="flex justify-between items-center text-body-sm font-body-sm">
+<span class="text-on-surface-variant">Opacity</span>
+<span class="font-mono text-label-md text-on-surface">100%</span>
+</div>
+<input class="w-full accent-primary h-1.5 bg-surface-container rounded-lg appearance-none cursor-pointer" max="100" min="0" type="range" value="100"/>
+</div>
+<!-- Warmth Slider -->
+<div class="space-y-1">
+<div class="flex justify-between items-center text-body-sm font-body-sm">
+<span class="text-on-surface-variant">Bakery Warmth</span>
+<span class="font-mono text-label-md text-primary font-medium">+8</span>
+</div>
+<input class="w-full accent-primary h-1.5 bg-surface-container rounded-lg appearance-none cursor-pointer" max="50" min="-50" type="range" value="8"/>
+</div>
+<!-- Exposure Slider -->
+<div class="space-y-1">
+<div class="flex justify-between items-center text-body-sm font-body-sm">
+<span class="text-on-surface-variant">Exposure</span>
+<span class="font-mono text-label-md text-on-surface">0.0</span>
+</div>
+<input class="w-full accent-primary h-1.5 bg-surface-container rounded-lg appearance-none cursor-pointer" max="10" min="-10" type="range" value="0"/>
+</div>
+</div>
+</aside>
+</div>
+<!-- Interactive Workbench Micro-Interactions Script -->
+<script>
+    (function initStudioWorkbench() {
+      // Zoom Controls
+      let currentZoom = 100;
+      const zoomVal = document.getElementById('zoom-val');
+      const artboard = document.getElementById('main-artboard');
+      const btnZoomIn = document.getElementById('zoom-in');
+      const btnZoomOut = document.getElementById('zoom-out');
+
+      function updateZoom(newZoom) {
+        currentZoom = Math.min(Math.max(newZoom, 50), 175);
+        if (zoomVal) zoomVal.textContent = currentZoom + '%';
+        if (artboard) artboard.style.transform = 'scale(' + (currentZoom / 100) + ')';
+      }
+
+      if (btnZoomIn) {
+        btnZoomIn.addEventListener('click', function() {
+          updateZoom(currentZoom + 10);
+        });
+      }
+
+      if (btnZoomOut) {
+        btnZoomOut.addEventListener('click', function() {
+          updateZoom(currentZoom - 10);
+        });
+      }
+
+      // Size Slider Inspector Sync
+      const sizeSlider = document.getElementById('size-slider');
+      const sizeReadout = document.getElementById('size-readout');
+      const subjectBaker = document.getElementById('subject-baker');
+
+      if (sizeSlider && sizeReadout) {
+        sizeSlider.addEventListener('input', function(e) {
+          const val = e.target.value;
+          sizeReadout.textContent = val + '%';
+          if (subjectBaker) {
+            const scale = val / 100;
+            subjectBaker.style.transform = 'translateX(-48%) scale(' + scale + ')';
+            subjectBaker.style.transformOrigin = 'bottom center';
+          }
+        });
+      }
+
+      // Simple Layer Selection Switcher
+      const layers = document.querySelectorAll('#layer-list > div');
+      layers.forEach(function(l) {
+        l.addEventListener('click', function() {
+          layers.forEach(item => {
+            item.classList.remove('bg-primary-fixed/30', 'ring-2', 'ring-primary-container');
+            item.classList.add('bg-surface-container-lowest');
+          });
+          this.classList.remove('bg-surface-container-lowest');
+          this.classList.add('bg-primary-fixed/30', 'ring-2', 'ring-primary-container');
+        });
+      });
+    })();
+  </script>
+</div></main></body></html>

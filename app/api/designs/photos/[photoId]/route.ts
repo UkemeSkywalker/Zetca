@@ -14,11 +14,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ phot
       const bytes = await new StockPhotoService().read(userId, photoId);
       if (!bytes) return NextResponse.json({ error: 'Photo not found', code: 'NOT_FOUND' }, { status: 404 });
       return new Response(Buffer.from(bytes), {
-        headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'private, max-age=31536000, immutable' },
+        headers: { 'Content-Type': isPng(bytes) ? 'image/png' : 'image/jpeg', 'Cache-Control': 'private, max-age=31536000, immutable' },
       });
     } catch (error) {
       return designErrorResponse(error, { endpoint: 'GET /api/designs/photos/[photoId]', userId });
     }
   });
   return handler(req);
+}
+
+/** Cut-outs are saved as see-through PNGs; everything else is JPEG */
+function isPng(bytes: Uint8Array): boolean {
+  return bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
 }

@@ -3,7 +3,7 @@
  * thumbnails and the downloaded PNG all use this, so what you see is what you get.
  */
 
-import { EXPORT_WIDTH, FORMATS, type DesignDoc, type FontId, type TextLayer } from './types';
+import { EXPORT_WIDTH, FORMATS, type DesignDoc, type FontId, type ImageLayer, type TextLayer } from './types';
 import { fitText, type FittedText } from './textFit';
 import { photoRect } from './photo';
 
@@ -132,6 +132,21 @@ function drawLayer(ctx: Ctx, layer: TextLayer, fitted: FittedText, families: Fon
   lines.forEach((line, i) => ctx.fillText(line, anchorX, top + pad / 2 + i * lineH + baselineOffset));
 }
 
+/** A picture layer, keeping its shape inside its box (cut-outs sit at the bottom of the box) */
+function drawImageLayer(ctx: Ctx, l: ImageLayer, photos: PhotoImages) {
+  const img = photos[l.photoId];
+  if (!img) return;
+  if (l.cover) {
+    const r = photoRect(img.width, img.height, l.w, l.h, 'fill', 0.5, 0.5);
+    ctx.drawImage(img, r.sx, r.sy, r.sw, r.sh, l.x + r.dx, l.y + r.dy, r.dw, r.dh);
+    return;
+  }
+  const k = Math.min(l.w / img.width, l.h / img.height);
+  const dw = img.width * k;
+  const dh = img.height * k;
+  ctx.drawImage(img, l.x + (l.w - dw) / 2, l.cutout ? l.y + l.h - dh : l.y + (l.h - dh) / 2, dw, dh);
+}
+
 /** Draws the design; the canvas is resized to the design's full size */
 export function drawDesign(
   canvas: HTMLCanvasElement,
@@ -153,11 +168,12 @@ export function drawDesign(
   ctx.setTransform(resolution, 0, 0, resolution, 0, 0);
   ctx.clearRect(0, 0, width, height);
   drawBackground(ctx, doc, width, height, photos, overlayOnly);
-  return doc.layers.map((layer) => {
-    const fitted = layoutLayer(ctx, layer, families);
-    drawLayer(ctx, layer, fitted, families);
-    return { id: layer.id, fitted };
-  });
+  // Order: background, text marked "behind", pictures, then the rest of the text
+  const laid = new Map(doc.layers.map((layer) => [layer.id, layoutLayer(ctx, layer, families)]));
+  for (const layer of doc.layers) if (layer.behind) drawLayer(ctx, layer, laid.get(layer.id)!, families);
+  if (!overlayOnly) for (const img of doc.images ?? []) drawImageLayer(ctx, img, photos);
+  for (const layer of doc.layers) if (!layer.behind) drawLayer(ctx, layer, laid.get(layer.id)!, families);
+  return doc.layers.map((layer) => ({ id: layer.id, fitted: laid.get(layer.id)! }));
 }
 
 /** The design as a PNG file */
@@ -165,7 +181,8 @@ export function designToBlob(doc: DesignDoc, families: FontFamilies, photos: Pho
   const canvas = document.createElement('canvas');
   drawDesign(canvas, doc, families, photos, (EXPORT_WIDTH[doc.format] ?? FORMATS[doc.format].width) / FORMATS[doc.format].width);
   // Photos are much smaller as JPEG; flat colours and text stay crisp as PNG
-  const [type, quality] = doc.background.kind === 'photo' ? ['image/jpeg', 0.9] : ['image/png', undefined];
+  const photo = doc.background.kind === 'photo' || (doc.images ?? []).length > 0;
+  const [type, quality] = photo ? ['image/jpeg', 0.9] : ['image/png', undefined];
   return new Promise((resolve, reject) =>
     canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Couldn’t make the image'))), type, quality)
   );
