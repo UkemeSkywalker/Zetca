@@ -43,7 +43,7 @@ export function CreateDesign() {
     return s === 'stock' || s === 'ai_image' || s === 'ai_video' ? s : 'template';
   });
   const { credits, available: aiAvailable, tier, models, refresh: refreshCredits } = useAiCredits();
-  const [imageModelId, setImageModelId] = useState('');
+  const [imageModelId, setImageModelId] = useState(params.get('model') ?? '');
   const [videoModelId, setVideoModelId] = useState('');
   const pickedImage = models?.image.find((m) => m.id === (imageModelId || models.defaults.image));
   const pickedVideo = models?.video.find((m) => m.id === (videoModelId || models.defaults.video));

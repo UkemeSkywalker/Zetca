@@ -15,6 +15,12 @@ type Img = PhotoImages[string];
 
 const loaded = new Map<string, Promise<Img>>();
 
+/** The example images that ship with the style library: "style:<id>" (photo) and "style:<id>-cut" (its cut-out) */
+export const styleExampleUrl = (photoId: string) => {
+  const name = photoId.replace(/^style:/, '');
+  return `/designer/styles/${name}${name.endsWith('-cut') ? '.png' : '.jpg'}`;
+};
+
 function imageFromUrl(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -41,6 +47,8 @@ export function loadPhoto(bg: Pick<PhotoBackground, 'photoId' | 'previewUrl'>): 
   if (!p) {
     p = bg.photoId.startsWith('sample:')
       ? imageFromUrl(samplePhotoUrl(bg.photoId))
+      : bg.photoId.startsWith('style:')
+        ? imageFromUrl(styleExampleUrl(bg.photoId))
       : isUnsavedPhoto(bg.photoId)
         ? imageFromUrl(bg.previewUrl ?? '')
         : fetchSaved(bg.photoId);
