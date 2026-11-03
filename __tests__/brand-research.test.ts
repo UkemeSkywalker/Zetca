@@ -124,6 +124,7 @@ const profile: BrandProfile = {
     look: ['Warm light'],
   },
   missing: [],
+  styles: [{ id: 'word-behind', why: 'Bold story on feed' }],
 };
 
 describe('the brand kit', () => {

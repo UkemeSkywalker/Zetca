@@ -130,6 +130,7 @@ export class MockBrandResearchAgent {
         look: ['Clean photos'],
       },
       missing: ['What do you most want people to do after a post?'],
+      styles: [{ id: 'marble-thinker', why: 'Bold and simple' }],
     };
   }
 

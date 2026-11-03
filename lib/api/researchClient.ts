@@ -36,3 +36,8 @@ export async function startResearch(message: string): Promise<PublicBrandResearc
 export async function getResearch(researchId: string): Promise<PublicBrandResearch> {
   return (await call<{ research: PublicBrandResearch }>(`/api/strategist/research/${encodeURIComponent(researchId)}`)).research;
 }
+
+/** Saves the campaign look picked from the suggested styles (null clears it) */
+export async function chooseResearchStyle(researchId: string, style: string | null): Promise<PublicBrandResearch> {
+  return (await call<{ research: PublicBrandResearch }>(`/api/strategist/research/${encodeURIComponent(researchId)}/style`, { method: 'PUT', body: JSON.stringify({ style }) })).research;
+}

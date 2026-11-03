@@ -6,6 +6,10 @@
 import type { BrandProfile } from '../models/brandResearch';
 import type { PageRead } from './webReader';
 import type { SearchResult } from './webSearch';
+import { FAMILY_NAMES, RECIPES } from '../design/recipes';
+
+/** The style library, for the AI to suggest a campaign look from */
+const STYLE_LIST = RECIPES.map((r) => `- ${r.id}: ${r.name} (${FAMILY_NAMES[r.family]}): ${r.description}`).join('\n');
 export type { SearchResult };
 
 export interface BrandResearchInput {
@@ -45,6 +49,9 @@ ${socialPages.map(pageBlock).join('\n\n---\n\n') || 'None read.'}
 
 Public web search results:
 ${search.map((r) => `- ${r.title} (${r.url}): ${r.content}`).join('\n') || 'None.'}
+
+Styles in the style library (suggest 3 that suit this brand):
+${STYLE_LIST}
 
 Brand kit candidates from their website:
 ${candidates}
