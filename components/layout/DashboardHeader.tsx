@@ -85,15 +85,21 @@ export function DashboardHeader({ className = '', leading, trailing, mobileTitle
           {user?.linkedin?.isConnected && (
             <div className="hidden sm:flex items-center gap-2 px-2 py-1 rounded-lg bg-surface-container-low">
               <div className="relative">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={user.linkedin.pictureUrl || ''}
-                  alt={`${user.linkedin.name || 'LinkedIn'} profile photo`}
-                  width={28}
-                  height={28}
-                  className="w-7 h-7 rounded-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
+                {user.linkedin.pictureUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={user.linkedin.pictureUrl}
+                    alt={`${user.linkedin.name || 'LinkedIn'} profile photo`}
+                    width={28}
+                    height={28}
+                    className="w-7 h-7 rounded-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <span className="grid w-7 h-7 place-items-center rounded-full bg-[#0A66C2] text-xs font-bold text-white" aria-hidden>
+                    {(user.linkedin.name || 'L').slice(0, 1)}
+                  </span>
+                )}
                 <svg
                   className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 text-[#0A66C2] bg-surface-container-low rounded-full"
                   viewBox="0 0 24 24"
