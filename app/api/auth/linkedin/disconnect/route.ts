@@ -2,8 +2,8 @@
  * LinkedIn Disconnect Endpoint
  * POST /api/auth/linkedin/disconnect
  *
- * Removes all LinkedIn connection data from the user's record.
- * Protected with authentication middleware.
+ * Body { accountId } removes that LinkedIn account; with no body, removes
+ * every connected LinkedIn account. Protected with authentication middleware.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -13,8 +13,10 @@ import { logError } from '@/lib/errors';
 
 async function disconnectHandler(req: NextRequest, userId: string): Promise<Response> {
   try {
+    const body = (await req.json().catch(() => ({}))) as { accountId?: unknown };
     const userRepository = new UserRepository();
-    await userRepository.disconnectLinkedIn(userId);
+    if (typeof body.accountId === 'string' && body.accountId) await userRepository.removeLinkedInAccount(userId, body.accountId);
+    else await userRepository.disconnectLinkedIn(userId);
 
     return NextResponse.json({ success: true });
   } catch (err) {

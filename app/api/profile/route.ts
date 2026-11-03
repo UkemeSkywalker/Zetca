@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/middleware/withAuth';
+import { accountsOf, publicAccount } from '@/lib/linkedin/accounts';
 import { UserRepository } from '@/lib/db/userRepository';
 import { YOUTUBE_ANALYTICS_SCOPE } from '@/lib/services/youtubeClient';
 import {
@@ -28,15 +29,11 @@ export async function GET(req: NextRequest) {
         throw new AuthError('User not found', 404, undefined, 'USER_NOT_FOUND');
       }
 
-      // Build LinkedIn connection data (never expose access token)
-      const linkedin = user.linkedinSub
-        ? {
-            isConnected: true,
-            name: user.linkedinName,
-            pictureUrl: user.linkedinPictureUrl,
-            email: user.linkedinEmail,
-            connectedAt: user.linkedinConnectedAt,
-          }
+      // Connected LinkedIn accounts (never expose access tokens); `linkedin` is the default one
+      const linkedinAccounts = accountsOf(user).map(publicAccount);
+      const first = linkedinAccounts[0];
+      const linkedin = first
+        ? { isConnected: true, name: first.name, pictureUrl: first.pictureUrl, email: first.email, connectedAt: first.connectedAt }
         : { isConnected: false };
 
       // YouTube channel (never expose the refresh token)
@@ -62,6 +59,7 @@ export async function GET(req: NextRequest) {
           company: user.company,
           bio: user.bio,
           linkedin,
+          linkedinAccounts,
           youtube,
         },
       });
