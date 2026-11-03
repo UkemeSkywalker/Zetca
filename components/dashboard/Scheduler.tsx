@@ -192,6 +192,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
           status: postData.status === 'publishing' || postData.status === 'failed' ? 'scheduled' : postData.status,
           mediaId: postData.mediaId ?? null,
           mediaType: postData.mediaType ?? null,
+          accountId: postData.platform === 'linkedin' ? (postData.accountId ?? null) : null,
         };
         await schedulerClient.updatePost(editingPost.id, updatePayload);
         setEditingPost(null);
@@ -207,6 +208,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
           scheduledTime: postData.scheduledTime,
           platform: postData.platform,
           ...(postData.mediaId ? { mediaId: postData.mediaId, mediaType: postData.mediaType } : {}),
+          ...(postData.platform === 'linkedin' && postData.accountId ? { accountId: postData.accountId } : {}),
         };
         await schedulerClient.manualSchedule(schedulePayload);
       }
@@ -279,6 +281,7 @@ export function Scheduler({ className = '' }: SchedulerProps) {
         status: post.status,
         createdAt: new Date(post.createdAt),
         ...(post.mediaId ? { mediaId: post.mediaId, mediaType: post.mediaType } : {}),
+        ...(post.accountId ? { accountId: post.accountId } : {}),
       };
 
       // Fetch media download URL if post has media

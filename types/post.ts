@@ -9,6 +9,8 @@ export interface Post {
   imageUrl?: string;
   mediaId?: string;
   mediaType?: 'image' | 'video';
+  /** The LinkedIn account it posts as; none means the default */
+  accountId?: string;
   captionId?: string;
   createdAt: Date;
   publishedAt?: Date;

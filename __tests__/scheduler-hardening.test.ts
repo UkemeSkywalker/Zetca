@@ -107,7 +107,9 @@ function makePublisher({
     listLogsByPost: async (id: string) => logs.filter((l) => l.post_id === id),
   } as unknown as PublisherRepository;
   const userRepo = {
-    getUserLinkedInCredentials: async () => (connected ? { linkedinAccessToken: 't', linkedinSub: 'sub' } : {}),
+    // The default account is "sub"; any other connected account id signs in as itself
+    getUserLinkedInCredentials: async (_userId: string, accountId?: string | null) =>
+      !connected || accountId === 'gone' ? {} : { linkedinAccessToken: `t-${accountId ?? 'sub'}`, linkedinSub: accountId ?? 'sub' },
   } as unknown as UserRepository;
   const mediaRepo = {
     getMediaById: async (id: string) => ({ mediaId: id, userId: mediaOwner, s3Key: 'k', contentType: 'image/png' }),
@@ -170,6 +172,18 @@ describe('PublisherService', () => {
     expect(createTextPost).not.toHaveBeenCalled();
     expect(repo.posts.get(p.id)?.status).toBe('failed');
     expect(logs).toHaveLength(1);
+  });
+
+  it('posts each post as its own LinkedIn account, and never falls back to another one', async () => {
+    const mine = post();
+    const client = post({ account_id: 'client-a' });
+    const removed = post({ account_id: 'gone' });
+    const { service, repo, createTextPost } = makePublisher({ posts: [mine, client, removed] });
+    await service.runScanCycle();
+    const authors = createTextPost.mock.calls.map((c) => (c as unknown[]).slice(0, 2));
+    expect(authors).toEqual(expect.arrayContaining([['t-sub', 'urn:li:person:sub'], ['t-client-a', 'urn:li:person:client-a']]));
+    expect(createTextPost).toHaveBeenCalledTimes(2);
+    expect(repo.posts.get(removed.id)?.last_error_code).toBe('linkedin_not_connected');
   });
 
   it('does not try to auto-publish platforms other than LinkedIn', async () => {
