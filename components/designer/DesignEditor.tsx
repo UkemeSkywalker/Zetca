@@ -6,7 +6,7 @@ import { Icon } from '@iconify/react';
 import { FORMATS, FORMAT_IDS, isUnsavedPhoto, type DesignDoc, type DesignRecord, type FormatId } from '@/lib/design/types';
 import { changeFormat, clampBox, duplicateLayer, removeLayer, scaleImage, updateImage, updateLayer } from '@/lib/design/edit';
 import { designToBlob } from '@/lib/design/render';
-import { getDesign, saveDesign } from '@/lib/api/designApi';
+import { createDesign, designerPath, getDesign, saveDesign } from '@/lib/api/designApi';
 import { DesignCanvas } from './DesignCanvas';
 import { FONT_FAMILIES, loadDesignFonts } from './fonts';
 import { photosFor, withSavedPhoto } from './photos';
@@ -16,25 +16,31 @@ import { LeftPanel, RightPanel, type Tab } from './EditorPanels';
 import { SecondaryButton, PrimaryButton } from './ui';
 import { VideoBar } from './VideoBar';
 
-type SaveState = 'saved' | 'saving' | 'unsaved' | 'error';
+/** 'draft': a new design nothing has been added to yet, so it isn't saved */
+type SaveState = 'draft' | 'saved' | 'saving' | 'unsaved' | 'error';
 
 const HISTORY_LIMIT = 60;
 
-export function DesignEditor({ designId }: { designId: string }) {
+/**
+ * Edits a saved design (designId), or a new one (draft) that is saved only
+ * once something is added to it
+ */
+export function DesignEditor({ designId, draft }: { designId?: string; draft?: DesignDoc }) {
   const [design, setDesign] = useState<DesignRecord | null>(null);
   const [loadError, setLoadError] = useState('');
-  const [doc, setDoc] = useState<DesignDoc | null>(null);
-  const [name, setName] = useState('');
+  const [doc, setDoc] = useState<DesignDoc | null>(draft ?? null);
+  const [name, setName] = useState(draft ? 'Untitled design' : '');
   const [past, setPast] = useState<DesignDoc[]>([]);
   const [future, setFuture] = useState<DesignDoc[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab>('text');
-  const [saveState, setSaveState] = useState<SaveState>('saved');
+  const [tab, setTab] = useState<Tab>(draft ? 'photos' : 'text');
+  const [saveState, setSaveState] = useState<SaveState>(draft ? 'draft' : 'saved');
   const [downloading, setDownloading] = useState(false);
   const [updatingPost, setUpdatingPost] = useState<'idle' | 'busy' | 'done' | 'error'>('idle');
   const lastPush = useRef(0);
 
   useEffect(() => {
+    if (!designId) return;
     getDesign(designId).then(
       (d) => {
         setDesign(d);
@@ -43,8 +49,6 @@ export function DesignEditor({ designId }: { designId: string }) {
         setSelected(d.doc.layers.find((l) => l.role === 'headline')?.id ?? null);
         // A style example still has its sample photo: offer real ones first
         if (d.doc.background.kind === 'photo' && d.doc.background.photoId.startsWith('sample:')) setTab('photos');
-        // The photo editor opens a blank canvas on the Photos tab
-        if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'photos') setTab('photos');
       },
       (err) => setLoadError(err instanceof Error ? err.message : 'Couldn’t open this design')
     );
@@ -97,21 +101,37 @@ export function DesignEditor({ designId }: { designId: string }) {
     setSaveState('unsaved');
   }, [future]);
 
+  // A new design being saved for the first time, so later saves wait for it
+  // instead of making a second one
+  const creating = useRef<Promise<DesignRecord> | null>(null);
+
   const save = useCallback(async () => {
-    if (!doc || !design) return;
+    if (!doc || (!design && !draft)) return;
     const toSave = withSavedPhoto(doc);
     // A photo still being copied to storage: try again once it's there
     if (toSave.background.kind === 'photo' && isUnsavedPhoto(toSave.background.photoId)) return;
     setSaveState('saving');
     try {
-      const source = sourceOf(toSave);
-      const saved = await saveDesign(design.designId, { name: name.trim() || 'Untitled design', source, doc: toSave });
+      const input = { name: name.trim() || 'Untitled design', source: sourceOf(toSave), doc: toSave };
+      let saved: DesignRecord;
+      const current = design ?? (creating.current ? await creating.current : null);
+      if (current) {
+        saved = await saveDesign(current.designId, input);
+      } else {
+        creating.current = createDesign(input);
+        saved = await creating.current.catch((e) => {
+          creating.current = null;
+          throw e;
+        });
+        // Its own address now, without reloading the editor
+        window.history.replaceState(null, '', designerPath(saved.designId));
+      }
       setDesign(saved);
       setSaveState((s) => (s === 'saving' ? 'saved' : s));
     } catch {
       setSaveState('error');
     }
-  }, [doc, design, name]);
+  }, [doc, design, draft, name]);
 
   // Saves on its own a moment after the last change
   useEffect(() => {
@@ -207,7 +227,7 @@ export function DesignEditor({ designId }: { designId: string }) {
     );
   }
 
-  if (!doc || !design) {
+  if (!doc || (!design && !draft)) {
     return <div className="h-[70vh] rounded-2xl bg-white/60 animate-pulse" aria-label="Opening design" />;
   }
 
@@ -264,7 +284,7 @@ export function DesignEditor({ designId }: { designId: string }) {
             {downloading ? <Icon icon="lucide:loader-circle" className="w-4 h-4 animate-spin" aria-hidden /> : <Icon icon="lucide:download" className="w-4 h-4" aria-hidden />}
             Download
           </SecondaryButton>
-          {design.attachedTo ? (
+          {design?.attachedTo ? (
             <PrimaryButton type="button" onClick={updatePost} disabled={updatingPost === 'busy'} className="h-10">
               {updatingPost === 'busy' ? (
                 <Icon icon="lucide:loader-circle" className="w-4 h-4 animate-spin" aria-hidden />
@@ -274,7 +294,7 @@ export function DesignEditor({ designId }: { designId: string }) {
               {updatingPost === 'done' ? 'Post updated' : updatingPost === 'error' ? 'Try again' : 'Update post'}
             </PrimaryButton>
           ) : (
-            <PrimaryButton type="button" onClick={save} disabled={saveState === 'saving' || saveState === 'saved'} className="h-10">
+            <PrimaryButton type="button" onClick={save} disabled={saveState === 'saving' || saveState === 'saved' || saveState === 'draft'} className="h-10">
               Save
             </PrimaryButton>
           )}
@@ -300,7 +320,7 @@ function SaveStatus({ state, onRetry }: { state: SaveState; onRetry: () => void 
       </button>
     );
   }
-  const label = state === 'saved' ? 'Saved' : state === 'saving' ? 'Saving…' : 'Unsaved';
+  const label = state === 'saved' ? 'Saved' : state === 'saving' ? 'Saving…' : state === 'draft' ? 'Not saved yet' : 'Unsaved';
   return (
     <span role="status" className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${state === 'saved' ? 'bg-emerald-50 text-emerald-700' : 'bg-[#F1F5F9] text-[#64748B]'}`}>
       {state === 'saved' && <Icon icon="lucide:check" className="w-3.5 h-3.5" aria-hidden />}
