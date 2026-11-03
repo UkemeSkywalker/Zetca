@@ -13,7 +13,9 @@ import { SuggestedStyles } from './SuggestedStyles';
 
 const POLL_MS = 2500;
 const GLASS = 'rounded-3xl border border-white/10 bg-white/[0.06] backdrop-blur-xl';
-const LABEL = 'text-[11px] font-semibold uppercase tracking-[0.14em] text-white/50';
+/** The result cards: white with dark text */
+const CARD = 'rounded-3xl border border-white bg-white text-[#0b1c30]';
+const LABEL = 'text-[11px] font-semibold uppercase tracking-[0.14em] text-[#64748b]';
 
 const SOCIAL_ICONS: Record<string, string> = {
   instagram: 'simple-icons:instagram',
@@ -260,7 +262,7 @@ function Board({ research, onResearch }: { research: PublicBrandResearch | null;
 
       {/* The brand, like a profile card */}
       {profile ? (
-        <section className={`${GLASS} talk-in p-5`} aria-label="Your brand">
+        <section className={`${CARD} talk-in p-5`} aria-label="Your brand">
           <div className="flex flex-wrap items-center gap-4">
             <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-full bg-white">
               {kit?.logoUrl ? (
@@ -274,14 +276,14 @@ function Board({ research, onResearch }: { research: PublicBrandResearch | null;
               <h2 className="text-[clamp(22px,2.6vw,30px)] font-bold leading-tight" style={kit?.headingFont ? { fontFamily: `"${kit.headingFont}", serif` } : undefined}>
                 {profile.brandName}
               </h2>
-              <p className="text-[15px] text-white/70">{profile.tagline}</p>
+              <p className="text-[15px] text-[#464555]">{profile.tagline}</p>
             </div>
             <Platforms socials={socials} />
           </div>
           {chips.length > 0 && <Chips items={chips} className="mt-4" />}
         </section>
       ) : (
-        chips.length > 0 && <Chips items={chips} className="talk-in" />
+        chips.length > 0 && <Chips items={chips} className="talk-in" onDark />
       )}
 
       {/* Photos and videos */}
@@ -290,7 +292,7 @@ function Board({ research, onResearch }: { research: PublicBrandResearch | null;
       {/* The brand kit and who it's for */}
       {profile && kit && (
         <div className="grid gap-5 md:grid-cols-2">
-          <section className={`${GLASS} talk-in p-5 md:col-span-2`} aria-label="Colours">
+          <section className={`${CARD} talk-in p-5 md:col-span-2`} aria-label="Colours">
             <p className={LABEL}>Colours</p>
             {kit.colors.length ? (
               <div className="mt-3 flex h-28 overflow-hidden rounded-2xl">
@@ -302,11 +304,11 @@ function Board({ research, onResearch }: { research: PublicBrandResearch | null;
                 ))}
               </div>
             ) : (
-              <p className="mt-2 text-sm text-white/50">No colours found on the site</p>
+              <p className="mt-2 text-sm text-[#64748b]">No colours found on the site</p>
             )}
           </section>
           {fonts.length > 0 && (
-            <section className={`${GLASS} talk-in p-5`} aria-label="Fonts">
+            <section className={`${CARD} talk-in p-5`} aria-label="Fonts">
               <p className={LABEL}>Fonts</p>
               <div className="mt-3 flex items-end gap-6">
                 {kit.headingFont && (
@@ -314,7 +316,7 @@ function Board({ research, onResearch }: { research: PublicBrandResearch | null;
                     <span className="block text-5xl leading-none" style={{ fontFamily: `"${kit.headingFont}", serif` }}>
                       Aa
                     </span>
-                    <span className="mt-2 block text-xs text-white/60">{kit.headingFont}</span>
+                    <span className="mt-2 block text-xs text-[#64748b]">{kit.headingFont}</span>
                   </div>
                 )}
                 {kit.bodyFont && (
@@ -322,13 +324,13 @@ function Board({ research, onResearch }: { research: PublicBrandResearch | null;
                     <span className="block text-2xl leading-none" style={{ fontFamily: `"${kit.bodyFont}", sans-serif` }}>
                       Aa
                     </span>
-                    <span className="mt-2 block text-xs text-white/60">{kit.bodyFont}</span>
+                    <span className="mt-2 block text-xs text-[#64748b]">{kit.bodyFont}</span>
                   </div>
                 )}
               </div>
             </section>
           )}
-          <section className={`${GLASS} talk-in p-5 space-y-4 ${fonts.length ? '' : 'md:col-span-2'}`} aria-label="Who it's for">
+          <section className={`${CARD} talk-in p-5 space-y-4 ${fonts.length ? '' : 'md:col-span-2'}`} aria-label="Who it's for">
             <TagRow label="Customers" icon="lucide:users" items={profile.audience} />
             <TagRow label="How you sound" icon="lucide:message-circle" items={profile.voice} />
             <TagRow label="Your look" icon="lucide:camera" items={kit.look} />
@@ -369,14 +371,14 @@ function Board({ research, onResearch }: { research: PublicBrandResearch | null;
               const by = competitors.find((c) => c.name.toLowerCase() === w.competitor.toLowerCase());
               const photo = by?.media.images[0]?.url;
               return (
-                <a key={w.title} href={w.source} target="_blank" rel="noopener noreferrer" className={`${GLASS} group overflow-hidden`}>
-                  <div className="relative h-32 bg-white/5">
+                <a key={w.title} href={w.source} target="_blank" rel="noopener noreferrer" className={`${CARD} group overflow-hidden`}>
+                  <div className="relative h-32 bg-[#0b1c30]/5">
                     {photo && <Photo src={photo} alt="" className="h-full w-full object-cover opacity-80 transition group-hover:opacity-100" />}
-                    <span className="absolute bottom-2 left-2 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-semibold">{w.competitor}</span>
+                    <span className="absolute bottom-2 left-2 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-semibold text-white">{w.competitor}</span>
                   </div>
                   <div className="p-4">
                     <p className="font-semibold">{w.title}</p>
-                    <p className="mt-1 text-sm text-white/60">{w.detail}</p>
+                    <p className="mt-1 text-sm text-[#464555]">{w.detail}</p>
                   </div>
                 </a>
               );
@@ -407,11 +409,11 @@ function Board({ research, onResearch }: { research: PublicBrandResearch | null;
 
       {/* Sources, folded away */}
       {profile && profile.facts.length > 0 && (
-        <details className={`${GLASS} p-4 text-sm`}>
-          <summary className="cursor-pointer font-semibold text-white/80">Where this came from</summary>
+        <details className={`${CARD} p-4 text-sm`}>
+          <summary className="cursor-pointer font-semibold">Where this came from</summary>
           <ul className="mt-3 space-y-2">
             {profile.facts.map((f, i) => (
-              <li key={i} className="text-white/80">
+              <li key={i} className="text-[#464555]">
                 {f.text} <SourceChip url={f.source} />
               </li>
             ))}
@@ -432,11 +434,11 @@ function Shimmer({ tall = false }: { tall?: boolean }) {
   );
 }
 
-function Chips({ items, className = '' }: { items: string[]; className?: string }) {
+function Chips({ items, className = '', onDark = false }: { items: string[]; className?: string; onDark?: boolean }) {
   return (
     <div className={`flex flex-wrap gap-2 ${className}`}>
       {items.map((c) => (
-        <span key={c} className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[13px] font-medium">
+        <span key={c} className={`rounded-full border px-3 py-1 text-[13px] font-medium ${onDark ? 'border-white/15 bg-white/10' : 'border-[#0b1c30]/10 bg-[#f1f5f9]'}`}>
           {c}
         </span>
       ))}
@@ -468,7 +470,7 @@ function Platforms({ socials, small = false }: { socials: Socials; small?: boole
           target="_blank"
           rel="noopener noreferrer"
           aria-label={p}
-          className={`grid place-items-center rounded-full bg-white text-[#0b0b0f] hover:scale-105 transition ${small ? 'h-7 w-7' : 'h-9 w-9'}`}
+          className={`grid place-items-center rounded-full bg-[#0b1c30] text-white hover:scale-105 transition ${small ? 'h-7 w-7' : 'h-9 w-9'}`}
         >
           <Icon icon={SOCIAL_ICONS[p] ?? 'lucide:link'} className={small ? 'h-3.5 w-3.5' : 'h-4 w-4'} aria-hidden />
         </a>
@@ -478,9 +480,9 @@ function Platforms({ socials, small = false }: { socials: Socials; small?: boole
 }
 
 function SourceChip({ url }: { url: string }) {
-  if (!/^https?:/.test(url)) return <span className="ml-1 rounded-full bg-white/10 px-2 py-0.5 text-[11px] text-white/60">{url}</span>;
+  if (!/^https?:/.test(url)) return <span className="ml-1 rounded-full bg-[#0b1c30]/5 px-2 py-0.5 text-[11px] text-[#64748b]">{url}</span>;
   return (
-    <a href={url} target="_blank" rel="noopener noreferrer" className="ml-1 inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[11px] text-white/60 hover:text-white">
+    <a href={url} target="_blank" rel="noopener noreferrer" className="ml-1 inline-flex items-center gap-1 rounded-full bg-[#0b1c30]/5 px-2 py-0.5 text-[11px] text-[#64748b] hover:text-[#0b1c30]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={`https://www.google.com/s2/favicons?domain=${hostOf(url)}&sz=32`} alt="" className="h-3 w-3 rounded-sm" referrerPolicy="no-referrer" />
       {hostOf(url)}
@@ -555,8 +557,8 @@ function BrandCard({
   site?: string;
 }) {
   return (
-    <article className={`${GLASS} talk-in flex flex-col overflow-hidden ${you ? 'ring-2 ring-white/70' : ''}`}>
-      <div className="relative h-28 bg-gradient-to-br from-white/10 to-white/[0.02]">
+    <article className={`${CARD} talk-in flex flex-col overflow-hidden ${you ? 'ring-2 ring-white/70' : ''}`}>
+      <div className="relative h-28 bg-gradient-to-br from-[#0b1c30]/10 to-[#0b1c30]/[0.02]">
         {cover && <Photo src={cover} alt="" className="h-full w-full object-cover" />}
         {you && <span className="absolute right-2 top-2 rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-[#0b0b0f]">You</span>}
         <span className="absolute -bottom-6 left-4 grid h-12 w-12 place-items-center overflow-hidden rounded-full border-2 border-black bg-white">
@@ -571,15 +573,15 @@ function BrandCard({
         {colors.length > 0 && (
           <div className="flex gap-1" aria-label="Colours">
             {colors.slice(0, 5).map((c) => (
-              <span key={c} className="h-4 w-4 rounded-full border border-white/20" style={{ background: c }} />
+              <span key={c} className="h-4 w-4 rounded-full border border-black/10" style={{ background: c }} />
             ))}
           </div>
         )}
-        {line && <p className="text-sm text-white/70">{line}</p>}
+        {line && <p className="text-sm text-[#464555]">{line}</p>}
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {tags.slice(0, 3).map((t) => (
-              <span key={t} className="rounded-full bg-white/10 px-2 py-0.5 text-[11px]">
+              <span key={t} className="rounded-full bg-[#0b1c30]/5 px-2 py-0.5 text-[11px]">
                 {t}
               </span>
             ))}
@@ -588,7 +590,7 @@ function BrandCard({
         {thumbs.length > 0 && (
           <div className="mt-auto grid grid-cols-3 gap-1.5">
             {thumbs.slice(0, 3).map((t) => (
-              <div key={t.url} className="aspect-square overflow-hidden rounded-lg bg-white/5">
+              <div key={t.url} className="aspect-square overflow-hidden rounded-lg bg-[#0b1c30]/5">
                 <Photo src={t.url} alt="" className="h-full w-full object-cover" />
               </div>
             ))}
