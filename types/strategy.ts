@@ -57,5 +57,7 @@ export interface StrategyRecord {
   strategyOutput: StrategyOutput;
   /** Only on strategies generated from the quiz */
   quiz?: QuizAnswers;
+  /** The campaign's design style: every post's visual follows it */
+  designStyle?: { recipeId: string; model?: string; onNewPosts: boolean };
   createdAt: string;
 }

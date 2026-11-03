@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { CopyChatMessage, CopyJob, CopyRecord } from '@/types/agent';
 import type { StrategyRecord } from '@/types/strategy';
-import { listStrategies } from '@/lib/api/strategyClient';
+import { listStrategies, setStrategyStyle } from '@/lib/api/strategyClient';
 import { deleteCopy, deleteCopySet, followCopyJob, getCopyWorkspace, sendCopyChat, startCopyJob, type CopyJobLane } from '@/lib/api/copyClient';
 import {
   COPY_PLATFORMS,
@@ -24,6 +24,8 @@ import { GeneratePicker } from './GeneratePicker';
 import { EditVisualModal, VisualsBanner } from './PostVisual';
 import { AI_CREDIT_COST } from '@/components/designer/postVisuals';
 import { needsVisual, usePostVisuals, visualOf } from './usePostVisuals';
+import { CampaignStyleBar, styleCreditsPerPost, type CampaignStyleValue } from './CampaignStyleBar';
+import { recipeById } from '@/lib/design/recipes';
 import { PLATFORM_STYLE, platformInfo } from './platforms';
 
 const LABEL_MD = 'text-[13px] leading-[18px] tracking-[0.01em] font-semibold';
@@ -230,11 +232,32 @@ export function CopywriterWorkspace() {
       setWorkspace((prev) => (prev ? { ...prev, copies: prev.copies.map((c) => (c.id === saved.id ? saved : c)) } : prev)),
     []
   );
-  const visuals = usePostVisuals(replaceCopy);
+  // The campaign's design style: new posts' visuals follow it
+  const campaignStyle = strategy?.designStyle;
+  const activeStyle = campaignStyle?.onNewPosts ? { recipeId: campaignStyle.recipeId, model: campaignStyle.model } : undefined;
+  const [savingStyle, setSavingStyle] = useState(false);
+  const changeStyle = async (next: CampaignStyleValue | null) => {
+    if (!strategyId) return;
+    setSavingStyle(true);
+    const before = strategies;
+    setStrategies((list) => list?.map((s) => (s.id === strategyId ? { ...s, designStyle: next ?? undefined } : s)) ?? list);
+    try {
+      await setStrategyStyle(strategyId, next);
+    } catch {
+      setStrategies(before);
+    } finally {
+      setSavingStyle(false);
+    }
+  };
+  const visuals = usePostVisuals(replaceCopy, activeStyle);
+  const activeRecipe = activeStyle ? recipeById(activeStyle.recipeId) : undefined;
+  const styled = activeStyle && activeRecipe ? { name: activeRecipe.name, credits: styleCreditsPerPost({ ...activeStyle, onNewPosts: true }) } : undefined;
   const [editingVisualId, setEditingVisualId] = useState<string | null>(null);
   const [creatingAll, setCreatingAll] = useState(false);
   const visualsToMake = copies.filter(needsVisual).length;
-  const visualCredits = copies.filter(needsVisual).reduce((n, c) => n + (AI_CREDIT_COST[visualOf(c).kind] ?? 0), 0);
+  const visualCredits = copies
+    .filter(needsVisual)
+    .reduce((n, c) => n + (activeStyle && visualOf(c).kind !== 'ai_video' ? styleCreditsPerPost({ ...activeStyle, onNewPosts: true }) : (AI_CREDIT_COST[visualOf(c).kind] ?? 0)), 0);
   const createAllVisuals = async () => {
     setCreatingAll(true);
     try {
@@ -450,10 +473,16 @@ export function CopywriterWorkspace() {
               onChoose: (kind) => void visuals.choose(openCopy, kind),
               onCreate: () => void visuals.make(openCopy, visualOf(openCopy).kind),
               onEdit: () => setEditingVisualId(openCopy.id),
+              styled,
             }}
           />
         ) : (
           <>
+            {strategyId && (
+              <div className="mb-4">
+                <CampaignStyleBar value={campaignStyle} onChange={(v) => void changeStyle(v)} saving={savingStyle} />
+              </div>
+            )}
             <VisualsBanner count={visualsToMake} busy={creatingAll} onCreateAll={createAllVisuals} aiCredits={visualCredits} />
 
             {/* Platform tabs */}
@@ -501,6 +530,7 @@ export function CopywriterWorkspace() {
                               onChoose: (kind) => void visuals.choose(item, kind),
                               onCreate: () => void visuals.make(item, visualOf(item).kind),
                               onEdit: () => setEditingVisualId(item.id),
+                              styled,
                             }}
                           />
                         )

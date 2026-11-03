@@ -17,6 +17,13 @@ import { updatePost } from '@/lib/api/schedulerClient';
 import type { CopyRecord, VisualKind } from '@/types/agent';
 import { FONT_FAMILIES, loadDesignFonts } from './fonts';
 import { loadPhoto, photosFor, rememberSaved, tonesOf } from './photos';
+import { recipeById } from '@/lib/design/recipes';
+
+/** A campaign's design style: the style library recipe, and the AI image model */
+export interface VisualStyle {
+  recipeId: string;
+  model?: string;
+}
 
 /** What a visual is made for */
 export interface VisualTarget {
@@ -101,7 +108,9 @@ export async function designOptions(
   count = 1,
   format: FormatId = formatForPlatform(target.platform),
   /** AI images and videos take a while: how far along it is */
-  onProgress?: (p: AiProgress) => void
+  onProgress?: (p: AiProgress) => void,
+  /** A campaign style: AI images follow its recipe */
+  campaignStyle?: VisualStyle
 ): Promise<{ docs: DesignDoc[]; name: string }> {
   // Thumbnails are seen small next to other videos: a few huge words work best
   const prompt = format === 'landscape' ? `A YouTube thumbnail, at most 5 big punchy words (not the full title). ${brief(target)}` : brief(target);
@@ -116,6 +125,23 @@ export async function designOptions(
   };
   const n = seed(target.id);
   const name = written.headline.replace(/\n/g, ' ').slice(0, 60);
+
+  const recipe = kind === 'ai_image' && campaignStyle ? recipeById(campaignStyle.recipeId) : undefined;
+  if (recipe) {
+    // The post's own idea, in the campaign's look
+    const idea = (target.angle ? `${target.angle}: ${written.headline}` : written.headline).replace(/\n/g, ' ');
+    const job = await makeAi('image', recipe.imagePrompt(idea, recipe.colors), format, onProgress, campaignStyle?.model, undefined, { rawPrompt: true, cutout: recipe.cutout });
+    const photo = await aiPhotoBackground(job);
+    const cut = job.cutoutPhotoId ? await loadPhoto({ photoId: job.cutoutPhotoId }) : null;
+    const doc = recipe.build({
+      text,
+      format,
+      photo,
+      colors: recipe.colors,
+      cutout: cut && job.cutoutPhotoId ? { photoId: job.cutoutPhotoId, width: cut.width, height: cut.height } : undefined,
+    });
+    return { docs: [doc], name };
+  }
 
   if (kind === 'ai_image' || kind === 'ai_video') {
     const job = await makeAi(kind === 'ai_video' ? 'video' : 'image', written.imagePrompt || brief(target), format, onProgress);
@@ -188,14 +214,14 @@ export function sourceOf(doc: DesignDoc): 'template' | 'stock' | 'ai_image' | 'a
 }
 
 /** Makes a visual of `kind` for a post and returns its design and image (not attached to anything yet) */
-export async function makeVisual(target: VisualTarget, kind: VisualKind, attachedTo?: AttachedTo, onProgress?: (p: AiProgress) => void) {
-  const { docs, name } = await designOptions(target, kind, 1, formatForPlatform(target.platform), onProgress);
+export async function makeVisual(target: VisualTarget, kind: VisualKind, attachedTo?: AttachedTo, onProgress?: (p: AiProgress) => void, style?: VisualStyle) {
+  const { docs, name } = await designOptions(target, kind, 1, formatForPlatform(target.platform), onProgress, style);
   return saveAndExport(docs[0], name, attachedTo);
 }
 
 /** Makes a visual of `kind` for a Copywriter post and attaches it */
-export async function makePostVisual(copy: CopyRecord, kind: VisualKind): Promise<{ copy: CopyRecord; design: DesignRecord }> {
-  const { design, image } = await makeVisual(copy, kind, { copyId: copy.id, platform: copy.platform });
+export async function makePostVisual(copy: CopyRecord, kind: VisualKind, style?: VisualStyle): Promise<{ copy: CopyRecord; design: DesignRecord }> {
+  const { design, image } = await makeVisual(copy, kind, { copyId: copy.id, platform: copy.platform }, undefined, style);
   const updated = await setCopyVisual(copy.id, { kind: design.source === 'template' ? 'template' : design.source, designId: design.designId, mediaId: image.mediaId, mediaType: image.mediaType });
   return { copy: updated, design };
 }
