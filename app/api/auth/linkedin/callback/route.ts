@@ -4,7 +4,8 @@
  *
  * Handles the redirect from LinkedIn after user authorization.
  * Validates state, exchanges code for tokens, fetches profile,
- * and stores LinkedIn data on the user record.
+ * and adds the account to the user's connected LinkedIn accounts (or
+ * refreshes it, if it's already connected).
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -14,6 +15,7 @@ import { getConfig } from '@/lib/config';
 import { UserRepository } from '@/lib/db/userRepository';
 import { logError } from '@/lib/errors';
 import { siteUrl } from '@/lib/http/siteUrl';
+import { encryptToken } from '@/lib/crypto/tokenCipher';
 
 const PROFILE_URL = '/dashboard/profile';
 
@@ -166,14 +168,21 @@ async function linkedinCallbackHandler(req: NextRequest, userId: string): Promis
     const sanitizedName = String(name).trim().slice(0, 200);
     const sanitizedEmail = typeof email === 'string' ? email.trim().slice(0, 320) : undefined;
 
-    // Store LinkedIn data on the user record
+    // LinkedIn tokens last about 60 days; record when, to remind the user to reconnect
+    const expiresIn = typeof tokenData.expires_in === 'number' ? tokenData.expires_in : undefined;
+
+    // Add it to the user's LinkedIn accounts (a reconnect refreshes it in place)
     const userRepository = new UserRepository();
-    await userRepository.connectLinkedIn(userId, {
-      linkedinSub: sub,
-      linkedinAccessToken: accessToken,
-      linkedinName: sanitizedName,
-      linkedinPictureUrl: pictureUrl,
-      linkedinEmail: sanitizedEmail,
+    const now = new Date();
+    await userRepository.addLinkedInAccount(userId, {
+      id: sub,
+      kind: 'person',
+      name: sanitizedName,
+      pictureUrl,
+      email: sanitizedEmail,
+      tokenEnc: encryptToken(accessToken),
+      connectedAt: now.toISOString(),
+      expiresAt: expiresIn ? new Date(now.getTime() + expiresIn * 1000).toISOString() : undefined,
     });
 
     // Clear the OAuth state cookie and redirect with success

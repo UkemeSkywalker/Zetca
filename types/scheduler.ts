@@ -24,6 +24,8 @@ export interface ScheduledPost {
   mediaId?: string;
   mediaUrl?: string;
   mediaType?: 'image' | 'video';
+  /** The LinkedIn account it posts as; none means the default */
+  accountId?: string;
   /** Automatic publish attempts so far */
   publishAttempts?: number;
   /** Why the last publish attempt failed, in words the user can act on */
@@ -61,6 +63,7 @@ export interface ManualScheduleInput {
   content?: string;
   mediaId?: string;
   mediaType?: 'image' | 'video';
+  accountId?: string;
 }
 
 /**
@@ -75,4 +78,5 @@ export interface ScheduledPostUpdate {
   status?: 'draft' | 'scheduled' | 'published';
   mediaId?: string | null;
   mediaType?: 'image' | 'video' | null;
+  accountId?: string | null;
 }

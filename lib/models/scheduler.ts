@@ -48,6 +48,8 @@ export const ManualScheduleInputSchema = z.object({
   content: z.string().nullable().optional(),
   media_id: z.string().nullable().optional(),
   media_type: z.string().nullable().optional(),
+  /** The LinkedIn account to post as; none means the default */
+  account_id: z.string().trim().min(1).max(200).nullable().optional(),
 });
 export type ManualScheduleInput = z.infer<typeof ManualScheduleInputSchema>;
 
@@ -98,6 +100,8 @@ export interface ScheduledPostRecord {
   created_at: string;
   media_id?: string | null;
   media_type?: string | null;
+  /** The LinkedIn account it posts as (lib/linkedin/accounts); none means the default account */
+  account_id?: string | null;
   /** When the post is due (UTC ISO), kept in step with scheduled_date/time for the due-posts index */
   due_at?: string;
   /** Automatic publish attempts so far */
@@ -148,5 +152,6 @@ export const ScheduledPostUpdateSchema = z.object({
   status: z.enum(['draft', 'scheduled', 'published']).optional(),
   media_id: z.string().nullable().optional(),
   media_type: z.string().nullable().optional(),
+  account_id: z.string().trim().min(1).max(200).nullable().optional(),
 });
 export type ScheduledPostUpdate = z.infer<typeof ScheduledPostUpdateSchema>;

@@ -232,6 +232,7 @@ export class SchedulerService {
         status: 'scheduled',
         media_id: input.media_id ?? null,
         media_type: input.media_type ?? null,
+        account_id: input.account_id ?? null,
       });
       return this.schedulerRepository.createPost(record);
     }
@@ -262,6 +263,7 @@ export class SchedulerService {
       strategy_label: strategyLabel,
       media_id: input.media_id ?? null,
       media_type: input.media_type ?? null,
+      account_id: input.account_id ?? null,
     });
 
     return this.schedulerRepository.createPost(record);

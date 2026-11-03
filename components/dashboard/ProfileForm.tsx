@@ -4,7 +4,8 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Button from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { UserProfile, ConnectedAccount, LinkedInProfile } from '@/types';
+import { UserProfile, ConnectedAccount } from '@/types';
+import { LinkedInAccounts } from './LinkedInAccounts';
 import type { YouTubeConnection } from '@/types/user';
 import { Icon } from '@iconify/react';
 import { useAuth } from '@/context/AuthContext';
@@ -38,8 +39,6 @@ const ProfileFormInner: React.FC<ProfileFormProps> = ({ className = '' }) => {
     { platform: 'facebook', isConnected: false },
   ]);
 
-  // LinkedIn connection data from API
-  const [linkedinData, setLinkedinData] = useState<LinkedInProfile>({ isConnected: false });
   const [youtubeData, setYoutubeData] = useState<YouTubeConnection>({ isConnected: false });
   const [youtubeBusy, setYoutubeBusy] = useState(false);
 
@@ -70,10 +69,6 @@ const ProfileFormInner: React.FC<ProfileFormProps> = ({ className = '' }) => {
               company: data.user.company || '',
               bio: data.user.bio || '',
             });
-            // Set LinkedIn connection data from API
-            if (data.user.linkedin) {
-              setLinkedinData(data.user.linkedin);
-            }
             if (data.user.youtube) {
               setYoutubeData(data.user.youtube);
             }
@@ -243,66 +238,6 @@ const ProfileFormInner: React.FC<ProfileFormProps> = ({ className = '' }) => {
 
   // Handle account connection toggle
   const handleAccountToggle = async (platform: string) => {
-    if (platform === 'linkedin') {
-      if (linkedinData.isConnected) {
-        // Disconnect LinkedIn
-        try {
-          const response = await fetch('/api/auth/linkedin/disconnect', {
-            method: 'POST',
-            credentials: 'include',
-          });
-
-          const data = await response.json();
-
-          if (response.ok && data.success) {
-            // Re-fetch profile to update LinkedIn state
-            const profileResponse = await fetch('/api/profile', {
-              method: 'GET',
-              credentials: 'include',
-            });
-
-            if (profileResponse.ok) {
-              const profileData = await profileResponse.json();
-              if (profileData.success && profileData.user) {
-                setLinkedinData(
-                  profileData.user.linkedin || { isConnected: false }
-                );
-              } else {
-                setLinkedinData({ isConnected: false });
-              }
-            } else {
-              setLinkedinData({ isConnected: false });
-            }
-
-            setConnectionMessage('LinkedIn disconnected successfully.');
-            setTimeout(() => setConnectionMessage(''), 5000);
-          } else {
-            setErrors(prev => ({
-              ...prev,
-              general: data.error || 'Failed to disconnect LinkedIn',
-            }));
-            setTimeout(() => setErrors(prev => {
-              const { general, ...rest } = prev;
-              return rest;
-            }), 5000);
-          }
-        } catch (error) {
-          console.error('Error disconnecting LinkedIn:', error);
-          setErrors(prev => ({
-            ...prev,
-            general: 'Failed to disconnect LinkedIn. Please try again.',
-          }));
-          setTimeout(() => setErrors(prev => {
-            const { general, ...rest } = prev;
-            return rest;
-          }), 5000);
-        }
-        return;
-      }
-      // Full page redirect to start OAuth flow
-      window.location.href = '/api/auth/linkedin';
-      return;
-    }
     // Other platforms coming soon
     setConnectionMessage(`Account connection feature coming soon!`);
     setTimeout(() => {
@@ -484,47 +419,18 @@ const ProfileFormInner: React.FC<ProfileFormProps> = ({ className = '' }) => {
           </p>
 
           <div className="space-y-3">
-            {/* LinkedIn - uses real data from API */}
-            <div className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-3 flex-1">
-                  {linkedinData.isConnected && linkedinData.pictureUrl ? (
-                    <img
-                      src={linkedinData.pictureUrl}
-                      alt={`${linkedinData.name || 'LinkedIn'} profile picture`}
-                      className="w-10 h-10 rounded-full object-cover mt-1"
-                    />
-                  ) : (
-                    <Icon
-                      icon={platformIcons['linkedin']}
-                      className="text-3xl text-gray-700 mt-1"
-                    />
-                  )}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium text-gray-900">LinkedIn</p>
-                      <StatusBadge
-                        status={linkedinData.isConnected ? 'complete' : 'not-started'}
-                      />
-                    </div>
-                    {linkedinData.isConnected ? (
-                      <p className="text-sm text-gray-600">
-                        {linkedinData.name || 'Connected'}
-                      </p>
-                    ) : (
-                      <p className="text-sm text-gray-500">Not connected</p>
-                    )}
-                  </div>
-                </div>
-                <Button
-                  variant={linkedinData.isConnected ? 'outline' : 'primary'}
-                  size="sm"
-                  onClick={() => handleAccountToggle('linkedin')}
-                >
-                  {linkedinData.isConnected ? 'Disconnect' : 'Connect'}
-                </Button>
-              </div>
-            </div>
+            {/* LinkedIn: every connected account (the user's and their clients') */}
+            <LinkedInAccounts
+              onMessage={(text, isError) => {
+                if (isError) {
+                  setErrors((prev) => ({ ...prev, general: text }));
+                  setTimeout(() => setErrors(({ general: _g, ...rest }) => rest), 5000);
+                } else {
+                  setConnectionMessage(text);
+                  setTimeout(() => setConnectionMessage(''), 5000);
+                }
+              }}
+            />
 
             {/* YouTube - uses real data from API */}
             <div className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">

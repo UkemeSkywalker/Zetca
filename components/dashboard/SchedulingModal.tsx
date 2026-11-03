@@ -7,6 +7,7 @@ import { DesignerMediaPanel } from '@/components/designer/ScheduledPostVisual';
 import MediaUploader from '@/components/dashboard/MediaUploader';
 import { Post } from '@/types/post';
 import { ScheduledPost } from '@/types/scheduler';
+import { LinkedInAccountPicker } from './LinkedInAccountPicker';
 import { refineText } from '@/lib/api/copyClient';
 
 interface SchedulingModalProps {
@@ -76,6 +77,7 @@ export function SchedulingModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mediaId, setMediaId] = useState<string | null>(prefillMediaId ?? editingPost?.mediaId ?? null);
   const [mediaType, setMediaType] = useState<'image' | 'video' | null>(prefillMediaType ?? editingPost?.mediaType ?? null);
+  const [accountId, setAccountId] = useState<string | null>(editingPost?.accountId ?? editingScheduledPost?.accountId ?? null);
   const [isMediaUploading, setIsMediaUploading] = useState(false);
   /** An image made with the Designer in this form (shown in the uploader) */
   const [designerMedia, setDesignerMedia] = useState<{ mediaId: string; previewUrl: string } | null>(null);
@@ -89,10 +91,12 @@ export function SchedulingModal({
   useEffect(() => {
     if (editingScheduledPost) {
       setFormData({ content: editingScheduledPost.content, platform: editingScheduledPost.platform as FormData['platform'], date: editingScheduledPost.scheduledDate, time: editingScheduledPost.scheduledTime, hashtags: editingScheduledPost.hashtags || [] });
+      setAccountId(editingScheduledPost.accountId ?? null);
     } else if (editingPost) {
       setFormData({ content: editingPost.content, platform: editingPost.platform, date: formatLocalDate(new Date(editingPost.scheduledDate)), time: editingPost.scheduledTime, hashtags: [] });
       setMediaId(editingPost.mediaId ?? null);
       setMediaType(editingPost.mediaType ?? null);
+      setAccountId(editingPost.accountId ?? null);
     } else if (prefillContent || prefillPlatform) {
       setFormData(prev => ({ ...prev, content: prefillContent || prev.content, platform: prefillPlatform || prev.platform, hashtags: prefillHashtags || prev.hashtags, date: selectedDate ? formatLocalDate(selectedDate) : prev.date }));
     } else if (selectedDate) {
@@ -133,6 +137,7 @@ export function SchedulingModal({
       const newPost: Omit<Post, 'id' | 'createdAt'> = {
         content: formData.content.trim(), platform: formData.platform, scheduledDate: localDate, scheduledTime: utcTime, status: 'scheduled', publishedAt: undefined,
         ...(mediaId ? { mediaId, mediaType: mediaType ?? undefined } : isEditing ? { mediaId: undefined, mediaType: undefined } : {}),
+        ...(accountId ? { accountId } : {}),
       };
       await onSchedulePost(newPost);
       resetForm();
@@ -148,7 +153,7 @@ export function SchedulingModal({
 
   const resetForm = () => {
     setFormData({ content: '', platform: 'linkedin', date: selectedDate ? formatLocalDate(selectedDate) : '', time: '09:00', hashtags: [] });
-    setErrors({}); setMediaId(null); setMediaType(null); setIsMediaUploading(false);
+    setErrors({}); setMediaId(null); setMediaType(null); setAccountId(null); setIsMediaUploading(false);
     setAiPrompt(''); setAiMessage(null); setIsRefining(false);
   };
 
@@ -329,6 +334,7 @@ export function SchedulingModal({
                   })}
                 </div>
                 {errors.platform && <p className="text-sm text-red-500 mt-1">{errors.platform}</p>}
+                {formData.platform === 'linkedin' && <LinkedInAccountPicker value={accountId} onChange={setAccountId} />}
               </div>
 
               {/* Media Assets */}

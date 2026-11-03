@@ -14,6 +14,7 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import { getConfig } from '../config';
 import { randomUUID } from 'crypto';
+import { accountsOf, pickAccount, tokenOf, type LinkedInAccount } from '../linkedin/accounts';
 
 /**
  * User record structure in DynamoDB
@@ -35,6 +36,8 @@ export interface UserRecord {
   linkedinPictureUrl?: string;
   linkedinEmail?: string;
   linkedinConnectedAt?: string;
+  /** Every connected LinkedIn account (lib/linkedin/accounts); the old single fields above are moved here */
+  linkedinAccounts?: LinkedInAccount[];
 
   // YouTube OAuth fields (optional, set when user connects a channel)
   youtubeChannelId?: string;
@@ -137,19 +140,78 @@ export class UserRepository {
   }
 
   /**
-   * Retrieve LinkedIn credentials for a user (used by the publisher service).
-   * Returns null if the user is not found.
+   * Retrieve LinkedIn credentials for a user (used by the publisher service):
+   * the account asked for, or the default one. Returns null if the user is not
+   * found, and empty credentials if that account isn't connected.
    */
   async getUserLinkedInCredentials(
-    userId: string
+    userId: string,
+    accountId?: string | null
   ): Promise<{ linkedinAccessToken?: string; linkedinSub?: string; linkedinName?: string } | null> {
     const user = await this.getUserById(userId);
     if (!user) return null;
-    return {
-      linkedinAccessToken: user.linkedinAccessToken,
-      linkedinSub: user.linkedinSub,
-      linkedinName: user.linkedinName,
-    };
+    const account = pickAccount(accountsOf(user), accountId);
+    if (!account) return {};
+    return { linkedinAccessToken: tokenOf(account), linkedinSub: account.id, linkedinName: account.name };
+  }
+
+  /** The user's connected LinkedIn accounts, the default first */
+  async getLinkedInAccounts(userId: string): Promise<LinkedInAccount[]> {
+    const user = await this.getUserById(userId);
+    return user ? accountsOf(user) : [];
+  }
+
+  /**
+   * Add a LinkedIn account, or refresh it if it's already connected (keeping
+   * its place in the list). The old single connection is moved into the list.
+   */
+  async addLinkedInAccount(userId: string, account: LinkedInAccount): Promise<LinkedInAccount[]> {
+    const user = await this.getUserById(userId);
+    if (!user) throw new Error('User not found');
+    const list = accountsOf(user);
+    const at = list.findIndex((a) => a.id === account.id);
+    if (at >= 0) list[at] = account;
+    else list.push(account);
+    await this.saveLinkedInAccounts(userId, list);
+    return list;
+  }
+
+  /** Remove one LinkedIn account */
+  async removeLinkedInAccount(userId: string, accountId: string): Promise<LinkedInAccount[]> {
+    const user = await this.getUserById(userId);
+    if (!user) throw new Error('User not found');
+    const list = accountsOf(user).filter((a) => a.id !== accountId);
+    await this.saveLinkedInAccounts(userId, list);
+    return list;
+  }
+
+  /** Make an account the default (first in the list) */
+  async setDefaultLinkedInAccount(userId: string, accountId: string): Promise<LinkedInAccount[]> {
+    const user = await this.getUserById(userId);
+    if (!user) throw new Error('User not found');
+    const list = accountsOf(user);
+    const chosen = list.find((a) => a.id === accountId);
+    if (!chosen) throw new Error('LinkedIn account not connected');
+    const next = [chosen, ...list.filter((a) => a !== chosen)];
+    await this.saveLinkedInAccounts(userId, next);
+    return next;
+  }
+
+  /** Store the account list and drop the old single-connection fields */
+  private async saveLinkedInAccounts(userId: string, list: LinkedInAccount[]): Promise<void> {
+    const legacy = ['linkedinSub', 'linkedinAccessToken', 'linkedinName', 'linkedinPictureUrl', 'linkedinEmail', 'linkedinConnectedAt'];
+    const names: Record<string, string> = { '#accounts': 'linkedinAccounts', '#lastModified': 'lastModified' };
+    legacy.forEach((f) => (names[`#${f}`] = f));
+    await this.docClient.send(
+      new UpdateCommand({
+        TableName: this.tableName,
+        Key: { userId },
+        UpdateExpression: `SET #accounts = :accounts, #lastModified = :lastModified REMOVE ${legacy.map((f) => `#${f}`).join(', ')}`,
+        ExpressionAttributeNames: names,
+        ExpressionAttributeValues: { ':accounts': list, ':lastModified': new Date().toISOString() },
+        ConditionExpression: 'attribute_exists(userId)',
+      })
+    );
   }
 
   /**
@@ -363,7 +425,7 @@ export class UserRepository {
         TableName: this.tableName,
         Key: { userId },
         UpdateExpression:
-          'REMOVE #linkedinSub, #linkedinAccessToken, #linkedinName, #linkedinPictureUrl, #linkedinEmail, #linkedinConnectedAt SET #lastModified = :lastModified',
+          'REMOVE #linkedinSub, #linkedinAccessToken, #linkedinName, #linkedinPictureUrl, #linkedinEmail, #linkedinConnectedAt, #linkedinAccounts SET #lastModified = :lastModified',
         ExpressionAttributeNames: {
           '#linkedinSub': 'linkedinSub',
           '#linkedinAccessToken': 'linkedinAccessToken',
@@ -371,6 +433,7 @@ export class UserRepository {
           '#linkedinPictureUrl': 'linkedinPictureUrl',
           '#linkedinEmail': 'linkedinEmail',
           '#linkedinConnectedAt': 'linkedinConnectedAt',
+          '#linkedinAccounts': 'linkedinAccounts',
           '#lastModified': 'lastModified',
         },
         ExpressionAttributeValues: {
