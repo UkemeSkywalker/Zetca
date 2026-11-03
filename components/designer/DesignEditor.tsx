@@ -43,6 +43,8 @@ export function DesignEditor({ designId }: { designId: string }) {
         setSelected(d.doc.layers.find((l) => l.role === 'headline')?.id ?? null);
         // A style example still has its sample photo: offer real ones first
         if (d.doc.background.kind === 'photo' && d.doc.background.photoId.startsWith('sample:')) setTab('photos');
+        // The photo editor opens a blank canvas on the Photos tab
+        if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'photos') setTab('photos');
       },
       (err) => setLoadError(err instanceof Error ? err.message : 'Couldn’t open this design')
     );

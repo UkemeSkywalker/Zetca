@@ -10,11 +10,17 @@ import { createDesign, designerPath, listDesigns, rememberedHandle } from '@/lib
 import { DesignCanvas, DesignThumb } from './DesignCanvas';
 import { CARD, Chip, CostBadge, timeAgo } from './ui';
 import { CreditsPill, useAiCredits } from './AiCredits';
+import { FAMILY_NAMES, RECIPES, type RecipeFamily } from '@/lib/design/recipes';
+import { RecipeCard } from './StyleLibrary';
+import { StyleDialog } from './StyleDetail';
 
-type Filter = 'all' | StyleCategory | 'ai_image' | 'ai_video';
+type Filter = 'all' | RecipeFamily | StyleCategory | 'ai_image' | 'ai_video';
 
 const FILTERS: { id: Filter; label: string }[] = [
   { id: 'all', label: 'All' },
+  // The AI styles, by family
+  ...(Object.keys(FAMILY_NAMES) as RecipeFamily[]).map((id) => ({ id, label: FAMILY_NAMES[id] })),
+  // The text and photo styles
   { id: 'bold', label: 'Bold text' },
   { id: 'quote', label: 'Quote' },
   { id: 'announcement', label: 'Announcement' },
@@ -44,6 +50,8 @@ export function DesignerHome() {
   }, []);
 
   const styles = useMemo(() => STYLES.filter((s) => filter === 'all' || s.category === filter), [filter]);
+  const recipes = useMemo(() => RECIPES.filter((r) => filter === 'all' || r.family === filter), [filter]);
+  const [openRecipe, setOpenRecipe] = useState<string | null>(null);
   const aiCards = AI_CARDS.filter((c) => filter === 'all' || c.id === filter);
   const { credits } = useAiCredits();
 
@@ -135,6 +143,9 @@ export function DesignerHome() {
           </p>
         )}
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+          {recipes.map((r) => (
+            <RecipeCard key={r.id} recipe={r} onOpen={() => setOpenRecipe(r.id)} />
+          ))}
           {styles.map((style) => (
             <StyleCard key={style.id} style={style} busy={starting === style.id} disabled={!!starting} onUse={() => startFromStyle(style)} />
           ))}
@@ -161,24 +172,7 @@ export function DesignerHome() {
         </div>
       </section>
 
-      <Link
-        href="/dashboard/designer/styles"
-        className="group flex flex-col sm:flex-row sm:items-center gap-4 rounded-2xl bg-[#0B0B0F] p-5 text-white hover:ring-2 hover:ring-primary transition"
-      >
-        <div className="flex -space-x-6 shrink-0" aria-hidden>
-          {['marble-thinker', 'word-behind', 'mono-studio', 'celebration-script'].map((id, i) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={id} src={`/designer/styles/${id}.jpg`} alt="" className="h-20 w-16 rounded-lg object-cover ring-2 ring-[#0B0B0F]" style={{ transform: `rotate(${(i - 1.5) * 4}deg)` }} />
-          ))}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-lg font-bold">Style library</p>
-          <p className="text-sm text-white/70">19 ready-made looks. Pick one and every post follows it, with new words and a new image each time.</p>
-        </div>
-        <span className="inline-flex items-center gap-1 text-sm font-semibold text-white">
-          See the styles <Icon icon="lucide:arrow-right" className="w-4 h-4 transition group-hover:translate-x-0.5" aria-hidden />
-        </span>
-      </Link>
+      {openRecipe && <StyleDialog id={openRecipe} onClose={() => setOpenRecipe(null)} />}
 
       <section aria-labelledby="mine-title" className="space-y-5">
         <div className="flex items-center justify-between">
