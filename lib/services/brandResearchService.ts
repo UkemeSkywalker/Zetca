@@ -174,6 +174,14 @@ export class BrandResearchService {
     }
   }
 
+  /** Saves the campaign look the user picked from the suggested styles (null clears it) */
+  async chooseStyle(userId: string, researchId: string, styleId: string | null): Promise<BrandResearch> {
+    const r = await this.get(userId, researchId);
+    const { chosenStyle: _drop, ...rest } = r;
+    void _drop;
+    return this.save(styleId ? { ...rest, chosenStyle: styleId } : rest);
+  }
+
   /** Takes the credits, saves the research and starts it; returns straight away */
   async start(userId: string, message: string): Promise<BrandResearch> {
     const cost = priceOf('brand_research');

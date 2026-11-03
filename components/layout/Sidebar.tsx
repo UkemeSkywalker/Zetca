@@ -10,6 +10,8 @@ interface NavItem {
   label: string;
   href: string;
   icon: string;
+  /** A sub-menu that opens under the item (like WordPress) */
+  children?: { label: string; href: string }[];
 }
 
 const navItems: NavItem[] = [
@@ -17,7 +19,16 @@ const navItems: NavItem[] = [
   { label: 'Strategist', href: '/dashboard/strategist', icon: 'lucide:lightbulb' },
   { label: 'Copywriter', href: '/dashboard/copywriter', icon: 'lucide:pencil' },
   { label: 'Scheduler', href: '/dashboard/scheduler', icon: 'lucide:calendar' },
-  { label: 'Designer', href: '/dashboard/designer', icon: 'lucide:image' },
+  {
+    label: 'Designer',
+    href: '/dashboard/designer',
+    icon: 'lucide:image',
+    children: [
+      { label: 'New Design', href: '/dashboard/designer/new' },
+      { label: 'Photo Editor', href: '/dashboard/designer/blank' },
+      { label: 'My Designs', href: '/dashboard/designer/library' },
+    ],
+  },
   { label: 'Publisher', href: '/dashboard/publisher', icon: 'lucide:navigation-2' },
   { label: 'Analysis', href: '/dashboard/analysis', icon: 'lucide:chart-column' },
   { label: 'Billing', href: '/dashboard/billing', icon: 'lucide:coins' },
@@ -31,6 +42,16 @@ interface SidebarProps {
 export default function Sidebar({ className = '' }: SidebarProps) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  // Sub-menus opened with their caret (they also open on hover, and stay open in their section)
+  const [openMenus, setOpenMenus] = useState<Set<string>>(new Set());
+  const [hovered, setHovered] = useState<string | null>(null);
+  const toggleMenu = (href: string) =>
+    setOpenMenus((s) => {
+      const next = new Set(s);
+      if (next.has(href)) next.delete(href);
+      else next.add(href);
+      return next;
+    });
 
   return (
     <>
@@ -82,8 +103,14 @@ export default function Sidebar({ className = '' }: SidebarProps) {
               {navItems.map((item) => {
                 // Sub-pages (e.g. a strategy result) keep their section highlighted
                 const isActive = item.href === '/dashboard' ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
+                const open = !!item.children && (isActive || openMenus.has(item.href) || hovered === item.href);
                 return (
-                  <li key={item.href}>
+                  <li
+                    key={item.href}
+                    onMouseEnter={item.children ? () => setHovered(item.href) : undefined}
+                    onMouseLeave={item.children ? () => setHovered((h) => (h === item.href ? null : h)) : undefined}
+                  >
+                    <div className="relative">
                     <Link
                       href={item.href}
                       onClick={() => setIsMobileMenuOpen(false)}
@@ -102,6 +129,38 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                       {/* text-inherit overrides the global span color from globals.css */}
                       <span className="text-[13.5px] font-medium text-inherit">{item.label}</span>
                     </Link>
+                    {item.children && (
+                      <button
+                        type="button"
+                        onClick={() => toggleMenu(item.href)}
+                        aria-expanded={open}
+                        aria-controls={`submenu-${item.label}`}
+                        aria-label={`${open ? 'Hide' : 'Show'} ${item.label} pages`}
+                        className={`absolute right-1 top-1/2 -translate-y-1/2 grid h-7 w-7 place-items-center rounded-md ${isActive ? 'text-white hover:bg-white/15' : 'text-slate-400 hover:bg-white/10 hover:text-slate-200'}`}
+                      >
+                        <Icon icon="lucide:chevron-down" width={15} height={15} className={`text-inherit transition-transform duration-200 ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
+                      </button>
+                    )}
+                    </div>
+                    {item.children && open && (
+                      <ul id={`submenu-${item.label}`} className="mt-1 mb-1 ml-[22px] space-y-0.5 border-l border-white/10 pl-3" role="list">
+                        {item.children.map((child) => {
+                          const childActive = pathname === child.href || (child.href === '/dashboard/designer/library' && pathname.startsWith(`${child.href}/`));
+                          return (
+                            <li key={child.href}>
+                              <Link
+                                href={child.href}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                aria-current={childActive ? 'page' : undefined}
+                                className={`flex h-8 items-center rounded-md px-3 text-[13px] transition-colors ${childActive ? 'bg-white/10 font-semibold text-white' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'}`}
+                              >
+                                <span className="text-inherit">{child.label}</span>
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
                   </li>
                 );
               })}

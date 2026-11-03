@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { FAMILY_NAMES, recipeById } from '@/lib/design/recipes';
@@ -23,29 +23,29 @@ const FORMATS_SHOWN: { id: FormatId; label: string }[] = [
   { id: 'story', label: 'Story 9:16' },
 ];
 
-/** One style: what it looks like, what stays the same, and how much each post costs */
-export function StyleDetail({ id }: { id: string }) {
+/**
+ * One style, in a pop-up on the Designer page: what it looks like, what stays
+ * the same, and how much each post costs
+ */
+export function StyleDialog({ id, onClose }: { id: string; onClose: () => void }) {
   const recipe = recipeById(id);
   const [format, setFormat] = useState<FormatId>('portrait');
   const [quality, setQuality] = useState<(typeof QUALITIES)[number]['id']>('qwen-image-3');
-  if (!recipe) {
-    return (
-      <div className="max-w-md mx-auto mt-16 text-center space-y-3">
-        <p className="text-lg font-semibold text-[#0B1C30]">That style doesn’t exist.</p>
-        <Link href="/dashboard/designer/styles" className="text-sm font-semibold text-primary hover:underline">
-          Back to styles
-        </Link>
-      </div>
-    );
-  }
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    document.addEventListener('keydown', esc);
+    return () => document.removeEventListener('keydown', esc);
+  }, [onClose]);
+  if (!recipe) return null;
   const cutout = recipe.cutout ? creditsFor(0.04) : 0;
   const perPost = (usd: number) => creditsFor(usd) + cutout;
   return (
-    <div className="max-w-[1280px] mx-auto space-y-5">
-      <Link href="/dashboard/designer/styles" className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
-        <Icon icon="lucide:arrow-left" className="w-4 h-4" aria-hidden /> Back to styles
-      </Link>
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px] items-start">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-label={recipe.name} onClick={onClose}>
+    <div className="relative max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-3xl bg-[#F8F9FF] p-5 sm:p-6" onClick={(e) => e.stopPropagation()}>
+      <button type="button" onClick={onClose} aria-label="Close" className="absolute right-4 top-4 z-10 rounded-full bg-white p-2 text-[#464555] shadow-sm hover:bg-[#F1F5F9]">
+        <Icon icon="lucide:x" className="w-5 h-5" aria-hidden />
+      </button>
+      <div className="grid gap-6 lg:grid-cols-[1fr_340px] items-start">
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2" role="group" aria-label="Post shape">
             {FORMATS_SHOWN.map((f) => (
@@ -64,7 +64,7 @@ export function StyleDetail({ id }: { id: string }) {
           <p className="text-sm text-[#777587]">An example. Your posts get their own words and a new image in this style.</p>
         </div>
 
-        <aside className={`${CARD} p-6 space-y-6 lg:sticky lg:top-[96px]`}>
+        <aside className={`${CARD} p-6 space-y-6`}>
           <div>
             <h1 className="text-2xl font-bold font-heading text-[#0B1C30]">{recipe.name}</h1>
             <span className="mt-2 inline-block rounded-full bg-[#F1F5F9] px-3 py-1 text-xs font-semibold text-[#464555]">{FAMILY_NAMES[recipe.family]}</span>
@@ -99,6 +99,7 @@ export function StyleDetail({ id }: { id: string }) {
           </Link>
         </aside>
       </div>
+    </div>
     </div>
   );
 }

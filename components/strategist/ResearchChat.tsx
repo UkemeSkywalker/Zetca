@@ -9,6 +9,7 @@ import { refreshCredits } from '@/lib/api/billingClient';
 import type { BrandProfile, CompetitorFound, MediaImage, MediaVideo, ResearchStep, Socials } from '@/lib/models/brandResearch';
 import { PENDING_PROMPT_KEY } from './TalkToZetca';
 import { TalkBackground } from './TalkBackground';
+import { SuggestedStyles } from './SuggestedStyles';
 
 const POLL_MS = 2500;
 const GLASS = 'rounded-3xl border border-white/10 bg-white/[0.06] backdrop-blur-xl';
@@ -144,7 +145,7 @@ export function ResearchChat() {
 
         <div className="mt-5 grid items-start gap-5 lg:grid-cols-[1fr_360px]">
           <div className="order-2 space-y-5 lg:order-1" aria-busy={working}>
-            <Board research={research} />
+            <Board research={research} onResearch={setResearch} />
           </div>
 
           {/* The conversation */}
@@ -248,7 +249,7 @@ function Progress({ steps }: { steps: ResearchStep[] }) {
 }
 
 /** What Zetca found: visual first */
-function Board({ research }: { research: PublicBrandResearch | null }) {
+function Board({ research, onResearch }: { research: PublicBrandResearch | null; onResearch: (r: PublicBrandResearch) => void }) {
   if (!research) return <Shimmer />;
   const { profile, media, chips, socials, competitors, comparison } = research;
   const kit = profile?.brandKit;
@@ -400,6 +401,9 @@ function Board({ research }: { research: PublicBrandResearch | null }) {
           </p>
         </section>
       )}
+
+      {/* The campaign looks Zetca suggests for this brand */}
+      {research.status === 'done' && <SuggestedStyles research={research} onResearch={onResearch} />}
 
       {/* Sources, folded away */}
       {profile && profile.facts.length > 0 && (

@@ -7,6 +7,10 @@
  */
 
 import { z } from 'zod';
+import { RECIPES } from '../design/recipes';
+
+/** The style library's style ids, for suggesting a campaign look */
+const STYLE_IDS = RECIPES.map((r) => r.id) as [string, ...string[]];
 
 const HEX = /^#[0-9a-f]{6}$/i;
 const tags = (what: string, max = 4) => z.array(z.string()).max(max).describe(`${what}: ${max} or fewer tags of 1-3 words each`);
@@ -47,6 +51,15 @@ export const BrandProfileSchema = z.object({
     look: tags('How their photos and designs look (e.g. "Warm light", "Close-ups", "Cream backgrounds")', 3),
   }),
   missing: z.array(z.string()).max(2).describe('Up to 2 short questions (15 words or fewer) about things you could not find that matter for their plan'),
+  styles: z
+    .array(
+      z.object({
+        id: z.enum(STYLE_IDS).describe('A style from the style library, by id'),
+        why: z.string().describe('Why it suits this brand, in 5 words or fewer (e.g. "Fits your warm voice")'),
+      })
+    )
+    .max(3)
+    .describe('The 3 styles from the style library that best suit this brand, its customers and its voice, best first. Different families where possible.'),
 });
 export type BrandProfile = z.infer<typeof BrandProfileSchema>;
 
@@ -158,6 +171,8 @@ export interface BrandResearch {
   profile?: BrandProfile;
   competitors: CompetitorFound[];
   comparison?: Omit<Comparison, 'competitors'>;
+  /** The campaign look the user picked from the suggested styles */
+  chosenStyle?: string;
   error?: string;
   cost: number;
   createdAt: string;
