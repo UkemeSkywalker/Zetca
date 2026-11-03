@@ -24,6 +24,7 @@ interface CopyCardProps {
     onChoose: (kind: VisualKind) => void;
     onCreate: () => void;
     onEdit: () => void;
+    styled?: { name: string; credits: number };
   };
 }
 

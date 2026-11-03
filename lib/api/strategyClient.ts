@@ -204,6 +204,9 @@ export async function listStrategies(): Promise<StrategyRecord[]> {
         schedule: record.strategy_output.schedule,
       },
       quiz: record.quiz,
+      ...(record.design_style
+        ? { designStyle: { recipeId: record.design_style.recipe_id, model: record.design_style.model, onNewPosts: record.design_style.on_new_posts !== false } }
+        : {}),
       createdAt: record.created_at,
     }));
   } catch (error) {
@@ -291,6 +294,9 @@ export async function getStrategy(id: string): Promise<StrategyRecord> {
         schedule: record.strategy_output.schedule,
       },
       quiz: record.quiz,
+      ...(record.design_style
+        ? { designStyle: { recipeId: record.design_style.recipe_id, model: record.design_style.model, onNewPosts: record.design_style.on_new_posts !== false } }
+        : {}),
       createdAt: record.created_at,
     };
   } catch (error) {
@@ -467,5 +473,25 @@ export async function deleteStrategy(id: string): Promise<void> {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new StrategyAPIError(errorData.detail || 'Failed to delete strategy. Please try again.', response.status, errorData);
+  }
+}
+
+/**
+ * Sets the campaign's design style (or removes it with null): every new post's
+ * visual follows it, with its own words and image.
+ */
+export async function setStrategyStyle(strategyId: string, style: { recipeId: string; model?: string; onNewPosts: boolean } | null): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/strategy/${encodeURIComponent(strategyId)}/style`, {
+    method: 'PUT',
+    headers: createAuthHeaders(),
+    body: JSON.stringify(style ? { recipe_id: style.recipeId, model: style.model, on_new_posts: style.onNewPosts } : { recipe_id: null }),
+  });
+  if (response.status === 401) {
+    handleAuthError();
+    throw new StrategyAPIError('Authentication required. Please log in again.', 401);
+  }
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new StrategyAPIError(errorData.detail || errorData.error || 'Couldn’t save the style. Please try again.', response.status, errorData);
   }
 }

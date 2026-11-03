@@ -7,7 +7,7 @@
 import { DynamoDBClient, DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand, GetCommand, QueryCommand, UpdateCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { getConfig } from '../config';
-import { ChannelDescription, QuizAnswers, StrategyOutput, StrategyRecord } from '../models/strategy';
+import { CampaignStyle, ChannelDescription, QuizAnswers, StrategyOutput, StrategyRecord } from '../models/strategy';
 import type { CopyChatMessage, CopyJob } from '../models/copy';
 
 /** Chat messages kept per strategy; older ones are dropped */
@@ -23,6 +23,7 @@ interface StrategyItem {
   goals: string;
   strategyOutput: StrategyOutput;
   quiz?: QuizAnswers;
+  designStyle?: CampaignStyle;
   createdAt: string;
 }
 
@@ -70,6 +71,20 @@ export class StrategyRepository {
         UpdateExpression: 'SET strategyOutput.channel_descriptions = :descriptions',
         ConditionExpression: 'userId = :userId',
         ExpressionAttributeValues: { ':descriptions': descriptions, ':userId': userId },
+      })
+    );
+  }
+
+  /** Sets (or, with null, removes) a strategy's campaign design style; only for the strategy's owner */
+  async updateDesignStyle(strategyId: string, userId: string, style: CampaignStyle | null): Promise<void> {
+    await this.docClient.send(
+      new UpdateCommand({
+        TableName: this.tableName,
+        Key: { strategyId },
+        ...(style
+          ? { UpdateExpression: 'SET designStyle = :style', ExpressionAttributeValues: { ':style': style, ':userId': userId } }
+          : { UpdateExpression: 'REMOVE designStyle', ExpressionAttributeValues: { ':userId': userId } }),
+        ConditionExpression: 'userId = :userId',
       })
     );
   }
@@ -219,6 +234,7 @@ export class StrategyRepository {
       goals: item.goals,
       strategy_output: item.strategyOutput,
       ...(item.quiz ? { quiz: item.quiz } : {}),
+      ...(item.designStyle ? { design_style: item.designStyle } : {}),
       created_at: item.createdAt,
     };
   }

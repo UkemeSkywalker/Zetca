@@ -37,6 +37,7 @@ export function VisualRow({
   onCreate,
   onEdit,
   size = 'sm',
+  styled,
 }: {
   copy: CopyRecord;
   design?: DesignRecord;
@@ -47,8 +48,12 @@ export function VisualRow({
   onEdit: () => void;
   /** "lg": the bigger version in the copy editor */
   size?: 'sm' | 'lg';
+  /** The campaign's style, when its visuals follow one */
+  styled?: { name: string; credits: number };
 }) {
   const kind = visualOf(copy).kind;
+  // A post's text, photo or AI-image visual is made in the campaign's style
+  const inStyle = !!styled && !copy.visual?.mediaId && (kind === 'template' || kind === 'stock' || kind === 'ai_image');
   const { credits } = useCredits();
   const freeLeft = (k: 'ai_image' | 'ai_video') => (credits ? credits.freeAi[k === 'ai_video' ? 'video' : 'image'] : 0);
   /** Not on the plan, and no free AI uses left for it */
@@ -102,8 +107,8 @@ export function VisualRow({
       <div className="min-w-0 flex-1 space-y-1.5">
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-[13px] font-bold text-[#0b1c30]">
-            <span className="truncate">{VISUAL_LABELS[kind]}</span>
-            {kind !== 'none' && <CostBadge cost={costOf(kind)} />}
+            <span className="truncate">{inStyle ? `${styled!.name} style` : VISUAL_LABELS[kind]}</span>
+            {kind !== 'none' && <CostBadge cost={inStyle ? styled!.credits : costOf(kind)} />}
           </p>
           <p className={`text-[11px] leading-[14px] line-clamp-2 ${error ? 'text-[#ba1a1a]' : 'text-[#777587]'}`} role={error ? 'alert' : undefined}>
             {required && kind !== 'none' && !ready && !making ? 'Visual required · ' : ''}

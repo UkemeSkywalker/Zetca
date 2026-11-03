@@ -131,6 +131,18 @@ export const QuizStrategyOutputSchema = StrategyOutputSchema.extend({
   schedule: ScheduleSchema,
 });
 
+/**
+ * A campaign's design style: the style library recipe every post's visual
+ * follows (each with its own words and image), and the AI image model it uses.
+ */
+export const CampaignStyleSchema = z.object({
+  recipe_id: z.string().trim().min(1).max(40),
+  model: z.string().trim().min(1).max(40).optional(),
+  /** New posts' visuals follow it (off: the style is kept but not applied) */
+  on_new_posts: z.boolean().default(true),
+});
+export type CampaignStyle = z.infer<typeof CampaignStyleSchema>;
+
 export interface StrategyRecord {
   id: string;
   user_id: string;
@@ -140,6 +152,7 @@ export interface StrategyRecord {
   goals: string;
   strategy_output: StrategyOutput;
   quiz?: QuizAnswers;
+  design_style?: CampaignStyle;
   created_at: string;
 }
 

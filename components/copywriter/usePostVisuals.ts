@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DesignRecord } from '@/lib/design/types';
 import { listDesigns } from '@/lib/api/designApi';
 import { setCopyVisual } from '@/lib/api/copyClient';
-import { clearPostVisual, makePostVisual, MAKEABLE } from '@/components/designer/postVisuals';
+import { clearPostVisual, makePostVisual, MAKEABLE, type VisualStyle } from '@/components/designer/postVisuals';
 import type { CopyRecord, CopyVisual, VisualKind } from '@/types/agent';
 
 /** Instagram and TikTok posts can't go out without an image or video */
@@ -22,6 +22,9 @@ export const needsVisual = (c: CopyRecord) => {
   return v.kind !== 'none' && !v.mediaId && MAKEABLE.includes(v.kind);
 };
 
+/** Kinds a campaign style takes over: text and photo designs become the style's AI image */
+const STYLED: VisualKind[] = ['template', 'stock', 'ai_image'];
+
 /** How many visuals are made at once ("Create all") */
 const AT_ONCE = 2;
 
@@ -29,7 +32,11 @@ const AT_ONCE = 2;
  * The designs behind the posts' visuals, and making them. `onCopy` is called
  * with each post whose visual changed, so the page can show it.
  */
-export function usePostVisuals(onCopy: (copy: CopyRecord) => void) {
+export function usePostVisuals(onCopy: (copy: CopyRecord) => void, campaignStyle?: VisualStyle) {
+  const styleRef = useRef(campaignStyle);
+  useEffect(() => {
+    styleRef.current = campaignStyle;
+  }, [campaignStyle]);
   const [designs, setDesigns] = useState<Record<string, DesignRecord>>({});
   const [making, setMaking] = useState<Set<string>>(new Set());
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -59,7 +66,9 @@ export function usePostVisuals(onCopy: (copy: CopyRecord) => void) {
         return next;
       });
       try {
-        const { copy: updated, design } = await makePostVisual(copy, kind);
+        // With a campaign style, the post's visual is made in it (with its own words and image)
+        const style = styleRef.current && STYLED.includes(kind) ? styleRef.current : undefined;
+        const { copy: updated, design } = await makePostVisual(copy, style ? 'ai_image' : kind, style);
         setDesigns((d) => ({ ...d, [design.designId]: design }));
         onCopy(updated);
       } catch (err) {
