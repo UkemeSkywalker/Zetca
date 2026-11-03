@@ -98,6 +98,8 @@ export interface ScheduledPostRecord {
   created_at: string;
   media_id?: string | null;
   media_type?: string | null;
+  /** The LinkedIn account it posts as (lib/linkedin/accounts); none means the default account */
+  account_id?: string | null;
   /** When the post is due (UTC ISO), kept in step with scheduled_date/time for the due-posts index */
   due_at?: string;
   /** Automatic publish attempts so far */

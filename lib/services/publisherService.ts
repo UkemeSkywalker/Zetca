@@ -157,18 +157,25 @@ export class PublisherService {
     const linkedinPosts = posts.filter((p) => AUTO_PUBLISH_PLATFORMS.has(p.platform));
     if (!linkedinPosts.length) return;
 
-    const credentials = await this.userRepository.getUserLinkedInCredentials(userId);
-    const missing = !credentials?.linkedinAccessToken
-      ? 'linkedin_not_connected'
-      : !credentials.linkedinSub
-        ? 'linkedin_sub_missing'
-        : null;
-    if (missing) {
-      for (const post of linkedinPosts) await this.failWithoutAttempt(post, missing, 'skipped');
-      return;
-    }
+    // Each post goes out as its own LinkedIn account (or the default one)
+    const byAccount = new Map<string, Awaited<ReturnType<typeof this.userRepository.getUserLinkedInCredentials>>>();
+    const credentialsFor = async (accountId?: string | null) => {
+      const key = accountId ?? '';
+      if (!byAccount.has(key)) byAccount.set(key, await this.userRepository.getUserLinkedInCredentials(userId, accountId));
+      return byAccount.get(key);
+    };
 
     for (const post of linkedinPosts) {
+      const credentials = await credentialsFor(post.account_id);
+      const missing = !credentials?.linkedinAccessToken
+        ? 'linkedin_not_connected'
+        : !credentials.linkedinSub
+          ? 'linkedin_sub_missing'
+          : null;
+      if (missing) {
+        await this.failWithoutAttempt(post, missing, 'skipped');
+        continue;
+      }
       const claimed = await this.schedulerRepository.claimPost(post.id);
       if (!claimed) continue; // another publisher has it, or it changed since the scan
       const log = await this.attempt(claimed, credentials!, { onFailureStatus: 'scheduled' });
@@ -191,7 +198,7 @@ export class PublisherService {
     if (post.status === 'published') throw new ApiError('Post is already published', 400);
     if (post.status === 'publishing') throw new ApiError('This post is being published right now', 409);
 
-    const credentials = await this.userRepository.getUserLinkedInCredentials(userId);
+    const credentials = await this.userRepository.getUserLinkedInCredentials(userId, post.account_id);
     if (!credentials?.linkedinAccessToken) {
       throw new ApiError('LinkedIn account not connected. Please connect your LinkedIn account first.', 400);
     }
