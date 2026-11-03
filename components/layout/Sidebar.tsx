@@ -24,9 +24,9 @@ const navItems: NavItem[] = [
     href: '/dashboard/designer',
     icon: 'lucide:image',
     children: [
-      { label: 'New design', href: '/dashboard/designer/new' },
-      { label: 'Photo editor', href: '/dashboard/designer/blank' },
-      { label: 'My designs', href: '/dashboard/designer/library' },
+      { label: 'New Design', href: '/dashboard/designer/new' },
+      { label: 'Photo Editor', href: '/dashboard/designer/blank' },
+      { label: 'My Designs', href: '/dashboard/designer/library' },
     ],
   },
   { label: 'Publisher', href: '/dashboard/publisher', icon: 'lucide:navigation-2' },
