@@ -125,9 +125,10 @@ export function DesignerHome() {
       </section>
 
       <section aria-labelledby="styles-title" className="space-y-5">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <h2 id="styles-title" className="text-xl font-bold font-heading text-[#0B1C30]">
-            Start from a style
+        <div>
+          {/* Read out by screen readers; the styles speak for themselves on screen */}
+          <h2 id="styles-title" className="sr-only">
+            Styles
           </h2>
           <div className="flex flex-wrap gap-2" role="group" aria-label="Filter styles">
             {FILTERS.map((f) => (
