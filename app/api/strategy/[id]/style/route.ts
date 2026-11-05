@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { withAuth } from '@/lib/middleware/withAuth';
 import { getStrategyRepository } from '@/lib/services/container';
 import { CampaignStyleSchema } from '@/lib/models/strategy';
-import { recipeById } from '@/lib/design/recipes';
+import { layoutsOf, recipeById } from '@/lib/design/recipes';
 import { imageModel } from '@/lib/billing/aiModels';
 import { handleRouteError, jsonError } from '@/lib/api/routeHelpers';
 
@@ -27,10 +27,18 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         return NextResponse.json({ design_style: null });
       }
       const style = body as z.infer<typeof CampaignStyleSchema>;
-      if (!recipeById(style.recipe_id)) return jsonError('That style doesn’t exist', 400);
-      // Only image models from the catalogue
+      const recipe = recipeById(style.recipe_id);
+      if (!recipe) return jsonError('That style doesn’t exist', 400);
+      // Only image models from the catalogue, and only this style's layouts
       const model = style.model && imageModel(style.model).id === style.model ? style.model : undefined;
-      const saved = { recipe_id: style.recipe_id, on_new_posts: style.on_new_posts, ...(model ? { model } : {}) };
+      const layout = style.layout && (style.layout === 'mix' || layoutsOf(recipe).some((l) => l.id === style.layout)) ? style.layout : undefined;
+      const saved = {
+        recipe_id: style.recipe_id,
+        on_new_posts: style.on_new_posts,
+        ...(model ? { model } : {}),
+        ...(style.colors ? { colors: style.colors } : {}),
+        ...(layout ? { layout } : {}),
+      };
       await repo.updateDesignStyle(id, userId, saved);
       return NextResponse.json({ design_style: saved });
     } catch (error) {

@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { FAMILY_NAMES, giantWord, recipeById, recipeColors, RECIPES } from '@/lib/design/recipes';
+import { FAMILY_NAMES, giantWord, layoutsOf, recipeById, recipeColors, RECIPES } from '@/lib/design/recipes';
 import { DesignDocSchema, type PhotoBackground } from '@/lib/design/types';
 import { contrastRatio } from '@/lib/design/contrast';
 
@@ -18,24 +18,34 @@ const photo: PhotoBackground = {
 };
 
 describe('style recipes', () => {
-  it('each makes a valid design in every format', () => {
+  it('each layout makes a valid design in every format, with and without its cut-out', () => {
     for (const r of RECIPES) {
-      for (const format of ['square', 'portrait', 'story'] as const) {
-        const doc = r.build({ text: r.example, format, photo, colors: r.colors, cutout: { photoId: '00000000-0000-4000-8000-000000000002', width: 864, height: 1152 } });
-        expect(DesignDocSchema.safeParse(doc).success).toBe(true);
-        expect(doc.styleId).toBe(r.id);
+      for (const layout of layoutsOf(r)) {
+        for (const format of ['square', 'portrait', 'story', 'landscape'] as const) {
+          for (const cutout of [{ photoId: '00000000-0000-4000-8000-000000000002', width: 864, height: 1152 }, undefined]) {
+            const doc = layout.build({ text: layout.example, format, photo, colors: layout.colors ?? r.colors, cutout });
+            const parsed = DesignDocSchema.safeParse(doc);
+            if (!parsed.success) throw new Error(`${r.id}/${layout.id}/${format}: ${parsed.error.message}`);
+            expect(doc.styleId).toBe(r.id);
+          }
+        }
       }
     }
   });
 
-  it('has all 19 styles from the reference set, each with its own id and a known family', () => {
-    expect(RECIPES).toHaveLength(19);
-    expect(new Set(RECIPES.map((r) => r.id)).size).toBe(19);
-    for (const r of RECIPES) expect(FAMILY_NAMES[r.family]).toBeTruthy();
+  it('keeps the 19 original styles and adds the new ones, each with its own id and a known family', () => {
+    for (const id of ['marble-thinker', 'word-behind', 'mono-studio', 'blueprint-thinker', 'sticker-portrait', 'collage-zine', 'neon-lime', 'electric-blue', 'brand-red', 'glow-numeral', 'while-others-blur', 'sky-product', 'dark-luxe', 'celebration-script', 'reach-out', 'sharp-in-crowd', '3d-crew', 'marker-highlight', 'street-flyer'])
+      expect(recipeById(id)).toBeDefined();
+    expect(RECIPES).toHaveLength(31);
+    expect(new Set(RECIPES.map((r) => r.id)).size).toBe(31);
+    for (const r of RECIPES) {
+      expect(FAMILY_NAMES[r.family]).toBeTruthy();
+      expect(new Set(layoutsOf(r).map((l) => l.id)).size).toBe(layoutsOf(r).length);
+    }
   });
 
   it('puts words behind a cut-out in every giant-word style', () => {
-    for (const r of RECIPES.filter((x) => x.cutout)) {
+    for (const r of RECIPES.filter((x) => x.cutout && x.family === 'giant-word')) {
       const doc = r.build({ text: r.example, format: 'portrait', photo, colors: r.colors, cutout: { photoId: 'cut', width: 864, height: 1152 } });
       expect(doc.layers.some((l) => l.behind)).toBe(true);
       expect(doc.images).toHaveLength(1);
@@ -44,10 +54,12 @@ describe('style recipes', () => {
 
   it('asks the AI for no text or logos, and uses the style colour', () => {
     for (const r of RECIPES) {
-      const prompt = r.imagePrompt('Good bread takes time', r.colors);
-      expect(prompt).toContain('Good bread takes time');
-      expect(prompt).toMatch(/no text/i);
-      expect(prompt).toMatch(/logo/i);
+      for (const layout of layoutsOf(r).filter((l) => !l.noImage)) {
+        const prompt = layout.imagePrompt('Good bread takes time', r.colors);
+        expect(prompt).toContain('Good bread takes time');
+        expect(prompt).toMatch(/no text/i);
+        expect(prompt).toMatch(/logo/i);
+      }
     }
     expect(recipeById('marble-thinker')!.imagePrompt('x', { main: '#FFF4E0', ink: '#4A2C1D', accent: '#E0A526' })).toContain('#FFF4E0');
   });

@@ -12,7 +12,10 @@ import { FONT_FAMILIES, loadDesignFonts } from './fonts';
 import { photosFor, withSavedPhoto } from './photos';
 import { exportDesign, sourceOf, updatePostVisual } from './postVisuals';
 import { getDownloadUrl } from '@/lib/api/mediaClient';
-import { LeftPanel, RightPanel, type Tab } from './EditorPanels';
+import { LeftPanel, RightPanel, type DesignCampaign, type Tab } from './EditorPanels';
+import { getCopy } from '@/lib/api/copyClient';
+import { getStrategy, setStrategyStyle } from '@/lib/api/strategyClient';
+import { forgetBrandPalettes } from './StyleChoices';
 import { SecondaryButton, PrimaryButton } from './ui';
 import { VideoBar } from './VideoBar';
 
@@ -53,6 +56,8 @@ export function DesignEditor({ designId, draft }: { designId?: string; draft?: D
       (err) => setLoadError(err instanceof Error ? err.message : 'Couldn’t open this design')
     );
   }, [designId]);
+
+  const campaign = useDesignCampaign(design);
 
   // The latest design, so changes made in quick succession (dragging) build on each other
   const docRef = useRef<DesignDoc | null>(null);
@@ -304,12 +309,45 @@ export function DesignEditor({ designId, draft }: { designId?: string; draft?: D
       {doc.video && <VideoBar video={doc.video} onVideo={(video) => change((d) => ({ ...d, video }))} />}
 
       <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[300px_1fr_280px] gap-4">
-        <LeftPanel tab={tab} onTab={setTab} doc={doc} onChange={change} onSelect={setSelected} selected={selected} />
+        <LeftPanel tab={tab} onTab={setTab} doc={doc} onChange={change} onSelect={setSelected} selected={selected} campaign={campaign} />
         <Stage doc={doc} selected={selected} onSelect={setSelected} onChange={change} />
         <RightPanel doc={doc} layer={layer} picture={picture} onChange={change} onSelect={setSelected} />
       </div>
     </div>
   );
+}
+
+/**
+ * The campaign a design's post belongs to (when it has a style), so its
+ * colours can become the whole campaign's
+ */
+function useDesignCampaign(design: DesignRecord | null): DesignCampaign | null {
+  const [campaign, setCampaign] = useState<DesignCampaign | null>(null);
+  const copyId = design?.attachedTo?.copyId;
+  useEffect(() => {
+    if (!copyId) return;
+    let live = true;
+    (async () => {
+      const copy = await getCopy(copyId);
+      const strategy = await getStrategy(copy.strategyId);
+      const style = strategy.designStyle;
+      if (!live || !style) return;
+      const make = (colors: typeof style.colors): DesignCampaign => ({
+        brandName: strategy.brandName,
+        colors,
+        setColors: async (next) => {
+          await setStrategyStyle(strategy.id, { ...style, colors: next });
+          forgetBrandPalettes();
+          if (live) setCampaign(make(next));
+        },
+      });
+      setCampaign(make(style.colors));
+    })().catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [copyId]);
+  return campaign;
 }
 
 function SaveStatus({ state, onRetry }: { state: SaveState; onRetry: () => void }) {

@@ -25,6 +25,16 @@ export const DesignWriterResponseSchema = z.object({
   imagePrompt: z
     .string()
     .describe('One sentence describing a striking photo for an AI image generator to make for this post: subject, setting, light, mood. No words or text in the image, no brand names, no real people by name.'),
+  people: z
+    .string()
+    .optional()
+    .describe(
+      'Who should appear in the picture, as a kind of person (not a count): age, gender, ethnicity, look, chosen to match the brand’s customers and the post. E.g. "Black women in their late 20s with natural hair". Use the brand’s audience when it is given. Omit only if the post has no people in it.'
+    ),
+  object: z
+    .string()
+    .optional()
+    .describe('The product or object the picture should show, from the brand and the post, e.g. "a jar of whipped shea butter". Plain, with no brand names. Omit if nothing specific fits.'),
   photoQuery: z
     .string()
     .describe('1-3 plain English words to search free stock photos for a background that fits the post (e.g. "gym workout", "coffee shop"). No brand names.'),
@@ -50,6 +60,8 @@ export function cleanDesignText(r: DesignWriterResponse): DesignWriterResponse {
     kicker: tidy(r.kicker, 30),
     body: r.styleId === 'headline-body' ? tidy(r.body, 160) : undefined,
     imagePrompt: (r.imagePrompt ?? '').replace(/\s+/g, ' ').trim().slice(0, 600),
+    people: tidy(r.people, 140)?.replace(/\n/g, ' '),
+    object: tidy(r.object, 120)?.replace(/\n/g, ' '),
     photoQuery: (r.photoQuery ?? '').replace(/[^\p{L}\p{N}\s-]/gu, ' ').replace(/\s+/g, ' ').trim().split(' ').slice(0, 3).join(' '),
   };
 }

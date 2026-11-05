@@ -3,8 +3,8 @@
  * Handles communication with the Python FastAPI service
  */
 
-import { ChannelDescription, StrategyInput, StrategyOutput, StrategyRecord } from '@/types/strategy';
-import type { StrategyRecord as WireStrategyRecord } from '@/lib/models/strategy';
+import { ChannelDescription, StrategyInput, StrategyOutput, StrategyRecord, type CampaignDesignStyle } from '@/types/strategy';
+import type { CampaignStyle, StrategyRecord as WireStrategyRecord } from '@/lib/models/strategy';
 import type { GenerationProgress } from '@/lib/models/strategyConstants';
 
 // Use relative URLs — Next.js rewrites proxy /api/strategy/* to the Python backend
@@ -205,7 +205,7 @@ export async function listStrategies(): Promise<StrategyRecord[]> {
       },
       quiz: record.quiz,
       ...(record.design_style
-        ? { designStyle: { recipeId: record.design_style.recipe_id, model: record.design_style.model, onNewPosts: record.design_style.on_new_posts !== false } }
+        ? { designStyle: fromCampaignStyle(record.design_style) }
         : {}),
       createdAt: record.created_at,
     }));
@@ -295,7 +295,7 @@ export async function getStrategy(id: string): Promise<StrategyRecord> {
       },
       quiz: record.quiz,
       ...(record.design_style
-        ? { designStyle: { recipeId: record.design_style.recipe_id, model: record.design_style.model, onNewPosts: record.design_style.on_new_posts !== false } }
+        ? { designStyle: fromCampaignStyle(record.design_style) }
         : {}),
       createdAt: record.created_at,
     };
@@ -480,11 +480,17 @@ export async function deleteStrategy(id: string): Promise<void> {
  * Sets the campaign's design style (or removes it with null): every new post's
  * visual follows it, with its own words and image.
  */
-export async function setStrategyStyle(strategyId: string, style: { recipeId: string; model?: string; onNewPosts: boolean } | null): Promise<void> {
+function fromCampaignStyle(s: CampaignStyle): CampaignDesignStyle {
+  return { recipeId: s.recipe_id, model: s.model, onNewPosts: s.on_new_posts !== false, ...(s.colors ? { colors: s.colors } : {}), ...(s.layout ? { layout: s.layout } : {}) };
+}
+
+export async function setStrategyStyle(strategyId: string, style: CampaignDesignStyle | null): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/strategy/${encodeURIComponent(strategyId)}/style`, {
     method: 'PUT',
     headers: createAuthHeaders(),
-    body: JSON.stringify(style ? { recipe_id: style.recipeId, model: style.model, on_new_posts: style.onNewPosts } : { recipe_id: null }),
+    body: JSON.stringify(
+      style ? { recipe_id: style.recipeId, model: style.model, on_new_posts: style.onNewPosts, colors: style.colors, layout: style.layout } : { recipe_id: null }
+    ),
   });
   if (response.status === 401) {
     handleAuthError();

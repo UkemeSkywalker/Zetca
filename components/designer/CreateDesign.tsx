@@ -15,7 +15,7 @@ import type { VideoQuality } from '@/lib/api/designApi';
 import { createDesign, designerPath, rememberHandle, rememberedHandle, savePhoto, searchPhotos, writeDesignText } from '@/lib/api/designApi';
 import { DESIGN_STYLE_IDS } from '@/lib/models/designWriter';
 import { DesignCanvas } from './DesignCanvas';
-import { RECIPES, recipeById } from '@/lib/design/recipes';
+import { buildPost, layoutOf, layoutsOf, NO_PHOTO, RECIPES, recipeById, recipeColors } from '@/lib/design/recipes';
 import { creditsFor } from '@/lib/billing/prices';
 import { CARD, Chip, CostBadge, INPUT, LABEL, PrimaryButton, SecondaryButton } from './ui';
 
@@ -54,20 +54,30 @@ export function CreateDesign() {
   /** A style recipe for the AI image (Marble Thinker, Word Behind…), or free-form */
   const [recipeId, setRecipeId] = useState(params.get('recipe') ?? '');
   const recipe = source === 'ai_image' ? recipeById(recipeId) : undefined;
+  /** Which of the style's layouts (styles with several) */
+  const [layoutId, setLayoutId] = useState(params.get('layout') ?? '');
+  const layout = recipe ? layoutOf(recipe, layoutId) : undefined;
+  /** Brand colours chosen in the style's dialog ("RRGGBB,RRGGBB,RRGGBB": main, text, accent) */
+  const [brandColors] = useState(() => {
+    const parts = (params.get('colors') ?? '').split(',').filter((c) => /^[0-9A-Fa-f]{6}$/.test(c));
+    return parts.length === 3 ? { main: `#${parts[0]}`, ink: `#${parts[1]}`, accent: `#${parts[2]}` } : undefined;
+  });
   /** Cut-outs are a second AI step (Qwen edit, $0.04) */
-  const cutoutCredits = recipe?.cutout ? creditsFor(0.04) : 0;
+  const cutoutCredits = layout?.cutout ? creditsFor(0.04) : 0;
   /** Free AI uses left for a source (everyone's few, on the default model) */
   const freeLeft = (id: string) => (credits ? credits.freeAi[kindOf(id)] : 0);
   const usesFree = (id: string) =>
     !!models &&
     freeLeft(id) > 0 &&
-    (id === 'ai_video' ? pickedVideo?.id === models.defaults.video : pickedImage?.id === models.defaults.image && !(id === 'ai_image' && recipe?.cutout));
+    (id === 'ai_video' ? pickedVideo?.id === models.defaults.video : pickedImage?.id === models.defaults.image && !(id === 'ai_image' && layout?.cutout));
   /** What an AI source costs with the model (and quality) picked */
   const aiCost = (id: string) =>
     usesFree(id)
       ? 0
       : id === 'ai_image'
-        ? (pickedImage?.credits ?? 1) + cutoutCredits
+        ? layout?.noImage
+          ? 0
+          : (pickedImage?.credits ?? 1) + cutoutCredits
         : id === 'ai_video'
           ? pickedQuality?.credits ?? pickedVideo?.credits ?? 26
           : 0;
@@ -113,17 +123,24 @@ export function CreateDesign() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [credits, models, source, pickedImage?.id, pickedVideo?.id]);
 
+  /** Who and what the writer said belong in the picture (a style's image uses them, not its examples) */
+  const castRef = useRef<{ people?: string; object?: string }>({});
+
   /** Asks the writer for the words (and a style, if none is picked) */
   const write = async (): Promise<{ text: DesignText; styleId: string; photoQuery: string; imagePrompt: string } | null> => {
     if (prompt.trim().length < 3) {
       setError('Say a few words about the post first.');
       return null;
     }
-    const written = await writeDesignText({ prompt, ...(style !== 'auto' && isWriterStyle(style) ? { styleId: style } : {}) });
+    // A style can ask for its words a certain way (accent words, a crossed-out word, a short giant word)
+    const written = recipe
+      ? await writeDesignText({ prompt: (recipe.wordsHint ? `How to write the words: ${recipe.wordsHint}\nThe post: ${prompt}` : prompt).slice(0, 1000), styleId: 'headline-body' })
+      : await writeDesignText({ prompt, ...(style !== 'auto' && isWriterStyle(style) ? { styleId: style } : {}) });
     const next = { ...text, headline: written.headline, kicker: written.kicker ?? '', body: written.body ?? '' };
     setText(next);
     setPhotoQuery(written.photoQuery ?? '');
     setImagePrompt(written.imagePrompt ?? '');
+    castRef.current = { people: written.people, object: written.object };
     return { text: next, styleId: written.styleId, photoQuery: written.photoQuery ?? '', imagePrompt: written.imagePrompt ?? '' };
   };
 
@@ -135,19 +152,25 @@ export function CreateDesign() {
   /** One design over a new AI image (or video) */
   const makeAiDesign = async (words: DesignText, description: string) => {
     setResults([]);
-    if (recipe) {
+    if (recipe && layout) {
       try {
-        const colors = recipe.colors;
-        const job = await makeAi('image', recipe.imagePrompt(description || prompt, colors), format, setAiProgress, pickedImage?.id, undefined, {
+        const colors = recipeColors(recipe, brandColors, layout.id);
+        const t = clean(words);
+        const recipeText = { headline: t.headline, kicker: t.kicker, body: t.body, footer: t.footer };
+        if (layout.noImage) {
+          setResults([buildPost(recipe, layout.id, { text: recipeText, format, photo: NO_PHOTO, colors })]);
+          return;
+        }
+        const idea = (description || prompt).replace(/[*~]/g, '');
+        const job = await makeAi('image', layout.imagePrompt(idea, colors, castRef.current), format, setAiProgress, pickedImage?.id, undefined, {
           rawPrompt: true,
-          cutout: recipe.cutout,
+          cutout: layout.cutout,
         });
         const photo = await aiPhotoBackground(job);
         const cut = job.cutoutPhotoId ? await loadPhoto({ photoId: job.cutoutPhotoId }) : null;
-        const t = clean(words);
         setResults([
-          recipe.build({
-            text: { headline: t.headline, kicker: t.kicker, body: t.body, footer: t.footer },
+          buildPost(recipe, layout.id, {
+            text: recipeText,
             format,
             photo,
             cutout: cut && job.cutoutPhotoId ? { photoId: job.cutoutPhotoId, width: cut.width, height: cut.height } : undefined,
@@ -425,7 +448,7 @@ export function CreateDesign() {
               onChange={(id) => (source === 'ai_video' ? setVideoModelId(id) : setImageModelId(id))}
               tier={tier}
               left={credits?.left ?? null}
-              free={{ id: source === 'ai_video' ? models.defaults.video : models.defaults.image, left: recipe?.cutout ? 0 : freeLeft(source) }}
+              free={{ id: source === 'ai_video' ? models.defaults.video : models.defaults.image, left: layout?.cutout ? 0 : freeLeft(source) }}
             />
           )}
           {source === 'ai_video' && pickedVideo?.qualities && !usesFree('ai_video') && (
@@ -460,9 +483,20 @@ export function CreateDesign() {
                   </Chip>
                 ))}
               </div>
+              {recipe && layoutsOf(recipe).length > 1 && (
+                <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Layout">
+                  {layoutsOf(recipe).map((l) => (
+                    <Chip key={l.id} selected={layout?.id === l.id} onClick={() => setLayoutId(l.id)}>
+                      {l.name}
+                    </Chip>
+                  ))}
+                </div>
+              )}
               {recipe && (
                 <p className="mt-2 text-xs text-[#777587]">
-                  {recipe.description}.{recipe.cutout ? ` Includes a cut-out of the subject (+${cutoutCredits} credits).` : ''}
+                  {recipe.description}.{layout?.cutout ? ` Includes a cut-out of the subject (+${cutoutCredits} credits).` : ''}
+                  {layout?.noImage ? ' Drawn by Zetca: no AI image needed.' : ''}
+                  {brandColors ? ' In your brand colours.' : ''}
                 </p>
               )}
             </fieldset>
@@ -538,7 +572,7 @@ export function CreateDesign() {
           {aiProgress ? (
             <AiMaking
               kind={source === 'ai_video' ? 'video' : 'image'}
-              cutout={!!recipe?.cutout}
+              cutout={!!layout?.cutout}
               progress={aiProgress}
               description={imagePrompt || prompt}
               onUseStock={() => pickSource('stock')}

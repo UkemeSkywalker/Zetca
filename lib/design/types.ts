@@ -82,6 +82,25 @@ export const TextLayerSchema = z.object({
   fill: hex.optional(),
   /** Drawn under the image layers (the giant word behind a person) */
   behind: z.boolean().optional(),
+  /** Slanted letters (a style's accent words, "anywhere", "Zero Drama") */
+  italic: z.boolean().optional(),
+  /**
+   * Words drawn differently: counted from 0 across the whole text, `to` not
+   * included. A colour, a line struck through them, or slanted.
+   */
+  marks: z
+    .array(
+      z.object({
+        from: z.number().int().min(0),
+        to: z.number().int().min(1),
+        color: hex.optional(),
+        strike: hex.optional(),
+        italic: z.boolean().optional(),
+        bold: z.boolean().optional(),
+      })
+    )
+    .max(4)
+    .optional(),
 });
 export type TextLayer = z.infer<typeof TextLayerSchema>;
 
@@ -104,17 +123,62 @@ export const ImageLayerSchema = z.object({
   cutout: z.boolean(),
   /** Fill the box, cropped exactly like a photo background (keeps a cut-out lined up with its photo) */
   cover: z.boolean().optional(),
+  /** Rounded corners in px (a photo set into the design) */
+  radius: z.number().min(0).max(300).optional(),
+  /** A thin border around a photo set into the design (a polaroid edge) */
+  border: hex.optional(),
 });
 export type ImageLayer = z.infer<typeof ImageLayerSchema>;
+
+/**
+ * A flat shape drawn by Zetca (not part of the photo): the speech bubble a
+ * headline sits in, a frame around the post, a blob, a footer strip.
+ */
+export const SHAPE_KINDS = ['rect', 'ellipse', 'bubble', 'scallop', 'frame', 'blob', 'zigzag', 'ribbon', 'steps', 'fade'] as const;
+export type ShapeKind = (typeof SHAPE_KINDS)[number];
+
+export const ShapeLayerSchema = z.object({
+  id: z.string().min(1).max(40),
+  kind: z.enum(SHAPE_KINDS),
+  x: z.number(),
+  y: z.number(),
+  w: z.number().min(2),
+  h: z.number().min(2),
+  fill: hex.optional(),
+  stroke: hex.optional(),
+  strokeWidth: z.number().min(0).max(80).optional(),
+  /** Corner rounding in px */
+  radius: z.number().min(0).max(600).optional(),
+  /** Bubbles: where the little tail points */
+  tail: z.enum(['bl', 'br', 'tl', 'tr', 'left', 'right']).optional(),
+  opacity: z.number().min(0).max(1).optional(),
+  /** Fades: strongest at the top instead of the bottom */
+  flip: z.boolean().optional(),
+  /** Above the cut-out (a footer strip); otherwise just above the background */
+  front: z.boolean().optional(),
+});
+export type ShapeLayer = z.infer<typeof ShapeLayerSchema>;
+
+/** The three colours a style is built from */
+export const DesignColorsSchema = z.object({ main: hex, ink: hex, accent: hex });
+export type DesignColors = z.infer<typeof DesignColorsSchema>;
 
 export const DesignDocSchema = z.object({
   format: z.enum(['square', 'portrait', 'story', 'landscape']),
   styleId: z.string().max(40),
   background: BackgroundSchema,
   overlay: z.object({ color: hex, opacity: z.number().min(0).max(0.9) }).optional(),
-  layers: z.array(TextLayerSchema).max(12),
+  layers: z.array(TextLayerSchema).max(16),
   /** Pictures above the background; text with `behind` goes under them */
-  images: z.array(ImageLayerSchema).max(4).optional(),
+  images: z.array(ImageLayerSchema).max(6).optional(),
+  /** Flat shapes: bubbles, frames, blobs, strips */
+  shapes: z.array(ShapeLayerSchema).max(16).optional(),
+  /** Which of the style's layouts this is (styles with several) */
+  layoutId: z.string().max(40).optional(),
+  /** The colours it was built with, so they can be changed later */
+  colors: DesignColorsSchema.optional(),
+  /** The AI image it was made from, kept when only its cut-out is drawn (to switch layouts later) */
+  photo: PhotoBackgroundSchema.optional(),
   /** An AI video under the words (the photo background is its first frame) */
   video: z
     .object({

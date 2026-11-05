@@ -8,130 +8,39 @@
  * prompts or the examples.
  */
 
-import type { KeyColor } from '../media/chromaKey';
 import { bestTextColor } from './contrast';
-import { FORMATS, type DesignDoc, type FormatId, type ImageLayer, type PhotoBackground, type TextLayer } from './types';
+import { FORMATS, type DesignDoc, type ImageLayer, type PhotoBackground, type TextLayer } from './types';
+import {
+  afterGiant,
+  castLine,
+  contactBar,
+  corner,
+  cutoutLayer,
+  featureRow,
+  flat,
+  giantWord,
+  inkOn,
+  M,
+  mergeColors,
+  NO_TEXT,
+  photoBg,
+  pill,
+  text,
+  type Colors,
+  type RecipeColors,
+  type RecipeLayout,
+  type StyleRecipe,
+} from './recipeKit';
+import { FAMILY_RECIPES, NEON_LIME_LAYOUTS, BRAND_RED_LAYOUTS } from './families';
 
-export type RecipeFamily = 'cutout' | 'mono' | 'giant-word' | 'premium' | 'celebration' | 'big-idea' | 'flyer';
+export { FAMILY_NAMES, giantWord, markup, type RecipeColors, type RecipeFamily, type RecipeLayout, type RecipeText, type StyleRecipe } from './recipeKit';
 
-export const FAMILY_NAMES: Record<RecipeFamily, string> = {
-  cutout: 'Cutout on colour',
-  mono: 'One-colour hero',
-  'giant-word': 'Giant word',
-  premium: 'Premium product',
-  celebration: 'Campaign and celebration',
-  'big-idea': 'Big idea',
-  flyer: 'Highlight and flyer',
-};
-
-/** The words a recipe places */
-export interface RecipeText {
-  /** The main words (for giant-word styles, the first word is the giant one) */
-  headline: string;
-  /** A short label, e.g. a hashtag or "NEW ERA" */
-  kicker?: string;
-  /** A supporting line */
-  body?: string;
-  /** The brand's name or handle */
-  footer?: string;
+/** Merges brand colours over the style's own (or one layout's own), keeping text readable */
+export function recipeColors(recipe: StyleRecipe, brand?: RecipeColors, layoutId?: string): Colors {
+  return mergeColors(layoutOf(recipe, layoutId).colors ?? recipe.colors, brand);
 }
 
-/** A brand's colours, when a campaign uses "My brand" instead of the style's own */
-export interface RecipeColors {
-  /** The flat colour or main colour of the style */
-  main: string;
-  /** Text and accents */
-  ink?: string;
-  accent?: string;
-}
-
-export interface StyleRecipe {
-  id: string;
-  name: string;
-  family: RecipeFamily;
-  description: string;
-  /** The style's own colours */
-  colors: Required<RecipeColors>;
-  /** Make the image, then cut the subject out of this flat colour (giant-word styles) */
-  cutout?: KeyColor;
-  /** The AI image prompt for one post: `idea` is what the post is about */
-  imagePrompt(idea: string, colors: Required<RecipeColors>): string;
-  /** The finished design from the AI image (and its cut-out, when the recipe makes one) */
-  build(input: { text: RecipeText; format: FormatId; photo: PhotoBackground; cutout?: { photoId: string; width: number; height: number }; colors: Required<RecipeColors> }): DesignDoc;
-  /** Example words for the gallery */
-  example: RecipeText;
-}
-
-const M = 84;
-
-function text(partial: Partial<TextLayer> & Pick<TextLayer, 'id' | 'role' | 'text' | 'x' | 'y' | 'width' | 'height'>): TextLayer {
-  return { font: 'jakarta', weight: 800, size: 40, color: '#FFFFFF', align: 'left', valign: 'top', lineHeight: 1.05, uppercase: false, letterSpacing: 0, ...partial };
-}
-
-const NO_TEXT = 'Absolutely no text, letters, numbers, logos, brand names or watermarks anywhere in the image.';
-
-/** The first word, for the giant word (letters and digits only) */
-export const giantWord = (headline: string) => (headline.trim().split(/\s+/)[0] ?? '').replace(/[^\p{L}\p{N}]/gu, '').slice(0, 8) || 'NOW';
-/** The rest of the headline after the giant word */
-const afterGiant = (headline: string) => headline.trim().split(/\s+/).slice(1).join(' ');
-
-/** Merges brand colours over the style's own, keeping text readable */
-export function recipeColors(recipe: StyleRecipe, brand?: RecipeColors): Required<RecipeColors> {
-  if (!brand) return recipe.colors;
-  const main = brand.main;
-  const ink = brand.ink && bestTextColor([main], [brand.ink, '#0B0B0F', '#FFFFFF']) === brand.ink ? brand.ink : bestTextColor([main], ['#0B0B0F', '#FFFFFF']);
-  return { main, ink, accent: brand.accent ?? recipe.colors.accent };
-}
-
-
-/* Shared pieces for the recipes below */
-
-/** A small line in a corner */
-const corner = (id: string, role: TextLayer['role'], value: string | undefined, where: 'tl' | 'tr' | 'bl' | 'br', h: number, color: string, size = 28) =>
-  value
-    ? [
-        text({
-          id,
-          role,
-          text: value,
-          x: where.endsWith('l') ? M : 1080 / 2,
-          y: where.startsWith('t') ? M - 20 : h - M - 40,
-          width: 1080 / 2 - M,
-          height: 50,
-          size,
-          weight: 700,
-          color,
-          align: where.endsWith('l') ? 'left' : 'right',
-        }),
-      ]
-    : [];
-
-/** A rounded button-like pill ("Shop now"), its text always readable on its fill */
-const pill = (id: string, value: string | undefined, x: number, y: number, fill: string, width = 360, size = 34) =>
-  value ? [text({ id, role: 'pill', text: value, x, y, width, height: size * 2.2, size, weight: 800, fill, color: bestTextColor([fill], ['#0B0B0F', '#FFFFFF']) })] : [];
-
-/** A full-width bar along the bottom: the brand, its handle, phone or website */
-const contactBar = (value: string | undefined, h: number, fill: string) =>
-  value ? [text({ id: 'footer', role: 'pill', text: value, x: M / 2, y: h - M - 70, width: 1080 - M, height: 96, size: 30, weight: 700, fill, color: bestTextColor([fill], ['#0B0B0F', '#FFFFFF']), align: 'center' })] : [];
-
-/** A row of up to 3 short features ("A16 chip · All-day battery · 11-inch screen") */
-const featureRow = (value: string | undefined, h: number, color: string) => {
-  const parts = (value ?? '').split(/\s*[·|•]\s*/).filter(Boolean).slice(0, 3);
-  const w = (1080 - M * 2) / Math.max(parts.length, 1);
-  return parts.map((part, i) => text({ id: `feature${i}`, role: 'body', text: part, x: M + i * w, y: h - M - 70, width: w - 16, height: 70, size: 26, weight: 600, color, align: 'center', lineHeight: 1.2 }));
-};
-
-const photoBg = (photo: PhotoBackground) => ({ ...photo, focusX: 0.5, focusY: 0.5 });
-
-const cutoutLayer = (cutout: { photoId: string; width: number; height: number } | undefined, h: number): ImageLayer[] =>
-  cutout ? [{ id: 'subject', photoId: cutout.photoId, width: cutout.width, height: cutout.height, x: 0, y: 0, w: 1080, h, cutout: true, cover: true }] : [];
-
-/** Text colour that reads on the photo's tones */
-const inkOn = (photo: PhotoBackground, prefer = '#FFFFFF') => bestTextColor(photo.tones, [prefer, prefer === '#FFFFFF' ? '#0B0B0F' : '#FFFFFF']);
-
-const flat = (c: string) => `Perfectly flat, solid, seamless background in one colour, exactly ${c}`;
-
-export const RECIPES: StyleRecipe[] = [
+const ORIGINAL: StyleRecipe[] = [
   {
     id: 'marble-thinker',
     name: 'Marble Thinker',
@@ -139,10 +48,10 @@ export const RECIPES: StyleRecipe[] = [
     description: 'A marble statue acting out the idea, on one bold colour',
     colors: { main: '#FFB000', ink: '#0B0B0F', accent: '#0B0B0F' },
     example: { headline: 'Marketing is not advertising.', kicker: '#yourbrand', footer: 'Your Brand' },
-    imagePrompt: (idea, c) =>
-      `Advertising poster photo: a classical white marble statue of a thoughtful bearded Greek philosopher in draped robes, acting out this idea: "${idea}". ` +
+    imagePrompt: (idea, c, k) =>
+      `Advertising poster photo: a classical white marble statue of ${k?.people ? `a thoughtful figure in draped robes, modelled on ${k.people}` : 'a thoughtful bearded Greek philosopher in draped robes'}, acting out this idea: "${idea}". ` +
       `The statue sits in the lower right of the frame. Perfectly flat, solid, seamless background in one colour, exactly ${c.main}, with a large empty area in the upper left for a headline. ` +
-      `Crisp studio light, soft natural shadow under the statue. Any laptop, phone or object in the scene is plain and unbranded. ${NO_TEXT}`,
+      `Crisp studio light, soft natural shadow under the statue. Any laptop, phone or object in the scene is plain and unbranded.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       const layers: TextLayer[] = [
@@ -161,9 +70,9 @@ export const RECIPES: StyleRecipe[] = [
     colors: { main: '#FACC15', ink: '#FFFFFF', accent: '#FACC15' },
     cutout: 'green',
     example: { headline: 'Rise and shine', body: 'Baked before sunrise', kicker: 'Lekki, Lagos', footer: 'Your Brand' },
-    imagePrompt: (idea) =>
+    imagePrompt: (idea, _c, k) =>
       `Editorial portrait photo about this idea: "${idea}". One person, centred, looking at the camera, upper body visible, sitting or standing in a warm, softly lit real place that fits the idea. ` +
-      `Their head is in the middle of the frame with plenty of empty wall or space above and around it. Warm golden light, shallow depth of field, rich colour. The person wears nothing bright green. ${NO_TEXT}`,
+      `Their head is in the middle of the frame with plenty of empty wall or space above and around it. Warm golden light, shallow depth of field, rich colour. The person wears nothing bright green.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, cutout, colors }) {
       const h = FORMATS[format].height;
       const word = giantWord(t.headline).toUpperCase();
@@ -190,10 +99,10 @@ export const RECIPES: StyleRecipe[] = [
     description: 'Person, product and backdrop all in one colour',
     colors: { main: '#F97316', ink: '#FFFFFF', accent: '#FFFFFF' },
     example: { headline: 'Nova 7 Pro', kicker: 'New era · New model', footer: 'Your Brand' },
-    imagePrompt: (idea, c) =>
+    imagePrompt: (idea, c, k) =>
       `High-end advertising photo where everything is one saturated colour, ${c.main}: a seamless studio backdrop and floor in that colour, a chair in that colour, and a stylish person in white and ${c.main} clothes ` +
       `showing off this: "${idea}", holding it toward the camera with a wide-angle lens. Bold commercial lighting. The upper right of the frame is empty backdrop for a headline. ` +
-      `Any product is plain and unbranded. ${NO_TEXT}`,
+      `Any product is plain and unbranded.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       const ink = bestTextColor(photo.tones, ['#FFFFFF', '#0B0B0F']);
@@ -215,9 +124,9 @@ export const RECIPES: StyleRecipe[] = [
     description: 'A marble statue on a dark grid, one phrase highlighted',
     colors: { main: '#0B0B0F', ink: '#FFFFFF', accent: '#1D4ED8' },
     example: { headline: 'Your brand deserves', kicker: 'better content', body: 'and this is where that begins', footer: 'Your Brand' },
-    imagePrompt: (idea, c) =>
-      `Advertising poster photo: a classical white marble statue of a thoughtful bearded philosopher, acting out this idea: "${idea}", with a thin white sticker-like outline around it, in the lower right of the frame. ` +
-      `Background: ${c.main} with a thin, even, light grey square grid like graph paper. Large empty area in the upper left. Crisp studio light. Any object is plain and unbranded. ${NO_TEXT}`,
+    imagePrompt: (idea, c, k) =>
+      `Advertising poster photo: a classical white marble statue of ${k?.people ? `a thoughtful figure, modelled on ${k.people}` : 'a thoughtful bearded philosopher'}, acting out this idea: "${idea}", with a thin white sticker-like outline around it, in the lower right of the frame. ` +
+      `Background: ${c.main} with a thin, even, light grey square grid like graph paper. Large empty area in the upper left. Crisp studio light. Any object is plain and unbranded.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       return {
@@ -240,9 +149,9 @@ export const RECIPES: StyleRecipe[] = [
     description: 'A big-head caricature with a sticker outline and callouts',
     colors: { main: '#1E3A5F', ink: '#FFFFFF', accent: '#F97316' },
     example: { headline: 'Social media manager', body: 'Trend obsessed · Always saving ideas · Lives in the comments', footer: 'Your Brand' },
-    imagePrompt: (idea, c) =>
+    imagePrompt: (idea, c, k) =>
       `A playful 3D caricature illustration of one smiling person with a slightly oversized head, styled to show this idea: "${idea}", holding the props of their work, with a thick white sticker outline around the whole figure, centred and full length. ` +
-      `${flat(c.main)} with a soft vignette. Lots of empty space at the top and both sides. ${NO_TEXT}`,
+      `${flat(c.main)} with a soft vignette. Lots of empty space at the top and both sides.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       const notes = (t.body ?? '').split(/\s*[·|•]\s*/).filter(Boolean).slice(0, 3);
@@ -266,9 +175,9 @@ export const RECIPES: StyleRecipe[] = [
     description: 'Cut-paper collage on cream, with a script word on top',
     colors: { main: '#FBF7EE', ink: '#2B2B2B', accent: '#5B21B6' },
     example: { kicker: 'When your', headline: 'Social Media Manager', body: 'is a Gen Z…', footer: 'Your Brand' },
-    imagePrompt: (idea) =>
+    imagePrompt: (idea, _c, k) =>
       `A witty paper-collage photo: one person from the waist up whose head is replaced by an object that tells this idea: "${idea}" (for example an old TV set, a speaker or a camera), cut out like a magazine clipping with a slight paper edge, ` +
-      `standing in the lower middle on a plain cream recycled-paper background with soft texture. Large empty space at the top. ${NO_TEXT}`,
+      `standing in the lower middle on a plain cream recycled-paper background with soft texture. Large empty space at the top.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       return {
@@ -293,9 +202,9 @@ export const RECIPES: StyleRecipe[] = [
     description: 'Fresh lime green, a hero product and a Shop Now button',
     colors: { main: '#A3E635', ink: '#14532D', accent: '#FFFFFF' },
     example: { headline: 'Level up your gadgets', kicker: 'Shop now', footer: 'Your Brand' },
-    imagePrompt: (idea, c) =>
-      `Vibrant advertising photo in fresh lime green (${c.main}) tones: a confident person in lime-green clothes holding a large unbranded product that shows this idea: "${idea}" toward the camera, ` +
-      `with a few floating translucent glass cubes and soft circular light rings around them, on a lime green gradient studio background. The top third is clear background for a headline. Bright, glossy commercial light. ${NO_TEXT}`,
+    imagePrompt: (idea, c, k) =>
+      `Vibrant advertising photo in fresh lime green (${c.main}) tones: a confident person in lime-green clothes holding ${k?.object ? `a large ${k.object.replace(/^an? /, '')}, unbranded,` : 'a large unbranded product'} that shows this idea: "${idea}" toward the camera, ` +
+      `with a few floating translucent glass cubes and soft circular light rings around them, on a lime green gradient studio background. The top third is clear background for a headline. Bright, glossy commercial light.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       const ink = inkOn(photo, colors.ink);
@@ -318,9 +227,9 @@ export const RECIPES: StyleRecipe[] = [
     description: 'Bright blue, tight white headline, contact bar for orders',
     colors: { main: '#1D6FF2', ink: '#FFFFFF', accent: '#FFFFFF' },
     example: { headline: 'Hold greatness', kicker: 'Simply premium', footer: 'Order now · 0901 234 5678 · @yourbrand' },
-    imagePrompt: (idea, c) =>
-      `Bold retail advertising photo in electric blue (${c.main}): a hand or a stylish person holding an unbranded product that shows this idea: "${idea}", large in the right half of the frame, ` +
-      `on a smooth bright blue studio gradient. The left half and the bottom are clear for text. Crisp, high-contrast light. ${NO_TEXT}`,
+    imagePrompt: (idea, c, k) =>
+      `Bold retail advertising photo in electric blue (${c.main}): a hand or a stylish person holding ${k?.object ? `${k.object}, unbranded,` : 'an unbranded product'} that shows this idea: "${idea}", large in the right half of the frame, ` +
+      `on a smooth bright blue studio gradient. The left half and the bottom are clear for text. Crisp, high-contrast light.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       return {
@@ -342,9 +251,9 @@ export const RECIPES: StyleRecipe[] = [
     description: 'Deep red, a bold 3D object, a big offer',
     colors: { main: '#B91C1C', ink: '#FFFFFF', accent: '#FFFFFF' },
     example: { headline: 'No buffering, just fast internet', kicker: 'Offer ends soon', body: 'T&C apply', footer: 'Your Brand' },
-    imagePrompt: (idea, c) =>
+    imagePrompt: (idea, c, k) =>
       `Glossy 3D advertising render: one large, smooth, shiny red object that symbolises this idea: "${idea}" (for example a gift box, a swirl, a speech bubble or a giant device), ` +
-      `with one or two small happy people sitting or standing on it, on a deep red (${c.main}) to dark red gradient background. The top third is clear for a headline. Studio lighting, soft reflections. ${NO_TEXT}`,
+      `with one or two small happy people sitting or standing on it, on a deep red (${c.main}) to dark red gradient background. The top third is clear for a headline. Studio lighting, soft reflections.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       return {
@@ -370,9 +279,9 @@ export const RECIPES: StyleRecipe[] = [
     colors: { main: '#E0F2FE', ink: '#FFFFFF', accent: '#38BDF8' },
     cutout: 'green',
     example: { headline: '11 Series', body: 'Health tracking · Always-on display · Fast charging', footer: 'Your Brand' },
-    imagePrompt: (idea) =>
-      `Moody premium advertising photo on a dark navy-blue background with a soft blue glow: one stylish person holding an unbranded product that shows this idea: "${idea}" toward the camera, ` +
-      `centred, upper body, with empty dark space above and around their head. Cinematic blue rim light. The person wears nothing bright green. ${NO_TEXT}`,
+    imagePrompt: (idea, _c, k) =>
+      `Moody premium advertising photo on a dark navy-blue background with a soft blue glow: one stylish person holding ${k?.object ? `${k.object}, unbranded,` : 'an unbranded product'} that shows this idea: "${idea}" toward the camera, ` +
+      `centred, upper body, with empty dark space above and around their head. Cinematic blue rim light. The person wears nothing bright green.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, cutout, colors }) {
       const h = FORMATS[format].height;
       const big = giantWord(t.headline);
@@ -398,9 +307,9 @@ export const RECIPES: StyleRecipe[] = [
     colors: { main: '#FACC15', ink: '#FFFFFF', accent: '#FACC15' },
     cutout: 'green',
     example: { headline: 'Blur', kicker: 'While others', body: 'We make you clear', footer: 'Your Brand' },
-    imagePrompt: (idea) =>
+    imagePrompt: (idea, _c, k) =>
       `Cinematic photo: one person in sharp focus in the centre, calm and looking at the camera, doing something that shows this idea: "${idea}", surrounded by a dense crowd in heavy motion blur, warm dark tones. ` +
-      `Upper body, empty blurred space above their head. Moody, high-end film look. The person wears nothing bright green. ${NO_TEXT}`,
+      `Upper body, empty blurred space above their head. Moody, high-end film look. The person wears nothing bright green.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, cutout, colors }) {
       const h = FORMATS[format].height;
       return {
@@ -426,9 +335,9 @@ export const RECIPES: StyleRecipe[] = [
     description: 'A product held up against a soft blue sky',
     colors: { main: '#93C5FD', ink: '#0B1C30', accent: '#FFFFFF' },
     example: { kicker: 'Introducing', headline: 'Tablet 11th Gen', body: 'Powerful chip · All-day battery · 11-inch screen', footer: 'Your Brand' },
-    imagePrompt: (idea) =>
-      `Clean premium product photo: a hand holding up an unbranded product that shows this idea: "${idea}", in the middle of the frame, against a soft pastel blue sky with a few light clouds and a gentle warm glow near the bottom. ` +
-      `Top quarter clear for a headline. Soft natural light. ${NO_TEXT}`,
+    imagePrompt: (idea, _c, k) =>
+      `Clean premium product photo: a hand holding up ${k?.object ? `${k.object}, unbranded,` : 'an unbranded product'} that shows this idea: "${idea}", in the middle of the frame, against a soft pastel blue sky with a few light clouds and a gentle warm glow near the bottom. ` +
+      `Top quarter clear for a headline. Soft natural light.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       const ink = inkOn(photo, colors.ink);
@@ -452,9 +361,9 @@ export const RECIPES: StyleRecipe[] = [
     description: 'Near-black and moody, a light headline and a glass tag',
     colors: { main: '#0B0B0F', ink: '#FFFFFF', accent: '#3F3F46' },
     example: { headline: 'Nova 15 Plus', kicker: '256 GB', body: 'Aerospace-grade finish', footer: 'Your Brand' },
-    imagePrompt: (idea) =>
-      `Moody luxury advertising photo, almost black: a person in a dark jacket holding an unbranded product that shows this idea: "${idea}" close to the camera, lit by a single soft side light, deep shadows. ` +
-      `The right half has dark empty space for text. Rich, cinematic, minimal. ${NO_TEXT}`,
+    imagePrompt: (idea, _c, k) =>
+      `Moody luxury advertising photo, almost black: a person in a dark jacket holding ${k?.object ? `${k.object}, unbranded,` : 'an unbranded product'} that shows this idea: "${idea}" close to the camera, lit by a single soft side light, deep shadows. ` +
+      `The right half has dark empty space for text. Rich, cinematic, minimal.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       return {
@@ -479,9 +388,9 @@ export const RECIPES: StyleRecipe[] = [
     description: 'A playful family moment, a big word and a script word over it',
     colors: { main: '#1E3A8A', ink: '#FFFFFF', accent: '#F43F5E' },
     example: { headline: 'Papa', kicker: 'happy day', body: 'Thank you for every adventure', footer: 'Your Brand · @yourbrand' },
-    imagePrompt: (idea, c) =>
+    imagePrompt: (idea, c, k) =>
       `Joyful, playful studio photo for a celebration campaign about this idea: "${idea}": a family or friends having fun together with simple props, warm genuine smiles, on a solid colour studio set in ${c.main} tones. ` +
-      `People in the upper and middle part of the frame, the bottom third clear for big words. Bright, clean commercial light. ${NO_TEXT}`,
+      `People in the upper and middle part of the frame, the bottom third clear for big words. Bright, clean commercial light.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       const word = t.headline.toUpperCase();
@@ -507,9 +416,9 @@ export const RECIPES: StyleRecipe[] = [
     description: 'A person reaching to the camera, a bold orange ticket',
     colors: { main: '#F97316', ink: '#FFFFFF', accent: '#F97316' },
     example: { headline: 'We make your brand impossible to ignore.', kicker: "Let's build your growth story.", footer: 'Your Brand' },
-    imagePrompt: (idea) =>
+    imagePrompt: (idea, _c, k) =>
       `Dynamic advertising photo in a clean white room: a friendly person reaching one open hand toward the camera with a strong wide-angle perspective so the hand looks huge and slightly blurred, about this idea: "${idea}". ` +
-      `Orange accent stripes on the white floor. The lower half of the frame has clear space in front of them. Bright, clean light. ${NO_TEXT}`,
+      `Orange accent stripes on the white floor. The lower half of the frame has clear space in front of them. Bright, clean light.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       return {
@@ -531,9 +440,9 @@ export const RECIPES: StyleRecipe[] = [
     description: 'Black-and-white crowd, one person stands out',
     colors: { main: '#FFFFFF', ink: '#0B0B0F', accent: '#1D4ED8' },
     example: { headline: 'Be the brand all notice', kicker: 'they', body: 'powered by creative excellence', footer: '@yourbrand' },
-    imagePrompt: (idea) =>
+    imagePrompt: (idea, _c, k) =>
       `Black and white editorial photo: a crowd of people seen from behind fills the lower two thirds, and one person in the centre faces the camera, calm and confident, about this idea: "${idea}". ` +
-      `Only one small detail on that person is in colour (for example warm amber sunglasses). The top third is plain bright white for a headline. ${NO_TEXT}`,
+      `Only one small detail on that person is in colour (for example warm amber sunglasses). The top third is plain bright white for a headline.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       return {
@@ -557,9 +466,9 @@ export const RECIPES: StyleRecipe[] = [
     description: 'A joyful 3D cartoon group, a clean headline and a button',
     colors: { main: '#FFFFFF', ink: '#0B1C30', accent: '#0B1C30' },
     example: { headline: 'Find your tribe, build your network', kicker: 'Join for free', footer: 'Your Brand' },
-    imagePrompt: (idea) =>
+    imagePrompt: (idea, _c, k) =>
       `A joyful Pixar-style 3D animated group selfie of diverse friendly young people, big smiles, pointing and waving, about this idea: "${idea}", filling the bottom 60% of the frame, ` +
-      `on a plain clean white background. The top 40% is empty white for a headline. Bright, soft, colourful. ${NO_TEXT}`,
+      `on a plain clean white background. The top 40% is empty white for a headline. Bright, soft, colourful.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       return {
@@ -583,9 +492,9 @@ export const RECIPES: StyleRecipe[] = [
     description: 'Grid paper, a marker-highlighted word, a striking portrait',
     colors: { main: '#FAFAFA', ink: '#0B0B0F', accent: '#FDE047' },
     example: { headline: 'What great founders know about marketing', kicker: 'founders', body: 'That most businesses ignore', footer: 'Share it →' },
-    imagePrompt: (idea) =>
+    imagePrompt: (idea, _c, k) =>
       `Editorial collage on white grid paper: a striking low-poly geometric portrait of a confident made-up business person (not a real or famous person) in the lower right, ` +
-      `and a hand holding a small glass jar of gold coins in the lower left, about this idea: "${idea}". The top half is empty grid paper for a headline. ${NO_TEXT}`,
+      `and a hand holding a small glass jar of gold coins in the lower left, about this idea: "${idea}". The top half is empty grid paper for a headline.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       return {
@@ -608,9 +517,9 @@ export const RECIPES: StyleRecipe[] = [
     description: 'A bold street-style flyer with a contact strip',
     colors: { main: '#FED7AA', ink: '#EA580C', accent: '#0B1C30' },
     example: { headline: 'Sport your style', kicker: 'Order now', footer: '@yourbrand · 0851 234 5678 · yourbrand.com' },
-    imagePrompt: (idea, c) =>
-      `Energetic street-style advertising photo: a young person in bright orange clothes striking a dynamic pose, one chunky boot kicked toward the camera with a wide-angle lens, holding an unbranded product that shows this idea: "${idea}", ` +
-      `on a warm peach (${c.main}) studio background with soft light. Clear space on both sides of the person. ${NO_TEXT}`,
+    imagePrompt: (idea, c, k) =>
+      `Energetic street-style advertising photo: a young person in bright orange clothes striking a dynamic pose, one chunky boot kicked toward the camera with a wide-angle lens, holding ${k?.object ? `${k.object}, unbranded,` : 'an unbranded product'} that shows this idea: "${idea}", ` +
+      `on a warm peach (${c.main}) studio background with soft light. Clear space on both sides of the person.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       const words = t.headline.trim().split(/\s+/);
@@ -632,4 +541,135 @@ export const RECIPES: StyleRecipe[] = [
 
 ];
 
+/** A style's first (or only) layout, from the recipe itself */
+const mainLayout = (r: StyleRecipe, name = 'Classic'): RecipeLayout => ({ id: 'main', name, imagePrompt: r.imagePrompt, build: r.build, example: r.example, cutout: r.cutout });
+
+/** The two original styles that grew into families keep their first layout */
+for (const [id, more] of [['neon-lime', NEON_LIME_LAYOUTS], ['brand-red', BRAND_RED_LAYOUTS]] as const) {
+  const r = ORIGINAL.find((x) => x.id === id)!;
+  r.layouts = [mainLayout(r, 'Headline on top'), ...more];
+}
+
+/** Every style: the families first, then the original styles */
+export const RECIPES: StyleRecipe[] = [...FAMILY_RECIPES, ...ORIGINAL];
+
 export const recipeById = (id: string) => RECIPES.find((r) => r.id === id);
+
+/** A style's layouts (one, for single-layout styles) */
+export const layoutsOf = (r: StyleRecipe): RecipeLayout[] => r.layouts ?? [mainLayout(r)];
+
+/** One of a style's layouts by id, or its first */
+export const layoutOf = (r: StyleRecipe, layoutId?: string): RecipeLayout => {
+  const all = layoutsOf(r);
+  return all.find((l) => l.id === layoutId) ?? all[0];
+};
+
+/** Styles with more than one layout */
+export const isFamily = (r: StyleRecipe) => layoutsOf(r).length > 1;
+
+/** How a campaign uses a family's layouts: mixes them post by post, or always one */
+export type LayoutChoice = 'mix' | string;
+
+/** The layout a post gets: `seed` spreads a campaign's posts across the layouts */
+export function pickLayout(r: StyleRecipe, choice: LayoutChoice | undefined, seed: number): RecipeLayout {
+  const all = layoutsOf(r);
+  if (choice && choice !== 'mix') return layoutOf(r, choice);
+  return all[seed % all.length];
+}
+
+/** The example image for a layout: "style:<id>" for the first, "style:<id>--<layout>" for the rest */
+export const examplePhotoId = (r: StyleRecipe, layoutId?: string) => {
+  const layout = layoutOf(r, layoutId);
+  return layout.id === layoutsOf(r)[0].id ? `style:${r.id}` : `style:${r.id}--${layout.id}`;
+};
+
+/** Builds a post in a style's layout, stamped with the layout and colours it used */
+export function buildPost(r: StyleRecipe, layoutId: string | undefined, input: Parameters<RecipeLayout['build']>[0]): DesignDoc {
+  const layout = layoutOf(r, layoutId);
+  const doc = layout.build(input);
+  const keepPhoto = doc.background.kind !== 'photo' && input.photo.photoId !== 'none';
+  return { ...doc, styleId: r.id, layoutId: layout.id, colors: input.colors, ...(keepPhoto ? { photo: input.photo } : {}) };
+}
+
+/** A stand-in photo for layouts drawn entirely by Zetca */
+export const NO_PHOTO: PhotoBackground = {
+  kind: 'photo',
+  photoId: 'none',
+  width: 1080,
+  height: 1350,
+  focusX: 0.5,
+  focusY: 0.5,
+  fit: 'fill',
+  tones: ['#FFFFFF'],
+  credit: { name: 'Zetca', url: 'https://zetca.pro/', source: 'sample' },
+};
+
+/** Layers that hold part of the headline, in the order they are read */
+const HEADLINE_PARTS = new Set(['kicker2', 'headline', 'body2', 'board', 'vs', 'headline2']);
+
+/** The words in a design, read back from its layers (to rebuild it in new colours or a new layout) */
+export function textOfDesign(doc: DesignDoc): { headline: string; kicker?: string; body?: string; footer?: string; cta?: string } {
+  const byId = (id: string) => doc.layers.find((l) => l.id === id);
+  const withMarks = (l: TextLayer | undefined) => {
+    if (!l) return undefined;
+    if (!l.marks?.length) return l.text;
+    // Put the markers back so the new layout draws the same words as accents
+    let i = 0;
+    return l.text
+      .split('\n')
+      .map((line) =>
+        line
+          .split(' ')
+          .filter(Boolean)
+          .map((w) => {
+            const at = i++;
+            const mark = l.marks!.find((m) => at >= m.from && at < m.to);
+            if (!mark) return w;
+            const marker = mark.strike ? '~~' : '*';
+            const first = at === mark.from;
+            const last = at === mark.to - 1;
+            return `${first ? marker : ''}${w}${last ? marker : ''}`;
+          })
+          .join(' ')
+      )
+      .join('\n');
+  };
+  const features = doc.layers.filter((l) => /^(feature|note|item)\d$/.test(l.id)).map((l) => l.text);
+  // Layouts that split the headline around a word (a chalkboard word, "vs", a giant number) put it back together
+  const pieces = doc.layers
+    .filter((l) => HEADLINE_PARTS.has(l.id))
+    .map((l) => (l.id === 'board' ? (l.text.trim() ? `*${l.text}*` : '') : l.id === 'headline' ? withMarks(l)! : l.text))
+    .filter((p) => p.trim());
+  const headline = pieces.length ? pieces.join(' ') : (doc.layers.find((l) => l.role === 'headline')?.text ?? '');
+  return {
+    headline,
+    kicker: byId('kicker')?.text,
+    body: byId('body')?.text ?? (features.length ? features.join(' · ') : undefined),
+    footer: byId('footer')?.text,
+    cta: byId('cta')?.text,
+  };
+}
+
+/**
+ * The same post in other colours or another of its style's layouts: same
+ * words, same photo and cut-out. Designs not made from a style come back as they were.
+ */
+export function rebuildDesign(doc: DesignDoc, change: { colors?: Colors; layoutId?: string }): DesignDoc {
+  const r = recipeById(doc.styleId);
+  if (!r) return doc;
+  const bgPhoto = doc.photo ?? (doc.background.kind === 'photo' ? doc.background : undefined);
+  const inset = doc.images?.find((i) => i.id === 'photo');
+  const subject = doc.images?.find((i) => i.id === 'subject');
+  const photo: PhotoBackground =
+    bgPhoto ??
+    (inset ? { ...NO_PHOTO, photoId: inset.photoId, width: inset.width, height: inset.height } : subject ? { ...NO_PHOTO, photoId: subject.photoId, width: subject.width, height: subject.height } : NO_PHOTO);
+  const colors = change.colors ?? doc.colors ?? recipeColors(r, undefined, doc.layoutId);
+  const next = buildPost(r, change.layoutId ?? doc.layoutId, {
+    text: textOfDesign(doc),
+    format: doc.format,
+    photo,
+    colors,
+    cutout: subject ? { photoId: subject.photoId, width: subject.width, height: subject.height } : undefined,
+  });
+  return doc.video ? { ...next, video: doc.video } : next;
+}

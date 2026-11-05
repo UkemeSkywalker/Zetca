@@ -10,14 +10,17 @@ import { createDesign, designerPath, listDesigns, rememberedHandle } from '@/lib
 import { DesignCanvas, DesignThumb } from './DesignCanvas';
 import { CARD, Chip, CostBadge, timeAgo } from './ui';
 import { CreditsPill, useAiCredits } from './AiCredits';
-import { FAMILY_NAMES, RECIPES, type RecipeFamily } from '@/lib/design/recipes';
+import { FAMILY_NAMES, isFamily, RECIPES, type RecipeFamily } from '@/lib/design/recipes';
 import { RecipeCard } from './StyleLibrary';
 import { StyleDialog } from './StyleDetail';
 
-type Filter = 'all' | RecipeFamily | StyleCategory | 'ai_image' | 'ai_video';
+type Filter = 'all' | 'families' | 'single' | RecipeFamily | StyleCategory | 'ai_image' | 'ai_video';
 
 const FILTERS: { id: Filter; label: string }[] = [
   { id: 'all', label: 'All' },
+  // Styles with several layouts, and styles with one
+  { id: 'families', label: 'Families' },
+  { id: 'single', label: 'Single' },
   // The AI styles, by family
   ...(Object.keys(FAMILY_NAMES) as RecipeFamily[]).map((id) => ({ id, label: FAMILY_NAMES[id] })),
   // The text and photo styles
@@ -49,8 +52,11 @@ export function DesignerHome() {
     listDesigns().then(setDesigns, () => setDesigns([]));
   }, []);
 
-  const styles = useMemo(() => STYLES.filter((s) => filter === 'all' || s.category === filter), [filter]);
-  const recipes = useMemo(() => RECIPES.filter((r) => filter === 'all' || r.family === filter), [filter]);
+  const styles = useMemo(() => STYLES.filter((s) => filter === 'all' || filter === 'single' || s.category === filter), [filter]);
+  const recipes = useMemo(
+    () => RECIPES.filter((r) => filter === 'all' || r.family === filter || (filter === 'families' && isFamily(r)) || (filter === 'single' && !isFamily(r))),
+    [filter]
+  );
   const [openRecipe, setOpenRecipe] = useState<string | null>(null);
   const aiCards = AI_CARDS.filter((c) => filter === 'all' || c.id === filter);
   const { credits } = useAiCredits();

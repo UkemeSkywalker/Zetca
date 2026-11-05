@@ -17,12 +17,18 @@ import { updatePost } from '@/lib/api/schedulerClient';
 import type { CopyRecord, VisualKind } from '@/types/agent';
 import { FONT_FAMILIES, loadDesignFonts } from './fonts';
 import { loadPhoto, photosFor, rememberSaved, tonesOf } from './photos';
-import { recipeById } from '@/lib/design/recipes';
+import { buildPost, NO_PHOTO, pickLayout, recipeById, recipeColors } from '@/lib/design/recipes';
 
 /** A campaign's design style: the style library recipe, and the AI image model */
 export interface VisualStyle {
   recipeId: string;
   model?: string;
+  /** The campaign's brand colours (otherwise the style's own) */
+  colors?: { main: string; ink: string; accent: string };
+  /** 'mix' the style's layouts post by post, or always one layout */
+  layout?: string;
+  /** The campaign's brand: its people and products go in the pictures, not the style's examples */
+  brand?: { name?: string; industry?: string; audience?: string };
 }
 
 /** What a visual is made for */
@@ -113,8 +119,13 @@ export async function designOptions(
   campaignStyle?: VisualStyle
 ): Promise<{ docs: DesignDoc[]; name: string }> {
   // Thumbnails are seen small next to other videos: a few huge words work best
-  const prompt = format === 'landscape' ? `A YouTube thumbnail, at most 5 big punchy words (not the full title). ${brief(target)}` : brief(target);
-  const written = await writeDesignText({ prompt: prompt.slice(0, 1000) });
+  const recipe = kind === 'ai_image' && campaignStyle ? recipeById(campaignStyle.recipeId) : undefined;
+  const base = format === 'landscape' ? `A YouTube thumbnail, at most 5 big punchy words (not the full title). ${brief(target)}` : brief(target);
+  // A style can ask for its words a certain way (accent words, a crossed-out word, a short giant word)
+  const b = campaignStyle?.brand;
+  const brandLine = b && (b.industry || b.audience) ? `The brand: ${[b.name, b.industry && `a ${b.industry} brand`, b.audience && `for ${b.audience}`].filter(Boolean).join(', ')}.\n` : '';
+  const prompt = recipe ? `${brandLine}${recipe.wordsHint ? `How to write the words: ${recipe.wordsHint}\n` : ''}The post: ${base}` : base;
+  const written = await writeDesignText({ prompt: prompt.slice(0, 1000), ...(recipe ? { styleId: 'headline-body' as const } : {}) });
   const handle = rememberedHandle();
   const text: DesignText = {
     headline: written.headline,
@@ -126,18 +137,22 @@ export async function designOptions(
   const n = seed(target.id);
   const name = written.headline.replace(/\n/g, ' ').slice(0, 60);
 
-  const recipe = kind === 'ai_image' && campaignStyle ? recipeById(campaignStyle.recipeId) : undefined;
   if (recipe) {
-    // The post's own idea, in the campaign's look
-    const idea = (target.angle ? `${target.angle}: ${written.headline}` : written.headline).replace(/\n/g, ' ');
-    const job = await makeAi('image', recipe.imagePrompt(idea, recipe.colors), format, onProgress, campaignStyle?.model, undefined, { rawPrompt: true, cutout: recipe.cutout });
+    // The post's own idea, in the campaign's look: one of the style's layouts, in the campaign's colours
+    const layout = pickLayout(recipe, campaignStyle?.layout, n);
+    const colors = recipeColors(recipe, campaignStyle?.colors, layout.id);
+    if (layout.noImage) return { docs: [buildPost(recipe, layout.id, { text, format, photo: NO_PHOTO, colors })], name };
+    const idea = (target.angle ? `${target.angle}: ${written.headline}` : written.headline).replace(/[*~]/g, '').replace(/\n/g, ' ');
+    // Who and what are in the picture come from this brand and post, not the style's examples
+    const cast = { people: written.people, object: written.object };
+    const job = await makeAi('image', layout.imagePrompt(idea, colors, cast), format, onProgress, campaignStyle?.model, undefined, { rawPrompt: true, cutout: layout.cutout });
     const photo = await aiPhotoBackground(job);
     const cut = job.cutoutPhotoId ? await loadPhoto({ photoId: job.cutoutPhotoId }) : null;
-    const doc = recipe.build({
+    const doc = buildPost(recipe, layout.id, {
       text,
       format,
       photo,
-      colors: recipe.colors,
+      colors,
       cutout: cut && job.cutoutPhotoId ? { photoId: job.cutoutPhotoId, width: cut.width, height: cut.height } : undefined,
     });
     return { docs: [doc], name };
@@ -209,7 +224,8 @@ export async function saveAndExport(doc: DesignDoc, name: string, attachedTo?: A
 /** What made a design: a text design, a stock photo, or AI */
 export function sourceOf(doc: DesignDoc): 'template' | 'stock' | 'ai_image' | 'ai_video' {
   if (doc.video) return 'ai_video';
-  if (doc.background.kind !== 'photo') return 'template';
+  // Cut-out styles draw their own page under the AI image's subject
+  if (doc.background.kind !== 'photo') return doc.photo?.credit.source === 'ai' || doc.images?.length ? 'ai_image' : 'template';
   return doc.background.credit.source === 'ai' ? 'ai_image' : 'stock';
 }
 

@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react';
-import type { StyleRecipe } from '@/lib/design/recipes';
+import { buildPost, examplePhotoId, layoutOf, layoutsOf, NO_PHOTO, recipeColors, type StyleRecipe } from '@/lib/design/recipes';
+import type { Colors } from '@/lib/design/recipeKit';
 import type { DesignDoc, FormatId } from '@/lib/design/types';
 import { DesignCanvas } from './DesignCanvas';
 import { loadPhoto, tonesOf } from './photos';
@@ -10,24 +11,34 @@ import { CARD } from './ui';
 
 /**
  * A recipe's example post, made from the example image that ships with Zetca
- * (and its cut-out, for giant-word styles)
+ * (and its cut-out, for styles that cut the subject out), in one of the
+ * style's layouts and, optionally, other colours
  */
-export function useRecipeExample(recipe: StyleRecipe, format: FormatId = 'portrait'): DesignDoc | null {
+export function useRecipeExample(recipe: StyleRecipe, format: FormatId = 'portrait', layoutId?: string, colors?: Colors): DesignDoc | null {
   const [doc, setDoc] = useState<DesignDoc | null>(null);
+  const colorKey = colors ? `${colors.main}${colors.ink}${colors.accent}` : '';
   useEffect(() => {
     let live = true;
     (async () => {
-      const img = await loadPhoto({ photoId: `style:${recipe.id}` });
-      const cut = recipe.cutout ? await loadPhoto({ photoId: `style:${recipe.id}-cut` }).catch(() => null) : null;
+      const layout = layoutOf(recipe, layoutId);
+      const use = colors ?? recipeColors(recipe, undefined, layout.id);
+      if (layout.noImage) {
+        if (live) setDoc(buildPost(recipe, layout.id, { text: layout.example, format, colors: use, photo: NO_PHOTO }));
+        return;
+      }
+      const photoId = examplePhotoId(recipe, layout.id);
+      const img = await loadPhoto({ photoId });
+      const cutId = `${photoId}-cut`;
+      const cut = layout.cutout ? await loadPhoto({ photoId: cutId }).catch(() => null) : null;
       if (!live) return;
       setDoc(
-        recipe.build({
-          text: recipe.example,
+        buildPost(recipe, layout.id, {
+          text: layout.example,
           format,
-          colors: recipe.colors,
+          colors: use,
           photo: {
             kind: 'photo',
-            photoId: `style:${recipe.id}`,
+            photoId,
             width: img.width,
             height: img.height,
             focusX: 0.5,
@@ -36,15 +47,28 @@ export function useRecipeExample(recipe: StyleRecipe, format: FormatId = 'portra
             tones: tonesOf(img),
             credit: { name: 'Higgsfield AI', url: 'https://higgsfield.ai/', source: 'ai' },
           },
-          cutout: cut ? { photoId: `style:${recipe.id}-cut`, width: cut.width, height: cut.height } : undefined,
+          cutout: cut ? { photoId: cutId, width: cut.width, height: cut.height } : undefined,
         })
       );
     })().catch(() => undefined);
     return () => {
       live = false;
     };
-  }, [recipe, format]);
+    // colours by value, not by object
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recipe, format, layoutId, colorKey]);
   return doc;
+}
+
+/** "6 layouts" or "1 layout" */
+export function LayoutCount({ recipe, className = '' }: { recipe: StyleRecipe; className?: string }) {
+  const n = layoutsOf(recipe).length;
+  return (
+    <span className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ${n > 1 ? 'bg-primary-50 text-primary' : 'bg-[#F1F5F9] text-[#464555]'} ${className}`}>
+      {n > 1 && <Icon icon="lucide:layers" className="w-3 h-3" aria-hidden />}
+      {n} {n === 1 ? 'layout' : 'layouts'}
+    </span>
+  );
 }
 
 /** An AI style as a real example post; opens its details */
@@ -60,9 +84,7 @@ export function RecipeCard({ recipe, onOpen }: { recipe: StyleRecipe; onOpen: ()
       </div>
       <div className="flex items-center justify-between gap-2 px-1 pt-3">
         <span className="truncate text-sm font-bold text-[#0B1C30]">{recipe.name}</span>
-        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-[11px] font-semibold text-primary">
-          <Icon icon="lucide:sparkles" className="w-3 h-3" aria-hidden /> AI image
-        </span>
+        <LayoutCount recipe={recipe} />
       </div>
     </button>
   );
