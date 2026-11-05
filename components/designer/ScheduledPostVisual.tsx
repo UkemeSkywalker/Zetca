@@ -8,11 +8,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import type { ScheduledPost } from '@/types/scheduler';
 import type { DesignRecord } from '@/lib/design/types';
 import type { VisualKind } from '@/types/agent';
 import { getDownloadUrl } from '@/lib/api/mediaClient';
+import { designerPath } from '@/lib/api/designApi';
 import { updatePost } from '@/lib/api/schedulerClient';
 import { setCopyVisual } from '@/lib/api/copyClient';
 import { EditVisualModal } from '@/components/copywriter/PostVisual';
@@ -111,6 +113,25 @@ export function ScheduledVisualActions({
   };
 
   const text = size === 'sm' ? 'text-xs' : 'text-sm';
+
+  // A carousel: edit it in the full editor (it has several slides), or save every slide to post by hand
+  if ((post.mediaIds?.length ?? 0) > 1) {
+    return (
+      <div className="flex flex-wrap items-center gap-3" onClick={(e) => e.stopPropagation()}>
+        <span className={`inline-flex items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 ${size === 'sm' ? 'text-[11px]' : 'text-xs'} font-semibold text-primary`}>
+          <Icon icon="lucide:gallery-horizontal" className="w-3.5 h-3.5" aria-hidden />
+          Carousel · {post.mediaIds!.length} slides
+        </span>
+        {design && (
+          <Link href={designerPath(design.designId)} className={`inline-flex items-center gap-1.5 ${text} font-semibold text-primary hover:text-primary/80`}>
+            <Icon icon="lucide:palette" className="w-4 h-4" aria-hidden />
+            Edit carousel
+          </Link>
+        )}
+        <DownloadSlides mediaIds={post.mediaIds!} name={post.content} className={text} />
+      </div>
+    );
+  }
 
   if (post.mediaId) {
     if (!design) return null;
@@ -287,5 +308,35 @@ export function DesignerMediaPanel({
         </p>
       )}
     </div>
+  );
+}
+
+/** Saves every slide of a carousel, in order, for posting by hand */
+export function DownloadSlides({ mediaIds, name, className = 'text-sm' }: { mediaIds: string[]; name: string; className?: string }) {
+  const [state, setState] = useState<'idle' | 'busy' | 'error'>('idle');
+  const base = name.split('\n')[0].replace(/[^\w]+/g, '-').replace(/^-|-$/g, '').toLowerCase().slice(0, 40) || 'carousel';
+  const save = async () => {
+    setState('busy');
+    try {
+      for (const [i, id] of mediaIds.entries()) {
+        const { downloadUrl } = await getDownloadUrl(id, `${base}-${String(i + 1).padStart(2, '0')}`);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.rel = 'noopener';
+        // The link is sent with "save as", so the page stays put
+        a.click();
+        // Browsers block a burst of downloads; a short gap lets each one through
+        await new Promise((r) => setTimeout(r, 400));
+      }
+      setState('idle');
+    } catch {
+      setState('error');
+    }
+  };
+  return (
+    <button type="button" onClick={() => void save()} disabled={state === 'busy'} className={`inline-flex items-center gap-1.5 ${className} font-semibold text-primary hover:text-primary/80 disabled:opacity-60`}>
+      <Icon icon={state === 'busy' ? 'lucide:loader-circle' : 'lucide:download'} className={`w-4 h-4 ${state === 'busy' ? 'animate-spin' : ''}`} aria-hidden />
+      {state === 'error' ? 'Couldn’t download · try again' : `Download ${mediaIds.length} slides`}
+    </button>
   );
 }

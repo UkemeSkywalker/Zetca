@@ -19,6 +19,7 @@ import { PublisherRepository } from '../db/publisherRepository';
 import { SchedulerRepository } from '../db/schedulerRepository';
 import { UserRepository } from '../db/userRepository';
 import { MediaRepository } from '../db/mediaRepository';
+import { pagesToPdf, slidesToPages } from '../media/slidesPdf';
 import { getConfig } from '../config';
 import { ApiError } from '../errors';
 
@@ -44,6 +45,7 @@ const PERMANENT_ERRORS = new Set([
   'linkedin_sub_missing',
   'media_forbidden',
   'platform_not_supported',
+  'document_processing_failed',
 ]);
 
 /** What the user sees on a failed post */
@@ -54,6 +56,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   linkedin_not_connected: 'LinkedIn isn’t connected. Connect it in your profile, then reschedule this post.',
   linkedin_sub_missing: 'Your LinkedIn profile details are incomplete. Reconnect LinkedIn, then reschedule this post.',
   media_forbidden: 'The attached image isn’t yours, so it can’t be posted.',
+  document_processing_failed: 'LinkedIn couldn’t read the carousel. Open it in the Designer, update the post, then reschedule it.',
   platform_not_supported: 'Automatic publishing isn’t available for this platform yet. Post it yourself, then mark it as published.',
   publish_interrupted:
     'Publishing was interrupted, so we couldn’t confirm whether it posted. Check LinkedIn before rescheduling.',
@@ -65,6 +68,13 @@ function friendlyError(code: string, detail: string, attempts: number): string {
 }
 
 /** Wait before automatic attempt n+1: 1, 2, 4, 8 minutes... capped at an hour */
+/** The title LinkedIn shows above a carousel: the post's first line, kept short */
+export function carouselTitle(content: string): string {
+  const first = content.split('\n').map((l) => l.trim()).find(Boolean) ?? 'Carousel';
+  const plain = first.replace(/#\S+/g, '').replace(/\s+/g, ' ').trim() || 'Carousel';
+  return plain.length > 100 ? `${plain.slice(0, 97).trimEnd()}…` : plain;
+}
+
 export function retryDelayMs(attempts: number): number {
   return Math.min(60, 2 ** Math.max(0, attempts - 1)) * 60_000;
 }
@@ -99,6 +109,8 @@ async function withRetries<T>(label: string, fn: () => Promise<T>, attempts = 4)
 export class PublisherService {
   private s3Client: S3Client;
   private s3Bucket: string;
+  /** How long to wait between checks that LinkedIn has finished reading a carousel PDF */
+  documentPollMs = 5000;
 
   constructor(
     private linkedinClient: LinkedInClient,
@@ -268,6 +280,7 @@ export class PublisherService {
     const accessToken = credentials.linkedinAccessToken!;
     const personUrn = `urn:li:person:${credentials.linkedinSub}`;
     const commentary = this.linkedinClient.formatCommentary(post.content, post.hashtags);
+    if ((post.media_ids?.length ?? 0) > 1) return this.sendCarousel(post, accessToken, personUrn, commentary);
     if (!post.media_id) return this.linkedinClient.createTextPost(accessToken, personUrn, commentary);
 
     const media = await this.mediaRepository.getMediaById(post.media_id);
@@ -296,6 +309,63 @@ export class PublisherService {
       return { status_code: 0, error_code: 'image_upload_error', error_message: String((e as Error)?.message ?? e).slice(0, 500) };
     }
     return this.linkedinClient.createImagePost(accessToken, personUrn, commentary, upload.image_urn);
+  }
+
+  /**
+   * A carousel: every slide as one PDF, which LinkedIn shows as a swipeable
+   * document post. If LinkedIn won't take documents from this app, the
+   * slides go out as a multi-image post instead.
+   */
+  private async sendCarousel(post: ScheduledPostRecord, accessToken: string, personUrn: string, commentary: string): Promise<LinkedInPostResponse> {
+    const ids = post.media_ids!.slice(0, 20);
+    const images: { data: Buffer; contentType: string }[] = [];
+    for (const id of ids) {
+      const media = await this.mediaRepository.getMediaById(id);
+      if (media === null) return { status_code: 0, error_code: 's3_download_error', error_message: `Slide ${images.length + 1} of the carousel is missing` };
+      if (media.userId !== post.user_id) return { status_code: 0, error_code: 'media_forbidden', error_message: 'Media belongs to another user' };
+      const data = await this.downloadFromS3(media.s3Key);
+      if (data === null) return { status_code: 0, error_code: 's3_download_error', error_message: `Failed to download slide ${images.length + 1} from S3` };
+      images.push({ data, contentType: media.contentType || 'image/jpeg' });
+    }
+
+    let doc: { upload_url: string; document_urn: string };
+    try {
+      doc = await this.linkedinClient.initializeDocumentUpload(accessToken, personUrn);
+    } catch (e) {
+      const status = (e as { status?: number }).status;
+      // Documents not allowed for this app (or this member): post the slides as images instead
+      if (status === 403 || status === 422) return this.sendMultiImage(images, accessToken, personUrn, commentary);
+      return { status_code: status ?? 0, error_code: status === 401 ? 'token_expired' : 'document_upload_init_error', error_message: String((e as Error)?.message ?? e).slice(0, 500) };
+    }
+    try {
+      const pdf = pagesToPdf(await slidesToPages(images.map((i) => i.data)));
+      await this.linkedinClient.uploadDocument(accessToken, doc.upload_url, pdf);
+    } catch (e) {
+      return { status_code: 0, error_code: 'document_upload_error', error_message: String((e as Error)?.message ?? e).slice(0, 500) };
+    }
+    // LinkedIn turns the PDF into pages first; wait for it (up to about a minute)
+    for (let i = 0; i < 12; i++) {
+      const status = await this.linkedinClient.documentStatus(accessToken, doc.document_urn).catch(() => 'UNKNOWN');
+      if (status === 'AVAILABLE') break;
+      if (status === 'PROCESSING_FAILED') return { status_code: 0, error_code: 'document_processing_failed', error_message: 'LinkedIn couldn’t read the carousel PDF' };
+      await new Promise((r) => setTimeout(r, this.documentPollMs));
+    }
+    return this.linkedinClient.createDocumentPost(accessToken, personUrn, commentary, doc.document_urn, carouselTitle(post.content));
+  }
+
+  /** The slides as a grid of images (LinkedIn allows 2-20) */
+  private async sendMultiImage(images: { data: Buffer; contentType: string }[], accessToken: string, personUrn: string, commentary: string): Promise<LinkedInPostResponse> {
+    const urns: string[] = [];
+    try {
+      for (const img of images) {
+        const upload = await this.linkedinClient.initializeImageUpload(accessToken, personUrn);
+        await this.linkedinClient.uploadImageBinary(upload.upload_url, img.data, img.contentType);
+        urns.push(upload.image_urn);
+      }
+    } catch (e) {
+      return { status_code: 0, error_code: 'image_upload_error', error_message: String((e as Error)?.message ?? e).slice(0, 500) };
+    }
+    return this.linkedinClient.createMultiImagePost(accessToken, personUrn, commentary, urns, urns.map((_, i) => `Slide ${i + 1} of ${urns.length}`));
   }
 
   /** Mark a due post failed without calling LinkedIn (unsupported platform, LinkedIn not connected) */

@@ -113,9 +113,9 @@ export async function uploadFileToS3(uploadUrl: string, file: File): Promise<voi
 /**
  * Request a presigned download URL for a media file
  */
-export async function getDownloadUrl(mediaId: string): Promise<DownloadUrlResponse> {
+export async function getDownloadUrl(mediaId: string, attachment?: string): Promise<DownloadUrlResponse> {
   try {
-    const response = await fetch(`/api/media/${mediaId}/download-url`, {
+    const response = await fetch(`/api/media/${mediaId}/download-url${attachment ? `?attachment=${encodeURIComponent(attachment)}` : ''}`, {
       method: 'GET',
       headers: createAuthHeaders(),
     });

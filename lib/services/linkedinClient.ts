@@ -142,6 +142,78 @@ export class LinkedInClient {
     return response.status;
   }
 
+  /** POST /rest/posts with a given content block (document, multi-image) */
+  private async createPostWithContent(accessToken: string, personUrn: string, commentary: string, content: Record<string, unknown>): Promise<LinkedInPostResponse> {
+    const body = { ...this.buildPostBody(personUrn, commentary), content };
+    try {
+      const response = await fetchWithTimeout(`${LINKEDIN_API_BASE}/posts`, { method: 'POST', headers: this.headers(accessToken), body: JSON.stringify(body) }, this.fetchTimeoutMs());
+      if (response.status === 201) return { status_code: 201, post_id: response.headers.get('x-restli-id') };
+      return this.mapError(response.status, await response.text());
+    } catch (e) {
+      return { status_code: 0, error_code: 'network_error', error_message: `Network error: ${(e as Error)?.message ?? e}` };
+    }
+  }
+
+  /**
+   * POST /rest/documents?action=initializeUpload: where to upload a PDF, and
+   * its document URN. Throws with `.status` set, so a 403 (not allowed for
+   * this app) can fall back to a multi-image post.
+   */
+  async initializeDocumentUpload(accessToken: string, personUrn: string): Promise<{ upload_url: string; document_urn: string }> {
+    let response: Response;
+    try {
+      response = await fetchWithTimeout(
+        `${LINKEDIN_API_BASE}/documents?action=initializeUpload`,
+        { method: 'POST', headers: this.headers(accessToken), body: JSON.stringify({ initializeUploadRequest: { owner: personUrn } }) },
+        this.fetchTimeoutMs()
+      );
+    } catch (e) {
+      throw Object.assign(new Error(`Network error initializing document upload: ${(e as Error)?.message ?? e}`), { status: 0 });
+    }
+    if (response.status === 200 || response.status === 201) {
+      const value = (await response.json()).value || {};
+      return { upload_url: value.uploadUrl, document_urn: value.document };
+    }
+    const text = await response.text();
+    throw Object.assign(new Error(`Document upload init failed with status ${response.status}: ${text.slice(0, 500)}`), { status: response.status });
+  }
+
+  /** PUT the PDF bytes to the document upload URL */
+  async uploadDocument(accessToken: string, uploadUrl: string, pdf: Buffer): Promise<void> {
+    let response: Response;
+    try {
+      response = await fetchWithTimeout(
+        uploadUrl,
+        { method: 'PUT', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/octet-stream' }, body: pdf as unknown as BodyInit },
+        this.fetchTimeoutMs() * 2
+      );
+    } catch (e) {
+      throw new Error(`Network error uploading the document: ${(e as Error)?.message ?? e}`);
+    }
+    if (response.status !== 200 && response.status !== 201) {
+      throw new Error(`Document upload failed with status ${response.status}: ${(await response.text()).slice(0, 500)}`);
+    }
+  }
+
+  /** GET /rest/documents/{urn}: PROCESSING, AVAILABLE or PROCESSING_FAILED */
+  async documentStatus(accessToken: string, documentUrn: string): Promise<string> {
+    const response = await fetchWithTimeout(`${LINKEDIN_API_BASE}/documents/${encodeURIComponent(documentUrn)}`, { method: 'GET', headers: this.headers(accessToken) }, this.fetchTimeoutMs());
+    if (!response.ok) return `HTTP_${response.status}`;
+    return String((await response.json()).status ?? 'UNKNOWN');
+  }
+
+  /** A post with a PDF: LinkedIn shows it as a swipeable carousel with `title` above it */
+  createDocumentPost(accessToken: string, personUrn: string, commentary: string, documentUrn: string, title: string): Promise<LinkedInPostResponse> {
+    return this.createPostWithContent(accessToken, personUrn, commentary, { media: { title, id: documentUrn } });
+  }
+
+  /** A post with 2-20 images, shown as a grid */
+  createMultiImagePost(accessToken: string, personUrn: string, commentary: string, imageUrns: string[], altTexts: string[] = []): Promise<LinkedInPostResponse> {
+    return this.createPostWithContent(accessToken, personUrn, commentary, {
+      multiImage: { images: imageUrns.map((id, i) => ({ id, ...(altTexts[i] ? { altText: altTexts[i] } : {}) })) },
+    });
+  }
+
   /** POST /rest/posts with a content.media.id — creates a post with an image attachment. */
   async createImagePost(
     accessToken: string,
