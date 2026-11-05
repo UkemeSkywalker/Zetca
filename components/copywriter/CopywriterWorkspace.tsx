@@ -234,7 +234,7 @@ export function CopywriterWorkspace() {
   );
   // The campaign's design style: new posts' visuals follow it
   const campaignStyle = strategy?.designStyle;
-  const activeStyle = campaignStyle?.onNewPosts ? { recipeId: campaignStyle.recipeId, model: campaignStyle.model } : undefined;
+  const activeStyle = campaignStyle?.onNewPosts ? { recipeId: campaignStyle.recipeId, model: campaignStyle.model, colors: campaignStyle.colors, layout: campaignStyle.layout } : undefined;
   const [savingStyle, setSavingStyle] = useState(false);
   const changeStyle = async (next: CampaignStyleValue | null) => {
     if (!strategyId) return;
@@ -251,13 +251,13 @@ export function CopywriterWorkspace() {
   };
   const visuals = usePostVisuals(replaceCopy, activeStyle);
   const activeRecipe = activeStyle ? recipeById(activeStyle.recipeId) : undefined;
-  const styled = activeStyle && activeRecipe ? { name: activeRecipe.name, credits: styleCreditsPerPost({ ...activeStyle, onNewPosts: true }) } : undefined;
+  const styled = activeStyle && activeRecipe ? { name: activeRecipe.name, credits: styleCreditsPerPost(activeStyle) } : undefined;
   const [editingVisualId, setEditingVisualId] = useState<string | null>(null);
   const [creatingAll, setCreatingAll] = useState(false);
   const visualsToMake = copies.filter(needsVisual).length;
   const visualCredits = copies
     .filter(needsVisual)
-    .reduce((n, c) => n + (activeStyle && visualOf(c).kind !== 'ai_video' ? styleCreditsPerPost({ ...activeStyle, onNewPosts: true }) : (AI_CREDIT_COST[visualOf(c).kind] ?? 0)), 0);
+    .reduce((n, c) => n + (activeStyle && visualOf(c).kind !== 'ai_video' ? styleCreditsPerPost(activeStyle) : (AI_CREDIT_COST[visualOf(c).kind] ?? 0)), 0);
   const createAllVisuals = async () => {
     setCreatingAll(true);
     try {
@@ -480,7 +480,7 @@ export function CopywriterWorkspace() {
           <>
             {strategyId && (
               <div className="mb-4">
-                <CampaignStyleBar value={campaignStyle} onChange={(v) => void changeStyle(v)} saving={savingStyle} />
+                <CampaignStyleBar value={campaignStyle} onChange={(v) => void changeStyle(v)} saving={savingStyle} brandName={strategy?.brandName ?? 'Brand'} />
               </div>
             )}
             <VisualsBanner count={visualsToMake} busy={creatingAll} onCreateAll={createAllVisuals} aiCredits={visualCredits} />

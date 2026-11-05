@@ -8,7 +8,7 @@ const archivo = Archivo_Black({ subsets: ['latin'], weight: '400' });
 const serif = DM_Serif_Display({ subsets: ['latin'], weight: '400' });
 // A brush script for the word written over bold type ("parabéns", "they")
 const script = Yellowtail({ subsets: ['latin'], weight: '400' });
-const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], weight: ['400', '600', '700', '800'] });
+const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], weight: ['400', '600', '700', '800'], style: ['normal', 'italic'] });
 
 export const FONT_FAMILIES: FontFamilies = {
   anton: anton.style.fontFamily,
@@ -35,7 +35,7 @@ export function loadDesignFonts(): Promise<void> {
   if (typeof document === 'undefined' || !document.fonts) return Promise.resolve();
   ready ??= Promise.all(
     (Object.keys(FONT_FAMILIES) as FontId[]).flatMap((id) =>
-      (id === 'jakarta' ? [400, 600, 700, 800] : [400]).map((w) => document.fonts.load(`${w} 40px ${FONT_FAMILIES[id]}`))
+      (id === 'jakarta' ? ['400', '600', '700', '800', 'italic 400', 'italic 800'] : ['400']).map((w) => document.fonts.load(`${w} 40px ${FONT_FAMILIES[id]}`))
     )
   ).then(() => undefined, () => undefined);
   return ready;

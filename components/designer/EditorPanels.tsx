@@ -3,7 +3,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Icon } from '@iconify/react';
 import { PALETTES, STYLES, restyle, type Palette } from '@/lib/design/styles';
-import { backgroundColors, type Background, type DesignDoc, type ImageLayer, type TextLayer } from '@/lib/design/types';
+import { backgroundColors, type Background, type DesignColors, type DesignDoc, type ImageLayer, type TextLayer } from '@/lib/design/types';
+import { layoutsOf, rebuildDesign, recipeById, recipeColors } from '@/lib/design/recipes';
+import { sameColors } from '@/lib/design/recipeKit';
+import { ColorChooser, colorsOf, useBrandPalettes, type ColorChoice } from './StyleChoices';
 import { worstContrast, bestTextColor } from '@/lib/design/contrast';
 import { addText, fixContrast, lowContrastLayers, removeImage, scaleImage, setBackground, setHandle, setOverlay, setPhotoBackground, updateImage, updateLayer, type NewTextKind } from '@/lib/design/edit';
 import { photoCredit, readableOverlay } from '@/lib/design/photo';
@@ -16,11 +19,12 @@ import { DesignCanvas } from './DesignCanvas';
 import { FONT_FAMILIES, FONT_OPTIONS } from './fonts';
 import { ContrastBadge, INPUT } from './ui';
 
-export type Tab = 'styles' | 'layers' | 'text' | 'background' | 'photos' | 'brand';
+export type Tab = 'colours' | 'styles' | 'layers' | 'text' | 'background' | 'photos' | 'brand';
 
 type Change = (next: (d: DesignDoc) => DesignDoc, opts?: { coalesce?: boolean }) => void;
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
+  { id: 'colours', label: 'Colours', icon: 'lucide:palette' },
   { id: 'styles', label: 'Styles', icon: 'lucide:layout-template' },
   { id: 'layers', label: 'Layers', icon: 'lucide:layers' },
   { id: 'text', label: 'Text', icon: 'lucide:type' },
@@ -49,6 +53,14 @@ function currentPalette(doc: DesignDoc): Palette {
   return PALETTES.find((p) => p.background.toLowerCase() === bg.toLowerCase()) ?? PALETTES[0];
 }
 
+/** The campaign a design's post belongs to, when that campaign has a style */
+export interface DesignCampaign {
+  brandName: string;
+  colors?: DesignColors;
+  /** Makes these the campaign's brand colours (for its new posts) */
+  setColors: (colors: DesignColors | undefined) => Promise<void>;
+}
+
 export function LeftPanel({
   tab,
   onTab,
@@ -56,6 +68,7 @@ export function LeftPanel({
   onChange,
   onSelect,
   selected,
+  campaign,
 }: {
   tab: Tab;
   onTab: (t: Tab) => void;
@@ -63,18 +76,23 @@ export function LeftPanel({
   onChange: Change;
   onSelect: (id: string | null) => void;
   selected: string | null;
+  campaign?: DesignCampaign | null;
 }) {
+  // Designs made from a style can change colours and layout; the others use the Styles tab
+  const fromRecipe = !!recipeById(doc.styleId);
+  const tabs = TABS.filter((t) => (t.id === 'colours' ? fromRecipe : t.id === 'styles' ? !fromRecipe : true));
+  const shown = tabs.some((t) => t.id === tab) ? tab : tabs[0].id;
   return (
     <div className={`${PANEL} flex min-h-0 overflow-hidden`}>
       <div role="tablist" aria-label="Editor tools" aria-orientation="vertical" className="flex lg:flex-col gap-1 p-2 border-r border-[#E2E8F0] bg-[#F8F9FF]">
-        {TABS.map((t) => (
+        {tabs.map((t) => (
           <button
             key={t.id}
             role="tab"
             type="button"
-            aria-selected={tab === t.id}
+            aria-selected={shown === t.id}
             onClick={() => onTab(t.id)}
-            className={`flex flex-col items-center gap-1 rounded-xl px-2 py-2.5 w-[64px] text-[11px] font-semibold ${tab === t.id ? 'bg-white text-primary shadow-sm' : 'text-[#64748B] hover:bg-white/70'}`}
+            className={`flex flex-col items-center gap-1 rounded-xl px-2 py-2.5 w-[64px] text-[11px] font-semibold ${shown === t.id ? 'bg-white text-primary shadow-sm' : 'text-[#64748B] hover:bg-white/70'}`}
           >
             <Icon icon={t.icon} className="w-5 h-5" aria-hidden />
             {t.label}
@@ -82,14 +100,124 @@ export function LeftPanel({
         ))}
       </div>
       <div role="tabpanel" className="flex-1 min-w-0 overflow-y-auto p-4 space-y-5">
-        {tab === 'styles' && <StylesTab doc={doc} onChange={onChange} />}
-        {tab === 'layers' && <LayersTab doc={doc} onChange={onChange} onSelect={onSelect} selected={selected} />}
-        {tab === 'text' && <TextTab doc={doc} onChange={onChange} onSelect={onSelect} selected={selected} />}
-        {tab === 'background' && <BackgroundTab doc={doc} onChange={onChange} />}
-        {tab === 'photos' && <PhotosTab doc={doc} onChange={onChange} />}
-        {tab === 'brand' && <BrandTab doc={doc} onChange={onChange} />}
+        {shown === 'colours' && <ColoursTab doc={doc} onChange={onChange} campaign={campaign ?? null} />}
+        {shown === 'styles' && <StylesTab doc={doc} onChange={onChange} />}
+        {shown === 'layers' && <LayersTab doc={doc} onChange={onChange} onSelect={onSelect} selected={selected} />}
+        {shown === 'text' && <TextTab doc={doc} onChange={onChange} onSelect={onSelect} selected={selected} />}
+        {shown === 'background' && <BackgroundTab doc={doc} onChange={onChange} />}
+        {shown === 'photos' && <PhotosTab doc={doc} onChange={onChange} />}
+        {shown === 'brand' && <BrandTab doc={doc} onChange={onChange} />}
       </div>
     </div>
+  );
+}
+
+/**
+ * A style's colours (its own, a brand's, or custom) and its other layouts.
+ * Changing either keeps the words, the photo and the cut-out.
+ */
+function ColoursTab({ doc, onChange, campaign }: { doc: DesignDoc; onChange: Change; campaign: DesignCampaign | null }) {
+  const recipe = recipeById(doc.styleId)!;
+  const own = recipeColors(recipe, undefined, doc.layoutId);
+  const brands = useBrandPalettes();
+  const current = doc.colors ?? own;
+  const brandList = campaign?.colors && !brands.some((b) => b.name === campaign.brandName) ? [{ name: campaign.brandName, colors: campaign.colors }, ...brands] : brands;
+  const brand = brandList.find((b) => sameColors(b.colors, current));
+  // "Custom" stays picked while its colours are being edited, even before they differ from the style's
+  const [editingCustom, setEditingCustom] = useState(false);
+  const value: ColorChoice = editingCustom
+    ? { kind: 'custom', colors: current }
+    : sameColors(current, own)
+      ? { kind: 'style' }
+      : brand
+        ? { kind: 'brand', name: brand.name, colors: brand.colors }
+        : { kind: 'custom', colors: current };
+  const [scope, setScope] = useState<'design' | 'campaign'>('design');
+  const [campaignState, setCampaignState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const apply = (c: ColorChoice) => {
+    setEditingCustom(c.kind === 'custom');
+    setCampaignState('idle');
+    onChange((d) => rebuildDesign(d, { colors: c.kind === 'custom' ? c.colors : recipeColors(recipe, colorsOf(c), d.layoutId) }), { coalesce: c.kind === 'custom' });
+  };
+  const layouts = layoutsOf(recipe);
+  const previews = useMemo(() => (layouts.length > 1 ? layouts.map((l) => ({ layout: l, doc: rebuildDesign(doc, { layoutId: l.id }) })) : []), [doc, layouts]);
+  const saveForCampaign = async () => {
+    if (!campaign) return;
+    setCampaignState('saving');
+    try {
+      await campaign.setColors(value.kind === 'style' ? undefined : current);
+      setCampaignState('saved');
+    } catch {
+      setCampaignState('error');
+    }
+  };
+  return (
+    <>
+      <div className="space-y-2">
+        <p className={HEADING}>Theme</p>
+        <ColorChooser value={value} onChange={apply} styleColors={own} brands={brandList} />
+      </div>
+      {campaign && (
+        <div className="space-y-2">
+          <p className={HEADING}>Use these colours for</p>
+          <div className="grid grid-cols-2 gap-1 rounded-xl bg-[#F1F5F9] p-1" role="radiogroup" aria-label="Use these colours for">
+            {(['design', 'campaign'] as const).map((k) => (
+              <button
+                key={k}
+                type="button"
+                role="radio"
+                aria-checked={scope === k}
+                onClick={() => {
+                  setScope(k);
+                  setCampaignState('idle');
+                }}
+                className={`rounded-lg py-2 text-sm font-semibold ${scope === k ? 'bg-white text-primary shadow-sm' : 'text-[#464555]'}`}
+              >
+                {k === 'design' ? 'This design' : 'Whole campaign'}
+              </button>
+            ))}
+          </div>
+          {scope === 'campaign' && (
+            <div className="space-y-2">
+              <p className="text-xs text-[#64748B]">New posts in {campaign.brandName}’s campaign will use these colours.</p>
+              <button
+                type="button"
+                onClick={() => void saveForCampaign()}
+                disabled={campaignState === 'saving'}
+                className="w-full rounded-xl bg-primary py-2 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
+              >
+                {campaignState === 'saving' ? 'Saving…' : campaignState === 'saved' ? 'Saved for the campaign' : 'Use for the whole campaign'}
+              </button>
+              {campaignState === 'error' && (
+                <p role="alert" className="text-xs font-semibold text-red-600">
+                  Couldn’t save the campaign’s colours. Please try again.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+      {previews.length > 0 && (
+        <div className="space-y-2">
+          <p className={HEADING}>Layout</p>
+          <p className="text-xs text-[#777587]">Other layouts in {recipe.name}. Your words and photo stay.</p>
+          <div className="grid grid-cols-2 gap-2">
+            {previews.map(({ layout, doc: preview }) => (
+              <button
+                key={layout.id}
+                type="button"
+                aria-pressed={(doc.layoutId ?? layouts[0].id) === layout.id}
+                onClick={() => onChange((d) => rebuildDesign(d, { layoutId: layout.id }))}
+                className={`overflow-hidden rounded-xl border-2 text-left ${(doc.layoutId ?? layouts[0].id) === layout.id ? 'border-primary' : 'border-transparent hover:border-primary/40'}`}
+              >
+                <DesignCanvas doc={preview} resolution={0.2} />
+                <span className="block truncate px-1.5 py-1 text-[11px] font-semibold text-[#0B1C30]">{layout.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

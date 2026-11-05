@@ -58,6 +58,17 @@ export interface StrategyRecord {
   /** Only on strategies generated from the quiz */
   quiz?: QuizAnswers;
   /** The campaign's design style: every post's visual follows it */
-  designStyle?: { recipeId: string; model?: string; onNewPosts: boolean };
+  designStyle?: CampaignDesignStyle;
   createdAt: string;
+}
+
+/** A campaign's look: the style, its colours and how posts use its layouts */
+export interface CampaignDesignStyle {
+  recipeId: string;
+  model?: string;
+  onNewPosts: boolean;
+  /** The campaign's brand colours (otherwise the style's own) */
+  colors?: { main: string; ink: string; accent: string };
+  /** 'mix' (each post gets the next layout) or one layout's id */
+  layout?: string;
 }

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Zetca Studio — Concept Object</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-background": "#171c20",
+            "primary-fixed-dim": "#c3c0ff",
+            "surface-container": "#eaeef3",
+            "on-error-container": "#93000a",
+            "on-surface": "#171c20",
+            "error": "#ba1a1a",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-primary": "#ffffff",
+            "on-secondary-fixed-variant": "#404757",
+            "inverse-surface": "#2c3135",
+            "surface-container-low": "#f0f4f9",
+            "primary": "#3525cd",
+            "on-surface-variant": "#464555",
+            "on-secondary-fixed": "#151b2a",
+            "tertiary-container": "#006e4b",
+            "secondary-container": "#d9dff4",
+            "surface-container-high": "#e4e9ed",
+            "surface-bright": "#f6faff",
+            "primary-fixed": "#e2dfff",
+            "on-tertiary-fixed-variant": "#005236",
+            "secondary-fixed": "#dce2f6",
+            "on-error": "#ffffff",
+            "tertiary": "#005338",
+            "on-tertiary-container": "#67f4b7",
+            "surface-container-lowest": "#ffffff",
+            "surface-tint": "#4d44e3",
+            "secondary-fixed-dim": "#c0c6da",
+            "on-tertiary-fixed": "#002113",
+            "surface": "#f6faff",
+            "surface-variant": "#dfe3e8",
+            "on-primary-container": "#dad7ff",
+            "surface-dim": "#d6dadf",
+            "on-secondary": "#ffffff",
+            "primary-container": "#4f46e5",
+            "inverse-on-surface": "#edf1f6",
+            "on-secondary-container": "#5c6274",
+            "secondary": "#585e6f",
+            "background": "#f6faff",
+            "surface-container-highest": "#dfe3e8",
+            "on-primary-fixed": "#0f0069",
+            "on-primary-fixed-variant": "#3323cc",
+            "on-tertiary": "#ffffff",
+            "inverse-primary": "#c3c0ff",
+            "tertiary-fixed": "#6ffbbe",
+            "error-container": "#ffdad6",
+            "outline": "#777587",
+            "outline-variant": "#c7c4d8"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "fontFamily": {
+            sans: ["Plus Jakarta Sans", "sans-serif"]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .material-symbols-outlined.fill {
+      font-variation-settings: 'FILL' 1;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased overflow-hidden font-sans select-none">
+<!-- Shell Wrapper -->
+<div class="flex h-screen w-screen overflow-hidden">
+<!-- Dark Navy Sidebar (Identical Shell Context #0B1220) -->
+<aside class="w-64 bg-[#0B1220] flex-shrink-0 flex flex-col justify-between p-5 text-white/80 z-10">
+<div class="flex flex-col gap-6">
+<!-- Logo -->
+<div class="flex items-center gap-3 px-2 py-1">
+<div class="size-8 rounded-lg bg-primary-container flex items-center justify-center text-white">
+<svg class="size-5" fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M13.8261 30.5736C16.7203 29.8826 20.2244 29.4783 24 29.4783C27.7756 29.4783 31.2797 29.8826 34.1739 30.5736C36.9144 31.2278 39.9967 32.7669 41.3563 33.8352L24.8486 7.36089C24.4571 6.73303 23.5429 6.73303 23.1514 7.36089L6.64374 33.8352C8.00331 32.7669 11.0856 31.2278 13.8261 30.5736Z" fill="currentColor"></path>
+<path clip-rule="evenodd" d="M39.998 35.764C39.9944 35.7463 39.9875 35.7155 39.9748 35.6706C39.9436 35.5601 39.8949 35.4259 39.8346 35.2825C39.8168 35.2403 39.7989 35.1993 39.7813 35.1602C38.5103 34.2887 35.9788 33.0607 33.7095 32.5189C30.9875 31.8691 27.6413 31.4783 24 31.4783C20.3587 31.4783 17.0125 31.8691 14.2905 32.5189C12.0012 33.0654 9.44505 34.3104 8.18538 35.1832C8.17384 35.2075 8.16216 35.233 8.15052 35.2592C8.09919 35.3751 8.05721 35.4886 8.02977 35.589C8.00356 35.6848 8.00039 35.7333 8.00004 35.7388C8.00004 35.739 8 35.7393 8.00004 35.7388C8.00004 35.7641 8.0104 36.0767 8.68485 36.6314C9.34546 37.1746 10.4222 37.7531 11.9291 38.2772C14.9242 39.319 19.1919 40 24 40C28.8081 40 33.0758 39.319 36.0709 38.2772C37.5778 37.7531 38.6545 37.1746 39.3151 36.6314C39.9006 36.1499 39.9857 35.8511 39.998 35.764Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<div>
+<span class="text-white text-base font-bold tracking-tight block">Zetca</span>
+<span class="text-xs text-slate-400">Creative Studio</span>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:text-white hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="house">house</span>
+            Home
+          </a>
+<!-- Designer (Highlighted) -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-primary-container text-white shadow-sm" href="#">
+<span class="material-symbols-outlined text-[20px] fill" data-icon="brush" style="font-variation-settings: 'FILL' 1;">brush</span>
+            Designer
+          </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:text-white hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="palette">palette</span>
+            Styles
+          </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:text-white hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="folder">folder</span>
+            Brand Kits
+          </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:text-white hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+            Settings
+          </a>
+</nav>
+</div>
+<!-- Studio brand label -->
+<div class="p-3 bg-white/5 rounded-xl border border-white/10 flex items-center gap-3">
+<div class="size-8 rounded-lg bg-surface-container flex items-center justify-center text-primary font-bold text-xs">
+          NB
+        </div>
+<div class="overflow-hidden">
+<p class="text-xs font-semibold text-white truncate">Northbeam Studio</p>
+<p class="text-[11px] text-slate-400 truncate">Pro Workspace</p>
+</div>
+</div>
+</aside>
+<!-- Main Section with Dimmed Background Context -->
+<div class="flex-1 flex flex-col min-w-0 relative">
+<!-- White Top Header (78px) -->
+<header class="h-[78px] bg-surface-container-lowest border-b border-surface-container-high px-8 flex items-center justify-between flex-shrink-0 z-10">
+<!-- Search bar -->
+<div class="relative w-80">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline text-[20px]" data-icon="search">search</span>
+<input class="w-full h-10 pl-10 pr-4 bg-surface-container-low border-0 rounded-lg text-sm text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest transition-all" placeholder="Search styles &amp; creations..." type="text" value=""/>
+</div>
+<!-- Top Right Actions -->
+<div class="flex items-center gap-4">
+<!-- Credits badge -->
+<div class="h-10 px-4 rounded-lg bg-primary-fixed text-on-primary-fixed flex items-center gap-2 text-sm font-bold tracking-tight">
+<span class="material-symbols-outlined text-[18px]" data-icon="bolt">bolt</span>
+<span>1,450 credits</span>
+</div>
+<!-- Notification -->
+<button class="size-10 rounded-lg bg-surface-container-low text-on-surface-variant flex items-center justify-center hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="notifications">notifications</span>
+</button>
+<!-- Avatar -->
+<div class="flex items-center gap-3 pl-2 border-l border-surface-container-high">
+<img class="size-10 rounded-full object-cover ring-2 ring-surface-container-highest" data-alt="Close up portrait photograph of Adaeze Okafor, a stylish creative director with warm neutral studio lighting, subtle shadow gradients, and minimalist professional aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdq_5jRzkGg8LwGX9WRNI7GpDoyLIvcWvTH5OLZWilshBrtZgpuVwBvMDlLcYCITHb13s-oM0BaviSPadEfvevL1JYQP8YF1ES1mUpIz1pIQtGimaV_UgIRpPrOcknFE3s4qGjxo0rJS56r4Fa1T3qDVVIvHy8F88oTItPD6slDlO4EJ_WL_kgfWsxtxg-QJocHvUHHkhOh9p7Uoqw3-PRQUnDxYICI5xPwNffMYo"/>
+<div class="hidden xl:block text-left">
+<span class="text-sm font-semibold text-on-surface block leading-tight">Adaeze Okafor</span>
+<span class="text-xs text-outline block">Creative Lead</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Background Catalog Page (Dimmed under overlay) -->
+<main class="flex-1 p-8 overflow-y-auto bg-surface-container-low opacity-40 filter blur-[1px] pointer-events-none">
+<div class="max-w-6xl mx-auto space-y-6">
+<div class="flex items-center justify-between">
+<div>
+<h1 class="text-2xl font-bold text-on-surface">Catalog</h1>
+<p class="text-sm text-secondary">Tactile sculptural styles &amp; editorial frameworks.</p>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-6">
+<div class="h-64 rounded-xl bg-surface-container-lowest p-4 shadow-sm border border-outline-variant"></div>
+<div class="h-64 rounded-xl bg-surface-container-lowest p-4 shadow-sm border border-outline-variant"></div>
+<div class="h-64 rounded-xl bg-surface-container-lowest p-4 shadow-sm border border-outline-variant"></div>
+</div>
+</div>
+</main>
+<!-- MODAL BACKDROP (Smoothly dimmed) -->
+<div class="absolute inset-0 bg-on-surface/40 backdrop-blur-sm z-30 flex items-center justify-center p-6">
+<!-- MODAL CONTAINER (Screen 2: Variant 2 for Concept Object) -->
+<div class="w-full max-w-5xl bg-surface-container-lowest rounded-2xl shadow-2xl border border-surface-container-high flex flex-col overflow-hidden max-h-[901px]">
+<!-- Modal Top Bar -->
+<div class="px-7 py-4 border-b border-surface-container flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<span class="text-xs font-semibold tracking-wider uppercase text-secondary">Style Inspection</span>
+<span class="text-outline-variant">/</span>
+<span class="text-xs font-semibold text-primary">Concept Object</span>
+</div>
+<button class="size-8 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="close">close</span>
+</button>
+</div>
+<!-- Modal Body: 2 Columns (~60% preview / ~40% config) -->
+<div class="flex flex-1 overflow-hidden divide-x divide-surface-container">
+<!-- PREVIEW AREA (Left side, ~60%) -->
+<div class="w-[58%] p-8 bg-surface-container-low flex flex-col justify-between items-center overflow-y-auto">
+<!-- Segmented Chips across the top -->
+<div class="flex items-center p-1 bg-surface-container-high rounded-full gap-1 shadow-inner">
+<!-- Single post (Active solid indigo pill #4F46E5) -->
+<button class="px-4 py-1.5 rounded-full text-xs font-bold text-white bg-primary-container shadow-sm flex items-center gap-1.5 transition-all">
+<span class="material-symbols-outlined text-[14px]" data-icon="crop_square">crop_square</span>
+                  Single post
+                </button>
+<button class="px-4 py-1.5 rounded-full text-xs font-semibold text-secondary hover:text-on-surface transition-colors flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]" data-icon="view_carousel">view_carousel</span>
+                  Carousel
+                </button>
+<button class="px-4 py-1.5 rounded-full text-xs font-semibold text-secondary hover:text-on-surface transition-colors flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]" data-icon="smartphone">smartphone</span>
+                  Story
+                </button>
+</div>
+<!-- Finished Post Preview 4:5 Aspect Ratio -->
+<div class="w-full max-w-[340px] aspect-[4/5] bg-surface-container-lowest rounded-xl shadow-lg border border-surface-container-highest overflow-hidden relative flex flex-col my-4 group">
+<!-- Tactile Object Composition Image with Editorial Typography Overlay -->
+<div class="relative w-full h-full bg-[#f4f2ee] overflow-hidden flex flex-col justify-between p-6">
+<!-- Architectural Image Layer -->
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover object-center filter saturate-90 brightness-[0.98]" data-alt="A minimalist architectural studio still life with a matte ceramic geometric calendar block and tactile bronze sphere poised on a coarse stone plinth, illuminated by warm directional afternoon sunlight casting dramatic soft shadows in a tranquil gallery space." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBM3QX71gfJ-FaA7UhKznyiMiD3dRdLCQtL3guB3mFPIsQ5EDhAegtzFWinhhDXdS_IZYSkfFJcxqC6RAEGsVJ_QLVR-FN6srtdIWBRlrwW4gI2QfAHHdnI51roPZsBwLfJ8112oL5kyaO9_zelH3fyj9LJnSSufse9QWW1sM5nRVaarxz8rJW2nN8ZfPLmuumreEmfwgr7zB-UIx_rkaOsL-unA1I8WquM4PS6Dw"/>
+<div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 mix-blend-multiply pointer-events-none"></div>
+</div>
+<!-- Editorial Typography Top Margin -->
+<div class="relative z-10 flex items-start justify-between">
+<div>
+<span class="text-[10px] tracking-[0.25em] uppercase font-bold text-white/90 drop-shadow-sm">EDITION 04 · OBJECT</span>
+<p class="text-[11px] text-white/70 font-medium tracking-wide mt-0.5">Tactile Sculpture Archive</p>
+</div>
+<span class="px-2 py-0.5 rounded text-[9px] font-bold tracking-widest uppercase bg-white/20 backdrop-blur-md text-white border border-white/30">
+                      № 01
+                    </span>
+</div>
+<!-- Editorial Typography Bottom Margin -->
+<div class="relative z-10 space-y-2">
+<div class="w-6 h-[1.5px] bg-white/80"></div>
+<h3 class="text-xl font-bold tracking-tight text-white leading-tight drop-shadow-sm">
+                      Form follows tactile intuition
+                    </h3>
+<div class="flex items-center justify-between pt-1">
+<span class="text-[10px] text-white/80 tracking-widest uppercase">Zetca Curated</span>
+<span class="text-[10px] text-white/60">Autumn / Winter Series</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Subtle preview hint (no thumbnail strip) -->
+<div class="flex items-center gap-2 text-[11px] text-secondary">
+<span class="material-symbols-outlined text-[14px]" data-icon="visibility">visibility</span>
+<span>Actual social feed 1080×1350 resolution</span>
+</div>
+</div>
+<!-- RIGHT CONFIGURATION CARD (~40%) -->
+<div class="w-[42%] p-8 bg-surface-container-lowest flex flex-col justify-between overflow-y-auto">
+<div class="space-y-6">
+<!-- Title & Chip Badge -->
+<div>
+<div class="flex items-center gap-3">
+<h2 class="text-2xl font-extrabold text-on-surface tracking-tight">Concept Object</h2>
+<!-- Crisp rounded pill badge -->
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container-high text-on-surface-variant border border-outline-variant">
+<span class="material-symbols-outlined text-[13px]" data-icon="dashboard">dashboard</span>
+                      1 layout
+                    </span>
+</div>
+<!-- Description line (strictly ≤ 15 words) -->
+<p class="text-sm text-secondary mt-2 leading-relaxed">
+                    Sculptural objects and physical textures with tactile lighting.
+                  </p>
+</div>
+<!-- Divider -->
+<hr class="border-surface-container"/>
+<!-- Colours Swatch Selector -->
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface">Colours</label>
+<span class="text-[11px] text-outline">Palette preset</span>
+</div>
+<div class="flex flex-col gap-2.5">
+<!-- Option 1: Style colours (Selected Pill) -->
+<div class="flex items-center justify-between p-3 rounded-xl border-2 border-primary-container bg-primary-fixed/30 cursor-pointer transition-all">
+<div class="flex items-center gap-3">
+<span class="text-xs font-bold text-on-surface">Style colours</span>
+<div class="flex items-center gap-1.5 pl-1">
+<span class="size-3.5 rounded-full bg-[#1A1A1A] ring-1 ring-black/10" title="Obsidian"></span>
+<span class="size-3.5 rounded-full bg-[#C86D51] ring-1 ring-black/10" title="Terracotta"></span>
+<span class="size-3.5 rounded-full bg-[#E5D7C5] ring-1 ring-black/10" title="Warm Sand"></span>
+</div>
+</div>
+<span class="material-symbols-outlined text-primary-container text-[18px] fill" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<!-- Option 2: Crumb & Co. -->
+<div class="flex items-center justify-between p-3 rounded-xl border border-surface-container-highest hover:border-outline bg-surface-container-low/40 cursor-pointer transition-all">
+<div class="flex items-center gap-3">
+<span class="text-xs font-semibold text-secondary">Crumb &amp; Co.</span>
+<div class="flex items-center gap-1.5 pl-1">
+<span class="size-3.5 rounded-full bg-[#F5EFEB] ring-1 ring-black/10" title="Cream"></span>
+<span class="size-3.5 rounded-full bg-[#5C4033] ring-1 ring-black/10" title="Cocoa"></span>
+<span class="size-3.5 rounded-full bg-[#D4A017] ring-1 ring-black/10" title="Mustard"></span>
+</div>
+</div>
+<span class="size-4 rounded-full border border-outline-variant"></span>
+</div>
+<!-- Option 3: Custom -->
+<div class="flex items-center justify-between p-3 rounded-xl border border-dashed border-outline-variant hover:border-primary text-secondary hover:text-primary cursor-pointer transition-all">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]" data-icon="add">add</span>
+<span class="text-xs font-semibold">Custom</span>
+</div>
+<span class="text-[10px] text-outline font-medium">Add brand hex</span>
+</div>
+</div>
+</div>
+<!-- Studio Quality Meta Card -->
+<div class="p-3.5 rounded-xl bg-surface-container-low border border-surface-container-high space-y-2">
+<div class="flex items-center gap-2 text-xs font-semibold text-on-surface">
+<span class="material-symbols-outlined text-primary text-[16px]" data-icon="tune">tune</span>
+                    Composition properties
+                  </div>
+<div class="text-[12px] text-secondary leading-snug space-y-1">
+<p class="flex justify-between">
+<span>Aspect ratio:</span>
+<strong class="text-on-surface font-semibold">4:5 Vertical</strong>
+</p>
+<p class="flex justify-between">
+<span>Typography:</span>
+<strong class="text-on-surface font-semibold">Editorial Serif &amp; Modern Sans</strong>
+</p>
+<p class="flex justify-between">
+<span>Lighting tone:</span>
+<strong class="text-on-surface font-semibold">Tactile warm ray</strong>
+</p>
+</div>
+</div>
+</div>
+<!-- Action Area at Bottom -->
+<div class="pt-6 border-t border-surface-container mt-6">
+<div class="flex items-center justify-between gap-4">
+<!-- Exactly one primary indigo button -->
+<button class="flex-1 h-12 bg-primary-container hover:bg-primary text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
+<span>Use this style</span>
+<span class="material-symbols-outlined text-[18px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<!-- Muted small text right beside button -->
+<div class="text-right flex-shrink-0">
+<p class="text-xs font-bold text-on-surface">6 credits</p>
+<p class="text-[11px] text-outline">a post</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body></html>

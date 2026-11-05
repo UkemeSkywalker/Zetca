@@ -140,6 +140,12 @@ export const CampaignStyleSchema = z.object({
   model: z.string().trim().min(1).max(40).optional(),
   /** New posts' visuals follow it (off: the style is kept but not applied) */
   on_new_posts: z.boolean().default(true),
+  /** The campaign's brand colours, used instead of the style's own */
+  colors: z
+    .object({ main: z.string().regex(/^#[0-9A-Fa-f]{6}$/), ink: z.string().regex(/^#[0-9A-Fa-f]{6}$/), accent: z.string().regex(/^#[0-9A-Fa-f]{6}$/) })
+    .optional(),
+  /** Styles with several layouts: 'mix' them post by post, or always use one */
+  layout: z.string().trim().min(1).max(40).optional(),
 });
 export type CampaignStyle = z.infer<typeof CampaignStyleSchema>;
 

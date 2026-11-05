@@ -2,31 +2,54 @@
 
 import React, { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react';
-import { FAMILY_NAMES, RECIPES, recipeById, type StyleRecipe } from '@/lib/design/recipes';
+import { FAMILY_NAMES, layoutOf, layoutsOf, RECIPES, recipeById, type StyleRecipe } from '@/lib/design/recipes';
 import { creditsFor } from '@/lib/billing/prices';
 import { DEFAULT_IMAGE_MODEL, imageCredits, imageModel } from '@/lib/billing/aiModels';
 import { DesignCanvas } from '@/components/designer/DesignCanvas';
-import { useRecipeExample } from '@/components/designer/StyleLibrary';
+import { LayoutCount, useRecipeExample } from '@/components/designer/StyleLibrary';
+import { StyleDialog } from '@/components/designer/StyleDetail';
+import { forgetBrandPalettes } from '@/components/designer/StyleChoices';
+import type { CampaignDesignStyle } from '@/types/strategy';
 
-export interface CampaignStyleValue {
-  recipeId: string;
-  model?: string;
-  onNewPosts: boolean;
+export type CampaignStyleValue = CampaignDesignStyle;
+
+/**
+ * Credits one post's visual costs in a style: the AI image, its cut-out if any,
+ * and the words. Mixing layouts: the dearest layout, so it's never more.
+ */
+export function styleCreditsPerPost(style: Pick<CampaignStyleValue, 'recipeId' | 'model' | 'layout'>): number {
+  const recipe = recipeById(style.recipeId);
+  if (!recipe) return 1;
+  const model = imageModel(style.model ?? DEFAULT_IMAGE_MODEL);
+  const used = !style.layout || style.layout === 'mix' ? layoutsOf(recipe) : [layoutOf(recipe, style.layout)];
+  return Math.max(...used.map((l) => (l.noImage ? 0 : imageCredits(model) + (l.cutout ? creditsFor(0.04) : 0)))) + 1;
 }
 
-/** Credits one post's visual costs in a style: the AI image, its cut-out if any, and the words */
-export function styleCreditsPerPost(style: CampaignStyleValue): number {
-  const recipe = recipeById(style.recipeId);
-  const model = imageModel(style.model ?? DEFAULT_IMAGE_MODEL);
-  return imageCredits(model) + (recipe?.cutout ? creditsFor(0.04) : 0) + 1;
+/** "Mixing 6 layouts · Crumb & Co. colours" */
+function styleSummary(recipe: StyleRecipe, value: CampaignStyleValue, brandName: string): string {
+  const n = layoutsOf(recipe).length;
+  const layouts = n === 1 ? 'One layout' : !value.layout || value.layout === 'mix' ? `Mixing ${n} layouts` : `Always “${layoutOf(recipe, value.layout).name}”`;
+  return `${layouts} · ${value.colors ? `${brandName} colours` : 'Style colours'}`;
 }
 
 /**
  * The campaign's design style, above the Copywriter's posts: every new post's
  * visual follows it, each with its own words and image.
  */
-export function CampaignStyleBar({ value, onChange, saving }: { value?: CampaignStyleValue; onChange: (next: CampaignStyleValue | null) => void; saving?: boolean }) {
+export function CampaignStyleBar({
+  value,
+  onChange,
+  saving,
+  brandName,
+}: {
+  value?: CampaignStyleValue;
+  onChange: (next: CampaignStyleValue | null) => void;
+  saving?: boolean;
+  /** The campaign's brand, to name its colours */
+  brandName: string;
+}) {
   const [picking, setPicking] = useState(false);
+  const [opened, setOpened] = useState<string | null>(null);
   const recipe = value ? recipeById(value.recipeId) : undefined;
   return (
     <>
@@ -37,12 +60,12 @@ export function CampaignStyleBar({ value, onChange, saving }: { value?: Campaign
             <div className="min-w-0">
               <p className="text-[14px] font-semibold text-[#0b1c30]">
                 Style: {recipe.name}{' '}
-                <button type="button" onClick={() => setPicking(true)} className="ml-1 text-[13px] font-semibold text-[#4f46e5] hover:underline">
+                <button type="button" onClick={() => setOpened(recipe.id)} className="ml-1 text-[13px] font-semibold text-[#4f46e5] hover:underline">
                   Change
                 </button>
               </p>
               <p className="text-[12px] text-[#777587]">
-                Every post’s visual follows it, with its own words and image · {styleCreditsPerPost(value!)} credits a post
+                {styleSummary(recipe, value!, brandName)} · {styleCreditsPerPost(value!)} credits a post
               </p>
             </div>
             <label className="ml-auto inline-flex items-center gap-2 text-[13px] font-medium text-[#464555]">
@@ -80,9 +103,29 @@ export function CampaignStyleBar({ value, onChange, saving }: { value?: Campaign
           onClose={() => setPicking(false)}
           onPick={(id) => {
             setPicking(false);
-            onChange({ recipeId: id, model: value?.model, onNewPosts: true });
+            setOpened(id);
           }}
           onRemove={value ? () => (setPicking(false), onChange(null)) : undefined}
+        />
+      )}
+      {opened && (
+        <StyleDialog
+          id={opened}
+          onClose={() => setOpened(null)}
+          campaign={{
+            brandName,
+            saving,
+            initial: opened === value?.recipeId ? { colors: value.colors, layout: value.layout, model: value.model } : value?.colors ? { colors: value.colors } : undefined,
+            onBack: () => {
+              setOpened(null);
+              setPicking(true);
+            },
+            onUse: (choice) => {
+              setOpened(null);
+              forgetBrandPalettes();
+              onChange({ recipeId: choice.recipeId, model: choice.model, onNewPosts: true, colors: choice.colors, layout: choice.layout });
+            },
+          }}
         />
       )}
     </>
@@ -111,7 +154,7 @@ function StylePicker({ current, onPick, onClose, onRemove }: { current?: string;
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-[#0b1c30]">Pick your campaign’s look</h2>
-            <p className="text-sm text-[#464555]">Every post follows it, with new words and a new image each time.</p>
+            <p className="text-sm text-[#464555]">Every post follows it, with new words and a new image each time. Styles with several layouts can mix them post by post.</p>
           </div>
           <button type="button" onClick={onClose} aria-label="Close" className="rounded-full p-2 text-[#464555] hover:bg-[#f1f5f9]">
             <Icon icon="lucide:x" className="h-5 w-5" aria-hidden />
@@ -126,7 +169,10 @@ function StylePicker({ current, onPick, onClose, onRemove }: { current?: string;
               className={`group rounded-2xl border p-2 text-left transition hover:-translate-y-0.5 ${current === r.id ? 'border-[#4f46e5] ring-2 ring-[#4f46e5]' : 'border-[#e2e8f0] hover:border-[#4f46e5]/40'}`}
             >
               <Thumb recipe={r} className="aspect-[4/5] w-full rounded-xl" />
-              <span className="mt-2 block truncate text-sm font-semibold text-[#0b1c30]">{r.name}</span>
+              <span className="mt-2 flex items-center justify-between gap-2">
+                <span className="truncate text-sm font-semibold text-[#0b1c30]">{r.name}</span>
+                <LayoutCount recipe={r} />
+              </span>
               <span className="block truncate text-[11px] text-[#777587]">{FAMILY_NAMES[r.family]}</span>
             </button>
           ))}

@@ -8,130 +8,38 @@
  * prompts or the examples.
  */
 
-import type { KeyColor } from '../media/chromaKey';
 import { bestTextColor } from './contrast';
-import { FORMATS, type DesignDoc, type FormatId, type ImageLayer, type PhotoBackground, type TextLayer } from './types';
+import { FORMATS, type DesignDoc, type ImageLayer, type PhotoBackground, type TextLayer } from './types';
+import {
+  afterGiant,
+  contactBar,
+  corner,
+  cutoutLayer,
+  featureRow,
+  flat,
+  giantWord,
+  inkOn,
+  M,
+  mergeColors,
+  NO_TEXT,
+  photoBg,
+  pill,
+  text,
+  type Colors,
+  type RecipeColors,
+  type RecipeLayout,
+  type StyleRecipe,
+} from './recipeKit';
+import { FAMILY_RECIPES, NEON_LIME_LAYOUTS, BRAND_RED_LAYOUTS } from './families';
 
-export type RecipeFamily = 'cutout' | 'mono' | 'giant-word' | 'premium' | 'celebration' | 'big-idea' | 'flyer';
+export { FAMILY_NAMES, giantWord, markup, type RecipeColors, type RecipeFamily, type RecipeLayout, type RecipeText, type StyleRecipe } from './recipeKit';
 
-export const FAMILY_NAMES: Record<RecipeFamily, string> = {
-  cutout: 'Cutout on colour',
-  mono: 'One-colour hero',
-  'giant-word': 'Giant word',
-  premium: 'Premium product',
-  celebration: 'Campaign and celebration',
-  'big-idea': 'Big idea',
-  flyer: 'Highlight and flyer',
-};
-
-/** The words a recipe places */
-export interface RecipeText {
-  /** The main words (for giant-word styles, the first word is the giant one) */
-  headline: string;
-  /** A short label, e.g. a hashtag or "NEW ERA" */
-  kicker?: string;
-  /** A supporting line */
-  body?: string;
-  /** The brand's name or handle */
-  footer?: string;
+/** Merges brand colours over the style's own (or one layout's own), keeping text readable */
+export function recipeColors(recipe: StyleRecipe, brand?: RecipeColors, layoutId?: string): Colors {
+  return mergeColors(layoutOf(recipe, layoutId).colors ?? recipe.colors, brand);
 }
 
-/** A brand's colours, when a campaign uses "My brand" instead of the style's own */
-export interface RecipeColors {
-  /** The flat colour or main colour of the style */
-  main: string;
-  /** Text and accents */
-  ink?: string;
-  accent?: string;
-}
-
-export interface StyleRecipe {
-  id: string;
-  name: string;
-  family: RecipeFamily;
-  description: string;
-  /** The style's own colours */
-  colors: Required<RecipeColors>;
-  /** Make the image, then cut the subject out of this flat colour (giant-word styles) */
-  cutout?: KeyColor;
-  /** The AI image prompt for one post: `idea` is what the post is about */
-  imagePrompt(idea: string, colors: Required<RecipeColors>): string;
-  /** The finished design from the AI image (and its cut-out, when the recipe makes one) */
-  build(input: { text: RecipeText; format: FormatId; photo: PhotoBackground; cutout?: { photoId: string; width: number; height: number }; colors: Required<RecipeColors> }): DesignDoc;
-  /** Example words for the gallery */
-  example: RecipeText;
-}
-
-const M = 84;
-
-function text(partial: Partial<TextLayer> & Pick<TextLayer, 'id' | 'role' | 'text' | 'x' | 'y' | 'width' | 'height'>): TextLayer {
-  return { font: 'jakarta', weight: 800, size: 40, color: '#FFFFFF', align: 'left', valign: 'top', lineHeight: 1.05, uppercase: false, letterSpacing: 0, ...partial };
-}
-
-const NO_TEXT = 'Absolutely no text, letters, numbers, logos, brand names or watermarks anywhere in the image.';
-
-/** The first word, for the giant word (letters and digits only) */
-export const giantWord = (headline: string) => (headline.trim().split(/\s+/)[0] ?? '').replace(/[^\p{L}\p{N}]/gu, '').slice(0, 8) || 'NOW';
-/** The rest of the headline after the giant word */
-const afterGiant = (headline: string) => headline.trim().split(/\s+/).slice(1).join(' ');
-
-/** Merges brand colours over the style's own, keeping text readable */
-export function recipeColors(recipe: StyleRecipe, brand?: RecipeColors): Required<RecipeColors> {
-  if (!brand) return recipe.colors;
-  const main = brand.main;
-  const ink = brand.ink && bestTextColor([main], [brand.ink, '#0B0B0F', '#FFFFFF']) === brand.ink ? brand.ink : bestTextColor([main], ['#0B0B0F', '#FFFFFF']);
-  return { main, ink, accent: brand.accent ?? recipe.colors.accent };
-}
-
-
-/* Shared pieces for the recipes below */
-
-/** A small line in a corner */
-const corner = (id: string, role: TextLayer['role'], value: string | undefined, where: 'tl' | 'tr' | 'bl' | 'br', h: number, color: string, size = 28) =>
-  value
-    ? [
-        text({
-          id,
-          role,
-          text: value,
-          x: where.endsWith('l') ? M : 1080 / 2,
-          y: where.startsWith('t') ? M - 20 : h - M - 40,
-          width: 1080 / 2 - M,
-          height: 50,
-          size,
-          weight: 700,
-          color,
-          align: where.endsWith('l') ? 'left' : 'right',
-        }),
-      ]
-    : [];
-
-/** A rounded button-like pill ("Shop now"), its text always readable on its fill */
-const pill = (id: string, value: string | undefined, x: number, y: number, fill: string, width = 360, size = 34) =>
-  value ? [text({ id, role: 'pill', text: value, x, y, width, height: size * 2.2, size, weight: 800, fill, color: bestTextColor([fill], ['#0B0B0F', '#FFFFFF']) })] : [];
-
-/** A full-width bar along the bottom: the brand, its handle, phone or website */
-const contactBar = (value: string | undefined, h: number, fill: string) =>
-  value ? [text({ id: 'footer', role: 'pill', text: value, x: M / 2, y: h - M - 70, width: 1080 - M, height: 96, size: 30, weight: 700, fill, color: bestTextColor([fill], ['#0B0B0F', '#FFFFFF']), align: 'center' })] : [];
-
-/** A row of up to 3 short features ("A16 chip · All-day battery · 11-inch screen") */
-const featureRow = (value: string | undefined, h: number, color: string) => {
-  const parts = (value ?? '').split(/\s*[·|•]\s*/).filter(Boolean).slice(0, 3);
-  const w = (1080 - M * 2) / Math.max(parts.length, 1);
-  return parts.map((part, i) => text({ id: `feature${i}`, role: 'body', text: part, x: M + i * w, y: h - M - 70, width: w - 16, height: 70, size: 26, weight: 600, color, align: 'center', lineHeight: 1.2 }));
-};
-
-const photoBg = (photo: PhotoBackground) => ({ ...photo, focusX: 0.5, focusY: 0.5 });
-
-const cutoutLayer = (cutout: { photoId: string; width: number; height: number } | undefined, h: number): ImageLayer[] =>
-  cutout ? [{ id: 'subject', photoId: cutout.photoId, width: cutout.width, height: cutout.height, x: 0, y: 0, w: 1080, h, cutout: true, cover: true }] : [];
-
-/** Text colour that reads on the photo's tones */
-const inkOn = (photo: PhotoBackground, prefer = '#FFFFFF') => bestTextColor(photo.tones, [prefer, prefer === '#FFFFFF' ? '#0B0B0F' : '#FFFFFF']);
-
-const flat = (c: string) => `Perfectly flat, solid, seamless background in one colour, exactly ${c}`;
-
-export const RECIPES: StyleRecipe[] = [
+const ORIGINAL: StyleRecipe[] = [
   {
     id: 'marble-thinker',
     name: 'Marble Thinker',
@@ -632,4 +540,135 @@ export const RECIPES: StyleRecipe[] = [
 
 ];
 
+/** A style's first (or only) layout, from the recipe itself */
+const mainLayout = (r: StyleRecipe, name = 'Classic'): RecipeLayout => ({ id: 'main', name, imagePrompt: r.imagePrompt, build: r.build, example: r.example, cutout: r.cutout });
+
+/** The two original styles that grew into families keep their first layout */
+for (const [id, more] of [['neon-lime', NEON_LIME_LAYOUTS], ['brand-red', BRAND_RED_LAYOUTS]] as const) {
+  const r = ORIGINAL.find((x) => x.id === id)!;
+  r.layouts = [mainLayout(r, 'Headline on top'), ...more];
+}
+
+/** Every style: the families first, then the original styles */
+export const RECIPES: StyleRecipe[] = [...FAMILY_RECIPES, ...ORIGINAL];
+
 export const recipeById = (id: string) => RECIPES.find((r) => r.id === id);
+
+/** A style's layouts (one, for single-layout styles) */
+export const layoutsOf = (r: StyleRecipe): RecipeLayout[] => r.layouts ?? [mainLayout(r)];
+
+/** One of a style's layouts by id, or its first */
+export const layoutOf = (r: StyleRecipe, layoutId?: string): RecipeLayout => {
+  const all = layoutsOf(r);
+  return all.find((l) => l.id === layoutId) ?? all[0];
+};
+
+/** Styles with more than one layout */
+export const isFamily = (r: StyleRecipe) => layoutsOf(r).length > 1;
+
+/** How a campaign uses a family's layouts: mixes them post by post, or always one */
+export type LayoutChoice = 'mix' | string;
+
+/** The layout a post gets: `seed` spreads a campaign's posts across the layouts */
+export function pickLayout(r: StyleRecipe, choice: LayoutChoice | undefined, seed: number): RecipeLayout {
+  const all = layoutsOf(r);
+  if (choice && choice !== 'mix') return layoutOf(r, choice);
+  return all[seed % all.length];
+}
+
+/** The example image for a layout: "style:<id>" for the first, "style:<id>--<layout>" for the rest */
+export const examplePhotoId = (r: StyleRecipe, layoutId?: string) => {
+  const layout = layoutOf(r, layoutId);
+  return layout.id === layoutsOf(r)[0].id ? `style:${r.id}` : `style:${r.id}--${layout.id}`;
+};
+
+/** Builds a post in a style's layout, stamped with the layout and colours it used */
+export function buildPost(r: StyleRecipe, layoutId: string | undefined, input: Parameters<RecipeLayout['build']>[0]): DesignDoc {
+  const layout = layoutOf(r, layoutId);
+  const doc = layout.build(input);
+  const keepPhoto = doc.background.kind !== 'photo' && input.photo.photoId !== 'none';
+  return { ...doc, styleId: r.id, layoutId: layout.id, colors: input.colors, ...(keepPhoto ? { photo: input.photo } : {}) };
+}
+
+/** A stand-in photo for layouts drawn entirely by Zetca */
+export const NO_PHOTO: PhotoBackground = {
+  kind: 'photo',
+  photoId: 'none',
+  width: 1080,
+  height: 1350,
+  focusX: 0.5,
+  focusY: 0.5,
+  fit: 'fill',
+  tones: ['#FFFFFF'],
+  credit: { name: 'Zetca', url: 'https://zetca.pro/', source: 'sample' },
+};
+
+/** Layers that hold part of the headline, in the order they are read */
+const HEADLINE_PARTS = new Set(['kicker2', 'headline', 'body2', 'board', 'vs', 'headline2']);
+
+/** The words in a design, read back from its layers (to rebuild it in new colours or a new layout) */
+export function textOfDesign(doc: DesignDoc): { headline: string; kicker?: string; body?: string; footer?: string; cta?: string } {
+  const byId = (id: string) => doc.layers.find((l) => l.id === id);
+  const withMarks = (l: TextLayer | undefined) => {
+    if (!l) return undefined;
+    if (!l.marks?.length) return l.text;
+    // Put the markers back so the new layout draws the same words as accents
+    let i = 0;
+    return l.text
+      .split('\n')
+      .map((line) =>
+        line
+          .split(' ')
+          .filter(Boolean)
+          .map((w) => {
+            const at = i++;
+            const mark = l.marks!.find((m) => at >= m.from && at < m.to);
+            if (!mark) return w;
+            const marker = mark.strike ? '~~' : '*';
+            const first = at === mark.from;
+            const last = at === mark.to - 1;
+            return `${first ? marker : ''}${w}${last ? marker : ''}`;
+          })
+          .join(' ')
+      )
+      .join('\n');
+  };
+  const features = doc.layers.filter((l) => /^(feature|note|item)\d$/.test(l.id)).map((l) => l.text);
+  // Layouts that split the headline around a word (a chalkboard word, "vs", a giant number) put it back together
+  const pieces = doc.layers
+    .filter((l) => HEADLINE_PARTS.has(l.id))
+    .map((l) => (l.id === 'board' ? (l.text.trim() ? `*${l.text}*` : '') : l.id === 'headline' ? withMarks(l)! : l.text))
+    .filter((p) => p.trim());
+  const headline = pieces.length ? pieces.join(' ') : (doc.layers.find((l) => l.role === 'headline')?.text ?? '');
+  return {
+    headline,
+    kicker: byId('kicker')?.text,
+    body: byId('body')?.text ?? (features.length ? features.join(' · ') : undefined),
+    footer: byId('footer')?.text,
+    cta: byId('cta')?.text,
+  };
+}
+
+/**
+ * The same post in other colours or another of its style's layouts: same
+ * words, same photo and cut-out. Designs not made from a style come back as they were.
+ */
+export function rebuildDesign(doc: DesignDoc, change: { colors?: Colors; layoutId?: string }): DesignDoc {
+  const r = recipeById(doc.styleId);
+  if (!r) return doc;
+  const bgPhoto = doc.photo ?? (doc.background.kind === 'photo' ? doc.background : undefined);
+  const inset = doc.images?.find((i) => i.id === 'photo');
+  const subject = doc.images?.find((i) => i.id === 'subject');
+  const photo: PhotoBackground =
+    bgPhoto ??
+    (inset ? { ...NO_PHOTO, photoId: inset.photoId, width: inset.width, height: inset.height } : subject ? { ...NO_PHOTO, photoId: subject.photoId, width: subject.width, height: subject.height } : NO_PHOTO);
+  const colors = change.colors ?? doc.colors ?? recipeColors(r, undefined, doc.layoutId);
+  const next = buildPost(r, change.layoutId ?? doc.layoutId, {
+    text: textOfDesign(doc),
+    format: doc.format,
+    photo,
+    colors,
+    cutout: subject ? { photoId: subject.photoId, width: subject.width, height: subject.height } : undefined,
+  });
+  return doc.video ? { ...next, video: doc.video } : next;
+}
