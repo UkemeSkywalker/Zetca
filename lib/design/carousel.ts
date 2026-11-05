@@ -102,6 +102,19 @@ export interface SlideInput {
 }
 
 /** A content slide: a numbered point with a short headline and a line or two */
+/**
+ * Where a slide's block of content starts, and how much to scale it, so it
+ * sits in the middle of the slide at any shape (square, 4:5, 9:16) and never
+ * runs into the brand line at the foot
+ */
+function stack(h: number, blockHeight: number): { top: number; k: number } {
+  const lo = M + 40;
+  const hi = h - M - 70;
+  const k = Math.min(1, (hi - lo) / blockHeight);
+  return { top: lo + Math.max(0, (hi - lo - blockHeight * k) / 2), k };
+}
+
+/** A content slide: a numbered point with a short headline and a line or two */
 export function contentSlide(layout: ContentLayout, input: SlideInput): DesignDoc {
   const { styleId, format, colors, index, total, footer } = input;
   const h = heightOf(format);
@@ -111,7 +124,7 @@ export function contentSlide(layout: ContentLayout, input: SlideInput): DesignDo
   const accentInk = readable('#FFFFFF', colors.accent, 3);
   const deep = deepOf(page);
   const card = cardOf(page);
-  const n = String(index);
+  const n = String(index).padStart(2, '0');
   const headline = plain(input.text.headline)!;
   const body = plain(input.text.body);
   const shapes: ShapeLayer[] = [];
@@ -119,26 +132,36 @@ export function contentSlide(layout: ContentLayout, input: SlideInput): DesignDo
   const images = [];
 
   if (layout === 'number-top') {
-    layers.push(
-      text({ id: 'num', role: 'kicker', text: n.padStart(2, '0'), x: M, y: h * 0.1, width: W - M * 2, height: h * 0.18, size: 220, font: theme.font, weight: theme.weight, color: readable(colors.accent, page, 2.2), align: 'center', valign: 'middle', lineHeight: 0.9 }),
-      rich({ id: 'headline', role: 'headline', x: M, y: h * 0.32, width: W - M * 2, height: h * 0.24, size: 96, font: theme.font, weight: theme.weight, color: ink, align: 'center', valign: 'middle', lineHeight: 1.04, letterSpacing: -0.01 }, input.text.headline, { color: readable(colors.accent, page, 3), fallback: 0 })
-    );
-    shapes.push(shape({ id: 'rule', kind: 'rect', x: W / 2 - 60, y: h * 0.59, w: 120, h: 6, radius: 3, fill: colors.accent }));
-    if (body) layers.push(text({ id: 'body', role: 'body', text: body, x: M * 1.5, y: h * 0.63, width: W - M * 3, height: h * 0.22, size: 40, weight: 600, color: ink, align: 'center', lineHeight: 1.3 }));
+    const sizes = { num: 230, head: 300, rule: 46, body: body ? 280 : 0 };
+    const { top, k } = stack(h, sizes.num + 20 + sizes.head + sizes.rule + sizes.body);
+    let y = top;
+    layers.push(text({ id: 'num', role: 'kicker', text: n, x: M, y, width: W - M * 2, height: sizes.num * k, size: 220, font: theme.font, weight: theme.weight, color: readable(colors.accent, page, 2.2), align: 'center', valign: 'middle', lineHeight: 0.9 }));
+    y += (sizes.num + 20) * k;
+    layers.push(rich({ id: 'headline', role: 'headline', x: M, y, width: W - M * 2, height: sizes.head * k, size: 96, font: theme.font, weight: theme.weight, color: ink, align: 'center', valign: 'middle', lineHeight: 1.04, letterSpacing: -0.01 }, input.text.headline, { color: readable(colors.accent, page, 3), fallback: 0 }));
+    y += sizes.head * k;
+    shapes.push(shape({ id: 'rule', kind: 'rect', x: W / 2 - 60, y: y + 14 * k, w: 120, h: 6, radius: 3, fill: colors.accent }));
+    y += sizes.rule * k;
+    if (body) layers.push(text({ id: 'body', role: 'body', text: body, x: M * 1.5, y, width: W - M * 3, height: sizes.body * k, size: 42, weight: 600, color: ink, align: 'center', lineHeight: 1.3 }));
   } else {
     const photoTop = layout === 'photo-top' && !!input.photo;
-    const top = photoTop ? h * 0.47 : h * 0.1;
-    if (photoTop) images.push(insetPhoto(input.photo!, M, h * 0.08, W - M * 2, h * 0.34, 36));
+    const sizes = { photo: photoTop ? 440 : 0, head: photoTop ? 220 : 270, body: body ? (photoTop ? 280 : 380) : 0 };
+    const gap = 28;
+    const { top, k } = stack(h, sizes.photo + (photoTop ? 40 : 0) + sizes.head + (body ? gap : 0) + sizes.body);
+    let y = top;
+    if (photoTop) {
+      images.push(insetPhoto(input.photo!, M, y, W - M * 2, sizes.photo * k, 36));
+      y += (sizes.photo + 40) * k;
+    }
     const d = 128;
-    shapes.push(shape({ id: 'num-dot', kind: 'ellipse', x: M, y: top, w: d, h: d, fill: colors.accent }));
-    layers.push(text({ id: 'num', role: 'kicker', text: n, x: M, y: top, width: d, height: d, size: 64, font: theme.font, weight: theme.weight === 400 ? 400 : 800, color: accentInk, align: 'center', valign: 'middle' }));
-    const box = { x: M + d + 28, y: top - 6, w: W - M * 2 - d - 28, h: photoTop ? h * 0.15 : h * 0.2 };
+    shapes.push(shape({ id: 'num-dot', kind: 'ellipse', x: M, y: y + 10 * k, w: d, h: d, fill: colors.accent }));
+    layers.push(text({ id: 'num', role: 'kicker', text: n, x: M, y: y + 10 * k, width: d, height: d, size: 56, font: theme.font, weight: theme.weight === 400 ? 400 : 800, color: accentInk, align: 'center', valign: 'middle' }));
+    const box = { x: M + d + 28, y, w: W - M * 2 - d - 28, h: sizes.head * k };
     shapes.push(shape({ id: 'head-box', kind: 'bubble', ...box, radius: 40, fill: deep, tail: 'left' }));
     layers.push(text({ id: 'headline', role: 'headline', text: headline, x: box.x + 40, y: box.y + 28, width: box.w - 80, height: box.h - 56, size: 72, font: theme.font, weight: theme.weight, color: readable('#FFFFFF', deep, 4.5), valign: 'middle', lineHeight: 1.04 }));
     if (body) {
-      const c = { x: M + d + 28, y: box.y + box.h + 28, w: box.w, h: photoTop ? h * 0.2 : h * 0.3 };
+      const c = { x: box.x, y: box.y + box.h + gap * k, w: box.w, h: sizes.body * k };
       shapes.push(shape({ id: 'body-card', kind: 'rect', ...c, radius: 32, fill: card }));
-      layers.push(text({ id: 'body', role: 'body', text: body, x: c.x + 36, y: c.y + 30, width: c.w - 72, height: c.h - 60, size: 40, weight: 600, color: readable(ink, card, 4.5), valign: 'middle', lineHeight: 1.3 }));
+      layers.push(text({ id: 'body', role: 'body', text: body, x: c.x + 36, y: c.y + 30, width: c.w - 72, height: c.h - 60, size: 42, weight: 600, color: readable(ink, card, 4.5), valign: 'middle', lineHeight: 1.3 }));
     }
   }
   layers.push(...foot(h, ink, footer, index, total));
@@ -153,15 +176,18 @@ export function closingSlide(input: Omit<SlideInput, 'text' | 'photo'> & { text:
   const bg = deepOf(colors.main);
   const ink = readable('#FFFFFF', bg, 4.5);
   const cta = input.text.cta?.trim() || 'Follow for more';
+  const { top, k } = stack(h, 12 + 44 + 420 + 60 + 110);
+  const headY = top + 56 * k;
+  const ctaY = headY + (420 + 60) * k;
   return design(styleId, CLOSING_ID, format, colors, {
     background: { kind: 'solid', color: bg },
     shapes: [
-      shape({ id: 'bar', kind: 'rect', x: M, y: h * 0.2, w: 140, h: 12, radius: 6, fill: colors.accent }),
-      shape({ id: 'glow', kind: 'ellipse', x: W * 0.45, y: h * 0.55, w: W * 0.9, h: W * 0.9, fill: lighten(bg, 0.08), opacity: 0.7 }),
+      shape({ id: 'bar', kind: 'rect', x: M, y: top, w: 140, h: 12, radius: 6, fill: colors.accent }),
+      shape({ id: 'glow', kind: 'ellipse', x: W * 0.45, y: h - W * 0.75, w: W * 0.9, h: W * 0.9, fill: lighten(bg, 0.08), opacity: 0.7 }),
     ],
     layers: [
-      rich({ id: 'headline', role: 'headline', x: M, y: h * 0.24, width: W - M * 2, height: h * 0.32, size: 110, font: theme.font, weight: theme.weight, color: ink, lineHeight: 1.02, letterSpacing: -0.02 }, input.text.headline, { color: readable(colors.accent, bg, 3), fallback: 0 }),
-      text({ id: 'cta', role: 'pill', text: cta, x: M, y: h * 0.62, width: W - M * 2, height: 100, size: 40, weight: 800, fill: colors.accent, color: bestTextColor([colors.accent]) }),
+      rich({ id: 'headline', role: 'headline', x: M, y: headY, width: W - M * 2, height: 420 * k, size: 120, font: theme.font, weight: theme.weight, color: ink, valign: 'bottom', lineHeight: 1.02, letterSpacing: -0.02 }, input.text.headline, { color: readable(colors.accent, bg, 3), fallback: 0 }),
+      text({ id: 'cta', role: 'pill', text: cta, x: M, y: ctaY, width: W - M * 2, height: 110 * k, size: 44, weight: 800, fill: colors.accent, color: bestTextColor([colors.accent]) }),
       ...foot(h, ink, footer, index, total),
     ],
   });
@@ -194,6 +220,6 @@ export function slideTextOf(doc: DesignDoc): SlideText & { cta?: string } {
 export function renumber(doc: DesignDoc, index: number, total: number): DesignDoc {
   return {
     ...doc,
-    layers: doc.layers.map((l) => (l.id === 'count' ? { ...l, text: counter(index, total) } : l.id === 'num' ? { ...l, text: l.text.length === 2 && contentLayoutOf(doc.layoutId) === 'number-top' ? String(index).padStart(2, '0') : String(index) } : l)),
+    layers: doc.layers.map((l) => (l.id === 'count' ? { ...l, text: counter(index, total) } : l.id === 'num' ? { ...l, text: String(index).padStart(2, '0') } : l)),
   };
 }
