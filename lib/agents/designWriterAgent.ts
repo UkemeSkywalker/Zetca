@@ -26,6 +26,7 @@ Rules:
 5. Write in the language of the user's description.
 6. imagePrompt: one sentence describing a striking photo an AI could make for the post (no text in the image).
 7. photoQuery: 1-3 plain English words for a stock photo that would sit well behind the words. No brand names.
+8. people and object: who and what belong in the picture for THIS brand and post. Match the people to the brand's customers when the audience is given (for a brand for Black women, Black women; for retirees, older people). Never default to one kind of person.
 
 ${STRUCTURED_OUTPUT_ONLY}`;
 

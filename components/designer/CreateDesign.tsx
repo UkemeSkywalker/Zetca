@@ -123,6 +123,9 @@ export function CreateDesign() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [credits, models, source, pickedImage?.id, pickedVideo?.id]);
 
+  /** Who and what the writer said belong in the picture (a style's image uses them, not its examples) */
+  const castRef = useRef<{ people?: string; object?: string }>({});
+
   /** Asks the writer for the words (and a style, if none is picked) */
   const write = async (): Promise<{ text: DesignText; styleId: string; photoQuery: string; imagePrompt: string } | null> => {
     if (prompt.trim().length < 3) {
@@ -137,6 +140,7 @@ export function CreateDesign() {
     setText(next);
     setPhotoQuery(written.photoQuery ?? '');
     setImagePrompt(written.imagePrompt ?? '');
+    castRef.current = { people: written.people, object: written.object };
     return { text: next, styleId: written.styleId, photoQuery: written.photoQuery ?? '', imagePrompt: written.imagePrompt ?? '' };
   };
 
@@ -158,7 +162,7 @@ export function CreateDesign() {
           return;
         }
         const idea = (description || prompt).replace(/[*~]/g, '');
-        const job = await makeAi('image', layout.imagePrompt(idea, colors), format, setAiProgress, pickedImage?.id, undefined, {
+        const job = await makeAi('image', layout.imagePrompt(idea, colors, castRef.current), format, setAiProgress, pickedImage?.id, undefined, {
           rawPrompt: true,
           cutout: layout.cutout,
         });

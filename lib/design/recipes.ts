@@ -12,6 +12,7 @@ import { bestTextColor } from './contrast';
 import { FORMATS, type DesignDoc, type ImageLayer, type PhotoBackground, type TextLayer } from './types';
 import {
   afterGiant,
+  castLine,
   contactBar,
   corner,
   cutoutLayer,
@@ -47,10 +48,10 @@ const ORIGINAL: StyleRecipe[] = [
     description: 'A marble statue acting out the idea, on one bold colour',
     colors: { main: '#FFB000', ink: '#0B0B0F', accent: '#0B0B0F' },
     example: { headline: 'Marketing is not advertising.', kicker: '#yourbrand', footer: 'Your Brand' },
-    imagePrompt: (idea, c) =>
-      `Advertising poster photo: a classical white marble statue of a thoughtful bearded Greek philosopher in draped robes, acting out this idea: "${idea}". ` +
+    imagePrompt: (idea, c, k) =>
+      `Advertising poster photo: a classical white marble statue of ${k?.people ? `a thoughtful figure in draped robes, modelled on ${k.people}` : 'a thoughtful bearded Greek philosopher in draped robes'}, acting out this idea: "${idea}". ` +
       `The statue sits in the lower right of the frame. Perfectly flat, solid, seamless background in one colour, exactly ${c.main}, with a large empty area in the upper left for a headline. ` +
-      `Crisp studio light, soft natural shadow under the statue. Any laptop, phone or object in the scene is plain and unbranded. ${NO_TEXT}`,
+      `Crisp studio light, soft natural shadow under the statue. Any laptop, phone or object in the scene is plain and unbranded.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       const layers: TextLayer[] = [
@@ -69,9 +70,9 @@ const ORIGINAL: StyleRecipe[] = [
     colors: { main: '#FACC15', ink: '#FFFFFF', accent: '#FACC15' },
     cutout: 'green',
     example: { headline: 'Rise and shine', body: 'Baked before sunrise', kicker: 'Lekki, Lagos', footer: 'Your Brand' },
-    imagePrompt: (idea) =>
+    imagePrompt: (idea, _c, k) =>
       `Editorial portrait photo about this idea: "${idea}". One person, centred, looking at the camera, upper body visible, sitting or standing in a warm, softly lit real place that fits the idea. ` +
-      `Their head is in the middle of the frame with plenty of empty wall or space above and around it. Warm golden light, shallow depth of field, rich colour. The person wears nothing bright green. ${NO_TEXT}`,
+      `Their head is in the middle of the frame with plenty of empty wall or space above and around it. Warm golden light, shallow depth of field, rich colour. The person wears nothing bright green.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, cutout, colors }) {
       const h = FORMATS[format].height;
       const word = giantWord(t.headline).toUpperCase();
@@ -98,10 +99,10 @@ const ORIGINAL: StyleRecipe[] = [
     description: 'Person, product and backdrop all in one colour',
     colors: { main: '#F97316', ink: '#FFFFFF', accent: '#FFFFFF' },
     example: { headline: 'Nova 7 Pro', kicker: 'New era · New model', footer: 'Your Brand' },
-    imagePrompt: (idea, c) =>
+    imagePrompt: (idea, c, k) =>
       `High-end advertising photo where everything is one saturated colour, ${c.main}: a seamless studio backdrop and floor in that colour, a chair in that colour, and a stylish person in white and ${c.main} clothes ` +
       `showing off this: "${idea}", holding it toward the camera with a wide-angle lens. Bold commercial lighting. The upper right of the frame is empty backdrop for a headline. ` +
-      `Any product is plain and unbranded. ${NO_TEXT}`,
+      `Any product is plain and unbranded.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       const ink = bestTextColor(photo.tones, ['#FFFFFF', '#0B0B0F']);
@@ -123,9 +124,9 @@ const ORIGINAL: StyleRecipe[] = [
     description: 'A marble statue on a dark grid, one phrase highlighted',
     colors: { main: '#0B0B0F', ink: '#FFFFFF', accent: '#1D4ED8' },
     example: { headline: 'Your brand deserves', kicker: 'better content', body: 'and this is where that begins', footer: 'Your Brand' },
-    imagePrompt: (idea, c) =>
-      `Advertising poster photo: a classical white marble statue of a thoughtful bearded philosopher, acting out this idea: "${idea}", with a thin white sticker-like outline around it, in the lower right of the frame. ` +
-      `Background: ${c.main} with a thin, even, light grey square grid like graph paper. Large empty area in the upper left. Crisp studio light. Any object is plain and unbranded. ${NO_TEXT}`,
+    imagePrompt: (idea, c, k) =>
+      `Advertising poster photo: a classical white marble statue of ${k?.people ? `a thoughtful figure, modelled on ${k.people}` : 'a thoughtful bearded philosopher'}, acting out this idea: "${idea}", with a thin white sticker-like outline around it, in the lower right of the frame. ` +
+      `Background: ${c.main} with a thin, even, light grey square grid like graph paper. Large empty area in the upper left. Crisp studio light. Any object is plain and unbranded.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       return {
@@ -148,9 +149,9 @@ const ORIGINAL: StyleRecipe[] = [
     description: 'A big-head caricature with a sticker outline and callouts',
     colors: { main: '#1E3A5F', ink: '#FFFFFF', accent: '#F97316' },
     example: { headline: 'Social media manager', body: 'Trend obsessed · Always saving ideas · Lives in the comments', footer: 'Your Brand' },
-    imagePrompt: (idea, c) =>
+    imagePrompt: (idea, c, k) =>
       `A playful 3D caricature illustration of one smiling person with a slightly oversized head, styled to show this idea: "${idea}", holding the props of their work, with a thick white sticker outline around the whole figure, centred and full length. ` +
-      `${flat(c.main)} with a soft vignette. Lots of empty space at the top and both sides. ${NO_TEXT}`,
+      `${flat(c.main)} with a soft vignette. Lots of empty space at the top and both sides.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       const notes = (t.body ?? '').split(/\s*[·|•]\s*/).filter(Boolean).slice(0, 3);
@@ -174,9 +175,9 @@ const ORIGINAL: StyleRecipe[] = [
     description: 'Cut-paper collage on cream, with a script word on top',
     colors: { main: '#FBF7EE', ink: '#2B2B2B', accent: '#5B21B6' },
     example: { kicker: 'When your', headline: 'Social Media Manager', body: 'is a Gen Z…', footer: 'Your Brand' },
-    imagePrompt: (idea) =>
+    imagePrompt: (idea, _c, k) =>
       `A witty paper-collage photo: one person from the waist up whose head is replaced by an object that tells this idea: "${idea}" (for example an old TV set, a speaker or a camera), cut out like a magazine clipping with a slight paper edge, ` +
-      `standing in the lower middle on a plain cream recycled-paper background with soft texture. Large empty space at the top. ${NO_TEXT}`,
+      `standing in the lower middle on a plain cream recycled-paper background with soft texture. Large empty space at the top.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       return {
@@ -201,9 +202,9 @@ const ORIGINAL: StyleRecipe[] = [
     description: 'Fresh lime green, a hero product and a Shop Now button',
     colors: { main: '#A3E635', ink: '#14532D', accent: '#FFFFFF' },
     example: { headline: 'Level up your gadgets', kicker: 'Shop now', footer: 'Your Brand' },
-    imagePrompt: (idea, c) =>
-      `Vibrant advertising photo in fresh lime green (${c.main}) tones: a confident person in lime-green clothes holding a large unbranded product that shows this idea: "${idea}" toward the camera, ` +
-      `with a few floating translucent glass cubes and soft circular light rings around them, on a lime green gradient studio background. The top third is clear background for a headline. Bright, glossy commercial light. ${NO_TEXT}`,
+    imagePrompt: (idea, c, k) =>
+      `Vibrant advertising photo in fresh lime green (${c.main}) tones: a confident person in lime-green clothes holding ${k?.object ? `a large ${k.object.replace(/^an? /, '')}, unbranded,` : 'a large unbranded product'} that shows this idea: "${idea}" toward the camera, ` +
+      `with a few floating translucent glass cubes and soft circular light rings around them, on a lime green gradient studio background. The top third is clear background for a headline. Bright, glossy commercial light.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       const ink = inkOn(photo, colors.ink);
@@ -226,9 +227,9 @@ const ORIGINAL: StyleRecipe[] = [
     description: 'Bright blue, tight white headline, contact bar for orders',
     colors: { main: '#1D6FF2', ink: '#FFFFFF', accent: '#FFFFFF' },
     example: { headline: 'Hold greatness', kicker: 'Simply premium', footer: 'Order now · 0901 234 5678 · @yourbrand' },
-    imagePrompt: (idea, c) =>
-      `Bold retail advertising photo in electric blue (${c.main}): a hand or a stylish person holding an unbranded product that shows this idea: "${idea}", large in the right half of the frame, ` +
-      `on a smooth bright blue studio gradient. The left half and the bottom are clear for text. Crisp, high-contrast light. ${NO_TEXT}`,
+    imagePrompt: (idea, c, k) =>
+      `Bold retail advertising photo in electric blue (${c.main}): a hand or a stylish person holding ${k?.object ? `${k.object}, unbranded,` : 'an unbranded product'} that shows this idea: "${idea}", large in the right half of the frame, ` +
+      `on a smooth bright blue studio gradient. The left half and the bottom are clear for text. Crisp, high-contrast light.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       return {
@@ -250,9 +251,9 @@ const ORIGINAL: StyleRecipe[] = [
     description: 'Deep red, a bold 3D object, a big offer',
     colors: { main: '#B91C1C', ink: '#FFFFFF', accent: '#FFFFFF' },
     example: { headline: 'No buffering, just fast internet', kicker: 'Offer ends soon', body: 'T&C apply', footer: 'Your Brand' },
-    imagePrompt: (idea, c) =>
+    imagePrompt: (idea, c, k) =>
       `Glossy 3D advertising render: one large, smooth, shiny red object that symbolises this idea: "${idea}" (for example a gift box, a swirl, a speech bubble or a giant device), ` +
-      `with one or two small happy people sitting or standing on it, on a deep red (${c.main}) to dark red gradient background. The top third is clear for a headline. Studio lighting, soft reflections. ${NO_TEXT}`,
+      `with one or two small happy people sitting or standing on it, on a deep red (${c.main}) to dark red gradient background. The top third is clear for a headline. Studio lighting, soft reflections.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       return {
@@ -278,9 +279,9 @@ const ORIGINAL: StyleRecipe[] = [
     colors: { main: '#E0F2FE', ink: '#FFFFFF', accent: '#38BDF8' },
     cutout: 'green',
     example: { headline: '11 Series', body: 'Health tracking · Always-on display · Fast charging', footer: 'Your Brand' },
-    imagePrompt: (idea) =>
-      `Moody premium advertising photo on a dark navy-blue background with a soft blue glow: one stylish person holding an unbranded product that shows this idea: "${idea}" toward the camera, ` +
-      `centred, upper body, with empty dark space above and around their head. Cinematic blue rim light. The person wears nothing bright green. ${NO_TEXT}`,
+    imagePrompt: (idea, _c, k) =>
+      `Moody premium advertising photo on a dark navy-blue background with a soft blue glow: one stylish person holding ${k?.object ? `${k.object}, unbranded,` : 'an unbranded product'} that shows this idea: "${idea}" toward the camera, ` +
+      `centred, upper body, with empty dark space above and around their head. Cinematic blue rim light. The person wears nothing bright green.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, cutout, colors }) {
       const h = FORMATS[format].height;
       const big = giantWord(t.headline);
@@ -306,9 +307,9 @@ const ORIGINAL: StyleRecipe[] = [
     colors: { main: '#FACC15', ink: '#FFFFFF', accent: '#FACC15' },
     cutout: 'green',
     example: { headline: 'Blur', kicker: 'While others', body: 'We make you clear', footer: 'Your Brand' },
-    imagePrompt: (idea) =>
+    imagePrompt: (idea, _c, k) =>
       `Cinematic photo: one person in sharp focus in the centre, calm and looking at the camera, doing something that shows this idea: "${idea}", surrounded by a dense crowd in heavy motion blur, warm dark tones. ` +
-      `Upper body, empty blurred space above their head. Moody, high-end film look. The person wears nothing bright green. ${NO_TEXT}`,
+      `Upper body, empty blurred space above their head. Moody, high-end film look. The person wears nothing bright green.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, cutout, colors }) {
       const h = FORMATS[format].height;
       return {
@@ -334,9 +335,9 @@ const ORIGINAL: StyleRecipe[] = [
     description: 'A product held up against a soft blue sky',
     colors: { main: '#93C5FD', ink: '#0B1C30', accent: '#FFFFFF' },
     example: { kicker: 'Introducing', headline: 'Tablet 11th Gen', body: 'Powerful chip · All-day battery · 11-inch screen', footer: 'Your Brand' },
-    imagePrompt: (idea) =>
-      `Clean premium product photo: a hand holding up an unbranded product that shows this idea: "${idea}", in the middle of the frame, against a soft pastel blue sky with a few light clouds and a gentle warm glow near the bottom. ` +
-      `Top quarter clear for a headline. Soft natural light. ${NO_TEXT}`,
+    imagePrompt: (idea, _c, k) =>
+      `Clean premium product photo: a hand holding up ${k?.object ? `${k.object}, unbranded,` : 'an unbranded product'} that shows this idea: "${idea}", in the middle of the frame, against a soft pastel blue sky with a few light clouds and a gentle warm glow near the bottom. ` +
+      `Top quarter clear for a headline. Soft natural light.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       const ink = inkOn(photo, colors.ink);
@@ -360,9 +361,9 @@ const ORIGINAL: StyleRecipe[] = [
     description: 'Near-black and moody, a light headline and a glass tag',
     colors: { main: '#0B0B0F', ink: '#FFFFFF', accent: '#3F3F46' },
     example: { headline: 'Nova 15 Plus', kicker: '256 GB', body: 'Aerospace-grade finish', footer: 'Your Brand' },
-    imagePrompt: (idea) =>
-      `Moody luxury advertising photo, almost black: a person in a dark jacket holding an unbranded product that shows this idea: "${idea}" close to the camera, lit by a single soft side light, deep shadows. ` +
-      `The right half has dark empty space for text. Rich, cinematic, minimal. ${NO_TEXT}`,
+    imagePrompt: (idea, _c, k) =>
+      `Moody luxury advertising photo, almost black: a person in a dark jacket holding ${k?.object ? `${k.object}, unbranded,` : 'an unbranded product'} that shows this idea: "${idea}" close to the camera, lit by a single soft side light, deep shadows. ` +
+      `The right half has dark empty space for text. Rich, cinematic, minimal.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       return {
@@ -387,9 +388,9 @@ const ORIGINAL: StyleRecipe[] = [
     description: 'A playful family moment, a big word and a script word over it',
     colors: { main: '#1E3A8A', ink: '#FFFFFF', accent: '#F43F5E' },
     example: { headline: 'Papa', kicker: 'happy day', body: 'Thank you for every adventure', footer: 'Your Brand · @yourbrand' },
-    imagePrompt: (idea, c) =>
+    imagePrompt: (idea, c, k) =>
       `Joyful, playful studio photo for a celebration campaign about this idea: "${idea}": a family or friends having fun together with simple props, warm genuine smiles, on a solid colour studio set in ${c.main} tones. ` +
-      `People in the upper and middle part of the frame, the bottom third clear for big words. Bright, clean commercial light. ${NO_TEXT}`,
+      `People in the upper and middle part of the frame, the bottom third clear for big words. Bright, clean commercial light.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       const word = t.headline.toUpperCase();
@@ -415,9 +416,9 @@ const ORIGINAL: StyleRecipe[] = [
     description: 'A person reaching to the camera, a bold orange ticket',
     colors: { main: '#F97316', ink: '#FFFFFF', accent: '#F97316' },
     example: { headline: 'We make your brand impossible to ignore.', kicker: "Let's build your growth story.", footer: 'Your Brand' },
-    imagePrompt: (idea) =>
+    imagePrompt: (idea, _c, k) =>
       `Dynamic advertising photo in a clean white room: a friendly person reaching one open hand toward the camera with a strong wide-angle perspective so the hand looks huge and slightly blurred, about this idea: "${idea}". ` +
-      `Orange accent stripes on the white floor. The lower half of the frame has clear space in front of them. Bright, clean light. ${NO_TEXT}`,
+      `Orange accent stripes on the white floor. The lower half of the frame has clear space in front of them. Bright, clean light.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       return {
@@ -439,9 +440,9 @@ const ORIGINAL: StyleRecipe[] = [
     description: 'Black-and-white crowd, one person stands out',
     colors: { main: '#FFFFFF', ink: '#0B0B0F', accent: '#1D4ED8' },
     example: { headline: 'Be the brand all notice', kicker: 'they', body: 'powered by creative excellence', footer: '@yourbrand' },
-    imagePrompt: (idea) =>
+    imagePrompt: (idea, _c, k) =>
       `Black and white editorial photo: a crowd of people seen from behind fills the lower two thirds, and one person in the centre faces the camera, calm and confident, about this idea: "${idea}". ` +
-      `Only one small detail on that person is in colour (for example warm amber sunglasses). The top third is plain bright white for a headline. ${NO_TEXT}`,
+      `Only one small detail on that person is in colour (for example warm amber sunglasses). The top third is plain bright white for a headline.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       return {
@@ -465,9 +466,9 @@ const ORIGINAL: StyleRecipe[] = [
     description: 'A joyful 3D cartoon group, a clean headline and a button',
     colors: { main: '#FFFFFF', ink: '#0B1C30', accent: '#0B1C30' },
     example: { headline: 'Find your tribe, build your network', kicker: 'Join for free', footer: 'Your Brand' },
-    imagePrompt: (idea) =>
+    imagePrompt: (idea, _c, k) =>
       `A joyful Pixar-style 3D animated group selfie of diverse friendly young people, big smiles, pointing and waving, about this idea: "${idea}", filling the bottom 60% of the frame, ` +
-      `on a plain clean white background. The top 40% is empty white for a headline. Bright, soft, colourful. ${NO_TEXT}`,
+      `on a plain clean white background. The top 40% is empty white for a headline. Bright, soft, colourful.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       return {
@@ -491,9 +492,9 @@ const ORIGINAL: StyleRecipe[] = [
     description: 'Grid paper, a marker-highlighted word, a striking portrait',
     colors: { main: '#FAFAFA', ink: '#0B0B0F', accent: '#FDE047' },
     example: { headline: 'What great founders know about marketing', kicker: 'founders', body: 'That most businesses ignore', footer: 'Share it →' },
-    imagePrompt: (idea) =>
+    imagePrompt: (idea, _c, k) =>
       `Editorial collage on white grid paper: a striking low-poly geometric portrait of a confident made-up business person (not a real or famous person) in the lower right, ` +
-      `and a hand holding a small glass jar of gold coins in the lower left, about this idea: "${idea}". The top half is empty grid paper for a headline. ${NO_TEXT}`,
+      `and a hand holding a small glass jar of gold coins in the lower left, about this idea: "${idea}". The top half is empty grid paper for a headline.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       return {
@@ -516,9 +517,9 @@ const ORIGINAL: StyleRecipe[] = [
     description: 'A bold street-style flyer with a contact strip',
     colors: { main: '#FED7AA', ink: '#EA580C', accent: '#0B1C30' },
     example: { headline: 'Sport your style', kicker: 'Order now', footer: '@yourbrand · 0851 234 5678 · yourbrand.com' },
-    imagePrompt: (idea, c) =>
-      `Energetic street-style advertising photo: a young person in bright orange clothes striking a dynamic pose, one chunky boot kicked toward the camera with a wide-angle lens, holding an unbranded product that shows this idea: "${idea}", ` +
-      `on a warm peach (${c.main}) studio background with soft light. Clear space on both sides of the person. ${NO_TEXT}`,
+    imagePrompt: (idea, c, k) =>
+      `Energetic street-style advertising photo: a young person in bright orange clothes striking a dynamic pose, one chunky boot kicked toward the camera with a wide-angle lens, holding ${k?.object ? `${k.object}, unbranded,` : 'an unbranded product'} that shows this idea: "${idea}", ` +
+      `on a warm peach (${c.main}) studio background with soft light. Clear space on both sides of the person.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = FORMATS[format].height;
       const words = t.headline.trim().split(/\s+/);

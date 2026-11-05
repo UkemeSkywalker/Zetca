@@ -51,6 +51,24 @@ export interface RecipeColors {
 
 export type Colors = Required<RecipeColors>;
 
+/**
+ * Who and what belong in this post's picture, from the brand's customers and
+ * the post itself. A style fixes the look and where things sit; the people
+ * and the product change with every brand.
+ */
+export interface Cast {
+  /** A kind of person, e.g. "Black women in their late 20s with natural hair" */
+  people?: string;
+  /** The product or object, e.g. "a jar of whipped shea butter" */
+  object?: string;
+}
+
+/** The sentence that puts the brand's kind of people in the picture (nothing when unknown) */
+export const castLine = (k?: Cast) => (k?.people ? ` Everyone in the picture looks like this: ${k.people}.` : '');
+
+/** The brand's product or object, or the style's own when there's none */
+export const obj = (k: Cast | undefined, fallback: string) => k?.object || fallback;
+
 export interface BuildInput {
   text: RecipeText;
   format: FormatId;
@@ -63,8 +81,8 @@ export interface BuildInput {
 export interface RecipeLayout {
   id: string;
   name: string;
-  /** The AI image prompt for one post: `idea` is what the post is about */
-  imagePrompt(idea: string, colors: Colors): string;
+  /** The AI image prompt for one post: `idea` is what the post is about, `cast` who and what is in it */
+  imagePrompt(idea: string, colors: Colors, cast?: Cast): string;
   build(input: BuildInput): DesignDoc;
   /** Example words for the gallery */
   example: RecipeText;
@@ -85,8 +103,8 @@ export interface StyleRecipe {
   colors: Colors;
   /** Make the image, then cut the subject out of this flat colour (giant-word styles) */
   cutout?: KeyColor;
-  /** The AI image prompt for one post: `idea` is what the post is about */
-  imagePrompt(idea: string, colors: Colors): string;
+  /** The AI image prompt for one post: `idea` is what the post is about, `cast` who and what is in it */
+  imagePrompt(idea: string, colors: Colors, cast?: Cast): string;
   /** The finished design from the AI image (and its cut-out, when the recipe makes one) */
   build(input: BuildInput): DesignDoc;
   /** Example words for the gallery */

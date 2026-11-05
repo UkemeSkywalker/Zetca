@@ -234,7 +234,15 @@ export function CopywriterWorkspace() {
   );
   // The campaign's design style: new posts' visuals follow it
   const campaignStyle = strategy?.designStyle;
-  const activeStyle = campaignStyle?.onNewPosts ? { recipeId: campaignStyle.recipeId, model: campaignStyle.model, colors: campaignStyle.colors, layout: campaignStyle.layout } : undefined;
+  const activeStyle = campaignStyle?.onNewPosts
+    ? {
+        recipeId: campaignStyle.recipeId,
+        model: campaignStyle.model,
+        colors: campaignStyle.colors,
+        layout: campaignStyle.layout,
+        brand: { name: strategy?.brandName, industry: strategy?.industry, audience: strategy?.targetAudience },
+      }
+    : undefined;
   const [savingStyle, setSavingStyle] = useState(false);
   const changeStyle = async (next: CampaignStyleValue | null) => {
     if (!strategyId) return;

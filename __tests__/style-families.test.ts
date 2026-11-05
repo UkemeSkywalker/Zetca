@@ -3,6 +3,7 @@
  */
 import { buildPost, isFamily, layoutsOf, pickLayout, rebuildDesign, recipeById, recipeColors, RECIPES, textOfDesign } from '@/lib/design/recipes';
 import { markup } from '@/lib/design/recipeKit';
+import { cleanDesignText } from '@/lib/models/designWriter';
 import { contrastRatio } from '@/lib/design/contrast';
 import { DesignDocSchema, type PhotoBackground } from '@/lib/design/types';
 
@@ -103,5 +104,44 @@ describe('style families', () => {
     expect(doc.background.kind).toBe('solid');
     expect(doc.layers.find((l) => l.id === 'cta')?.text).toBe('01');
     expect(textOfDesign(doc).headline).toBe('Happy New Month');
+  });
+});
+
+describe('pictures follow the brand, not the style’s examples', () => {
+  const cast = { people: 'Black women in their late 20s with natural hair', object: 'a jar of whipped shea butter' };
+
+  it('puts the brand’s kind of people in every picture with people, and its product in the object-only ones', () => {
+    // These show an object, not people
+    const objectOnly = new Set(['concept-object', 'strike-through', 'fire-money']);
+    for (const r of RECIPES) {
+      for (const l of layoutsOf(r).filter((x) => !x.noImage)) {
+        const prompt = l.imagePrompt('Glow that lasts all day', l.colors ?? r.colors, cast);
+        if (objectOnly.has(r.id)) {
+          if (!prompt.includes('shea butter')) throw new Error(`${r.id}/${l.id} ignores the brand's product`);
+        } else if (!prompt.includes(cast.people)) throw new Error(`${r.id}/${l.id} ignores the brand's people`);
+      }
+    }
+  });
+
+  it('swaps the style’s example people and products for the brand’s', () => {
+    const marble = recipeById('marble-thinker')!.imagePrompt('x', recipeById('marble-thinker')!.colors, cast);
+    expect(marble).not.toMatch(/bearded Greek philosopher/);
+    const safe = layoutsOf(recipeById('safe-hold')!)[0].imagePrompt('x', recipeById('safe-hold')!.colors, cast);
+    expect(safe).toContain('shea butter');
+    expect(safe).not.toMatch(/a phone/);
+    const lime = layoutsOf(recipeById('neon-lime')!)[1].imagePrompt('x', recipeById('neon-lime')!.colors, cast);
+    expect(lime).toContain('shea butter');
+    expect(lime).not.toMatch(/silver phone/);
+  });
+
+  it('keeps the style’s own subject when nothing is known about the brand', () => {
+    const marble = recipeById('marble-thinker')!.imagePrompt('x', recipeById('marble-thinker')!.colors);
+    expect(marble).toMatch(/bearded Greek philosopher/);
+    expect(marble).not.toMatch(/Everyone in the picture/);
+  });
+
+  it('keeps who and what the writer chose', () => {
+    const out = cleanDesignText({ styleId: 'headline-body', headline: 'Glow on', body: 'All day.', imagePrompt: 'x', photoQuery: 'skin care', people: ' Black women\nin their 30s ', object: 'a jar of shea butter' });
+    expect(out).toMatchObject({ people: 'Black women in their 30s', object: 'a jar of shea butter' });
   });
 });

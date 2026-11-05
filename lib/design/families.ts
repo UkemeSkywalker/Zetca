@@ -9,7 +9,9 @@
 import { bestTextColor } from './contrast';
 import type { ShapeLayer, TextLayer } from './types';
 import {
+  castLine,
   design,
+  obj,
   flat,
   giantWord,
   heightOf,
@@ -31,6 +33,7 @@ import {
   text,
   W,
   type BuildInput,
+  type Cast,
   type Colors,
   type RecipeLayout,
   type RecipeText,
@@ -60,9 +63,9 @@ function aroundAccent(raw: string): { before: string; accent: string; after: str
 const FB_GREEN = '#1F9D55';
 const FB_OWN: Colors = { main: '#F47C64', ink: '#FFFFFF', accent: '#EF5A2B' };
 
-const fbPhoto = (idea: string, where: string) =>
-  `Warm, candid lifestyle photo about this idea: "${idea}". Real people at work in a cosy, modern, sunlit workspace with plants and wooden desks, soft window light, warm orange and coral tones, shallow depth of field. ${where} ` +
-  `Any laptop, screen or phone is plain and unbranded. ${NO_TEXT}`;
+const fbPhoto = (idea: string, where: string, k?: Cast) =>
+  `Warm, candid lifestyle photo about this idea: "${idea}". Real people in a cosy, sunlit place that fits the idea (for example a modern studio with plants and wooden desks), soft window light, warm orange and coral tones, shallow depth of field. ${where}${castLine(k)} ` +
+  `${k?.object ? `${k.object} is clearly in the scene. ` : ''}Any laptop, screen, phone or product is plain and unbranded. ${NO_TEXT}`;
 
 /** The thin rounded frame, the hashtag, the name and the "Speak to us" button every Frame & Bubble post has */
 function fbChrome(t: RecipeText, h: number, colors: Colors): { layers: TextLayer[]; shapes: ShapeLayer[] } {
@@ -95,7 +98,7 @@ const FRAME_BUBBLE = family({
       id: 'bubble',
       name: 'Bubble in the corner',
       example: fbExample({ headline: 'We build brands from *anywhere.*' }),
-      imagePrompt: (idea) => fbPhoto(idea, 'One person works at a desk in the left half of the frame; the lower right of the frame is calm and uncluttered.'),
+      imagePrompt: (idea, _c, k) => fbPhoto(idea, 'One person works at a desk in the left half of the frame; the lower right of the frame is calm and uncluttered.', k),
       build({ text: t, format, photo, colors }) {
         const h = heightOf(format);
         const c = fbChrome(t, h, colors);
@@ -111,7 +114,7 @@ const FRAME_BUBBLE = family({
       id: 'split',
       name: 'Split card on top',
       example: fbExample({ headline: 'Stuck alone? Solved together.', body: 'When the strategy stalls, a second mind sees what yours *can’t.*' }),
-      imagePrompt: (idea) => fbPhoto(idea, 'Two or three people work together in the lower half of the frame; the top 40% is soft, blurred background.'),
+      imagePrompt: (idea, _c, k) => fbPhoto(idea, 'Two or three people work together in the lower half of the frame; the top 40% is soft, blurred background.', k),
       build({ text: t, format, photo, colors }) {
         const h = heightOf(format);
         const c = fbChrome(t, h, colors);
@@ -137,7 +140,7 @@ const FRAME_BUBBLE = family({
       id: 'sticker',
       name: 'Sticker',
       example: fbExample({ headline: 'Happy New Week', body: 'Follow up with that lead.' }),
-      imagePrompt: (idea) => fbPhoto(idea, 'Seen from above: a desk with people waving at a video call; the lower right of the frame is a plain part of the wooden desk.'),
+      imagePrompt: (idea, _c, k) => fbPhoto(idea, 'Seen from above: a desk with people waving at a video call; the lower right of the frame is a plain part of the wooden desk.', k),
       build({ text: t, format, photo, colors }) {
         const h = heightOf(format);
         const c = fbChrome(t, h, colors);
@@ -161,7 +164,7 @@ const FRAME_BUBBLE = family({
       id: 'banner',
       name: 'Banner and list',
       example: fbExample({ headline: 'Your workspace?\nThat’s your *safe haven!*', body: 'Every breakthrough · Every doubt · Every deadline survived' }),
-      imagePrompt: (idea) => fbPhoto(idea, 'A workspace scene fills the lower 70% of the frame; the top 30% is a plain soft wall.'),
+      imagePrompt: (idea, _c, k) => fbPhoto(idea, 'A workspace scene fills the lower 70% of the frame; the top 30% is a plain soft wall.', k),
       build({ text: t, format, photo, colors }) {
         const h = heightOf(format);
         const c = fbChrome(t, h, colors);
@@ -186,7 +189,7 @@ const FRAME_BUBBLE = family({
       id: 'quote',
       name: 'Quote card',
       example: fbExample({ headline: 'Clarity beats noise, every single time.', body: 'Northbeam Studio' }),
-      imagePrompt: (idea) => fbPhoto(idea, 'A calm, simple scene with lots of soft space.'),
+      imagePrompt: (idea, _c, k) => fbPhoto(idea, 'A calm, simple scene with lots of soft space.', k),
       build({ text: t, format, photo, colors }) {
         const h = heightOf(format);
         const c = fbChrome(t, h, colors);
@@ -207,7 +210,7 @@ const FRAME_BUBBLE = family({
       id: 'photo',
       name: 'Full photo, small bubble',
       example: fbExample({ headline: 'Good brands are built, not born.' }),
-      imagePrompt: (idea) => fbPhoto(idea, 'The person is in the right half of the frame; the upper left is soft, out-of-focus background.'),
+      imagePrompt: (idea, _c, k) => fbPhoto(idea, 'The person is in the right half of the frame; the upper left is soft, out-of-focus background.', k),
       build({ text: t, format, photo, colors }) {
         const h = heightOf(format);
         const c = fbChrome(t, h, colors);
@@ -227,8 +230,8 @@ const FRAME_BUBBLE = family({
 const SPM_VIOLET: Colors = { main: '#4B3FD9', ink: '#FFFFFF', accent: '#FFFFFF' };
 const spmPastel = (main: string): Colors => ({ main, ink: '#2A2D9C', accent: '#2A2D9C' });
 
-const spmPrompt = (idea: string, subject: string, c: Colors) =>
-  `Bright, friendly fintech advertising photo about this idea: "${idea}". ${subject} ${flat(c.main)}, soft even studio light, crisp and clean. ${keepOff('green')} ${NO_TEXT}`;
+const spmPrompt = (idea: string, subject: string, c: Colors, k?: Cast) =>
+  `Bright, friendly advertising photo about this idea: "${idea}". ${subject}${castLine(k)} ${flat(c.main)}, soft even studio light, crisp and clean. ${keepOff('green')} ${NO_TEXT}`;
 
 function spmBuild(layoutId: string, place: (h: number) => { headline: Partial<TextLayer> & { x: number; y: number; width: number; height: number }; body?: { x: number; y: number; width: number; height: number }; glow: { x: number; y: number; w: number; h: number } }) {
   return (input: BuildInput) => {
@@ -280,7 +283,7 @@ const SOFT_PASTEL_MONEY = family({
       colors: SPM_VIOLET,
       cutout: 'green',
       example: spmExample({ headline: 'Everybody writes *secure* on their homepage.', body: 'Only one word has somebody standing behind it.' }),
-      imagePrompt: (idea, c) => spmPrompt(idea, 'One smiling person holding a phone, upper body, in the right half of the frame; the left half is empty.', c),
+      imagePrompt: (idea, c, k) => spmPrompt(idea, `One smiling person holding ${obj(k, 'a phone')}, upper body, in the right half of the frame; the left half is empty.`, c, k),
       build: spmBuild('split', (h) => ({ headline: { x: M, y: h * 0.2, width: W * 0.48, height: h * 0.26 }, body: { x: M, y: h * 0.48, width: W * 0.42, height: h * 0.12 }, glow: { x: W * 0.4, y: h * 0.2, w: W * 0.7, h: W * 0.7 } })),
     },
     {
@@ -289,7 +292,7 @@ const SOFT_PASTEL_MONEY = family({
       colors: spmPastel('#EAF8E4'),
       cutout: 'green',
       example: spmExample({ headline: 'Unnamed money wanders. *Named money arrives.*' }),
-      imagePrompt: (idea, c) => spmPrompt(idea, 'One joyful person, waist up, centred in the lower 60% of the frame; the top 40% is empty.', c),
+      imagePrompt: (idea, c, k) => spmPrompt(idea, 'One joyful person, waist up, centred in the lower 60% of the frame; the top 40% is empty.', c, k),
       build: spmBuild('top', (h) => ({ headline: { x: M, y: h * 0.1, width: W - M * 2, height: h * 0.2, align: 'center' }, body: { x: M * 2, y: h * 0.31, width: W - M * 4, height: h * 0.08 }, glow: { x: W * 0.18, y: h * 0.36, w: W * 0.64, h: W * 0.64 } })),
     },
     {
@@ -298,7 +301,7 @@ const SOFT_PASTEL_MONEY = family({
       colors: SPM_VIOLET,
       cutout: 'green',
       example: spmExample({ headline: 'Idle money is not resting. *It is shrinking.*' }),
-      imagePrompt: (idea, c) => spmPrompt(idea, 'One large glossy 3D object that symbolises the idea (for example a padlock, a safe or a piggy bank), in the lower right of the frame; the upper left is empty.', c),
+      imagePrompt: (idea, c, k) => spmPrompt(idea, `${k?.object ? `A large glossy 3D render of ${k.object}` : 'One large glossy 3D object that symbolises the idea (for example a padlock, a safe or a piggy bank)'}, in the lower right of the frame; the upper left is empty.`, c, k),
       build: spmBuild('object', (h) => ({ headline: { x: M, y: h * 0.13, width: W * 0.62, height: h * 0.26 }, body: { x: M, y: h * 0.41, width: W * 0.46, height: h * 0.1 }, glow: { x: W * 0.36, y: h * 0.34, w: W * 0.7, h: W * 0.7 } })),
     },
     {
@@ -307,7 +310,7 @@ const SOFT_PASTEL_MONEY = family({
       colors: spmPastel('#E5F0FF'),
       cutout: 'green',
       example: spmExample({ headline: 'A *budget* is telling your money where to go.' }),
-      imagePrompt: (idea, c) => spmPrompt(idea, 'A glossy 3D object or a neat arrangement of objects that symbolise the idea, filling the bottom half of the frame; the top half is empty.', c),
+      imagePrompt: (idea, c, k) => spmPrompt(idea, `${k?.object ? `A neat, glossy arrangement of ${k.object}` : 'A glossy 3D object or a neat arrangement of objects that symbolise the idea'}, filling the bottom half of the frame; the top half is empty.`, c, k),
       build: spmBuild('object-low', (h) => ({ headline: { x: M, y: h * 0.11, width: W - M * 2, height: h * 0.22, align: 'center' }, body: { x: M * 2, y: h * 0.34, width: W - M * 4, height: h * 0.08 }, glow: { x: W * 0.1, y: h * 0.42, w: W * 0.8, h: W * 0.6 } })),
     },
     {
@@ -316,7 +319,7 @@ const SOFT_PASTEL_MONEY = family({
       colors: spmPastel('#E9E3FF'),
       cutout: 'green',
       example: spmExample({ headline: 'You are also *a bill.*', body: 'Rent · Data · Transport' }),
-      imagePrompt: (idea, c) => spmPrompt(idea, 'One expressive person, upper body, slightly right of centre in the lower 75% of the frame; the upper left is empty.', c),
+      imagePrompt: (idea, c, k) => spmPrompt(idea, 'One expressive person, upper body, slightly right of centre in the lower 75% of the frame; the upper left is empty.', c, k),
       build: spmBuild('labels', (h) => ({ headline: { x: M, y: h * 0.2, width: W * 0.46, height: h * 0.2 }, glow: { x: W * 0.25, y: h * 0.3, w: W * 0.66, h: W * 0.66 } })),
     },
   ],
@@ -326,8 +329,8 @@ const SOFT_PASTEL_MONEY = family({
 
 const CE_OWN: Colors = { main: '#F1F2F4', ink: '#111111', accent: '#E23B3B' };
 
-const cePrompt = (idea: string, subject: string, c: Colors) =>
-  `Clean, premium health-care editorial image about this idea: "${idea}". ${subject} ${flat(c.main)}, soft diffused studio light, gentle shadow, high detail. ${keepOff('green')} ${NO_TEXT}`;
+const cePrompt = (idea: string, subject: string, c: Colors, k?: Cast) =>
+  `Clean, premium editorial image about this idea: "${idea}". ${subject}${castLine(k)} ${flat(c.main)}, soft diffused studio light, gentle shadow, high detail. ${keepOff('green')} ${NO_TEXT}`;
 
 /** The brand at the top, the line at the bottom, and the white button with its round red arrow */
 function ceChrome(t: RecipeText, h: number, colors: Colors, ctaY: number, ctaRight = W * 0.7): { layers: TextLayer[]; shapes: ShapeLayer[] } {
@@ -365,7 +368,7 @@ const CLINIC_EDITORIAL = family({
       name: 'Headline over an object',
       cutout: 'green',
       example: ceExample({ headline: 'Veins & Your Heart', body: 'How are they connected?', cta: 'See how it works' }),
-      imagePrompt: (idea, c) => cePrompt(idea, 'One glossy, colourful 3D object that symbolises the idea, in the middle of the frame; the top third and the bottom fifth are empty.', c),
+      imagePrompt: (idea, c, k) => cePrompt(idea, `${k?.object ? `A glossy 3D render of ${k.object}` : 'One glossy, colourful 3D object that symbolises the idea'}, in the middle of the frame; the top third and the bottom fifth are empty.`, c, k),
       build(input) {
         const { text: t, format, colors } = input;
         const h = heightOf(format);
@@ -383,7 +386,7 @@ const CLINIC_EDITORIAL = family({
       name: 'Headline behind the person',
       cutout: 'green',
       example: ceExample({ headline: 'Move Every Day', body: 'Keep your blood flowing well', cta: 'See the tips' }),
-      imagePrompt: (idea, c) => cePrompt(idea, 'One person in motion (running, stretching or walking briskly), full body, in the right two-thirds of the frame, their head in the upper third.', c),
+      imagePrompt: (idea, c, k) => cePrompt(idea, 'One person in motion (running, stretching or walking briskly), full body, in the right two-thirds of the frame, their head in the upper third.', c, k),
       build(input) {
         const { text: t, format, colors } = input;
         const h = heightOf(format);
@@ -401,7 +404,7 @@ const CLINIC_EDITORIAL = family({
       name: 'Chalkboard word',
       cutout: 'green',
       example: ceExample({ headline: 'Habits that *make it worse*', cta: 'Avoid these' }),
-      imagePrompt: (idea, c) => cePrompt(idea, 'One small 3D object that fits the idea, in the lower right corner of the frame; the rest of the frame is empty.', c),
+      imagePrompt: (idea, c, k) => cePrompt(idea, `${k?.object ? `A glossy 3D render of ${k.object}` : 'One small 3D object that fits the idea'}, in the lower right corner of the frame; the rest of the frame is empty.`, c, k),
       build(input) {
         const { text: t, format, colors } = input;
         const h = heightOf(format);
@@ -426,7 +429,7 @@ const CLINIC_EDITORIAL = family({
       name: 'Big headline, small object',
       cutout: 'green',
       example: ceExample({ headline: 'Blue lines winding on your legs', body: 'More than looks: it can be the start of something worse.', cta: '' }),
-      imagePrompt: (idea, c) => cePrompt(idea, 'One small 3D object or close-up detail that fits the idea, in the lower right quarter of the frame; the rest is empty.', c),
+      imagePrompt: (idea, c, k) => cePrompt(idea, `${k?.object ? `A glossy 3D render of ${k.object}` : 'One small 3D object or close-up detail that fits the idea'}, in the lower right quarter of the frame; the rest is empty.`, c, k),
       build(input) {
         const { text: t, format, colors } = input;
         const h = heightOf(format);
@@ -444,7 +447,7 @@ const CLINIC_EDITORIAL = family({
       name: 'This vs that',
       cutout: 'green',
       example: ceExample({ headline: 'Varicose Veins vs Deep Vein Clots', cta: 'Know the difference' }),
-      imagePrompt: (idea, c) => cePrompt(idea, 'One glossy 3D object that fits the idea in the lower right of the frame, reaching toward the middle; the top half is empty.', c),
+      imagePrompt: (idea, c, k) => cePrompt(idea, `${k?.object ? `A glossy 3D render of ${k.object}` : 'One glossy 3D object that fits the idea'} in the lower right of the frame, reaching toward the middle; the top half is empty.`, c, k),
       build(input) {
         const { text: t, format, colors } = input;
         const h = heightOf(format);
@@ -479,8 +482,8 @@ const RC = {
   lavender: { main: '#9F82E8', ink: '#FFFFFF', accent: '#2E1F6E' },
 } satisfies Record<string, Colors>;
 
-const rcPrompt = (idea: string, where: string, c: Colors) =>
-  `Joyful, playful studio photo for a celebration about this idea: "${idea}": a parent and a young child having fun together with simple props, big genuine smiles. ${where} ${flat(c.main)}, bright clean commercial light. ${keepOff('magenta')} ${NO_TEXT}`;
+const rcPrompt = (idea: string, where: string, c: Colors, k?: Cast) =>
+  `Joyful, playful studio photo for a celebration about this idea: "${idea}": ${k?.people ? 'two or three people the celebration is about' : 'a parent and a young child'} having fun together with simple props${k?.object ? ` and ${k.object}` : ''}, big genuine smiles. ${where}${castLine(k)} ${flat(c.main)}, bright clean commercial light. ${keepOff('magenta')} ${NO_TEXT}`;
 
 interface RcPlace {
   giant: { x: number; y: number; width: number; height: number; align?: TextLayer['align']; behind?: boolean; size?: number };
@@ -532,7 +535,7 @@ const RIBBON_CELEBRATION = family({
       colors: RC.coral,
       cutout: 'magenta',
       example: rcExample({ headline: 'Papa', kicker: 'love you', body: 'For turning every moment into a reason to smile.' }),
-      imagePrompt: (idea, c) => rcPrompt(idea, 'They sit together on a chair in the upper 60% of the frame; the bottom 35% is empty floor.', c),
+      imagePrompt: (idea, c, k) => rcPrompt(idea, 'They sit together on a chair in the upper 60% of the frame; the bottom 35% is empty floor.', c, k),
       build: rcBuild('word-low', (h) => ({ giant: { x: M, y: h * 0.64, width: W - M * 2, height: h * 0.17 }, script: { x: M * 2, y: h * 0.74, width: W - M * 4, height: h * 0.1 }, stamp: { x: W - M - 170, y: M, d: 170 }, body: { x: M, y: M, width: W * 0.34, height: h * 0.12 }, ribbon: { x: -40, y: h * 0.3, w: W + 80, h: h * 0.3 } })),
     },
     {
@@ -541,7 +544,7 @@ const RIBBON_CELEBRATION = family({
       colors: RC.navy,
       cutout: 'magenta',
       example: rcExample({ headline: 'Papa', kicker: 'thank you', body: 'My partner in missions, games and life.' }),
-      imagePrompt: (idea, c) => rcPrompt(idea, 'They lie or play on a big cushion, filling the upper 60% of the frame; the lower part is empty.', c),
+      imagePrompt: (idea, c, k) => rcPrompt(idea, 'They lie or play on a big cushion, filling the upper 60% of the frame; the lower part is empty.', c, k),
       build: rcBuild('big-photo', (h) => ({ giant: { x: M, y: h * 0.62, width: W - M * 2, height: h * 0.18 }, script: { x: M * 2, y: h * 0.73, width: W - M * 4, height: h * 0.1 }, stamp: { x: W - M - 180, y: M + 30, d: 180 }, body: { x: M, y: M, width: W * 0.4, height: h * 0.1 }, ribbon: { x: -60, y: h * 0.05, w: W + 120, h: h * 0.85 } })),
     },
     {
@@ -550,7 +553,7 @@ const RIBBON_CELEBRATION = family({
       colors: RC.yellow,
       cutout: 'magenta',
       example: rcExample({ headline: 'Papa', kicker: 'team', body: 'Teaching is an act of love you master every day.' }),
-      imagePrompt: (idea, c) => rcPrompt(idea, 'They sit on the floor together in the lower 55% of the frame; the top 40% is empty.', c),
+      imagePrompt: (idea, c, k) => rcPrompt(idea, 'They sit on the floor together in the lower 55% of the frame; the top 40% is empty.', c, k),
       build: rcBuild('word-top', (h) => ({ giant: { x: M, y: M + 10, width: W * 0.56, height: h * 0.24, align: 'left' }, script: { x: M, y: h * 0.17, width: W * 0.56, height: h * 0.1, align: 'left' }, stamp: { x: W - M - 160, y: h * 0.06, d: 160 }, body: { x: W * 0.62, y: h * 0.2, width: W * 0.38 - M, height: h * 0.14 }, ribbon: { x: -40, y: h * 0.26, w: W + 80, h: h * 0.2 } })),
     },
     {
@@ -559,7 +562,7 @@ const RIBBON_CELEBRATION = family({
       colors: RC.orange,
       cutout: 'magenta',
       example: rcExample({ headline: 'Papa', kicker: 'love you', body: 'Our partnership is life’s greatest show.' }),
-      imagePrompt: (idea, c) => rcPrompt(idea, 'They hug and laugh in the centre of the frame; the bottom quarter is empty.', c),
+      imagePrompt: (idea, c, k) => rcPrompt(idea, 'They hug and laugh in the centre of the frame; the bottom quarter is empty.', c, k),
       build: rcBuild('stamp', (h) => ({ giant: { x: M, y: h * 0.7, width: W * 0.7, height: h * 0.15, align: 'left' }, script: { x: M, y: h * 0.8, width: W * 0.7, height: h * 0.09, align: 'left' }, stamp: { x: M, y: M + 10, d: 190 }, body: { x: W * 0.66, y: h * 0.38, width: W * 0.34 - M, height: h * 0.14 }, ribbon: { x: W * 0.3, y: h * 0.02, w: W * 0.8, h: h * 0.3 } })),
     },
     {
@@ -568,7 +571,7 @@ const RIBBON_CELEBRATION = family({
       colors: RC.purple,
       cutout: 'magenta',
       example: rcExample({ headline: 'Papa', kicker: 'thank you', body: 'Your love is as big as the universe.' }),
-      imagePrompt: (idea, c) => rcPrompt(idea, 'They kneel side by side in the lower 70% of the frame, their heads near the middle; the top 30% is empty.', c),
+      imagePrompt: (idea, c, k) => rcPrompt(idea, 'They kneel side by side in the lower 70% of the frame, their heads near the middle; the top 30% is empty.', c, k),
       build: rcBuild('across', (h) => ({ giant: { x: 20, y: h * 0.62, width: W - 40, height: h * 0.2, behind: true, size: 300 }, script: { x: M * 2, y: h * 0.76, width: W - M * 4, height: h * 0.1 }, stamp: { x: W - M - 160, y: M, d: 160 }, body: { x: M, y: M, width: W * 0.36, height: h * 0.14 }, ribbon: { x: W * 0.2, y: -20, w: W, h: h * 0.4 } })),
     },
     {
@@ -577,7 +580,7 @@ const RIBBON_CELEBRATION = family({
       colors: RC.lavender,
       cutout: 'magenta',
       example: rcExample({ headline: 'Papa', kicker: 'love you', body: 'If there’s laughter, Papa is close by.' }),
-      imagePrompt: (idea, c) => rcPrompt(idea, 'They are in the right half of the frame, full body, sitting on a chair; the left half is empty.', c),
+      imagePrompt: (idea, c, k) => rcPrompt(idea, 'They are in the right half of the frame, full body, sitting on a chair; the left half is empty.', c, k),
       build: rcBuild('side', (h) => ({ giant: { x: M, y: h * 0.12, width: W * 0.5, height: h * 0.2, align: 'left', size: 180 }, script: { x: M, y: h * 0.27, width: W * 0.5, height: h * 0.1, align: 'left' }, stamp: { x: M, y: h * 0.64, d: 160 }, body: { x: M, y: h * 0.42, width: W * 0.38, height: h * 0.16 }, ribbon: { x: -40, y: h * 0.45, w: W * 0.7, h: h * 0.5 } })),
     },
   ],
@@ -588,8 +591,8 @@ const RIBBON_CELEBRATION = family({
 const SH_VIOLET: Colors = { main: '#6A2EE8', ink: '#FFFFFF', accent: '#3BE58A' };
 const SH_BLUE: Colors = { main: '#2F7BFF', ink: '#FFFFFF', accent: '#C8F53A' };
 
-const shPrompt = (idea: string, subject: string, c: Colors) =>
-  `Bright, confident fintech advertising photo about this idea: "${idea}". ${subject} The person wears colourful, stylish clothes (nothing bright green). ${flat(c.main)}, crisp studio light. ${NO_TEXT}`;
+const shPrompt = (idea: string, subject: string, c: Colors, k?: Cast) =>
+  `Bright, confident advertising photo about this idea: "${idea}". ${subject}${castLine(k)} The people wear colourful, stylish clothes (nothing bright green). ${flat(c.main)}, crisp studio light. ${NO_TEXT}`;
 
 function shBuild(layoutId: string, place: (h: number) => { headline: { x: number; y: number; width: number; height: number; align?: TextLayer['align'] }; body: { x: number; y: number; width: number; height: number }; behind?: ShapeLayer }) {
   return (input: BuildInput) => {
@@ -635,7 +638,7 @@ const SAFE_HOLD = family({
       colors: SH_VIOLET,
       cutout: 'green',
       example: shExample({ headline: 'No more *“I’ve sent it”* anxiety.', body: 'Funds are held safely until the deal is confirmed.' }),
-      imagePrompt: (idea, c) => shPrompt(idea, 'One smiling person seated, holding a phone and making an OK sign, centred in the lower 55% of the frame; the top 40% is empty.', c),
+      imagePrompt: (idea, c, k) => shPrompt(idea, `One smiling person seated, holding ${obj(k, 'a phone')} and making an OK sign, centred in the lower 55% of the frame; the top 40% is empty.`, c, k),
       build: shBuild('centre', (h) => ({ headline: { x: M, y: h * 0.1, width: W - M * 2, height: h * 0.16, align: 'center' }, body: { x: M * 2, y: h * 0.27, width: W - M * 4, height: h * 0.06 }, behind: shape({ id: 'steps', kind: 'steps', x: W * 0.1, y: h * 0.4, w: W * 0.8, h: h * 0.32 }) })),
     },
     {
@@ -644,7 +647,7 @@ const SAFE_HOLD = family({
       colors: SH_BLUE,
       cutout: 'green',
       example: shExample({ headline: 'Because trust shouldn’t feel *like a gamble.*', body: 'We hold payments safely until both sides are happy.' }),
-      imagePrompt: (idea, c) => shPrompt(idea, 'One smiling person in a hoodie looking at a phone, upper body, in the left half of the frame; the right half is empty.', c),
+      imagePrompt: (idea, c, k) => shPrompt(idea, `One smiling person in a hoodie looking at ${obj(k, 'a phone')}, upper body, in the left half of the frame; the right half is empty.`, c, k),
       build: shBuild('right', (h) => ({ headline: { x: W * 0.5, y: h * 0.12, width: W * 0.5 - M, height: h * 0.2 }, body: { x: W * 0.5, y: h * 0.34, width: W * 0.5 - M, height: h * 0.08 }, behind: shape({ id: 'zigzag', kind: 'zigzag', x: W * 0.42, y: h * 0.46, w: W * 0.62, h: h * 0.2 }) })),
     },
     {
@@ -653,7 +656,7 @@ const SAFE_HOLD = family({
       colors: SH_VIOLET,
       cutout: 'green',
       example: shExample({ headline: 'If it’s not confirmed, *it’s not released.*', body: 'That’s how your money stays protected.' }),
-      imagePrompt: (idea, c) => shPrompt(idea, 'One person in profile looking down at a phone, upper body close-up, in the right half of the frame; the left half is empty.', c),
+      imagePrompt: (idea, c, k) => shPrompt(idea, `One person in profile looking down at ${obj(k, 'a phone')}, upper body close-up, in the right half of the frame; the left half is empty.`, c, k),
       build: shBuild('left', (h) => ({ headline: { x: M, y: h * 0.14, width: W * 0.5, height: h * 0.22 }, body: { x: M, y: h * 0.38, width: W * 0.42, height: h * 0.08 } })),
     },
     {
@@ -662,7 +665,7 @@ const SAFE_HOLD = family({
       colors: SH_BLUE,
       cutout: 'green',
       example: shExample({ headline: 'Payment made. *Funds held.* Everyone protected.', body: 'Fair shopping, without bias.' }),
-      imagePrompt: (idea, c) => shPrompt(idea, 'Two friends laughing together over one phone, upper body, in the lower half of the frame; the top 45% is empty.', c),
+      imagePrompt: (idea, c, k) => shPrompt(idea, `Two friends laughing together over ${obj(k, 'one phone')}, upper body, in the lower half of the frame; the top 45% is empty.`, c, k),
       build: shBuild('together', (h) => ({ headline: { x: M, y: h * 0.12, width: W - M * 2, height: h * 0.16, align: 'center' }, body: { x: M * 2, y: h * 0.29, width: W - M * 4, height: h * 0.06 }, behind: shape({ id: 'zigzag', kind: 'zigzag', x: W * 0.35, y: h * 0.4, w: W * 0.5, h: h * 0.2 }) })),
     },
   ],
@@ -689,8 +692,8 @@ const BLOB_POP = family({
       name: 'Illustration and wavy box',
       cutout: 'magenta',
       example: bpExample({ headline: 'Happy New Week', body: 'New week, new ideas. We’re already three steps ahead.' }),
-      imagePrompt: (idea) =>
-        `A flat 2D vector illustration about this idea: "${idea}": two people (one sitting on a bench with a phone, one walking with a phone), simple shapes, green and blue clothes, in the lower left of the frame on a plain white background. The upper right is empty. ${keepOff('magenta')} ${NO_TEXT}`,
+      imagePrompt: (idea, _c, k) =>
+        `A flat 2D vector illustration about this idea: "${idea}": two people (one sitting on a bench, one walking), each with ${obj(k, 'a phone')}, simple shapes, green and blue clothes, in the lower left of the frame on a plain white background. The upper right is empty.${castLine(k)} ${keepOff('magenta')} ${NO_TEXT}`,
       build(input) {
         const { text: t, format, colors } = input;
         const h = heightOf(format);
@@ -718,8 +721,8 @@ const BLOB_POP = family({
       name: 'Person and tall box',
       cutout: 'magenta',
       example: bpExample({ headline: 'Happy New Month', kicker: 'November', body: 'May your calendar stay full and every post turn into a loyal community.' }),
-      imagePrompt: (idea) =>
-        `Friendly portrait photo about this idea: "${idea}": one confident person wearing an orange T-shirt and a headset, upper body, turned slightly, in the left half of the frame, on a plain light cream background. The right half is empty. ${keepOff('magenta')} ${NO_TEXT}`,
+      imagePrompt: (idea, _c, k) =>
+        `Friendly portrait photo about this idea: "${idea}": one confident person in an orange top${k?.object ? `, with ${k.object}` : ''}, upper body, turned slightly, in the left half of the frame, on a plain light cream background. The right half is empty.${castLine(k)} ${keepOff('magenta')} ${NO_TEXT}`,
       build(input) {
         const { text: t, format, colors } = input;
         const h = heightOf(format);
@@ -747,8 +750,8 @@ const BLOB_POP = family({
       id: 'photo-word',
       name: 'Photo with a big word',
       example: bpExample({ headline: 'Happy New Month', kicker: 'December', body: 'Use December as the runway for next year’s growth.' }),
-      imagePrompt: (idea) =>
-        `Warm lifestyle photo about this idea: "${idea}": one smiling person in an orange top and a grey jacket using a tablet, upper body, in the right half of the frame, in a softly lit modern room. The lower left is calm, darker background. ${NO_TEXT}`,
+      imagePrompt: (idea, _c, k) =>
+        `Warm lifestyle photo about this idea: "${idea}": one smiling person in an orange top and a grey jacket using ${obj(k, 'a tablet')}, upper body, in the right half of the frame, in a softly lit room that fits the idea. The lower left is calm, darker background.${castLine(k)} ${NO_TEXT}`,
       build({ text: t, format, photo, colors }) {
         const h = heightOf(format);
         return design('blob-pop', 'photo-word', format, colors, {
@@ -770,8 +773,8 @@ const BLOB_POP = family({
       id: 'tinted',
       name: 'Tinted photo',
       example: bpExample({ headline: 'Identity is what people remember.', body: 'You control the message. Build accordingly.' }),
-      imagePrompt: (idea) =>
-        `Warm lifestyle photo about this idea: "${idea}": one smiling person at a laptop, upper body, in the lower right of the frame, in a softly lit room with plants. The upper left is calm background. ${NO_TEXT}`,
+      imagePrompt: (idea, _c, k) =>
+        `Warm lifestyle photo about this idea: "${idea}": one smiling person with ${obj(k, 'a laptop')}, upper body, in the lower right of the frame, in a softly lit room with plants. The upper left is calm background.${castLine(k)} ${NO_TEXT}`,
       build({ text: t, format, photo, colors }) {
         const h = heightOf(format);
         return design('blob-pop', 'tinted', format, colors, {
@@ -806,8 +809,8 @@ const CONCEPT_OBJECT = family({
       name: 'Concept object',
       cutout: 'green',
       example: { headline: 'How many *platforms* should one studio run?', body: 'More tools aren’t always better. Here’s how to find the balance.', footer: 'Arcade Works' },
-      imagePrompt: (idea, c) =>
-        `Minimal conceptual 3D render that symbolises this idea: "${idea}" (for example a dartboard with three darts in the bullseye), in matte grey monochrome with only a few small details in ${c.accent}, entirely in the lower 55% of the frame, slightly from above; nothing reaches into the top 45%. ${flat(c.main)}, soft studio light and soft shadow. ${keepOff('green')} ${NO_TEXT}`,
+      imagePrompt: (idea, c, k) =>
+        `Minimal conceptual 3D render that symbolises this idea: "${idea}" (${k?.object ? `built around ${k.object}` : 'for example a dartboard with three darts in the bullseye'}), in matte grey monochrome with only a few small details in ${c.accent}, entirely in the lower 55% of the frame, slightly from above; nothing reaches into the top 45%. ${flat(c.main)}, soft studio light and soft shadow. ${keepOff('green')} ${NO_TEXT}`,
       build(input) {
         const { text: t, format, colors } = input;
         const h = heightOf(format);
@@ -841,8 +844,8 @@ const STRIKE_THROUGH = family({
       name: 'Strike through',
       cutout: 'green',
       example: { headline: 'A queen and her ~~pawns~~ *children.*', body: 'Happy Mother’s Day', kicker: 'Express your heart with us', footer: 'Heartnest' },
-      imagePrompt: (idea, c) =>
-        `Elegant conceptual still life that symbolises this idea: "${idea}": a few small, shiny symbolic objects (for example gold and blue chess pieces) standing on dark, rough volcanic rocks that fill only the bottom 40% of the frame; the top 55% is empty. ${flat(c.main)} above the rocks, soft light. ${keepOff('green')} ${NO_TEXT}`,
+      imagePrompt: (idea, c, k) =>
+        `Elegant conceptual still life that symbolises this idea: "${idea}": a few small, shiny symbolic objects (${k?.object ? `based on ${k.object}` : 'for example gold and blue chess pieces'}) standing on dark, rough volcanic rocks that fill only the bottom 40% of the frame; the top 55% is empty. ${flat(c.main)} above the rocks, soft light. ${keepOff('green')} ${NO_TEXT}`,
       build(input) {
         const { text: t, format, colors } = input;
         const h = heightOf(format);
@@ -874,8 +877,8 @@ const TORN_PAPER = family({
       id: 'main',
       name: 'Torn paper',
       example: { headline: 'Why people *ignore* your brand?', kicker: 'The truth your brand needs to see.', body: '6 reasons you’re being overlooked online', footer: 'Owlmark' },
-      imagePrompt: (idea, c) =>
-        `Mixed-media collage poster about this idea: "${idea}": a sheet of textured ${c.main} orange paper fills the frame; across the upper middle it is torn open in a ragged horizontal strip that reveals a detailed black-and-white engraved etching of a pair of intense human eyes. The bottom half is plain textured orange paper. ${NO_TEXT}`,
+      imagePrompt: (idea, c, k) =>
+        `Mixed-media collage poster about this idea: "${idea}": a sheet of textured ${c.main} orange paper fills the frame; across the upper middle it is torn open in a ragged horizontal strip that reveals a detailed black-and-white engraved etching of a pair of intense human eyes. The bottom half is plain textured orange paper.${castLine(k)} ${NO_TEXT}`,
       build({ text: t, format, photo, colors }) {
         const h = heightOf(format);
         const note = { x: W * 0.6, y: M - 30, w: W * 0.4 - M + 20, h: h * 0.12 };
@@ -911,8 +914,8 @@ const MINIATURE_WORLD = family({
       id: 'main',
       name: 'Miniature world',
       example: { headline: 'Winter is coming, *rally on.*', kicker: 'Play · Improve · Achieve', body: 'Keep playing. Keep moving.', footer: 'Mini Sports Club' },
-      imagePrompt: (idea, c) =>
-        `Tilt-shift miniature photo about this idea: "${idea}": tiny people acting out the idea on top of a giant everyday object that fits it (for example two tiny badminton players on a court laid on a racket's strings, with a giant shuttlecock), at an angle in the lower 60% of the frame, on a bright saturated ${c.main} background. The upper 40% is plain colour. ${NO_TEXT}`,
+      imagePrompt: (idea, c, k) =>
+        `Tilt-shift miniature photo about this idea: "${idea}": tiny people acting out the idea on top of ${k?.object ? `a giant ${k.object.replace(/^an? /, '')}` : 'a giant everyday object that fits it'} (for example two tiny badminton players on a court laid on a racket's strings, with a giant shuttlecock), at an angle in the lower 60% of the frame, on a bright saturated ${c.main} background. The upper 40% is plain colour.${castLine(k)} ${NO_TEXT}`,
       build({ text: t, format, photo, colors }) {
         const h = heightOf(format);
         const ink = inkOn(photo, colors.ink);
@@ -943,8 +946,8 @@ const FIRE_MONEY = family({
       id: 'main',
       name: 'Fire and money',
       example: { headline: 'Be burning your budget', kicker: 'Your studio might', body: 'Spending more. Growing less.', cta: 'Stop wasting money.', footer: 'Northbeam' },
-      imagePrompt: (idea, c) =>
-        `Dramatic advertising photo about this idea: "${idea}": a valuable object that fits it (for example a banknote with no readable text, a wallet or a bank card) burning with bright flames and sparks, centred in the lower 60% of the frame, on a deep ${c.main} red background with a few blurred flying paper pieces. The top 35% is clear red. ${NO_TEXT}`,
+      imagePrompt: (idea, c, k) =>
+        `Dramatic advertising photo about this idea: "${idea}": ${k?.object ? `${k.object}, or money tied to it,` : 'a valuable object that fits it (for example a banknote with no readable text, a wallet or a bank card)'} burning with bright flames and sparks, centred in the lower 60% of the frame, on a deep ${c.main} red background with a few blurred flying paper pieces. The top 35% is clear red. ${NO_TEXT}`,
       build({ text: t, format, photo, colors }) {
         const h = heightOf(format);
         return design('fire-money', 'main', format, colors, {
@@ -1022,8 +1025,8 @@ const BIG_DATE = family({
 
 /* ———————————————————————— More layouts for two original styles ———————————————————————— */
 
-const limePrompt = (idea: string, c: Colors, where: string) =>
-  `Vibrant advertising photo in fresh lime green (${c.main}) tones about this idea: "${idea}". ${where} People wear lime-green clothes; the phone is a large silver phone with no logo. A few floating translucent glass cubes and thin light rings, lime green gradient studio background, glossy commercial light. ${NO_TEXT}`;
+const limePrompt = (idea: string, c: Colors, where: string, k?: Cast) =>
+  `Vibrant advertising photo in fresh lime green (${c.main}) tones about this idea: "${idea}". ${where}${castLine(k)} People wear lime-green clothes; the product is ${obj(k, 'a large silver phone')} with no logo. A few floating translucent glass cubes and thin light rings, lime green gradient studio background, glossy commercial light. ${NO_TEXT}`;
 
 const LIME_RED = '#E5322D';
 
@@ -1032,7 +1035,7 @@ export const NEON_LIME_LAYOUTS: RecipeLayout[] = [
     id: 'side',
     name: 'Words on the right',
     example: { headline: 'The phone everyone’s talking about', body: 'Now available with us', kicker: 'Get yours now', footer: 'Volt Gadgets' },
-    imagePrompt: (idea, c) => limePrompt(idea, c, 'One stylish person holding the phone toward the camera in the left half of the frame; the right half is clear background.'),
+    imagePrompt: (idea, c, k) => limePrompt(idea, c, 'One stylish person holding the phone toward the camera in the left half of the frame; the right half is clear background.', k),
     build({ text: t, format, photo, colors }) {
       const h = heightOf(format);
       const ink = inkOn(photo, colors.ink);
@@ -1051,7 +1054,7 @@ export const NEON_LIME_LAYOUTS: RecipeLayout[] = [
     id: 'corner',
     name: 'Headline top, product bottom',
     example: { headline: 'Level up your gadgets', body: 'Nova 17 Pro', kicker: 'Shop now', footer: 'Volt Gadgets' },
-    imagePrompt: (idea, c) => limePrompt(idea, c, 'A person in a lime cap holds the phone to their ear, close to the camera, in the right half of the frame; the upper left and lower left are clear.'),
+    imagePrompt: (idea, c, k) => limePrompt(idea, c, 'A person in a lime cap holds the phone to their ear, close to the camera, in the right half of the frame; the upper left and lower left are clear.', k),
     build({ text: t, format, photo, colors }) {
       const h = heightOf(format);
       const ink = inkOn(photo, colors.ink);
@@ -1070,7 +1073,7 @@ export const NEON_LIME_LAYOUTS: RecipeLayout[] = [
     id: 'centre-red',
     name: 'Centred with a red button',
     example: { headline: 'Don’t wait', body: 'Own the power of the Nova 17 Pro now', kicker: 'Order yours now', footer: 'Volt Gadgets' },
-    imagePrompt: (idea, c) => limePrompt(idea, c, 'One smiling person holding the phone close to the camera, centred in the lower 65% of the frame; the top third is clear.'),
+    imagePrompt: (idea, c, k) => limePrompt(idea, c, 'One smiling person holding the phone close to the camera, centred in the lower 65% of the frame; the top third is clear.', k),
     build({ text: t, format, photo, colors }) {
       const h = heightOf(format);
       const ink = inkOn(photo, colors.ink);
@@ -1089,7 +1092,7 @@ export const NEON_LIME_LAYOUTS: RecipeLayout[] = [
     id: 'step',
     name: 'Floating phone',
     example: { headline: 'Step into *the future*', body: 'Sleek design, next-level power.', kicker: 'Order yours now', footer: 'Volt Gadgets' },
-    imagePrompt: (idea, c) => limePrompt(idea, c, 'A large floating phone in the left middle of the frame, and one person in a dynamic pose in the lower right; the top left is clear.'),
+    imagePrompt: (idea, c, k) => limePrompt(idea, c, 'A large floating phone in the left middle of the frame, and one person in a dynamic pose in the lower right; the top left is clear.', k),
     build({ text: t, format, photo, colors }) {
       const h = heightOf(format);
       const ink = inkOn(photo, colors.ink);
@@ -1108,7 +1111,7 @@ export const NEON_LIME_LAYOUTS: RecipeLayout[] = [
     id: 'group',
     name: 'Group behind',
     example: { headline: 'Upgrade your lifestyle with the all-new Nova', kicker: 'Shop now', footer: 'Volt Gadgets' },
-    imagePrompt: (idea, c) => limePrompt(idea, c, 'A group of four or five people fanned out behind one person who holds the phone forward, filling the lower 70% of the frame; the top 25% is clear.'),
+    imagePrompt: (idea, c, k) => limePrompt(idea, c, 'A group of four or five people fanned out behind one person who holds the phone forward, filling the lower 70% of the frame; the top 25% is clear.', k),
     build({ text: t, format, photo, colors }) {
       const h = heightOf(format);
       const ink = inkOn(photo, colors.ink);
@@ -1124,8 +1127,8 @@ export const NEON_LIME_LAYOUTS: RecipeLayout[] = [
   },
 ];
 
-const redPrompt = (idea: string, where: string, bg: string) =>
-  `Glossy 3D advertising render about this idea: "${idea}". ${where} ${bg} Studio lighting, soft reflections, bold and playful. ${NO_TEXT}`;
+const redPrompt = (idea: string, where: string, bg: string, k?: Cast) =>
+  `Glossy 3D advertising render about this idea: "${idea}". ${where}${castLine(k)}${k?.object ? ` The product shown is ${k.object}.` : ''} ${bg} Studio lighting, soft reflections, bold and playful. ${NO_TEXT}`;
 
 const RED_WHITE: Colors = { main: '#FFFFFF', ink: '#C8102E', accent: '#C8102E' };
 
@@ -1135,7 +1138,7 @@ export const BRAND_RED_LAYOUTS: RecipeLayout[] = [
     name: 'White page, red object',
     colors: RED_WHITE,
     example: { headline: 'No buffering, *just fast internet*', body: 'T&C apply', footer: 'Pulse Mobile' },
-    imagePrompt: (idea, c) => redPrompt(idea, 'A large glossy red 3D object that symbolises the idea, with one or two tiny happy people sitting on it, in the lower right two-thirds of the frame.', `Clean ${c.main === '#FFFFFF' ? 'white' : c.main} background; the upper left is empty.`),
+    imagePrompt: (idea, c, k) => redPrompt(idea, 'A large glossy red 3D object that symbolises the idea, with one or two tiny happy people sitting on it, in the lower right two-thirds of the frame.', `Clean ${c.main === '#FFFFFF' ? 'white' : c.main} background; the upper left is empty.`, k),
     build({ text: t, format, photo, colors }) {
       const h = heightOf(format);
       const ink = inkOn(photo, colors.ink);
@@ -1153,7 +1156,7 @@ export const BRAND_RED_LAYOUTS: RecipeLayout[] = [
     id: 'big-number',
     name: 'Giant offer number',
     example: { headline: '9GB data for 5 months', kicker: 'Only ₦900', body: 'T&C apply', footer: 'Pulse Mobile' },
-    imagePrompt: (idea, c) => redPrompt(idea, 'Glossy red 3D shapes and a small object that fits the idea in the lower corners of the frame; the centre is empty.', `A deep red (${c.main}) to dark red gradient background.`),
+    imagePrompt: (idea, c, k) => redPrompt(idea, 'Glossy red 3D shapes and a small object that fits the idea in the lower corners of the frame; the centre is empty.', `A deep red (${c.main}) to dark red gradient background.`, k),
     build({ text: t, format, photo, colors }) {
       const h = heightOf(format);
       const big = giantWord(plain(t.headline)!);
@@ -1174,7 +1177,7 @@ export const BRAND_RED_LAYOUTS: RecipeLayout[] = [
     id: 'top-left',
     name: 'Small headline, object right',
     example: { headline: 'Always stay connected', body: 'T&C apply', footer: 'Pulse Mobile' },
-    imagePrompt: (idea, c) => redPrompt(idea, 'A large glossy red 3D object that symbolises the idea, with tiny people on it, in the right two-thirds of the frame.', `A deep red (${c.main}) to dark red gradient background; the upper left is empty.`),
+    imagePrompt: (idea, c, k) => redPrompt(idea, 'A large glossy red 3D object that symbolises the idea, with tiny people on it, in the right two-thirds of the frame.', `A deep red (${c.main}) to dark red gradient background; the upper left is empty.`, k),
     build({ text: t, format, photo, colors }) {
       const h = heightOf(format);
       return design('brand-red', 'top-left', format, colors, {
@@ -1191,8 +1194,8 @@ export const BRAND_RED_LAYOUTS: RecipeLayout[] = [
     id: 'person',
     name: 'Person with the product',
     example: { headline: 'Get the 5G router today!', kicker: 'Enjoy unlimited browsing', body: 'T&C apply', footer: 'Pulse Mobile' },
-    imagePrompt: (idea, c) =>
-      `Bright advertising photo about this idea: "${idea}": one smiling person in a red top holding an unbranded white product toward the camera, upper body, in the lower right of the frame, on a deep red (${c.main}) gradient studio background. The upper left is empty. ${NO_TEXT}`,
+    imagePrompt: (idea, c, k) =>
+      `Bright advertising photo about this idea: "${idea}": one smiling person in a red top holding ${obj(k, 'an unbranded white product')} toward the camera, upper body, in the lower right of the frame, on a deep red (${c.main}) gradient studio background. The upper left is empty.${castLine(k)} ${NO_TEXT}`,
     build({ text: t, format, photo, colors }) {
       const h = heightOf(format);
       return design('brand-red', 'person', format, colors, {
@@ -1210,7 +1213,7 @@ export const BRAND_RED_LAYOUTS: RecipeLayout[] = [
     id: 'box',
     name: 'Product in the middle',
     example: { headline: 'Enjoy gifts and offers', kicker: 'Dial *123# to start', body: 'T&C apply', footer: 'Pulse Mobile' },
-    imagePrompt: (idea, c) => redPrompt(idea, 'One glossy red 3D product or gift box that symbolises the idea, centred in the frame, slightly below the middle.', `A deep red (${c.main}) gradient background; the top quarter is empty.`),
+    imagePrompt: (idea, c, k) => redPrompt(idea, 'One glossy red 3D product or gift box that symbolises the idea, centred in the frame, slightly below the middle.', `A deep red (${c.main}) gradient background; the top quarter is empty.`, k),
     build({ text: t, format, photo, colors }) {
       const h = heightOf(format);
       return design('brand-red', 'box', format, colors, {
