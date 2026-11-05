@@ -48,6 +48,8 @@ export const ManualScheduleInputSchema = z.object({
   content: z.string().nullable().optional(),
   media_id: z.string().nullable().optional(),
   media_type: z.string().nullable().optional(),
+  /** A carousel's slide images in order (the first is media_id, the cover) */
+  media_ids: z.array(z.string().min(1).max(80)).min(2).max(20).nullable().optional(),
   /** The LinkedIn account to post as; none means the default */
   account_id: z.string().trim().min(1).max(200).nullable().optional(),
 });
@@ -100,6 +102,8 @@ export interface ScheduledPostRecord {
   created_at: string;
   media_id?: string | null;
   media_type?: string | null;
+  /** A carousel's slide images in order; media_id is the first */
+  media_ids?: string[] | null;
   /** The LinkedIn account it posts as (lib/linkedin/accounts); none means the default account */
   account_id?: string | null;
   /** When the post is due (UTC ISO), kept in step with scheduled_date/time for the due-posts index */
@@ -152,6 +156,8 @@ export const ScheduledPostUpdateSchema = z.object({
   status: z.enum(['draft', 'scheduled', 'published']).optional(),
   media_id: z.string().nullable().optional(),
   media_type: z.string().nullable().optional(),
+  /** A carousel's slide images in order (the first is media_id, the cover) */
+  media_ids: z.array(z.string().min(1).max(80)).min(2).max(20).nullable().optional(),
   account_id: z.string().trim().min(1).max(200).nullable().optional(),
 });
 export type ScheduledPostUpdate = z.infer<typeof ScheduledPostUpdateSchema>;

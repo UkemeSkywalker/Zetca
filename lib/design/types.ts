@@ -214,6 +214,10 @@ export interface DesignRecord {
   attachedTo?: AttachedTo;
   /** The exported image of the current version, if it's been made */
   mediaId?: string;
+  /** A carousel: every slide in order (the first is `doc`, the cover) */
+  slides?: DesignDoc[];
+  /** A carousel's exported slide images, in order (the first is `mediaId`) */
+  mediaIds?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -223,6 +227,9 @@ export const DesignInputSchema = z.object({
   source: z.enum(DESIGN_SOURCES).default('template'),
   attachedTo: AttachedToSchema.optional(),
   mediaId: z.string().min(1).max(80).optional(),
+  /** A carousel: every slide in order, the cover first (it is also `doc`) */
+  slides: z.array(DesignDocSchema).min(2).max(10).optional(),
+  mediaIds: z.array(z.string().min(1).max(80)).min(2).max(10).optional(),
   doc: DesignDocSchema.refine((d) => d.background.kind !== 'photo' || !isUnsavedPhoto(d.background.photoId), {
     message: 'Save the photo before saving the design',
   }),

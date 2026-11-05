@@ -40,6 +40,7 @@ const FIELD_MAPPING: Record<string, string> = {
   status: 'status',
   media_id: 'mediaId',
   media_type: 'mediaType',
+  media_ids: 'mediaIds',
   account_id: 'accountId',
   due_at: 'dueAt',
   publish_attempts: 'publishAttempts',
@@ -54,6 +55,7 @@ const FIELD_MAPPING: Record<string, string> = {
 const NULLABLE_FIELDS = new Set([
   'media_id',
   'media_type',
+  'media_ids',
   'account_id',
   'next_attempt_at',
   'claimed_at',
@@ -80,6 +82,7 @@ interface PostItem {
   strategyLabel?: string;
   mediaId?: string;
   mediaType?: string;
+  mediaIds?: string[];
   accountId?: string;
   dueAt?: string;
   publishAttempts?: number;
@@ -397,6 +400,7 @@ export class SchedulerRepository {
     if (dueAt) item.dueAt = dueAt;
     if (record.media_id != null) item.mediaId = record.media_id;
     if (record.media_type != null) item.mediaType = record.media_type;
+    if (record.media_ids?.length) item.mediaIds = record.media_ids;
     if (record.account_id != null) item.accountId = record.account_id;
     if (record.next_attempt_at) item.nextAttemptAt = record.next_attempt_at;
     if (record.published_at) item.publishedAt = record.published_at;
@@ -421,6 +425,7 @@ export class SchedulerRepository {
       strategy_label: item.strategyLabel || '',
       media_id: item.mediaId ?? null,
       media_type: item.mediaType ?? null,
+      media_ids: item.mediaIds ?? null,
       account_id: item.accountId ?? null,
       due_at: item.dueAt,
       publish_attempts: item.publishAttempts ?? 0,

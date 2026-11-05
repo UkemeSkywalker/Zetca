@@ -1,6 +1,6 @@
 /**
  * PUT /api/copy/:copyId/visual: sets the image or video that goes with a copy.
- * Body: { kind, design_id?, media_id?, media_type? }
+ * Body: { kind, design_id?, media_id?, media_type?, media_ids? } (media_ids: a carousel's slides, cover first)
  */
 
 import { NextRequest, NextResponse } from 'next/server';

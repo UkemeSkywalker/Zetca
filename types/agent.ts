@@ -38,7 +38,7 @@ export interface CopyRecord {
   updatedAt: string;
 }
 
-export type VisualKind = 'none' | 'template' | 'stock' | 'ai_image' | 'ai_video';
+export type VisualKind = 'none' | 'template' | 'stock' | 'ai_image' | 'ai_video' | 'carousel';
 
 export interface CopyVisual {
   kind: VisualKind;
@@ -47,6 +47,8 @@ export interface CopyVisual {
   /** The finished image or video, ready to schedule */
   mediaId?: string;
   mediaType?: 'image' | 'video';
+  /** A carousel's slide images in order (mediaId is the cover) */
+  mediaIds?: string[];
 }
 
 /** A full set being written in the background */

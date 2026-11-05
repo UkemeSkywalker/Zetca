@@ -51,7 +51,11 @@ export class DesignWriterAgent {
     const userPrompt = `Write the words for this design.
 
 What the post is about: ${input.prompt}
-${input.styleId ? `Style: ${input.styleId} (use this style)` : 'Style: pick the one that suits it best'}`;
+${input.styleId ? `Style: ${input.styleId} (use this style)` : 'Style: pick the one that suits it best'}${
+      input.slides
+        ? `\nThis is a carousel. The headline is its cover. Also write exactly ${input.slides} content slides (slides), the last slide's line (closing) and its button (cta).`
+        : ''
+    }`;
 
     const run = () =>
       runAgent(new Agent({ model: this.model, systemPrompt: SYSTEM_PROMPT, structuredOutputSchema: DesignWriterResponseSchema }), 'design-writer', userPrompt);
@@ -74,6 +78,16 @@ export class MockDesignWriterAgent {
     await new Promise((r) => setTimeout(r, 500));
     const words = input.prompt.replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter((w) => w.length > 2).slice(0, 5);
     const headline = words.length >= 2 ? `${words.slice(0, 2).join(' ')}\n${words.slice(2).join(' ')}` : 'Show up anyway';
-    return cleanDesignText({ styleId: input.styleId ?? 'bold-statement', headline, kicker: 'Daily reminder', body: words.join(' '), photoQuery: words.slice(0, 2).join(' ') || 'fitness', imagePrompt: `A vivid photo about ${words.join(' ') || 'fitness'}` });
+    return cleanDesignText({
+      styleId: input.styleId ?? 'bold-statement',
+      headline,
+      kicker: 'Daily reminder',
+      body: words.join(' '),
+      photoQuery: words.slice(0, 2).join(' ') || 'fitness',
+      imagePrompt: `A vivid photo about ${words.join(' ') || 'fitness'}`,
+      ...(input.slides
+        ? { slides: Array.from({ length: input.slides }, (_, i) => ({ headline: `Point ${i + 1}`, body: 'One short line that explains it.' })), closing: 'Ready to start?', cta: 'Follow for more' }
+        : {}),
+    });
   }
 }

@@ -32,6 +32,7 @@ import {
   type StyleRecipe,
 } from './recipeKit';
 import { FAMILY_RECIPES, NEON_LIME_LAYOUTS, BRAND_RED_LAYOUTS } from './families';
+import { CLOSING_ID, closingSlide, contentLayoutOf, contentSlide, isSlideLayout, slideTextOf } from './carousel';
 
 export { FAMILY_NAMES, giantWord, markup, type RecipeColors, type RecipeFamily, type RecipeLayout, type RecipeText, type StyleRecipe } from './recipeKit';
 
@@ -655,6 +656,8 @@ export function textOfDesign(doc: DesignDoc): { headline: string; kicker?: strin
  * words, same photo and cut-out. Designs not made from a style come back as they were.
  */
 export function rebuildDesign(doc: DesignDoc, change: { colors?: Colors; layoutId?: string }): DesignDoc {
+  // A carousel's content or closing slide: same words, new colours or another slide layout
+  if (isSlideLayout(doc.layoutId)) return rebuildSlide(doc, change);
   const r = recipeById(doc.styleId);
   if (!r) return doc;
   const bgPhoto = doc.photo ?? (doc.background.kind === 'photo' ? doc.background : undefined);
@@ -672,4 +675,28 @@ export function rebuildDesign(doc: DesignDoc, change: { colors?: Colors; layoutI
     cutout: subject ? { photoId: subject.photoId, width: subject.width, height: subject.height } : undefined,
   });
   return doc.video ? { ...next, video: doc.video } : next;
+}
+
+/** A carousel slide rebuilt in new colours, or as another content layout */
+function rebuildSlide(doc: DesignDoc, change: { colors?: Colors; layoutId?: string }): DesignDoc {
+  const colors = change.colors ?? doc.colors;
+  if (!colors) return doc;
+  const [index, total] = (doc.layers.find((l) => l.id === 'count')?.text ?? '2/3').split('/').map(Number);
+  const words = slideTextOf(doc);
+  const footer = doc.layers.find((l) => l.id === 'footer')?.text;
+  const photo = doc.images?.find((i) => i.id === 'photo');
+  const base = {
+    styleId: doc.styleId,
+    format: doc.format,
+    colors,
+    index: index - 1,
+    total,
+    footer,
+    photo: photo ? { ...NO_PHOTO, photoId: photo.photoId, width: photo.width, height: photo.height } : doc.photo,
+  };
+  if (doc.layoutId === CLOSING_ID) return closingSlide({ ...base, text: { headline: words.headline, cta: words.cta } });
+  const layout = contentLayoutOf(change.layoutId) ?? contentLayoutOf(doc.layoutId) ?? 'number-left';
+  const next = contentSlide(layout === 'photo-top' && !base.photo ? 'number-left' : layout, { ...base, text: words });
+  // Keep the cover's photo with the slide, so it can switch to "Photo top" later
+  return base.photo ? { ...next, photo: base.photo } : next;
 }
