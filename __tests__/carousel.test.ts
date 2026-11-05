@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 import { buildPost, layoutsOf, rebuildDesign, RECIPES, recipeColors } from '@/lib/design/recipes';
-import { carouselSlides, CLOSING_ID, CONTENT_LAYOUTS, contentSlide, MAX_SLIDES, renumber, slideTextOf, withSlideAdded, withSlideMoved, withSlideRemoved } from '@/lib/design/carousel';
+import { carouselSlides, exampleCarouselWords, CLOSING_ID, CONTENT_LAYOUTS, contentSlide, MAX_SLIDES, renumber, slideTextOf, withSlideAdded, withSlideMoved, withSlideRemoved } from '@/lib/design/carousel';
 import { colorsBehind } from '@/lib/design/types';
 import { lowContrastLayers } from '@/lib/design/edit';
 import { contrastRatio } from '@/lib/design/contrast';
@@ -165,5 +165,21 @@ describe('carousels', () => {
       const body = start[1].layers.find((l) => l.id === 'body')!;
       expect(colorsBehind(start[1], body)).toEqual([start[1].shapes!.find((x) => x.id === 'body-card')!.fill]);
     });
+  });
+
+  it('makes the style dialog’s example carousel at any slide count', () => {
+    for (const total of [3, 5, 10]) {
+      const w = exampleCarouselWords(total, 'Northbeam');
+      expect(w.slides).toHaveLength(total - 2);
+      const r = RECIPES.find((x) => x.id === 'frame-bubble')!;
+      const cover = buildPost(r, 'bubble', { text: layoutsOf(r)[0].example, format: 'portrait', photo, colors: recipeColors(r) });
+      expect([cover, ...carouselSlides(cover, w, recipeColors(r), photo)]).toHaveLength(total);
+    }
+  });
+
+  it('keeps Frame & Bubble’s white headline readable on its coral bubble', () => {
+    const r = RECIPES.find((x) => x.id === 'frame-bubble')!;
+    const doc = buildPost(r, 'bubble', { text: layoutsOf(r)[0].example, format: 'portrait', photo, colors: recipeColors(r) });
+    expect(lowContrastLayers(doc).map((l) => l.id)).not.toContain('headline');
   });
 });

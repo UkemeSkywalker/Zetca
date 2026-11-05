@@ -61,7 +61,8 @@ function aroundAccent(raw: string): { before: string; accent: string; after: str
 /* ———————————————————————— A. Frame & Bubble ———————————————————————— */
 
 const FB_GREEN = '#1F9D55';
-const FB_OWN: Colors = { main: '#F47C64', ink: '#FFFFFF', accent: '#EF5A2B' };
+// A coral deep enough for white headlines (3.2:1, large text)
+const FB_OWN: Colors = { main: '#E9674E', ink: '#FFFFFF', accent: '#EF5A2B' };
 
 const fbPhoto = (idea: string, where: string, k?: Cast) =>
   `Warm, candid lifestyle photo about this idea: "${idea}". Real people in a cosy, sunlit place that fits the idea (for example a modern studio with plants and wooden desks), soft window light, warm orange and coral tones, shallow depth of field. ${where}${castLine(k)} ` +

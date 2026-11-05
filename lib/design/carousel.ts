@@ -264,3 +264,18 @@ export function withSlideMoved(slides: DesignDoc[], i: number, by: -1 | 1): Desi
   [next[i], next[j]] = [next[j], next[i]];
   return renumberAll(next);
 }
+
+/** Words for a style's example carousel (the gallery and the style dialog) */
+export function exampleCarouselWords(total: number, footer?: string): CarouselText {
+  const points: SlideText[] = [
+    { headline: 'Know who it’s for', body: 'Speak to one kind of customer, and they’ll feel you wrote it just for them.' },
+    { headline: 'Show, don’t tell', body: 'One real photo of your work beats three paragraphs about it.' },
+    { headline: 'Post when they’re free', body: 'Early mornings and lunch breaks get the most saves.' },
+    { headline: 'Reply to every comment', body: 'Each reply tells the feed your post is worth showing again.' },
+    { headline: 'Keep one look', body: 'The same colours and fonts make people know it’s you before they read.' },
+    { headline: 'Ask for one thing', body: 'One clear next step gets more clicks than three choices.' },
+    { headline: 'Reuse what works', body: 'Turn your best post into a carousel, a reel and a story.' },
+    { headline: 'Measure the saves', body: 'Saves show what people want to come back to.' },
+  ];
+  return { slides: points.slice(0, Math.max(1, total - 2)), closing: { headline: 'Want more tips like *these?*', cta: 'Follow for more' }, footer };
+}

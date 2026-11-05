@@ -16,6 +16,8 @@ import { createDesign, designerPath, rememberHandle, rememberedHandle, savePhoto
 import { DESIGN_STYLE_IDS } from '@/lib/models/designWriter';
 import { DesignCanvas } from './DesignCanvas';
 import { buildPost, layoutOf, layoutsOf, NO_PHOTO, RECIPES, recipeById, recipeColors } from '@/lib/design/recipes';
+import { carouselSlides, MAX_SLIDES, MIN_SLIDES, type CarouselText } from '@/lib/design/carousel';
+import type { Colors } from '@/lib/design/recipeKit';
 import { creditsFor } from '@/lib/billing/prices';
 import { CARD, Chip, CostBadge, INPUT, LABEL, PrimaryButton, SecondaryButton } from './ui';
 
@@ -62,6 +64,20 @@ export function CreateDesign() {
     const parts = (params.get('colors') ?? '').split(',').filter((c) => /^[0-9A-Fa-f]{6}$/.test(c));
     return parts.length === 3 ? { main: `#${parts[0]}`, ink: `#${parts[1]}`, accent: `#${parts[2]}` } : undefined;
   });
+  /** A carousel: how many slides in all (0 = a single post); styles only */
+  const [slideCount, setSlideCount] = useState(() => {
+    const n = Number(params.get('carousel'));
+    return Number.isInteger(n) && n >= MIN_SLIDES && n <= MAX_SLIDES ? n : 0;
+  });
+  const carousel = !!recipe && slideCount > 0;
+  /** A finished carousel's slides (the cover is also shown as the result) */
+  const [carouselSlidesMade, setCarouselSlidesMade] = useState<DesignDoc[] | null>(null);
+  /** The slides' words from the writer, kept until the slides are made */
+  const slideWordsRef = useRef<CarouselText | null>(null);
+  // Another number of slides needs its words written again
+  useEffect(() => {
+    slideWordsRef.current = null;
+  }, [slideCount]);
   /** Cut-outs are a second AI step (Qwen edit, $0.04) */
   const cutoutCredits = layout?.cutout ? creditsFor(0.04) : 0;
   /** Free AI uses left for a source (everyone's few, on the default model) */
@@ -134,8 +150,19 @@ export function CreateDesign() {
     }
     // A style can ask for its words a certain way (accent words, a crossed-out word, a short giant word)
     const written = recipe
-      ? await writeDesignText({ prompt: (recipe.wordsHint ? `How to write the words: ${recipe.wordsHint}\nThe post: ${prompt}` : prompt).slice(0, 1000), styleId: 'headline-body' })
+      ? await writeDesignText({
+          prompt: (recipe.wordsHint ? `How to write the words: ${recipe.wordsHint}\nThe post: ${prompt}` : prompt).slice(0, 1000),
+          styleId: 'headline-body',
+          ...(carousel ? { slides: slideCount - 2 } : {}),
+        })
       : await writeDesignText({ prompt, ...(style !== 'auto' && isWriterStyle(style) ? { styleId: style } : {}) });
+    slideWordsRef.current = carousel
+      ? {
+          slides: (written.slides?.length ? written.slides : [{ headline: written.body ?? written.headline }]).slice(0, slideCount - 2),
+          closing: { headline: written.closing ?? 'Want more like this?', cta: written.cta },
+          footer: text.footer || undefined,
+        }
+      : null;
     const next = { ...text, headline: written.headline, kicker: written.kicker ?? '', body: written.body ?? '' };
     setText(next);
     setPhotoQuery(written.photoQuery ?? '');
@@ -152,13 +179,20 @@ export function CreateDesign() {
   /** One design over a new AI image (or video) */
   const makeAiDesign = async (words: DesignText, description: string) => {
     setResults([]);
+    setCarouselSlidesMade(null);
     if (recipe && layout) {
+      // A carousel: the cover is this post; content and closing slides follow in its colours
+      const withSlides = (cover: DesignDoc, colors: Colors, photo?: PhotoBackground) => {
+        const w = slideWordsRef.current;
+        if (carousel && w) setCarouselSlidesMade([cover, ...carouselSlides(cover, { ...w, footer: clean(words).footer || w.footer }, colors, photo)]);
+        return cover;
+      };
       try {
         const colors = recipeColors(recipe, brandColors, layout.id);
         const t = clean(words);
         const recipeText = { headline: t.headline, kicker: t.kicker, body: t.body, footer: t.footer };
         if (layout.noImage) {
-          setResults([buildPost(recipe, layout.id, { text: recipeText, format, photo: NO_PHOTO, colors })]);
+          setResults([withSlides(buildPost(recipe, layout.id, { text: recipeText, format, photo: NO_PHOTO, colors }), colors)]);
           return;
         }
         const idea = (description || prompt).replace(/[*~]/g, '');
@@ -169,13 +203,17 @@ export function CreateDesign() {
         const photo = await aiPhotoBackground(job);
         const cut = job.cutoutPhotoId ? await loadPhoto({ photoId: job.cutoutPhotoId }) : null;
         setResults([
-          buildPost(recipe, layout.id, {
-            text: recipeText,
-            format,
-            photo,
-            cutout: cut && job.cutoutPhotoId ? { photoId: job.cutoutPhotoId, width: cut.width, height: cut.height } : undefined,
+          withSlides(
+            buildPost(recipe, layout.id, {
+              text: recipeText,
+              format,
+              photo,
+              cutout: cut && job.cutoutPhotoId ? { photoId: job.cutoutPhotoId, width: cut.width, height: cut.height } : undefined,
+              colors,
+            }),
             colors,
-          }),
+            photo
+          ),
         ]);
       } finally {
         setAiProgress(null);
@@ -256,7 +294,7 @@ export function CreateDesign() {
       let styleId = chosenStyle?.id ?? 'bold-statement';
       let query = photoQuery;
       let description = imagePrompt;
-      if (!text.headline.trim() || (isAi(source) && !imagePrompt)) {
+      if (!text.headline.trim() || (isAi(source) && !imagePrompt) || (carousel && !slideWordsRef.current)) {
         const r = await write();
         if (!r) return;
         words = r.text;
@@ -319,10 +357,13 @@ export function CreateDesign() {
         toSave = { ...doc, background: { ...bg, photoId: saved.photoId, previewUrl: undefined } };
       }
       if (text.footer?.startsWith('@')) rememberHandle(text.footer);
+      // A carousel keeps every slide; the one shown is its cover
+      const slides = carouselSlidesMade && carouselSlidesMade[0] === doc ? [toSave, ...carouselSlidesMade.slice(1)] : undefined;
       const design = await createDesign({
-        name: (text.headline || 'New design').replace(/\n/g, ' ').slice(0, 60),
+        name: (text.headline || 'New design').replace(/[*~]/g, '').replace(/\n/g, ' ').slice(0, 60),
         source: sourceOf(toSave),
         doc: toSave,
+        ...(slides ? { slides } : {}),
       });
       router.push(designerPath(design.designId));
     } catch (err) {
@@ -493,6 +534,28 @@ export function CreateDesign() {
                 </div>
               )}
               {recipe && (
+                <div className="mt-3 flex flex-wrap items-center gap-2" role="group" aria-label="Post type">
+                  <Chip selected={!carousel} onClick={() => setSlideCount(0)}>
+                    Single post
+                  </Chip>
+                  <Chip selected={carousel} onClick={() => setSlideCount((n) => n || 5)}>
+                    Carousel
+                  </Chip>
+                  {carousel && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-[#E2E8F0] bg-white px-1 py-0.5">
+                      <button type="button" aria-label="Fewer slides" disabled={slideCount <= MIN_SLIDES} onClick={() => setSlideCount((n) => n - 1)} className="rounded-full p-1 text-[#464555] hover:bg-[#F1F5F9] disabled:opacity-30">
+                        <Icon icon="lucide:minus" className="h-3.5 w-3.5" aria-hidden />
+                      </button>
+                      <span className="min-w-[64px] text-center text-xs font-semibold text-[#0B1C30]">{slideCount} slides</span>
+                      <button type="button" aria-label="More slides" disabled={slideCount >= MAX_SLIDES} onClick={() => setSlideCount((n) => n + 1)} className="rounded-full p-1 text-[#464555] hover:bg-[#F1F5F9] disabled:opacity-30">
+                        <Icon icon="lucide:plus" className="h-3.5 w-3.5" aria-hidden />
+                      </button>
+                    </span>
+                  )}
+                </div>
+              )}
+              {carousel && <p className="mt-2 text-xs text-[#777587]">A cover in this style, {slideCount - 2} content {slideCount - 2 === 1 ? 'slide' : 'slides'} and a closing slide. Only the cover needs an AI image.</p>}
+              {recipe && (
                 <p className="mt-2 text-xs text-[#777587]">
                   {recipe.description}.{layout?.cutout ? ` Includes a cut-out of the subject (+${cutoutCredits} credits).` : ''}
                   {layout?.noImage ? ' Drawn by Zetca: no AI image needed.' : ''}
@@ -553,7 +616,7 @@ export function CreateDesign() {
           <div>
             <PrimaryButton type="submit" disabled={!!busy} className="w-full h-12">
               {busy === 'create' && <Icon icon="lucide:loader-circle" className="w-4 h-4 animate-spin" aria-hidden />}
-              {isAi(source) ? (source === 'ai_video' ? 'Make the AI video' : 'Make the AI image') : 'Create 4 designs'}
+              {isAi(source) ? (source === 'ai_video' ? 'Make the AI video' : carousel ? `Make the carousel (${slideCount} slides)` : 'Make the AI image') : 'Create 4 designs'}
             </PrimaryButton>
             <p className="mt-2 text-center text-xs text-[#777587]">
               {isAi(source)
@@ -591,7 +654,14 @@ export function CreateDesign() {
             <>
               <div className="mt-5 grid grid-cols-2 gap-4">
                 {results.map((doc, i) => (
-                  <ResultCard key={`${doc.styleId}-${i}`} doc={doc} busy={opening === i} disabled={opening !== null} onOpen={() => open(doc, i)} />
+                  <ResultCard
+                    key={`${doc.styleId}-${i}`}
+                    doc={doc}
+                    busy={opening === i}
+                    disabled={opening !== null}
+                    onOpen={() => open(doc, i)}
+                    slides={carouselSlidesMade && carouselSlidesMade[0] === doc ? carouselSlidesMade.length : 0}
+                  />
                 ))}
               </div>
               {source === 'stock' && (
@@ -620,12 +690,17 @@ export function CreateDesign() {
   );
 }
 
-function ResultCard({ doc, busy, disabled, onOpen }: { doc: DesignDoc; busy: boolean; disabled: boolean; onOpen: () => void }) {
+function ResultCard({ doc, busy, disabled, onOpen, slides = 0 }: { doc: DesignDoc; busy: boolean; disabled: boolean; onOpen: () => void; slides?: number }) {
   const ratio = useMemo(() => Math.min(...doc.layers.map((l) => worstContrast(l.color, colorsBehind(doc, l)))), [doc]);
   return (
     <div>
       <div className="group relative overflow-hidden rounded-2xl shadow-sm">
         <DesignCanvas doc={doc} resolution={0.6} />
+        {slides > 1 && (
+          <span className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-semibold text-white">
+            <Icon icon="lucide:gallery-horizontal" className="w-3 h-3" aria-hidden /> Carousel · {slides} slides
+          </span>
+        )}
         {doc.video && (
           <span className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-semibold text-white">
             <Icon icon="lucide:play" className="w-3 h-3" aria-hidden /> AI video · {doc.video.durationSeconds}s
