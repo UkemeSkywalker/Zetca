@@ -26,6 +26,7 @@ import { AI_CREDIT_COST } from '@/components/designer/postVisuals';
 import { needsVisual, usePostVisuals, visualOf } from './usePostVisuals';
 import { CampaignStyleBar, styleCreditsPerPost, type CampaignStyleValue } from './CampaignStyleBar';
 import { recipeById } from '@/lib/design/recipes';
+import { designerPath } from '@/lib/api/designApi';
 import { PLATFORM_STYLE, platformInfo } from './platforms';
 
 const LABEL_MD = 'text-[13px] leading-[18px] tracking-[0.01em] font-semibold';
@@ -276,6 +277,13 @@ export function CopywriterWorkspace() {
   };
   const editingCopy = copies.find((c) => c.id === editingVisualId) ?? null;
   const editingDesign = editingCopy ? visuals.designFor(editingCopy) : undefined;
+  // A carousel has several slides: it opens in the full editor, which shows them all
+  useEffect(() => {
+    if (editingDesign?.slides?.length) {
+      setEditingVisualId(null);
+      router.push(designerPath(editingDesign.designId));
+    }
+  }, [editingDesign, router]);
 
   // The picker starts with the platforms last used for this strategy, else the strategy's own
   const initialPlatforms = (): CopyPlatformId[] => {
@@ -552,7 +560,7 @@ export function CopywriterWorkspace() {
         )}
       </div>
 
-      {editingCopy && editingDesign && (
+      {editingCopy && editingDesign && !editingDesign.slides?.length && (
         <EditVisualModal
           key={editingDesign.updatedAt}
           caption={editingCopy.text}

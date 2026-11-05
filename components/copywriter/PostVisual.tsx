@@ -10,7 +10,7 @@ import { readableOverlay } from '@/lib/design/photo';
 import { designerPath } from '@/lib/api/designApi';
 import { DesignCanvas, DesignThumb } from '@/components/designer/DesignCanvas';
 import { CostBadge } from '@/components/designer/ui';
-import { MAKEABLE, VISUAL_LABELS, updatePostVisual } from '@/components/designer/postVisuals';
+import { CAROUSEL_PLATFORMS, DEFAULT_SLIDES, MAKEABLE, VISUAL_LABELS, updatePostVisual } from '@/components/designer/postVisuals';
 import type { CopyRecord, VisualKind } from '@/types/agent';
 import { platformInfo } from './platforms';
 import { useCredits } from '@/components/billing/useCredits';
@@ -23,9 +23,11 @@ const COSTS: Record<VisualKind, 'free' | number | 'soon'> = {
   stock: 1,
   ai_image: 2,
   ai_video: 27,
+  // The words for every slide; in a campaign style, the cover's AI image too
+  carousel: 1,
 };
 const isAiKind = (k: VisualKind): k is 'ai_image' | 'ai_video' => k === 'ai_image' || k === 'ai_video';
-const KINDS: VisualKind[] = ['none', 'template', 'stock', 'ai_image', 'ai_video'];
+const KINDS: VisualKind[] = ['none', 'template', 'stock', 'ai_image', 'ai_video', 'carousel'];
 
 /** The visual row at the bottom of a post card */
 export function VisualRow({
@@ -53,7 +55,9 @@ export function VisualRow({
 }) {
   const kind = visualOf(copy).kind;
   // A post's text, photo or AI-image visual is made in the campaign's style
-  const inStyle = !!styled && !copy.visual?.mediaId && (kind === 'template' || kind === 'stock' || kind === 'ai_image');
+  const inStyle = !!styled && !copy.visual?.mediaId && (kind === 'template' || kind === 'stock' || kind === 'ai_image' || kind === 'carousel');
+  const slideCount = copy.visual?.mediaIds?.length ?? 0;
+  const carouselOk = CAROUSEL_PLATFORMS.has(copy.platform);
   const { credits } = useCredits();
   const freeLeft = (k: 'ai_image' | 'ai_video') => (credits ? credits.freeAi[k === 'ai_video' ? 'video' : 'image'] : 0);
   /** Not on the plan, and no free AI uses left for it */
@@ -63,7 +67,9 @@ export function VisualRow({
   const required = VISUAL_REQUIRED.has(copy.platform);
   const ready = !!copy.visual?.mediaId;
   const status = making
-    ? kind === 'ai_video'
+    ? kind === 'carousel'
+      ? `Making ${DEFAULT_SLIDES} slides… about a minute`
+      : kind === 'ai_video'
       ? 'Making the AI video… about 2 minutes'
       : kind === 'ai_image'
         ? 'Making the AI image… under a minute'
@@ -73,7 +79,9 @@ export function VisualRow({
       : kind === 'none'
         ? 'Text-only post'
         : ready
-          ? 'Ready to schedule'
+          ? slideCount > 1
+            ? `${slideCount} slides · ready to schedule`
+            : 'Ready to schedule'
           : MAKEABLE.includes(kind)
             ? 'Not made yet'
             : 'Coming soon';
@@ -94,6 +102,12 @@ export function VisualRow({
         ) : ready && design ? (
           <>
             <DesignThumb doc={design.doc} frame="square" resolution={size === 'lg' ? 0.2 : 0.12} className="rounded-lg" />
+            {slideCount > 1 && (
+              <span className="absolute right-1 top-1 inline-flex items-center gap-0.5 rounded-full bg-black/70 px-1.5 py-0.5 text-[10px] font-bold text-white" aria-label={`${slideCount} slides`}>
+                <Icon icon="material-symbols:view-carousel-outline" width={11} height={11} aria-hidden />
+                {slideCount}
+              </span>
+            )}
             <span className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 group-hover/thumb:bg-black/40 group-hover/thumb:opacity-100 transition">
               <Icon icon="material-symbols:edit-outline" width={18} height={18} className="text-white" />
             </span>
@@ -107,7 +121,7 @@ export function VisualRow({
       <div className="min-w-0 flex-1 space-y-1.5">
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-[13px] font-bold text-[#0b1c30]">
-            <span className="truncate">{inStyle ? `${styled!.name} style` : VISUAL_LABELS[kind]}</span>
+            <span className="truncate">{inStyle ? (kind === 'carousel' ? `${styled!.name} carousel` : `${styled!.name} style`) : VISUAL_LABELS[kind]}</span>
             {kind !== 'none' && <CostBadge cost={inStyle ? styled!.credits : costOf(kind)} />}
           </p>
           <p className={`text-[11px] leading-[14px] line-clamp-2 ${error ? 'text-[#ba1a1a]' : 'text-[#777587]'}`} role={error ? 'alert' : undefined}>
@@ -127,9 +141,11 @@ export function VisualRow({
             className="min-w-0 flex-1 h-8 pl-2 pr-6 rounded-lg border border-[#c7c4d8]/60 bg-white text-[12px] font-semibold text-[#0b1c30] disabled:opacity-50"
           >
             {KINDS.map((k) => (
-              <option key={k} value={k} disabled={(k === 'none' && required) || COSTS[k] === 'soon' || locked(k)}>
+              <option key={k} value={k} disabled={(k === 'none' && required) || COSTS[k] === 'soon' || locked(k) || (k === 'carousel' && !carouselOk)}>
                 {VISUAL_LABELS[k]}
-                {k === 'none' && required
+                {k === 'carousel' && !carouselOk
+                  ? ` (not on ${platformInfo(copy.platform).label})`
+                  : k === 'none' && required
                   ? ` (${platformInfo(copy.platform).label} needs a visual)`
                   : COSTS[k] === 'soon'
                     ? ' (soon)'

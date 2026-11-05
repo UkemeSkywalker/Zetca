@@ -40,9 +40,15 @@ async function downloadUrlHandler(
     }
     const s3 = new S3Client(s3ClientConfig);
 
+    // ?attachment=name.png: the link saves the file under that name instead of opening it
+    const named = (req.nextUrl.searchParams.get('attachment') ?? '').replace(/[^\w.-]+/g, '-').slice(0, 80);
+    // With the file's own extension, so it opens as the image (or video) it is
+    const ext = (record.contentType ?? '').split('/')[1]?.replace('jpeg', 'jpg').replace(/[^\w]/g, '');
+    const attachment = named && ext && !named.includes('.') ? `${named}.${ext}` : named;
     const command = new GetObjectCommand({
       Bucket: cfg.s3MediaBucket,
       Key: record.s3Key,
+      ...(attachment ? { ResponseContentDisposition: `attachment; filename="${attachment}"` } : {}),
     });
 
     const downloadUrl = await getSignedUrl(s3, command, { expiresIn: DOWNLOAD_URL_EXPIRY });

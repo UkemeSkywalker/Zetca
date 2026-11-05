@@ -34,7 +34,7 @@ export type CopyItem = z.infer<typeof CopyItemSchema>;
 // The visual that goes with a post
 // ---------------------------------------------------------------------------
 
-export const VISUAL_KINDS = ['none', 'template', 'stock', 'ai_image', 'ai_video'] as const;
+export const VISUAL_KINDS = ['none', 'template', 'stock', 'ai_image', 'ai_video', 'carousel'] as const;
 export type VisualKind = (typeof VISUAL_KINDS)[number];
 
 /** Platforms whose posts can't go out without an image or video */
@@ -47,6 +47,8 @@ export interface CopyVisual {
   /** The finished image or video, ready to schedule */
   media_id?: string;
   media_type?: 'image' | 'video';
+  /** A carousel's slide images in order (media_id is the first, the cover) */
+  media_ids?: string[];
 }
 
 /**
@@ -66,8 +68,10 @@ export const CopyVisualSchema = z
     design_id: z.string().trim().min(1).max(80).optional(),
     media_id: z.string().trim().min(1).max(80).optional(),
     media_type: z.enum(['image', 'video']).optional(),
+    media_ids: z.array(z.string().trim().min(1).max(80)).min(2).max(20).optional(),
   })
-  .refine((v) => !v.media_id || v.media_type, { message: 'media_type is needed with media_id' });
+  .refine((v) => !v.media_id || v.media_type, { message: 'media_type is needed with media_id' })
+  .refine((v) => !v.media_ids || v.media_ids[0] === v.media_id, { message: 'A carousel starts with its cover (media_id)' });
 
 export const CopyOutputSchema = z.object({
   copies: z.array(CopyItemSchema).min(1).describe('List of generated copies, 7 variations per platform'),

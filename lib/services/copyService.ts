@@ -417,8 +417,9 @@ export class CopyService {
     if (visual.kind === 'none' && VISUAL_REQUIRED_PLATFORMS.has(record.platform)) {
       throw new ApiError(`${record.platform === 'tiktok' ? 'TikTok' : 'Instagram'} posts need an image or video`, 400);
     }
-    if (visual.media_id) {
-      const media = await new MediaRepository().getMediaById(visual.media_id);
+    // Every image (a carousel has several) must be the user's own
+    for (const id of new Set([visual.media_id, ...(visual.media_ids ?? [])].filter((x): x is string => !!x))) {
+      const media = await new MediaRepository().getMediaById(id);
       if (!media || media.userId !== userId) throw new ApiError('That image isn’t yours', 403);
     }
     return this.copyRepository.updateVisual(copyId, visual);

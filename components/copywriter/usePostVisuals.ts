@@ -67,8 +67,9 @@ export function usePostVisuals(onCopy: (copy: CopyRecord) => void, campaignStyle
       });
       try {
         // With a campaign style, the post's visual is made in it (with its own words and image)
-        const style = styleRef.current && STYLED.includes(kind) ? styleRef.current : undefined;
-        const { copy: updated, design } = await makePostVisual(copy, style ? 'ai_image' : kind, style);
+        // A carousel keeps being a carousel: its cover follows the style
+        const style = styleRef.current && (STYLED.includes(kind) || kind === 'carousel') ? styleRef.current : undefined;
+        const { copy: updated, design } = await makePostVisual(copy, style && kind !== 'carousel' ? 'ai_image' : kind, style);
         setDesigns((d) => ({ ...d, [design.designId]: design }));
         onCopy(updated);
       } catch (err) {

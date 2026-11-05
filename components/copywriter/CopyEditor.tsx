@@ -112,6 +112,8 @@ export function CopyEditor({ copy, onBack, onSaved, onDelete, visual }: CopyEdit
         scheduledTime: localToUtcSlot(scheduleDate, scheduleTime).time,
         platform: platform.id,
         ...(attached ? { mediaId: attached.id, mediaType: attached.type } : {}),
+        // A carousel goes out with every slide, not just its cover
+        ...(!media && copy.visual?.mediaIds?.length ? { mediaIds: copy.visual.mediaIds } : {}),
       });
       setScheduleOpen(false);
       flash('Scheduled');
@@ -229,7 +231,11 @@ export function CopyEditor({ copy, onBack, onSaved, onDelete, visual }: CopyEdit
           {postVisual && !media && (
             <p className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[12px] font-semibold text-emerald-700">
               <Icon icon="material-symbols:image-outline" width={14} height={14} />
-              <span className="text-inherit">This post’s visual is attached. Upload a file to use that instead.</span>
+              <span className="text-inherit">
+                {copy.visual?.mediaIds?.length
+                  ? `This post’s carousel (${copy.visual.mediaIds.length} slides) is attached. Upload a file to use that instead.`
+                  : 'This post’s visual is attached. Upload a file to use that instead.'}
+              </span>
             </p>
           )}
           <MediaUploader

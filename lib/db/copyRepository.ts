@@ -32,7 +32,7 @@ interface CopyItemRow {
   hashtags?: string[];
   angle?: string;
   jobId?: string;
-  visual?: { kind: CopyVisual['kind']; designId?: string; mediaId?: string; mediaType?: 'image' | 'video' };
+  visual?: { kind: CopyVisual['kind']; designId?: string; mediaId?: string; mediaType?: 'image' | 'video'; mediaIds?: string[] };
   createdAt: string;
   updatedAt: string;
 }
@@ -197,6 +197,7 @@ export class CopyRepository {
               kind: item.visual.kind,
               ...(item.visual.designId ? { design_id: item.visual.designId } : {}),
               ...(item.visual.mediaId ? { media_id: item.visual.mediaId, media_type: item.visual.mediaType ?? 'image' } : {}),
+              ...(item.visual.mediaIds?.length ? { media_ids: item.visual.mediaIds } : {}),
             },
           }
         : {}),
@@ -211,5 +212,6 @@ function visualToItem(v: CopyVisual): NonNullable<CopyItemRow['visual']> {
     kind: v.kind,
     ...(v.design_id ? { designId: v.design_id } : {}),
     ...(v.media_id ? { mediaId: v.media_id, mediaType: v.media_type ?? 'image' } : {}),
+    ...(v.media_ids?.length ? { mediaIds: v.media_ids } : {}),
   };
 }

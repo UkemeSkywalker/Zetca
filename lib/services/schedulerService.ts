@@ -217,6 +217,7 @@ export class SchedulerService {
   async manualSchedule(input: ManualScheduleInput, userId: string): Promise<ScheduledPostRecord> {
     SchedulerService.validateFutureDate(input.scheduled_date, input.scheduled_time);
     if (input.media_id) await this.assertOwnsMedia(input.media_id, userId);
+    for (const id of input.media_ids ?? []) await this.assertOwnsMedia(id, userId);
 
     // If content is provided directly (manual post from calendar), skip copy lookup.
     if (input.content && input.copy_id.startsWith('manual')) {
@@ -232,6 +233,7 @@ export class SchedulerService {
         status: 'scheduled',
         media_id: input.media_id ?? null,
         media_type: input.media_type ?? null,
+        media_ids: input.media_ids ?? null,
         account_id: input.account_id ?? null,
       });
       return this.schedulerRepository.createPost(record);
@@ -263,6 +265,7 @@ export class SchedulerService {
       strategy_label: strategyLabel,
       media_id: input.media_id ?? null,
       media_type: input.media_type ?? null,
+      media_ids: input.media_ids ?? null,
       account_id: input.account_id ?? null,
     });
 
@@ -303,6 +306,7 @@ export class SchedulerService {
     if (record === null) throw new ApiError('Scheduled post not found', 404);
     if (record.status === 'publishing') throw new ApiError('This post is being published right now, so it can’t be changed', 409);
     if (updates.media_id) await this.assertOwnsMedia(updates.media_id, userId);
+    for (const id of updates.media_ids ?? []) await this.assertOwnsMedia(id, userId);
 
     const updateDict: PostUpdates = {};
     for (const [key, value] of Object.entries(updates)) {

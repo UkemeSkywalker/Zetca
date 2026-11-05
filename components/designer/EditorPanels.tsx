@@ -3,8 +3,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Icon } from '@iconify/react';
 import { PALETTES, STYLES, restyle, type Palette } from '@/lib/design/styles';
-import { backgroundColors, type Background, type DesignColors, type DesignDoc, type ImageLayer, type TextLayer } from '@/lib/design/types';
+import { colorsBehind, type Background, type DesignColors, type DesignDoc, type ImageLayer, type TextLayer } from '@/lib/design/types';
 import { layoutsOf, rebuildDesign, recipeById, recipeColors } from '@/lib/design/recipes';
+import { CONTENT_LAYOUTS, contentLayoutOf, isSlideLayout } from '@/lib/design/carousel';
 import { sameColors } from '@/lib/design/recipeKit';
 import { ColorChooser, colorsOf, useBrandPalettes, type ColorChoice } from './StyleChoices';
 import { worstContrast, bestTextColor } from '@/lib/design/contrast';
@@ -69,6 +70,7 @@ export function LeftPanel({
   onSelect,
   selected,
   campaign,
+  applyToAll,
 }: {
   tab: Tab;
   onTab: (t: Tab) => void;
@@ -77,9 +79,11 @@ export function LeftPanel({
   onSelect: (id: string | null) => void;
   selected: string | null;
   campaign?: DesignCampaign | null;
+  /** A carousel: changes every slide at once (its colours, its size) */
+  applyToAll?: (fn: (d: DesignDoc) => DesignDoc) => void;
 }) {
   // Designs made from a style can change colours and layout; the others use the Styles tab
-  const fromRecipe = !!recipeById(doc.styleId);
+  const fromRecipe = !!recipeById(doc.styleId) || isSlideLayout(doc.layoutId);
   const tabs = TABS.filter((t) => (t.id === 'colours' ? fromRecipe : t.id === 'styles' ? !fromRecipe : true));
   const shown = tabs.some((t) => t.id === tab) ? tab : tabs[0].id;
   return (
@@ -100,7 +104,7 @@ export function LeftPanel({
         ))}
       </div>
       <div role="tabpanel" className="flex-1 min-w-0 overflow-y-auto p-4 space-y-5">
-        {shown === 'colours' && <ColoursTab doc={doc} onChange={onChange} campaign={campaign ?? null} />}
+        {shown === 'colours' && <ColoursTab doc={doc} onChange={onChange} campaign={campaign ?? null} applyToAll={applyToAll} />}
         {shown === 'styles' && <StylesTab doc={doc} onChange={onChange} />}
         {shown === 'layers' && <LayersTab doc={doc} onChange={onChange} onSelect={onSelect} selected={selected} />}
         {shown === 'text' && <TextTab doc={doc} onChange={onChange} onSelect={onSelect} selected={selected} />}
@@ -116,9 +120,10 @@ export function LeftPanel({
  * A style's colours (its own, a brand's, or custom) and its other layouts.
  * Changing either keeps the words, the photo and the cut-out.
  */
-function ColoursTab({ doc, onChange, campaign }: { doc: DesignDoc; onChange: Change; campaign: DesignCampaign | null }) {
-  const recipe = recipeById(doc.styleId)!;
-  const own = recipeColors(recipe, undefined, doc.layoutId);
+function ColoursTab({ doc, onChange, campaign, applyToAll }: { doc: DesignDoc; onChange: Change; campaign: DesignCampaign | null; applyToAll?: (fn: (d: DesignDoc) => DesignDoc) => void }) {
+  const recipe = recipeById(doc.styleId);
+  const isSlide = isSlideLayout(doc.layoutId);
+  const own = recipe ? recipeColors(recipe, undefined, isSlide ? undefined : doc.layoutId) : (doc.colors ?? { main: '#FFFFFF', ink: '#0B0B0F', accent: '#4F46E5' });
   const brands = useBrandPalettes();
   const current = doc.colors ?? own;
   const brandList = campaign?.colors && !brands.some((b) => b.name === campaign.brandName) ? [{ name: campaign.brandName, colors: campaign.colors }, ...brands] : brands;
@@ -137,9 +142,24 @@ function ColoursTab({ doc, onChange, campaign }: { doc: DesignDoc; onChange: Cha
   const apply = (c: ColorChoice) => {
     setEditingCustom(c.kind === 'custom');
     setCampaignState('idle');
-    onChange((d) => rebuildDesign(d, { colors: c.kind === 'custom' ? c.colors : recipeColors(recipe, colorsOf(c), d.layoutId) }), { coalesce: c.kind === 'custom' });
+    const recolour = (d: DesignDoc) =>
+      rebuildDesign(d, { colors: c.kind === 'custom' ? c.colors : recipe ? recipeColors(recipe, colorsOf(c), isSlideLayout(d.layoutId) ? undefined : d.layoutId) : (colorsOf(c) ?? own) });
+    // A carousel changes colour as one: every slide
+    if (applyToAll) applyToAll(recolour);
+    else onChange(recolour, { coalesce: c.kind === 'custom' });
   };
-  const layouts = layoutsOf(recipe);
+  // A content slide offers the slide layouts; the closing slide has one; a cover or post, its style's layouts
+  const layouts = useMemo(
+    () =>
+      isSlide
+        ? contentLayoutOf(doc.layoutId)
+          ? CONTENT_LAYOUTS.map((l) => ({ id: `slide:${l.id}`, name: l.name }))
+          : []
+        : recipe
+          ? layoutsOf(recipe).map((l) => ({ id: l.id, name: l.name }))
+          : [],
+    [isSlide, doc.layoutId, recipe]
+  );
   const previews = useMemo(() => (layouts.length > 1 ? layouts.map((l) => ({ layout: l, doc: rebuildDesign(doc, { layoutId: l.id }) })) : []), [doc, layouts]);
   const saveForCampaign = async () => {
     if (!campaign) return;
@@ -200,7 +220,7 @@ function ColoursTab({ doc, onChange, campaign }: { doc: DesignDoc; onChange: Cha
       {previews.length > 0 && (
         <div className="space-y-2">
           <p className={HEADING}>Layout</p>
-          <p className="text-xs text-[#777587]">Other layouts in {recipe.name}. Your words and photo stay.</p>
+          <p className="text-xs text-[#777587]">{isSlide ? 'Other layouts for this slide. Your words stay.' : `Other layouts in ${recipe?.name}. Your words and photo stay.`}</p>
           <div className="grid grid-cols-2 gap-2">
             {previews.map(({ layout, doc: preview }) => (
               <button
@@ -684,7 +704,7 @@ export function RightPanel({
   if (picture) return <PicturePanel doc={doc} picture={picture} onChange={onChange} onSelect={onSelect} />;
   if (!layer) return <DesignSummary doc={doc} onChange={onChange} />;
   const set = (patch: Partial<TextLayer>, coalesce = false) => onChange((d) => updateLayer(d, layer.id, patch), { coalesce });
-  const behind = layer.fill ? [layer.fill] : backgroundColors(doc);
+  const behind = colorsBehind(doc, layer);
   const ratio = worstContrast(layer.color, behind);
   return (
     <div className={`${PANEL} min-h-0 overflow-y-auto p-4 space-y-5`}>

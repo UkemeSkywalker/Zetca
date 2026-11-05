@@ -24,6 +24,8 @@ export interface ScheduledPost {
   mediaId?: string;
   mediaUrl?: string;
   mediaType?: 'image' | 'video';
+  /** A carousel's slide images in order (mediaId is the cover) */
+  mediaIds?: string[];
   /** The LinkedIn account it posts as; none means the default */
   accountId?: string;
   /** Automatic publish attempts so far */
@@ -63,6 +65,7 @@ export interface ManualScheduleInput {
   content?: string;
   mediaId?: string;
   mediaType?: 'image' | 'video';
+  mediaIds?: string[];
   accountId?: string;
 }
 
@@ -78,5 +81,6 @@ export interface ScheduledPostUpdate {
   status?: 'draft' | 'scheduled' | 'published';
   mediaId?: string | null;
   mediaType?: 'image' | 'video' | null;
+  mediaIds?: string[] | null;
   accountId?: string | null;
 }

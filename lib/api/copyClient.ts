@@ -81,6 +81,7 @@ function convertCopyRecord(record: WireCopyRecord): CopyRecord {
             kind: record.visual.kind,
             ...(record.visual.design_id ? { designId: record.visual.design_id } : {}),
             ...(record.visual.media_id ? { mediaId: record.visual.media_id, mediaType: record.visual.media_type ?? 'image' } : {}),
+            ...(record.visual.media_ids?.length ? { mediaIds: record.visual.media_ids } : {}),
           },
         }
       : {}),
@@ -182,6 +183,7 @@ export async function setCopyVisual(copyId: string, visual: CopyVisual): Promise
         kind: visual.kind,
         ...(visual.designId ? { design_id: visual.designId } : {}),
         ...(visual.mediaId ? { media_id: visual.mediaId, media_type: visual.mediaType ?? 'image' } : {}),
+        ...(visual.mediaIds?.length ? { media_ids: visual.mediaIds } : {}),
       }),
     },
     'Couldn’t save the visual. Please try again.'

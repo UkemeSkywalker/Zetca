@@ -214,6 +214,10 @@ export interface DesignRecord {
   attachedTo?: AttachedTo;
   /** The exported image of the current version, if it's been made */
   mediaId?: string;
+  /** A carousel: every slide in order (the first is `doc`, the cover) */
+  slides?: DesignDoc[];
+  /** A carousel's exported slide images, in order (the first is `mediaId`) */
+  mediaIds?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -223,6 +227,9 @@ export const DesignInputSchema = z.object({
   source: z.enum(DESIGN_SOURCES).default('template'),
   attachedTo: AttachedToSchema.optional(),
   mediaId: z.string().min(1).max(80).optional(),
+  /** A carousel: every slide in order, the cover first (it is also `doc`) */
+  slides: z.array(DesignDocSchema).min(2).max(10).optional(),
+  mediaIds: z.array(z.string().min(1).max(80)).min(2).max(10).optional(),
   doc: DesignDocSchema.refine((d) => d.background.kind !== 'photo' || !isUnsavedPhoto(d.background.photoId), {
     message: 'Save the photo before saving the design',
   }),
@@ -235,4 +242,17 @@ export function backgroundColors(doc: DesignDoc): string[] {
   const colors = bg.kind === 'solid' ? [bg.color] : bg.kind === 'gradient' ? [bg.from, bg.to] : bg.tones;
   const overlay = doc.overlay;
   return overlay ? colors.map((c) => blend(c, overlay.color, overlay.opacity)) : colors;
+}
+
+/**
+ * The colours right behind a text layer: its own fill, else the solid shape
+ * it sits on (a speech bubble, a card), else the background
+ */
+export function colorsBehind(doc: DesignDoc, layer: Pick<TextLayer, 'x' | 'y' | 'width' | 'height' | 'fill'>): string[] {
+  if (layer.fill) return [layer.fill];
+  const cx = layer.x + layer.width / 2;
+  const cy = layer.y + layer.height / 2;
+  const solid = (s: ShapeLayer) => !!s.fill && (s.opacity ?? 1) >= 0.85 && !['fade', 'frame', 'ribbon'].includes(s.kind);
+  const under = [...(doc.shapes ?? [])].reverse().find((s) => solid(s) && cx >= s.x && cx <= s.x + s.w && cy >= s.y && cy <= s.y + s.h);
+  return under ? [under.fill!] : backgroundColors(doc);
 }
