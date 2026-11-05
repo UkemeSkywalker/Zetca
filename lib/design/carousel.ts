@@ -135,7 +135,7 @@ export function contentSlide(layout: ContentLayout, input: SlideInput): DesignDo
     const sizes = { num: 230, head: 300, rule: 46, body: body ? 280 : 0 };
     const { top, k } = stack(h, sizes.num + 20 + sizes.head + sizes.rule + sizes.body);
     let y = top;
-    layers.push(text({ id: 'num', role: 'kicker', text: n, x: M, y, width: W - M * 2, height: sizes.num * k, size: 220, font: theme.font, weight: theme.weight, color: readable(colors.accent, page, 2.2), align: 'center', valign: 'middle', lineHeight: 0.9 }));
+    layers.push(text({ id: 'num', role: 'kicker', text: n, x: M, y, width: W - M * 2, height: sizes.num * k, size: 220, font: theme.font, weight: theme.weight, color: readable(colors.accent, page, 3), align: 'center', valign: 'middle', lineHeight: 0.9 }));
     y += (sizes.num + 20) * k;
     layers.push(rich({ id: 'headline', role: 'headline', x: M, y, width: W - M * 2, height: sizes.head * k, size: 96, font: theme.font, weight: theme.weight, color: ink, align: 'center', valign: 'middle', lineHeight: 1.04, letterSpacing: -0.01 }, input.text.headline, { color: readable(colors.accent, page, 3), fallback: 0 }));
     y += sizes.head * k;
@@ -222,4 +222,45 @@ export function renumber(doc: DesignDoc, index: number, total: number): DesignDo
     ...doc,
     layers: doc.layers.map((l) => (l.id === 'count' ? { ...l, text: counter(index, total) } : l.id === 'num' ? { ...l, text: String(index).padStart(2, '0') } : l)),
   };
+}
+
+/** Every slide numbered for its place */
+export const renumberAll = (slides: DesignDoc[]) => slides.map((s, i) => (i === 0 ? s : renumber(s, i, slides.length)));
+
+/** A slide can be moved or removed: not the cover, not the closing slide */
+export const isContentSlide = (slides: DesignDoc[], i: number) => i > 0 && i < slides.length - 1 && slides[i].layoutId !== CLOSING_ID;
+
+/** Adds a new content slide just before the closing slide (or after `after`) */
+export function withSlideAdded(slides: DesignDoc[], after = slides.length - 2): DesignDoc[] {
+  if (slides.length >= MAX_SLIDES) return slides;
+  const like = slides.find((s, i) => i > 0 && isSlideLayout(s.layoutId)) ?? slides[slides.length - 1];
+  const colors = like.colors ?? slides[0].colors;
+  if (!colors) return slides;
+  const at = Math.min(Math.max(1, after + 1), slides.length - 1);
+  const fresh = contentSlide(at % 2 === 1 ? 'number-left' : 'number-top', {
+    styleId: like.styleId,
+    format: slides[0].format,
+    colors,
+    index: at,
+    total: slides.length + 1,
+    text: { headline: 'A new point', body: 'Say why it matters in a line or two.' },
+    footer: like.layers.find((l) => l.id === 'footer')?.text,
+  });
+  const withPhoto = like.photo ? { ...fresh, photo: like.photo } : fresh;
+  return renumberAll([...slides.slice(0, at), withPhoto, ...slides.slice(at)]);
+}
+
+/** Removes a content slide (a carousel keeps at least its cover, one point and the closing slide) */
+export function withSlideRemoved(slides: DesignDoc[], i: number): DesignDoc[] {
+  if (!isContentSlide(slides, i) || slides.length <= MIN_SLIDES) return slides;
+  return renumberAll(slides.filter((_, k) => k !== i));
+}
+
+/** Moves a content slide one place left or right, among the content slides */
+export function withSlideMoved(slides: DesignDoc[], i: number, by: -1 | 1): DesignDoc[] {
+  const j = i + by;
+  if (!isContentSlide(slides, i) || !isContentSlide(slides, j)) return slides;
+  const next = [...slides];
+  [next[i], next[j]] = [next[j], next[i]];
+  return renumberAll(next);
 }

@@ -9,7 +9,7 @@ import { loadPhoto, rememberSaved, tonesOf } from './photos';
 import { aiPhotoBackground, makeAi, type AiProgress } from './ai';
 import { ModelPicker, resetDate, useAiCredits } from './AiCredits';
 import { sourceOf } from './postVisuals';
-import { FORMATS, FORMAT_IDS, backgroundColors, isUnsavedPhoto, type DesignDoc, type FormatId, type PhotoBackground } from '@/lib/design/types';
+import { FORMATS, FORMAT_IDS, colorsBehind, isUnsavedPhoto, type DesignDoc, type FormatId, type PhotoBackground } from '@/lib/design/types';
 import { worstContrast } from '@/lib/design/contrast';
 import type { VideoQuality } from '@/lib/api/designApi';
 import { createDesign, designerPath, rememberHandle, rememberedHandle, savePhoto, searchPhotos, writeDesignText } from '@/lib/api/designApi';
@@ -621,7 +621,7 @@ export function CreateDesign() {
 }
 
 function ResultCard({ doc, busy, disabled, onOpen }: { doc: DesignDoc; busy: boolean; disabled: boolean; onOpen: () => void }) {
-  const ratio = useMemo(() => Math.min(...doc.layers.map((l) => worstContrast(l.color, l.fill ? [l.fill] : backgroundColors(doc)))), [doc]);
+  const ratio = useMemo(() => Math.min(...doc.layers.map((l) => worstContrast(l.color, colorsBehind(doc, l)))), [doc]);
   return (
     <div>
       <div className="group relative overflow-hidden rounded-2xl shadow-sm">

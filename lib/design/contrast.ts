@@ -52,3 +52,11 @@ export function bestTextColor(backgrounds: string[], candidates: string[] = ['#F
 export function passes(text: string, backgrounds: string[]): boolean {
   return worstContrast(text, backgrounds) >= MIN_CONTRAST;
 }
+
+/** Large text (WCAG: 3:1 is enough) — a box whose largest size is this or more */
+export const LARGE_TEXT = 96;
+
+/** Readable for its size: big words need 3:1, the rest MIN_CONTRAST */
+export function passesAt(text: string, backgrounds: string[], size: number): boolean {
+  return worstContrast(text, backgrounds) >= (size >= LARGE_TEXT ? 3 : MIN_CONTRAST);
+}

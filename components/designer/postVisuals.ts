@@ -343,6 +343,33 @@ export async function updatePostVisual(design: DesignRecord, doc: DesignDoc, nam
   return { copy, design: saved, image };
 }
 
+/**
+ * Saves an edited carousel, makes a new image of every slide and gives them
+ * to its Copywriter post and its scheduled post
+ */
+export async function updateCarouselVisual(design: DesignRecord, slides: DesignDoc[], name = design.name) {
+  const ready = await Promise.all(slides.map((d) => savePreviewPhoto(d)));
+  const images: { mediaId: string; blob: Blob }[] = [];
+  for (const [i, doc] of ready.entries()) images.push(await exportDesign(doc, `${name}-${i + 1}`));
+  const mediaIds = images.map((i) => i.mediaId);
+  const saved = await saveDesign(design.designId, {
+    name,
+    source: sourceOf(ready[0]),
+    doc: ready[0],
+    slides: ready,
+    mediaId: mediaIds[0],
+    mediaIds,
+    attachedTo: design.attachedTo,
+  });
+  rememberDesign(saved);
+  const to = design.attachedTo;
+  const copy = to?.copyId
+    ? await setCopyVisual(to.copyId, { kind: 'carousel', designId: design.designId, mediaId: mediaIds[0], mediaType: 'image', mediaIds }).catch(() => null)
+    : null;
+  if (to?.postId) await updatePost(to.postId, { mediaId: mediaIds[0], mediaType: 'image', mediaIds });
+  return { copy, design: saved, mediaIds };
+}
+
 /** Changes a post's visual to "None" (only where the platform allows it) */
 export function clearPostVisual(copy: CopyRecord): Promise<CopyRecord> {
   return setCopyVisual(copy.id, { kind: 'none' });

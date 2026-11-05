@@ -243,3 +243,16 @@ export function backgroundColors(doc: DesignDoc): string[] {
   const overlay = doc.overlay;
   return overlay ? colors.map((c) => blend(c, overlay.color, overlay.opacity)) : colors;
 }
+
+/**
+ * The colours right behind a text layer: its own fill, else the solid shape
+ * it sits on (a speech bubble, a card), else the background
+ */
+export function colorsBehind(doc: DesignDoc, layer: Pick<TextLayer, 'x' | 'y' | 'width' | 'height' | 'fill'>): string[] {
+  if (layer.fill) return [layer.fill];
+  const cx = layer.x + layer.width / 2;
+  const cy = layer.y + layer.height / 2;
+  const solid = (s: ShapeLayer) => !!s.fill && (s.opacity ?? 1) >= 0.85 && !['fade', 'frame', 'ribbon'].includes(s.kind);
+  const under = [...(doc.shapes ?? [])].reverse().find((s) => solid(s) && cx >= s.x && cx <= s.x + s.w && cy >= s.y && cy <= s.y + s.h);
+  return under ? [under.fill!] : backgroundColors(doc);
+}

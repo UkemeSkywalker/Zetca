@@ -2,8 +2,8 @@
  * Small, pure edits to a design, used by the editor (and easy to test)
  */
 
-import { bestTextColor, luminance, passes } from './contrast';
-import { FORMATS, backgroundColors, type Background, type DesignDoc, type FormatId, type ImageLayer, type PhotoBackground, type TextLayer } from './types';
+import { bestTextColor, luminance, passes, passesAt } from './contrast';
+import { FORMATS, backgroundColors, colorsBehind, type Background, type DesignDoc, type FormatId, type ImageLayer, type PhotoBackground, type TextLayer } from './types';
 import { readableOverlay } from './photo';
 
 export function updateLayer(doc: DesignDoc, id: string, patch: Partial<TextLayer>): DesignDoc {
@@ -91,18 +91,16 @@ export function setBackground(doc: DesignDoc, background: Background): DesignDoc
 
 /** Text layers that are hard to read against what's behind them */
 export function lowContrastLayers(doc: DesignDoc): TextLayer[] {
-  const behind = backgroundColors(doc);
-  return doc.layers.filter((l) => l.text.trim() && !passes(l.color, l.fill ? [l.fill] : behind));
+  return doc.layers.filter((l) => l.text.trim() && !passesAt(l.color, colorsBehind(doc, l), l.size));
 }
 
 /** Gives every hard-to-read layer the colour that reads best */
 export function fixContrast(doc: DesignDoc): DesignDoc {
-  const behind = backgroundColors(doc);
   return {
     ...doc,
     layers: doc.layers.map((l) => {
-      const bg = l.fill ? [l.fill] : behind;
-      return passes(l.color, bg) ? l : { ...l, color: bestTextColor(bg) };
+      const bg = colorsBehind(doc, l);
+      return passesAt(l.color, bg, l.size) ? l : { ...l, color: bestTextColor(bg) };
     }),
   };
 }

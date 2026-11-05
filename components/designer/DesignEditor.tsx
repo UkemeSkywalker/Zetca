@@ -10,7 +10,10 @@ import { createDesign, designerPath, getDesign, saveDesign } from '@/lib/api/des
 import { DesignCanvas } from './DesignCanvas';
 import { FONT_FAMILIES, loadDesignFonts } from './fonts';
 import { photosFor, withSavedPhoto } from './photos';
-import { exportDesign, sourceOf, updatePostVisual } from './postVisuals';
+import { exportDesign, sourceOf, updateCarouselVisual, updatePostVisual } from './postVisuals';
+import { SlideStrip } from './SlideStrip';
+import { isSlideLayout, withSlideAdded, withSlideMoved, withSlideRemoved } from '@/lib/design/carousel';
+import { rebuildDesign } from '@/lib/design/recipes';
 import { getDownloadUrl } from '@/lib/api/mediaClient';
 import { LeftPanel, RightPanel, type DesignCampaign, type Tab } from './EditorPanels';
 import { getCopy } from '@/lib/api/copyClient';
@@ -32,6 +35,9 @@ export function DesignEditor({ designId, draft }: { designId?: string; draft?: D
   const [design, setDesign] = useState<DesignRecord | null>(null);
   const [loadError, setLoadError] = useState('');
   const [doc, setDoc] = useState<DesignDoc | null>(draft ?? null);
+  /** A carousel's slides (the one being edited is `doc`, at `current`) */
+  const [slides, setSlides] = useState<DesignDoc[] | null>(null);
+  const [current, setCurrent] = useState(0);
   const [name, setName] = useState(draft ? 'Untitled design' : '');
   const [past, setPast] = useState<DesignDoc[]>([]);
   const [future, setFuture] = useState<DesignDoc[]>([]);
@@ -47,7 +53,8 @@ export function DesignEditor({ designId, draft }: { designId?: string; draft?: D
     getDesign(designId).then(
       (d) => {
         setDesign(d);
-        setDoc(d.doc);
+        setDoc(d.slides?.length ? d.slides[0] : d.doc);
+        if (d.slides?.length) setSlides(d.slides);
         setName(d.name);
         setSelected(d.doc.layers.find((l) => l.role === 'headline')?.id ?? null);
         // A style example still has its sample photo: offer real ones first
@@ -88,6 +95,45 @@ export function DesignEditor({ designId, draft }: { designId?: string; draft?: D
     []
   );
 
+  /** Every slide, with the one being edited as it is now */
+  const allSlides = useCallback((): DesignDoc[] | null => (slides ? slides.map((s, i) => (i === current ? (docRef.current ?? s) : s)) : null), [slides, current]);
+
+  /** Shows another slide (each slide has its own undo history) */
+  const goTo = useCallback(
+    (i: number) => {
+      const all = allSlides();
+      if (!all || i === current) return;
+      setSlides(all);
+      setCurrent(i);
+      docRef.current = all[i];
+      setDoc(all[i]);
+      setPast([]);
+      setFuture([]);
+      setSelected(null);
+    },
+    [allSlides, current]
+  );
+
+  /** Changes the set of slides (added, removed, moved, recoloured), then shows slide `show` */
+  const changeSlides = useCallback(
+    (fn: (all: DesignDoc[]) => DesignDoc[], show = current) => {
+      const all = allSlides();
+      if (!all) return;
+      const next = fn(all);
+      const i = Math.min(Math.max(0, show), next.length - 1);
+      setSlides(next);
+      setCurrent(i);
+      docRef.current = next[i];
+      setDoc(next[i]);
+      setPast([]);
+      setFuture([]);
+      setSelected(null);
+      setSaveState('unsaved');
+    },
+    [allSlides, current]
+  );
+  const applyToAll = useCallback((fn: (d: DesignDoc) => DesignDoc) => changeSlides((all) => all.map(fn)), [changeSlides]);
+
   const undo = useCallback(() => {
     const current = docRef.current;
     if (!past.length || !current) return;
@@ -112,12 +158,13 @@ export function DesignEditor({ designId, draft }: { designId?: string; draft?: D
 
   const save = useCallback(async () => {
     if (!doc || (!design && !draft)) return;
-    const toSave = withSavedPhoto(doc);
+    const every = allSlides()?.map(withSavedPhoto);
+    const toSave = every ? every[0] : withSavedPhoto(doc);
     // A photo still being copied to storage: try again once it's there
-    if (toSave.background.kind === 'photo' && isUnsavedPhoto(toSave.background.photoId)) return;
+    if ((every ?? [toSave]).some((d) => d.background.kind === 'photo' && isUnsavedPhoto(d.background.photoId))) return;
     setSaveState('saving');
     try {
-      const input = { name: name.trim() || 'Untitled design', source: sourceOf(toSave), doc: toSave };
+      const input = { name: name.trim() || 'Untitled design', source: sourceOf(toSave), doc: toSave, ...(every ? { slides: every } : {}) };
       let saved: DesignRecord;
       const current = design ?? (creating.current ? await creating.current : null);
       if (current) {
@@ -136,7 +183,7 @@ export function DesignEditor({ designId, draft }: { designId?: string; draft?: D
     } catch {
       setSaveState('error');
     }
-  }, [doc, design, draft, name]);
+  }, [doc, design, draft, name, allSlides]);
 
   // Saves on its own a moment after the last change
   useEffect(() => {
@@ -184,6 +231,24 @@ export function DesignEditor({ designId, draft }: { designId?: string; draft?: D
     if (!doc) return;
     setDownloading(true);
     try {
+      const every = allSlides();
+      if (every) {
+        // A carousel: every slide, one file each, in order
+        await loadDesignFonts();
+        const base = (name || 'carousel').replace(/[^\w-]+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'carousel';
+        for (const [i, slide] of every.entries()) {
+          const blob = await designToBlob(slide, FONT_FAMILIES, await photosFor(slide));
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${base}-${String(i + 1).padStart(2, '0')}.${blob.type === 'image/jpeg' ? 'jpg' : 'png'}`;
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          // Browsers block a burst of downloads; a short gap lets each one through
+          await new Promise((r) => setTimeout(r, 350));
+        }
+        return;
+      }
       if (doc.video) {
         // Videos are put together on the server, with the words on top
         const { mediaId } = await exportDesign(withSavedPhoto(doc), name || 'design');
@@ -211,7 +276,10 @@ export function DesignEditor({ designId, draft }: { designId?: string; draft?: D
     if (toSave.background.kind === 'photo' && isUnsavedPhoto(toSave.background.photoId)) return;
     setUpdatingPost('busy');
     try {
-      const { design: saved } = await updatePostVisual(design, toSave, name.trim() || design.name);
+      const every = allSlides();
+      const { design: saved } = every
+        ? await updateCarouselVisual(design, every.map(withSavedPhoto), name.trim() || design.name)
+        : await updatePostVisual(design, toSave, name.trim() || design.name);
       setDesign(saved);
       setSaveState('saved');
       setUpdatingPost('done');
@@ -268,7 +336,12 @@ export function DesignEditor({ designId, draft }: { designId?: string; draft?: D
           <select
             id="design-format"
             value={doc.format}
-            onChange={(e) => change((d) => changeFormat(d, e.target.value as FormatId))}
+            onChange={(e) => {
+              const format = e.target.value as FormatId;
+              // A carousel's slides all share one size
+              if (slides) applyToAll((d) => (isSlideLayout(d.layoutId) ? rebuildDesign({ ...d, format }, {}) : changeFormat(d, format)));
+              else change((d) => changeFormat(d, format));
+            }}
             className="h-10 rounded-xl border border-[#E2E8F0] bg-[#F8F9FF] px-3 text-sm font-semibold text-[#0B1C30]"
           >
             {FORMAT_IDS.map((id) => (
@@ -309,8 +382,24 @@ export function DesignEditor({ designId, draft }: { designId?: string; draft?: D
       {doc.video && <VideoBar video={doc.video} onVideo={(video) => change((d) => ({ ...d, video }))} />}
 
       <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[300px_1fr_280px] gap-4">
-        <LeftPanel tab={tab} onTab={setTab} doc={doc} onChange={change} onSelect={setSelected} selected={selected} campaign={campaign} />
-        <Stage doc={doc} selected={selected} onSelect={setSelected} onChange={change} />
+        <LeftPanel tab={tab} onTab={setTab} doc={doc} onChange={change} onSelect={setSelected} selected={selected} campaign={campaign} applyToAll={slides ? applyToAll : undefined} />
+        {slides ? (
+          <div className="flex min-h-0 flex-col gap-3">
+            <div className="min-h-0 flex-1">
+              <Stage doc={doc} selected={selected} onSelect={setSelected} onChange={change} />
+            </div>
+            <SlideStrip
+              slides={allSlides()!}
+              current={current}
+              onPick={goTo}
+              onAdd={() => changeSlides((all) => withSlideAdded(all, current >= all.length - 1 ? all.length - 2 : current), Math.min(current + 1, slides.length - 1))}
+              onRemove={() => changeSlides((all) => withSlideRemoved(all, current), current - 1)}
+              onMove={(by) => changeSlides((all) => withSlideMoved(all, current, by), current + by)}
+            />
+          </div>
+        ) : (
+          <Stage doc={doc} selected={selected} onSelect={setSelected} onChange={change} />
+        )}
         <RightPanel doc={doc} layer={layer} picture={picture} onChange={change} onSelect={setSelected} />
       </div>
     </div>

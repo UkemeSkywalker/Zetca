@@ -2,7 +2,9 @@
  * @jest-environment node
  */
 import { buildPost, layoutsOf, rebuildDesign, RECIPES, recipeColors } from '@/lib/design/recipes';
-import { carouselSlides, CLOSING_ID, CONTENT_LAYOUTS, contentSlide, renumber, slideTextOf } from '@/lib/design/carousel';
+import { carouselSlides, CLOSING_ID, CONTENT_LAYOUTS, contentSlide, MAX_SLIDES, renumber, slideTextOf, withSlideAdded, withSlideMoved, withSlideRemoved } from '@/lib/design/carousel';
+import { colorsBehind } from '@/lib/design/types';
+import { lowContrastLayers } from '@/lib/design/edit';
 import { contrastRatio } from '@/lib/design/contrast';
 import { DesignDocSchema, DesignInputSchema, type PhotoBackground } from '@/lib/design/types';
 import { CopyVisualSchema } from '@/lib/models/copy';
@@ -116,5 +118,52 @@ describe('carousels', () => {
     });
     expect(out.slides).toEqual([{ headline: 'Point one', body: 'Why it matters.' }]);
     expect(out).toMatchObject({ closing: 'Ready to start?', cta: 'Book a call' });
+  });
+
+  describe('editing the slides', () => {
+    const r = RECIPES.find((x) => x.id === 'safe-hold')!;
+    const colors = recipeColors(r);
+    const cover = buildPost(r, 'centre', { text: layoutsOf(r)[0].example, format: 'portrait', photo, colors });
+    const start = [cover, ...carouselSlides(cover, words, colors, photo)];
+    const heads = (all: typeof start) => all.map((s) => s.layers.find((l) => l.id === 'headline')?.text);
+    const counts = (all: typeof start) => all.slice(1).map((s) => s.layers.find((l) => l.id === 'count')?.text);
+
+    it('adds a slide before the closing slide, or after the one picked, and renumbers', () => {
+      const added = withSlideAdded(start, 1);
+      expect(added).toHaveLength(6);
+      expect(heads(added)[2]).toBe('A new point');
+      expect(counts(added)).toEqual(['2/6', '3/6', '4/6', '5/6', '6/6']);
+      expect(added[5].layoutId).toBe(CLOSING_ID);
+      // Never past the limit
+      let many = start;
+      for (let i = 0; i < 10; i++) many = withSlideAdded(many);
+      expect(many).toHaveLength(MAX_SLIDES);
+    });
+
+    it('moves content slides among themselves, never past the cover or the closing slide', () => {
+      const moved = withSlideMoved(start, 1, 1);
+      expect(heads(moved).slice(1, 3)).toEqual([heads(start)[2], heads(start)[1]]);
+      expect(counts(moved)).toEqual(counts(start));
+      expect(withSlideMoved(start, 1, -1)).toBe(start);
+      expect(withSlideMoved(start, 3, 1)).toBe(start);
+      expect(withSlideMoved(start, 0, 1)).toBe(start);
+    });
+
+    it('removes a content slide but keeps the cover, one point and the closing slide', () => {
+      const removed = withSlideRemoved(start, 2);
+      expect(removed).toHaveLength(4);
+      expect(counts(removed)).toEqual(['2/4', '3/4', '4/4']);
+      expect(withSlideRemoved(start, 0)).toBe(start);
+      expect(withSlideRemoved(start, 4)).toBe(start);
+      const small = withSlideRemoved(withSlideRemoved(start, 1), 1);
+      expect(small).toHaveLength(3);
+      expect(withSlideRemoved(small, 1)).toBe(small);
+    });
+
+    it('checks text against the card or bubble it sits on, and big words at 3:1', () => {
+      for (const s of start.slice(1)) expect(lowContrastLayers(s)).toEqual([]);
+      const body = start[1].layers.find((l) => l.id === 'body')!;
+      expect(colorsBehind(start[1], body)).toEqual([start[1].shapes!.find((x) => x.id === 'body-card')!.fill]);
+    });
   });
 });
