@@ -128,12 +128,15 @@ data "aws_iam_policy_document" "app" {
   }
 
   statement {
-    sid     = "ClaudeOnBedrock"
+    sid     = "ModelsOnBedrock"
     actions = ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"]
-    # The us. inference profile routes requests to the model in several US regions
+    # The us. inference profile routes requests to the model in several US regions.
+    # Claude, plus Kimi (Moonshot AI) as the fallback when Claude isn't available.
     resources = [
       "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.*",
       "arn:aws:bedrock:*::foundation-model/anthropic.*",
+      "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/us.moonshotai.*",
+      "arn:aws:bedrock:*::foundation-model/moonshotai.*",
     ]
   }
 }
