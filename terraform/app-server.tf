@@ -104,8 +104,8 @@ resource "aws_lightsail_instance_public_ports" "app" {
 
 # ---------------------------------------------------------------------------
 # The app's AWS identity. Lightsail can't use IAM roles, so the app runs with
-# this user's access keys, limited to its own tables, its media bucket and the
-# Claude models on Bedrock.
+# this user's access keys, limited to its own tables, its media bucket, the
+# models on Bedrock, transcripts and account emails (email.tf).
 # ---------------------------------------------------------------------------
 
 resource "aws_iam_user" "app" {

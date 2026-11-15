@@ -37,6 +37,8 @@ interface Config {
   publisherScanIntervalSeconds: number;
   youtubeWorkerEnabled: boolean;
   linkedinApiTimeoutSeconds: number;
+  /** Sender for account emails (password resets), e.g. "Zetca <noreply@zetca.pro>"; must be verified in SES */
+  emailFrom: string;
 }
 
 // Use a function to get config so environment variables are read at runtime
@@ -91,6 +93,7 @@ export function getConfig(): Config {
         ? process.env.YOUTUBE_WORKER_ENABLED === 'true'
         : process.env.NODE_ENV === 'production',
     linkedinApiTimeoutSeconds: Number(process.env.LINKEDIN_API_TIMEOUT_SECONDS || 30),
+    emailFrom: process.env.EMAIL_FROM || '',
   };
 
   return cfg;

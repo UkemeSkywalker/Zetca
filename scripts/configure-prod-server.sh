@@ -82,6 +82,9 @@ HIGGSFIELD_API_KEY=$HIGGSFIELD_API_KEY
 # Web search for brand and competitor research in Talk to Zetca
 TAVILY_API_KEY=$TAVILY_API_KEY
 
+# Sender for password reset emails; the domain is verified in SES by terraform/email.tf
+EMAIL_FROM=Zetca <noreply@$DOMAIN>
+
 PUBLISHER_ENABLED=true
 PUBLISHER_SCAN_INTERVAL_SECONDS=60
 LINKEDIN_API_TIMEOUT_SECONDS=30
