@@ -48,6 +48,11 @@ export interface UserRecord {
   youtubeRefreshTokenEnc?: string;
   youtubeScopes?: string[];
   youtubeConnectedAt?: string;
+
+  // Password reset (lib/auth/passwordReset). Only a SHA-256 hash of the emailed token is stored.
+  passwordResetTokenHash?: string;
+  passwordResetExpiresAt?: string;  // ISO 8601
+  passwordChangedAt?: string;       // ISO 8601
 }
 
 /** Every YouTube attribute on the user item, for connect/disconnect */
@@ -445,6 +450,59 @@ export class UserRepository {
     );
 
     return result.Attributes as UserRecord;
+  }
+
+  /**
+   * Store a password reset token's hash and expiry, replacing any earlier
+   * token so only the latest emailed link works.
+   */
+  async setPasswordResetToken(userId: string, tokenHash: string, expiresAt: string): Promise<void> {
+    await this.docClient.send(
+      new UpdateCommand({
+        TableName: this.tableName,
+        Key: { userId },
+        UpdateExpression: 'SET #hash = :hash, #expires = :expires',
+        ExpressionAttributeNames: { '#hash': 'passwordResetTokenHash', '#expires': 'passwordResetExpiresAt' },
+        ExpressionAttributeValues: { ':hash': tokenHash, ':expires': expiresAt },
+        ConditionExpression: 'attribute_exists(userId)',
+      })
+    );
+  }
+
+  /**
+   * Set a new password if the reset token matches and hasn't expired, and
+   * remove the token in the same write so it can only be used once.
+   * @returns false if the token is wrong, expired or already used
+   */
+  async resetPasswordWithToken(
+    userId: string,
+    tokenHash: string,
+    newPasswordHash: string,
+    now: string
+  ): Promise<boolean> {
+    try {
+      await this.docClient.send(
+        new UpdateCommand({
+          TableName: this.tableName,
+          Key: { userId },
+          UpdateExpression:
+            'SET #password = :password, #changed = :now, #lastModified = :now REMOVE #hash, #expires',
+          ExpressionAttributeNames: {
+            '#password': 'passwordHash',
+            '#changed': 'passwordChangedAt',
+            '#lastModified': 'lastModified',
+            '#hash': 'passwordResetTokenHash',
+            '#expires': 'passwordResetExpiresAt',
+          },
+          ExpressionAttributeValues: { ':password': newPasswordHash, ':now': now, ':hash': tokenHash },
+          ConditionExpression: 'attribute_exists(userId) AND #hash = :hash AND #expires > :now',
+        })
+      );
+      return true;
+    } catch (error) {
+      if ((error as { name?: string }).name === 'ConditionalCheckFailedException') return false;
+      throw error;
+    }
   }
 
   /**
