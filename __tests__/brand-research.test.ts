@@ -177,6 +177,7 @@ describe('the research', () => {
         gap: 'Nobody posts prices',
         positioning: 'Lekki’s celebration cake bakery',
       })),
+      adjust: jest.fn(),
     };
     const service = new BrandResearchService(writer, search as never, s3 as never, read as never);
     return { service, read, search, writer, files };

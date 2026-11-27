@@ -106,6 +106,57 @@ export const ComparisonSchema = z.object({
 });
 export type Comparison = z.infer<typeof ComparisonSchema>;
 
+/**
+ * A change to the brand result, by hand or through the chat. Every field is
+ * optional; a field that's present replaces what's there (lists are sent whole).
+ */
+const label = (max = 60) => z.string().trim().min(1).max(max);
+const list = (max: number, itemMax = 40) => z.array(label(itemMax)).max(max);
+export const BrandColorSchema = z.object({
+  hex: z.string().regex(HEX, 'Colours are 6-digit hex codes, like #0C0C0C').describe('A 6-digit hex colour, e.g. "#C8973A"'),
+  role: z.enum(['primary', 'secondary', 'accent', 'background', 'text']),
+  name: label(30).describe('A plain 1-2 word colour name, e.g. "Cocoa"'),
+});
+const BrandChanges = z
+  .object({
+    brandName: label(80).describe('The brand name'),
+    tagline: label(140).describe('What they do in 10 words or fewer'),
+    specialties: list(8).describe('The tags under the tagline: main products or services, 1-3 words each, 6 or fewer'),
+    audience: list(6).describe('Customers: who it is for, 1-3 words each, 4 or fewer'),
+    voice: list(6).describe('How the brand sounds, single words, 4 or fewer'),
+    look: list(6).describe('How their photos and designs look, 1-3 words each, 4 or fewer'),
+    colors: z.array(BrandColorSchema).min(1).max(6).describe('The whole new colour palette, 2-5 colours'),
+    headingFont: label(50).nullable().describe('A Google Fonts family for headings, e.g. "Fraunces"; null removes it'),
+    bodyFont: label(50).nullable().describe('A Google Fonts family for body text, e.g. "Inter"; null removes it'),
+    positioning: label(140).describe('How the brand should position itself, 10 words or fewer'),
+    missing: z.array(label(160)).max(2).describe('The quick questions still open; drop ones the user has answered'),
+  })
+  .partial();
+/** A hand edit from the page: unknown fields are refused */
+export const BrandEditSchema = BrandChanges.strict();
+export type BrandEdit = z.infer<typeof BrandChanges>;
+export type BrandEditField = keyof BrandEdit;
+
+/** What the chat agent returns: a short reply, and only the parts it changed */
+export const BrandAdjustmentSchema = z.object({
+  reply: z.string().describe('1-2 short sentences to the user: what you changed, or your answer/question if you changed nothing'),
+  changes: BrandChanges.describe('Only the fields you are changing. Leave every other field out.'),
+});
+export type BrandAdjustment = z.infer<typeof BrandAdjustmentSchema>;
+
+export const ResearchChatSchema = z.object({
+  message: z.string().trim().min(1, 'Type a message').max(2000),
+});
+
+/** A line in the conversation after the research: the user, Zetca, or a note that the user edited something by hand */
+export interface ChatTurn {
+  role: 'user' | 'zetca' | 'edit';
+  text: string;
+  /** The parts of the result this turn changed */
+  changed?: BrandEditField[];
+  at: string;
+}
+
 export const ResearchStartSchema = z.object({
   message: z.string().trim().min(3, 'Tell Zetca a little about your business').max(4000),
 });
@@ -173,6 +224,8 @@ export interface BrandResearch {
   comparison?: Omit<Comparison, 'competitors'>;
   /** The campaign look the user picked from the suggested styles */
   chosenStyle?: string;
+  /** The conversation after the research: chat requests, replies and hand edits */
+  chat?: ChatTurn[];
   error?: string;
   cost: number;
   createdAt: string;

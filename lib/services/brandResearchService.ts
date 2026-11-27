@@ -12,9 +12,12 @@
 import { randomUUID } from 'crypto';
 import { GetObjectCommand, PutObjectCommand, S3Client, type S3ClientConfig } from '@aws-sdk/client-s3';
 import { getConfig } from '../config';
-import { charge, priceOf } from '../billing/charge';
+import { charge, priceOf, withCredits } from '../billing/charge';
+import { applyBrandEdit, noteHandEdit } from '../research/brandEdit';
 import type { BrandResearchInput, CompetitorMaterial } from '../research/brandProfile';
 import type {
+  BrandAdjustment,
+  BrandEdit,
   BrandProfile,
   BrandResearch,
   Comparison,
@@ -33,6 +36,7 @@ export interface ResearchWriter {
   profile(input: BrandResearchInput): Promise<BrandProfile>;
   pickCompetitors(profile: BrandProfile, results: SearchResult[], ownSite?: string): Promise<CompetitorPicks>;
   compare(profile: BrandProfile, competitors: CompetitorMaterial[]): Promise<Comparison>;
+  adjust(research: Omit<BrandResearch, 'userId'>, message: string): Promise<BrandAdjustment>;
 }
 
 const key = (userId: string, id: string) => `research/${userId}/${id}.json`;
@@ -52,6 +56,17 @@ export const STEPS: { id: ResearchStepId; label: string }[] = [
   { id: 'competitors', label: 'Brands like yours' },
   { id: 'compare', label: 'What works' },
 ];
+
+/** The result can't be changed until the research has made it */
+export class ResearchNotReadyError extends Error {
+  statusCode = 409;
+  constructor() {
+    super('Wait for the research to finish before changing it');
+  }
+}
+
+/** Chat lines kept on the research (older ones are dropped) */
+const MAX_CHAT = 60;
 
 const MAX_IMAGES = 12;
 const MAX_VIDEOS = 6;
@@ -180,6 +195,39 @@ export class BrandResearchService {
     const { chosenStyle: _drop, ...rest } = r;
     void _drop;
     return this.save(styleId ? { ...rest, chosenStyle: styleId } : rest);
+  }
+
+  private async ready(userId: string, researchId: string): Promise<BrandResearch> {
+    const r = await this.get(userId, researchId);
+    if (!r.profile || r.status === 'working') throw new ResearchNotReadyError();
+    return r;
+  }
+
+  /** A change the user made by hand on the page; noted in the chat so the agent knows */
+  async edit(userId: string, researchId: string, edit: BrandEdit): Promise<BrandResearch> {
+    const r = await this.ready(userId, researchId);
+    const { research, changed } = applyBrandEdit(r, edit);
+    if (!changed.length) return r;
+    return this.save({ ...research, chat: noteHandEdit(r.chat, changed, new Date().toISOString()).slice(-MAX_CHAT) });
+  }
+
+  /**
+   * A chat message about the result ("make the colours warmer"): the agent
+   * changes only the parts it asks about. Its changes go onto the latest saved
+   * result, so a hand edit made while it was thinking isn't lost.
+   */
+  async adjust(userId: string, researchId: string, message: string): Promise<BrandResearch> {
+    const r = await this.ready(userId, researchId);
+    const asked = new Date().toISOString();
+    const out = await withCredits(userId, 'brand_chat', priceOf('brand_chat'), () => this.writer.adjust(r, message), researchId);
+    const latest = await this.get(userId, researchId);
+    const { research, changed } = applyBrandEdit(latest, out.changes ?? {});
+    const chat = [
+      ...(latest.chat ?? []),
+      { role: 'user' as const, text: message, at: asked },
+      { role: 'zetca' as const, text: out.reply.trim() || 'Done.', ...(changed.length && { changed }), at: new Date().toISOString() },
+    ];
+    return this.save({ ...research, chat: chat.slice(-MAX_CHAT) });
   }
 
   /** Takes the credits, saves the research and starts it; returns straight away */

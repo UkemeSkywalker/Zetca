@@ -7,7 +7,9 @@
 import { Agent } from '@strands-agents/sdk';
 import { BedrockModel } from '@strands-agents/sdk/models/bedrock';
 import {
+  BrandAdjustmentSchema,
   BrandProfileSchema,
+  type BrandAdjustment,
   ComparisonSchema,
   CompetitorPicksSchema,
   type BrandProfile,
@@ -23,6 +25,8 @@ import {
   type CompetitorMaterial,
   type SearchResult,
 } from '../research/brandProfile';
+import { adjustPrompt } from '../research/brandEdit';
+import type { BrandResearch } from '../models/brandResearch';
 import { StructuredOutputException } from './errors';
 import { runAgent, STRUCTURED_OUTPUT_ONLY } from './runAgent';
 import type { AgentCredentials } from './strategistAgent';
@@ -61,6 +65,22 @@ Rules:
 
 ${STRUCTURED_OUTPUT_ONLY}`;
 
+const ADJUST_PROMPT = `You help a small business owner fine-tune the brand result you made for them: name, tagline, specialties, customers, how they sound, their look, colours, fonts and positioning.
+
+Each message asks for a change, answers one of your quick questions, or asks you something.
+
+Rules:
+1. Change only what the message asks for, or what its answer clearly affects. Put only those fields in "changes" and leave every other field out. Never redo the whole result.
+2. A list you change is sent whole: the full new list, keeping the items the user didn't ask to drop.
+3. The result shown to you includes the user's own edits. Keep them unless the message asks to change them.
+4. Colours: 6-digit hex codes, 2-5 colours, each with a role and a plain 1-2 word name. "Warmer", "softer", "bolder" and so on mean new hex values in that direction, keeping the palette's roles.
+5. Fonts: real Google Fonts family names only.
+6. If they answer a quick question, use the answer (e.g. update customers) and drop that question from "missing".
+7. If the message is a question or too unclear to act on, change nothing and answer or ask in "reply".
+8. "reply" is 1-2 short, plain sentences saying what you changed. No jargon. Write in the language of the user's message.
+
+${STRUCTURED_OUTPUT_ONLY}`;
+
 export class BrandResearchAgent {
   private model: BedrockModel;
 
@@ -96,7 +116,17 @@ export class BrandResearchAgent {
     return this.structured<Comparison>(COMPARE_PROMPT, ComparisonSchema, 'competitor-compare', comparePrompt(profile, competitors));
   }
 
-  private async structured<T>(systemPrompt: string, schema: typeof CompetitorPicksSchema | typeof ComparisonSchema, label: string, prompt: string): Promise<T> {
+  /** Changes parts of an existing result from a chat message */
+  async adjust(research: Omit<BrandResearch, 'userId'>, message: string): Promise<BrandAdjustment> {
+    return this.structured<BrandAdjustment>(ADJUST_PROMPT, BrandAdjustmentSchema, 'brand-adjust', adjustPrompt(research, message));
+  }
+
+  private async structured<T>(
+    systemPrompt: string,
+    schema: typeof CompetitorPicksSchema | typeof ComparisonSchema | typeof BrandAdjustmentSchema,
+    label: string,
+    prompt: string
+  ): Promise<T> {
     const run = () => runAgent(new Agent({ model: this.model, systemPrompt, structuredOutputSchema: schema }), label, prompt);
     const result = await run().catch((error: Error) => {
       if (error?.name !== 'ModelError') throw error;
@@ -136,6 +166,18 @@ export class MockBrandResearchAgent {
 
   async pickCompetitors(_profile: BrandProfile, results: SearchResult[]): Promise<CompetitorPicks> {
     return { competitors: results.slice(0, 2).map((r) => ({ name: r.title.split(/[-|–]/)[0].trim(), website: r.url, why: 'Similar business' })) };
+  }
+
+  /** Understands a few requests, so the chat can be tried without Bedrock */
+  async adjust(research: Omit<BrandResearch, 'userId'>, message: string): Promise<BrandAdjustment> {
+    await new Promise((r) => setTimeout(r, 400));
+    const kit = research.profile?.brandKit;
+    if (/warm/i.test(message) && kit?.colors.length) {
+      const warm = ['#B5532F', '#E0A526', '#F4E1C1', '#5A2E1B', '#D97B4A'];
+      return { reply: 'I warmed up your colours.', changes: { colors: kit.colors.map((c, i) => ({ ...c, hex: warm[i % warm.length] })) } };
+    }
+    if (/font/i.test(message)) return { reply: 'I switched your heading font to Fraunces.', changes: { headingFont: 'Fraunces' } };
+    return { reply: 'Noted. Tell me which part to change.', changes: {} };
   }
 
   async compare(_profile: BrandProfile, competitors: CompetitorMaterial[]): Promise<Comparison> {
