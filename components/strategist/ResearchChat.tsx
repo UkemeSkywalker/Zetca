@@ -4,9 +4,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { getResearch, startResearch, type PublicBrandResearch } from '@/lib/api/researchClient';
+import { chatAboutResearch, editResearch, getResearch, startResearch, type PublicBrandResearch } from '@/lib/api/researchClient';
 import { refreshCredits } from '@/lib/api/billingClient';
-import type { BrandProfile, CompetitorFound, MediaImage, MediaVideo, ResearchStep, Socials } from '@/lib/models/brandResearch';
+import type { BrandEdit, BrandProfile, ChatTurn, CompetitorFound, MediaImage, MediaVideo, ResearchStep, Socials } from '@/lib/models/brandResearch';
+import { ACTIONS } from '@/lib/billing/prices';
+import { applyBrandEdit, FIELD_LABELS, listOf, noteHandEdit } from '@/lib/research/brandEdit';
+import { ColorsEditor, EditableChips, EditableText, FontPicker, inkOn } from './BrandEditors';
 import { PENDING_PROMPT_KEY } from './TalkToZetca';
 import { TalkBackground } from './TalkBackground';
 import { SuggestedStyles } from './SuggestedStyles';
@@ -41,14 +44,12 @@ const hostOf = (url: string) => {
   }
 };
 
-/** Black or white text, whichever reads better on a colour */
-const inkOn = (hex: string) => {
-  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.55 ? '#0b0b0f' : '#ffffff';
-};
 
 /** Script and handwriting fonts suit a name, not a whole sentence */
 const SCRIPT_FONT = /script|hand|brush|signature|pinyon|vibes|cursive|calligraph|dancing|pacifico|satisfy/i;
+
+/** Ideas for the chat box, before the user has said anything */
+const CHAT_IDEAS = ['Make the colours warmer', 'Try a bolder heading font', 'Make the tagline shorter'];
 
 const googleFontsHref = (fonts: string[]) =>
   `https://fonts.googleapis.com/css2?${fonts.map((f) => `family=${encodeURIComponent(f).replace(/%20/g, '+')}`).join('&')}&display=swap`;
@@ -67,6 +68,13 @@ export function ResearchChat() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const started = useRef(false);
+  // The chat after the research
+  const [draft, setDraft] = useState('');
+  const [asking, setAsking] = useState<string | null>(null);
+  const [chatError, setChatError] = useState('');
+  const [editError, setEditError] = useState('');
+  const saving = useRef<Promise<unknown>>(Promise.resolve());
+  const chatEnd = useRef<HTMLDivElement>(null);
 
   // A message waiting from the Strategist page: start the research
   useEffect(() => {
@@ -121,6 +129,47 @@ export function ResearchChat() {
   const profile = research?.profile;
   const working = !error && (!research || research.status === 'working');
   const sent = research?.message ?? message;
+  const editable = !!profile && research?.status !== 'working';
+  const turns = research?.chat ?? [];
+
+  useEffect(() => {
+    chatEnd.current?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+  }, [turns.length, asking]);
+
+  /** A hand edit: shown at once, then saved (one save at a time, in order) */
+  const edit = (change: BrandEdit) => {
+    if (!research || !editable) return;
+    const { research: next, changed } = applyBrandEdit(research, change);
+    if (!changed.length) return;
+    const before = research;
+    setEditError('');
+    setResearch({ ...next, chat: noteHandEdit(next.chat, changed, new Date().toISOString()) });
+    saving.current = saving.current.then(() =>
+      editResearch(research.researchId, change).then(setResearch, (e: Error) => {
+        setResearch(before);
+        setEditError(`Couldn’t save that change: ${e.message}`);
+      })
+    );
+  };
+
+  /** A chat message: Zetca changes just the parts it asks about */
+  const ask = async (text: string) => {
+    const message = text.trim();
+    if (!research || !message || asking) return;
+    setAsking(message);
+    setChatError('');
+    setDraft('');
+    try {
+      await saving.current;
+      setResearch(await chatAboutResearch(research.researchId, message));
+    } catch (e) {
+      setChatError(e instanceof Error ? e.message : 'Couldn’t send that');
+      setDraft(message);
+    } finally {
+      setAsking(null);
+      void refreshCredits();
+    }
+  };
 
   return (
     <div className="talk-dark relative isolate overflow-hidden rounded-[28px] bg-black text-white font-sans min-h-[calc(100dvh-140px)]">
@@ -147,11 +196,21 @@ export function ResearchChat() {
 
         <div className="mt-5 grid items-start gap-5 lg:grid-cols-[1fr_360px]">
           <div className="order-2 space-y-5 lg:order-1" aria-busy={working}>
-            <Board research={research} onResearch={setResearch} />
+            {editable && (
+              <p className="flex items-center gap-1.5 text-xs text-white/50">
+                <Icon icon="lucide:pencil" className="h-3.5 w-3.5" aria-hidden /> Click anything below to change it, or ask Zetca in the chat.
+              </p>
+            )}
+            {editError && (
+              <p role="alert" className="rounded-2xl border border-red-400/30 bg-red-500/20 px-4 py-2 text-sm text-red-100">
+                {editError}
+              </p>
+            )}
+            <Board research={research} onResearch={setResearch} editable={editable} onEdit={edit} />
           </div>
 
           {/* The conversation */}
-          <aside className={`${GLASS} order-1 flex flex-col gap-3 p-4 lg:order-2 lg:sticky lg:top-[96px]`} aria-label="Conversation">
+          <aside className={`${GLASS} order-1 flex flex-col gap-3 p-4 lg:order-2 lg:sticky lg:top-[96px] lg:max-h-[calc(100dvh-120px)] lg:overflow-y-auto`} aria-label="Conversation">
             {sent && <Bubble from="user">{sent}</Bubble>}
             <Bubble from="zetca">On it. I’ll study your brand and a few like it. About two minutes.</Bubble>
             {error && <Bubble from="zetca" tone="error">{error}</Bubble>}
@@ -166,7 +225,7 @@ export function ResearchChat() {
                 <Bubble from="zetca">
                   Here’s <strong>{profile.brandName}</strong> at a glance{research.competitors.length ? `, next to ${research.competitors.length} brands like you` : ''}.
                 </Bubble>
-                {research.comparison && (
+                {research.comparison?.gap && (
                   <Bubble from="zetca">
                     <span className="block text-white/60 text-xs font-semibold uppercase tracking-wider">Your edge</span>
                     {research.comparison.gap}
@@ -181,6 +240,72 @@ export function ResearchChat() {
                       ))}
                     </ul>
                   </Bubble>
+                )}
+                {turns.map((t, i) => (
+                  <Turn key={`${t.at}-${i}`} turn={t} />
+                ))}
+                {asking && (
+                  <>
+                    <Bubble from="user">{asking}</Bubble>
+                    <p role="status" className="flex items-center gap-2 px-1 text-sm text-white/60">
+                      <Icon icon="lucide:loader-circle" className="h-4 w-4 animate-spin" aria-hidden /> Updating your brand…
+                    </p>
+                  </>
+                )}
+                {chatError && (
+                  <Bubble from="zetca" tone="error">
+                    {chatError}
+                  </Bubble>
+                )}
+                <div ref={chatEnd} />
+                <form
+                  className="rounded-2xl border border-white/15 bg-white/[0.06] p-2"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void ask(draft);
+                  }}
+                >
+                  <label htmlFor="brand-chat" className="sr-only">
+                    Ask Zetca to change something
+                  </label>
+                  <textarea
+                    id="brand-chat"
+                    rows={2}
+                    value={draft}
+                    maxLength={2000}
+                    disabled={!!asking}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        void ask(draft);
+                      }
+                    }}
+                    placeholder="Change something, or answer a question…"
+                    className="w-full resize-none bg-transparent px-2 py-1 text-[14px] leading-6 text-white placeholder:text-white/40 outline-none disabled:opacity-60"
+                  />
+                  <div className="flex items-center justify-between gap-2 px-1">
+                    <span className="text-[11px] text-white/40">
+                      {ACTIONS.brand_chat.credits} {ACTIONS.brand_chat.credits === 1 ? 'credit' : 'credits'} a message
+                    </span>
+                    <button
+                      type="submit"
+                      disabled={!draft.trim() || !!asking}
+                      aria-label="Send"
+                      className="grid h-8 w-8 place-items-center rounded-full bg-white text-[#0b0b0f] transition hover:scale-105 disabled:opacity-40 disabled:hover:scale-100"
+                    >
+                      <Icon icon="lucide:arrow-up" className="h-4 w-4" aria-hidden />
+                    </button>
+                  </div>
+                </form>
+                {!turns.some((t) => t.role === 'user') && !asking && (
+                  <div className="flex flex-wrap gap-1.5" aria-label="Ideas">
+                    {CHAT_IDEAS.map((idea) => (
+                      <button key={idea} type="button" onClick={() => setDraft(idea)} className="rounded-full border border-white/15 px-2.5 py-1 text-xs text-white/70 hover:bg-white/10">
+                        {idea}
+                      </button>
+                    ))}
+                  </div>
                 )}
                 <div className="rounded-2xl border border-white/15 bg-white/[0.08] p-3 text-sm">
                   <p className="font-semibold">Next: your plan</p>
@@ -214,6 +339,28 @@ function Bubble({ from, tone, children }: { from: 'user' | 'zetca'; tone?: 'erro
       </span>
       <div className={`rounded-3xl rounded-tl-lg px-4 py-3 text-[14px] leading-6 ${tone === 'error' ? 'bg-red-500/20 text-red-100 border border-red-400/30' : 'bg-white/10 text-white'}`}>{children}</div>
     </div>
+  );
+}
+
+/** A line of the chat after the research */
+function Turn({ turn }: { turn: ChatTurn }) {
+  if (turn.role === 'edit') {
+    return (
+      <p className="flex items-center justify-center gap-1.5 px-2 text-center text-xs text-white/45">
+        <Icon icon="lucide:pencil" className="h-3 w-3 shrink-0" aria-hidden /> {turn.text}
+      </p>
+    );
+  }
+  if (turn.role === 'user') return <Bubble from="user">{turn.text}</Bubble>;
+  return (
+    <Bubble from="zetca">
+      {turn.text}
+      {turn.changed && turn.changed.length > 0 && (
+        <span className="mt-1 flex items-center gap-1 text-xs text-emerald-200/80">
+          <Icon icon="lucide:check" className="h-3 w-3" aria-hidden /> Updated {listOf(turn.changed.map((f) => FIELD_LABELS[f]))}
+        </span>
+      )}
+    </Bubble>
   );
 }
 
@@ -251,7 +398,17 @@ function Progress({ steps }: { steps: ResearchStep[] }) {
 }
 
 /** What Zetca found: visual first */
-function Board({ research, onResearch }: { research: PublicBrandResearch | null; onResearch: (r: PublicBrandResearch) => void }) {
+function Board({
+  research,
+  onResearch,
+  editable,
+  onEdit,
+}: {
+  research: PublicBrandResearch | null;
+  onResearch: (r: PublicBrandResearch) => void;
+  editable: boolean;
+  onEdit: (change: BrandEdit) => void;
+}) {
   if (!research) return <Shimmer />;
   const { profile, media, chips, socials, competitors, comparison } = research;
   const kit = profile?.brandKit;
@@ -273,14 +430,30 @@ function Board({ research, onResearch }: { research: PublicBrandResearch | null;
               )}
             </span>
             <div className="min-w-0 flex-1">
-              <h2 className="text-[clamp(22px,2.6vw,30px)] font-bold leading-tight" style={kit?.headingFont ? { fontFamily: `"${kit.headingFont}", serif` } : undefined}>
-                {profile.brandName}
-              </h2>
-              <p className="text-[15px] text-[#464555]">{profile.tagline}</p>
+              <EditableText
+                as="h2"
+                label="brand name"
+                value={profile.brandName}
+                maxLength={80}
+                editable={editable}
+                onSave={(brandName) => onEdit({ brandName })}
+                className="block text-[clamp(22px,2.6vw,30px)] font-bold leading-tight"
+                style={kit?.headingFont ? { fontFamily: `"${kit.headingFont}", serif` } : undefined}
+              />
+              <EditableText
+                as="p"
+                label="tagline"
+                value={profile.tagline}
+                editable={editable}
+                onSave={(tagline) => onEdit({ tagline })}
+                className="block text-[15px] text-[#464555]"
+              />
             </div>
             <Platforms socials={socials} />
           </div>
-          {chips.length > 0 && <Chips items={chips} className="mt-4" />}
+          {(chips.length > 0 || editable) && (
+            <EditableChips items={chips} label="specialty" editable={editable} onSave={(specialties) => onEdit({ specialties })} className="mt-4" />
+          )}
         </section>
       ) : (
         chips.length > 0 && <Chips items={chips} className="talk-in" onDark />
@@ -294,46 +467,21 @@ function Board({ research, onResearch }: { research: PublicBrandResearch | null;
         <div className="grid gap-5 md:grid-cols-2">
           <section className={`${CARD} talk-in p-5 md:col-span-2`} aria-label="Colours">
             <p className={LABEL}>Colours</p>
-            {kit.colors.length ? (
-              <div className="mt-3 flex h-28 overflow-hidden rounded-2xl">
-                {kit.colors.map((c) => (
-                  <div key={c.hex} className="flex flex-1 flex-col justify-end p-3" style={{ background: c.hex, color: inkOn(c.hex) }}>
-                    <span className="text-sm font-semibold">{c.name}</span>
-                    <span className="text-[11px] uppercase opacity-70">{c.hex}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-2 text-sm text-[#64748b]">No colours found on the site</p>
-            )}
+            <ColorsEditor colors={kit.colors} editable={editable} onSave={(colors) => onEdit({ colors })} />
           </section>
-          {fonts.length > 0 && (
+          {(fonts.length > 0 || editable) && (
             <section className={`${CARD} talk-in p-5`} aria-label="Fonts">
               <p className={LABEL}>Fonts</p>
               <div className="mt-3 flex items-end gap-6">
-                {kit.headingFont && (
-                  <div>
-                    <span className="block text-5xl leading-none" style={{ fontFamily: `"${kit.headingFont}", serif` }}>
-                      Aa
-                    </span>
-                    <span className="mt-2 block text-xs text-[#64748b]">{kit.headingFont}</span>
-                  </div>
-                )}
-                {kit.bodyFont && (
-                  <div>
-                    <span className="block text-2xl leading-none" style={{ fontFamily: `"${kit.bodyFont}", sans-serif` }}>
-                      Aa
-                    </span>
-                    <span className="mt-2 block text-xs text-[#64748b]">{kit.bodyFont}</span>
-                  </div>
-                )}
+                <FontPicker role="Heading" size="text-5xl" font={kit.headingFont} editable={editable} onSave={(headingFont) => onEdit({ headingFont })} />
+                <FontPicker role="Body" size="text-2xl" font={kit.bodyFont} editable={editable} onSave={(bodyFont) => onEdit({ bodyFont })} />
               </div>
             </section>
           )}
-          <section className={`${CARD} talk-in p-5 space-y-4 ${fonts.length ? '' : 'md:col-span-2'}`} aria-label="Who it's for">
-            <TagRow label="Customers" icon="lucide:users" items={profile.audience} />
-            <TagRow label="How you sound" icon="lucide:message-circle" items={profile.voice} />
-            <TagRow label="Your look" icon="lucide:camera" items={kit.look} />
+          <section className={`${CARD} talk-in p-5 space-y-4 ${fonts.length || editable ? '' : 'md:col-span-2'}`} aria-label="Who it's for">
+            <TagRow label="Customers" icon="lucide:users" items={profile.audience} editable={editable} onSave={(audience) => onEdit({ audience })} />
+            <TagRow label="How you sound" icon="lucide:message-circle" items={profile.voice} editable={editable} onSave={(voice) => onEdit({ voice })} />
+            <TagRow label="Your look" icon="lucide:camera" items={kit.look} editable={editable} onSave={(look) => onEdit({ look })} />
           </section>
         </div>
       )}
@@ -395,12 +543,15 @@ function Board({ research, onResearch }: { research: PublicBrandResearch | null;
           aria-label="Your positioning"
         >
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] opacity-60">Your positioning</p>
-          <p
-            className="mt-2 text-[clamp(22px,3vw,36px)] font-bold leading-tight"
+          <EditableText
+            as="p"
+            label="positioning"
+            value={comparison.positioning}
+            editable={editable}
+            onSave={(positioning) => onEdit({ positioning })}
+            className="mt-2 block text-[clamp(22px,3vw,36px)] font-bold leading-tight"
             style={kit.headingFont && !SCRIPT_FONT.test(kit.headingFont) ? { fontFamily: `"${kit.headingFont}", serif` } : undefined}
-          >
-            {comparison.positioning}
-          </p>
+          />
         </section>
       )}
 
@@ -446,14 +597,14 @@ function Chips({ items, className = '', onDark = false }: { items: string[]; cla
   );
 }
 
-function TagRow({ label, icon, items }: { label: string; icon: string; items: string[] }) {
-  if (!items.length) return null;
+function TagRow({ label, icon, items, editable, onSave }: { label: string; icon: string; items: string[]; editable: boolean; onSave: (next: string[]) => void }) {
+  if (!items.length && !editable) return null;
   return (
     <div>
       <p className={`${LABEL} flex items-center gap-1.5`}>
         <Icon icon={icon} className="h-3.5 w-3.5" aria-hidden /> {label}
       </p>
-      <Chips items={items} className="mt-2" />
+      <EditableChips items={items} label={label.toLowerCase()} max={6} editable={editable} onSave={onSave} className="mt-2" />
     </div>
   );
 }

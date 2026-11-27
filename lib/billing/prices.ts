@@ -25,6 +25,8 @@ export const ACTIONS = {
   auto_schedule: { label: 'Auto-schedule', credits: 3 },
   // About 30k tokens in and 4k out over 3 AI calls (brand profile, picking competitors, comparing); web search is free
   brand_research: { label: 'Brand research', credits: 20 },
+  // One short AI call with the brand result and recent chat, about 3k tokens in and 500 out: under a cent, so the minimum
+  brand_chat: { label: 'Brand chat message', credits: 1 },
   transcript: { label: 'Video transcript', credits: 1 },
   ai_image: { label: 'AI image', credits: 1 },
   ai_video: { label: 'AI video', credits: 26 },

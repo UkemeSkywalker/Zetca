@@ -2,7 +2,7 @@
  * Browser client for Talk to Zetca's brand research
  */
 
-import type { PublicBrandResearch } from '@/lib/models/brandResearch';
+import type { BrandEdit, PublicBrandResearch } from '@/lib/models/brandResearch';
 
 export type { PublicBrandResearch };
 
@@ -40,4 +40,14 @@ export async function getResearch(researchId: string): Promise<PublicBrandResear
 /** Saves the campaign look picked from the suggested styles (null clears it) */
 export async function chooseResearchStyle(researchId: string, style: string | null): Promise<PublicBrandResearch> {
   return (await call<{ research: PublicBrandResearch }>(`/api/strategist/research/${encodeURIComponent(researchId)}/style`, { method: 'PUT', body: JSON.stringify({ style }) })).research;
+}
+
+/** Saves a change made by hand to the brand result */
+export async function editResearch(researchId: string, edit: BrandEdit): Promise<PublicBrandResearch> {
+  return (await call<{ research: PublicBrandResearch }>(`/api/strategist/research/${encodeURIComponent(researchId)}`, { method: 'PATCH', body: JSON.stringify(edit) })).research;
+}
+
+/** Asks Zetca to change part of the brand result ("make the colours warmer") */
+export async function chatAboutResearch(researchId: string, message: string): Promise<PublicBrandResearch> {
+  return (await call<{ research: PublicBrandResearch }>(`/api/strategist/research/${encodeURIComponent(researchId)}/chat`, { method: 'POST', body: JSON.stringify({ message }) })).research;
 }
