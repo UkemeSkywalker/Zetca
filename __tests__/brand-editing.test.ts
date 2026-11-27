@@ -170,7 +170,7 @@ describe('the research service', () => {
     const t = setup(research());
     t.writer.adjust.mockResolvedValue({ reply: 'Dropped recruiters and focused on DevOps teams.', changes: { audience: ['DevOps teams'], missing: ['Which platforms will you prioritise?'] } });
     const out = await t.service.adjust('u1', research().researchId, 'drop recruiters, focus on DevOps teams');
-    expect(withCredits).toHaveBeenCalledWith('u1', 'brand_chat', 2, expect.any(Function), research().researchId);
+    expect(withCredits).toHaveBeenCalledWith('u1', 'brand_chat', 1, expect.any(Function), research().researchId);
     expect(out.profile!.audience).toEqual(['DevOps teams']);
     expect(out.profile!.missing).toEqual(['Which platforms will you prioritise?']);
     expect(out.profile!.brandKit).toEqual(profile.brandKit);

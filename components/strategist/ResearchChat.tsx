@@ -7,6 +7,7 @@ import { Icon } from '@iconify/react';
 import { chatAboutResearch, editResearch, getResearch, startResearch, type PublicBrandResearch } from '@/lib/api/researchClient';
 import { refreshCredits } from '@/lib/api/billingClient';
 import type { BrandEdit, BrandProfile, ChatTurn, CompetitorFound, MediaImage, MediaVideo, ResearchStep, Socials } from '@/lib/models/brandResearch';
+import { ACTIONS } from '@/lib/billing/prices';
 import { applyBrandEdit, FIELD_LABELS, listOf, noteHandEdit } from '@/lib/research/brandEdit';
 import { ColorsEditor, EditableChips, EditableText, FontPicker, inkOn } from './BrandEditors';
 import { PENDING_PROMPT_KEY } from './TalkToZetca';
@@ -284,7 +285,9 @@ export function ResearchChat() {
                     className="w-full resize-none bg-transparent px-2 py-1 text-[14px] leading-6 text-white placeholder:text-white/40 outline-none disabled:opacity-60"
                   />
                   <div className="flex items-center justify-between gap-2 px-1">
-                    <span className="text-[11px] text-white/40">2 credits a message</span>
+                    <span className="text-[11px] text-white/40">
+                      {ACTIONS.brand_chat.credits} {ACTIONS.brand_chat.credits === 1 ? 'credit' : 'credits'} a message
+                    </span>
                     <button
                       type="submit"
                       disabled={!draft.trim() || !!asking}
